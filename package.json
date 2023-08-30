@@ -1,0 +1,60 @@
+{
+  "name": "@railgun-community/proof-of-innocence",
+  "version": "1.0.0",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "type": "module",
+  "files": [
+    "dist/**/*"
+  ],
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build": "npm run clean && tsc",
+    "prepare": "npm run build",
+    "check-circular-deps": "madge --circular .",
+    "eslint": "eslint src --ext .ts,.tsx --fix",
+    "lint": "npm run check-circular-deps && npm run eslint && tsc --noEmit && tsc --noEmit -p tsconfig.test.json",
+    "tsc-test": "tsc -p tsconfig.test.json && tsc-alias -p tsconfig.test.json",
+    "compile-test": "npm run clean && npm run tsc-test",
+    "test-coverage": "npm run compile-test && c8 mocha",
+    "test": "npm run compile-test && NODE_ENV=test mocha"
+  },
+  "dependencies": {
+  },
+  "peerDependencies": {
+    "@railgun-community/shared-models": "5.3.6",
+    "@railgun-community/wallet": "5.5.9",
+    "ethers": "github:Railgun-Community/ethers.js#v6.7.6"
+  },
+  "devDependencies": {
+    "@railgun-community/shared-models": "5.3.6",
+    "@railgun-community/wallet": "5.5.9",
+    "ethers": "github:Railgun-Community/ethers.js#v6.7.6",
+    "@types/chai": "^4.3.5",
+    "@types/chai-as-promised": "^7.1.5",
+    "@types/leveldown": "^4.0.3",
+    "@types/mocha": "^10.0.1",
+    "@types/node": "^20.4.2",
+    "@types/sinon": "^10.0.15",
+    "@typescript-eslint/eslint-plugin": "^6.1.0",
+    "@typescript-eslint/parser": "^6.1.0",
+    "c8": "^8.0.0",
+    "chai": "^4.3.7",
+    "chai-as-promised": "^7.1.1",
+    "eslint": "^8.45.0",
+    "eslint-config-prettier": "^8.8.0",
+    "eslint-plugin-flowtype": "^8.0.3",
+    "eslint-plugin-import": "^2.27.5",
+    "leveldown": "^6.1.1",
+    "madge": "^6.1.0",
+    "mocha": "^10.2.0",
+    "prettier": "^3.0.0",
+    "sinon": "^15.2.0",
+    "ts-node": "^10.9.1",
+    "tsc-alias": "^1.8.7",
+    "typescript": "^5.1.6"
+  }
+}
