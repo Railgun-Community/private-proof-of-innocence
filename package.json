@@ -15,6 +15,7 @@
     ".": "./dist/index.js"
   },
   "scripts": {
+    "start": "npm run build && env DEBUG=poi:* node dist/run-local.js",
     "clean": "rm -rf dist",
     "build": "npm run clean && tsc",
     "prepare": "npm run build",

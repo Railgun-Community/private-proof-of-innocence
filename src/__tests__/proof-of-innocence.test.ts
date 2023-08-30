@@ -2,7 +2,7 @@
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { ProofOfInnocenceNode } from '../proof-of-innocence-node';
-import { ListProvider } from '../list-provider/list-provider';
+import { TestMockListProvider } from '../tests/test-mock-list-provider.test';
 
 chai.use(chaiAsPromised);
 // const { expect } = chai;
@@ -11,7 +11,8 @@ let node: ProofOfInnocenceNode;
 
 describe('proof-of-innocence-node', () => {
   before(() => {
-    node = new ProofOfInnocenceNode();
+    const listProvider = new TestMockListProvider('test-mock-list-provider');
+    node = new ProofOfInnocenceNode(listProvider);
   });
 
   after(async () => {
@@ -19,7 +20,6 @@ describe('proof-of-innocence-node', () => {
   });
 
   it('Should start up the node', async () => {
-    const listProviders: ListProvider[] = [];
-    await node.start(listProviders);
+    await node.start();
   }).timeout(10000);
 });

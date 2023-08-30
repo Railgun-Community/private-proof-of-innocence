@@ -38,13 +38,12 @@ const dbg = debug('poi:list-provider');
 export abstract class ListProvider {
   readonly id: string;
 
-  readonly config: ListProviderConfig;
+  protected abstract config: ListProviderConfig;
 
   private shouldPoll = false;
 
-  constructor(id: string, config: ListProviderConfig) {
+  constructor(id: string) {
     this.id = id;
-    this.config = config;
   }
 
   protected abstract shouldAllowShield(
@@ -55,14 +54,20 @@ export abstract class ListProvider {
   ): Promise<boolean>;
 
   async startPolling() {
+    dbg(
+      `List ${this.config.name} polling for new shields and validating queued shields...`,
+    );
+
     this.shouldPoll = true;
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.runQueueShieldsPoller();
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    this.runValidateShieldsPoller();
+    this.runValidateQueuedShieldsPoller();
   }
 
   async stopPolling() {
+    dbg(`Stopping ${this.config.name} polling...`);
+
     this.shouldPoll = false;
   }
 
@@ -83,7 +88,7 @@ export abstract class ListProvider {
     );
   }
 
-  private async runValidateShieldsPoller() {
+  private async runValidateQueuedShieldsPoller() {
     if (!this.shouldPoll) {
       return;
     }
@@ -106,6 +111,9 @@ export abstract class ListProvider {
     const startingBlock = status?.latestBlockScanned ?? network.deploymentBlock;
 
     const newShields = await getAllShields(networkName, startingBlock);
+
+    console.log(startingBlock);
+    console.log(newShields.length);
 
     await Promise.all(
       newShields.map((shieldData) =>
