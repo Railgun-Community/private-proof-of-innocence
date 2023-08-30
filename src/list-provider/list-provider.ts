@@ -50,7 +50,7 @@ export abstract class ListProvider {
   protected abstract shouldAllowShield(
     networkName: NetworkName,
     txid: string,
-    fromAddress: string,
+    fromAddressLowercase: string,
     timestamp: number,
   ): Promise<boolean>;
 
@@ -164,7 +164,7 @@ export abstract class ListProvider {
       const shouldAllow = await this.shouldAllowShield(
         networkName,
         txid,
-        txReceipt.from,
+        txReceipt.from.toLowerCase(),
         timestamp,
       );
 

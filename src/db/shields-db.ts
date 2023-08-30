@@ -30,8 +30,8 @@ export const insertPendingShield = async (
   }
   const db = await shieldsCollection(networkName);
   const storedData: ShieldDBEntry = {
-    txid: shieldData.txid,
-    hash: shieldData.hash,
+    txid: shieldData.txid.toLowerCase(),
+    hash: shieldData.hash.toLowerCase(),
     timestamp: shieldData.timestamp,
     status: ShieldStatus.Pending,
     lastValidatedTimestamp: undefined,

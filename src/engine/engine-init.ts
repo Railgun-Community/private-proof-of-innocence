@@ -57,6 +57,7 @@ export const stopEngine = async () => {
     return;
   }
   await stopRailgunEngine();
+  engineStarted = false;
 };
 
 /**

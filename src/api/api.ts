@@ -2,6 +2,9 @@ import express, { Request, Response } from 'express';
 import cors from 'cors';
 import os from 'os';
 import { Config } from '../config/config';
+import debug from 'debug';
+
+const dbg = debug('poi:api');
 
 const app = express();
 app.use(express.json());
@@ -32,8 +35,7 @@ app.get('/status', async (_req: Request, res: Response) => {
 
 const startExpressAPIServer = () => {
   app.listen(Number(Config.PORT), Config.HOST, () => {
-    const { log } = console;
-    log(`Listening at http://${Config.HOST}:${Config.PORT}`);
+    dbg(`Listening at http://${Config.HOST}:${Config.PORT}`);
   });
 };
 
