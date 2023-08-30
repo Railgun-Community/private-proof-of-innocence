@@ -4,7 +4,7 @@
   },
   "compilerOptions": {
     "target": "es6",
-    "module": "esnext",
+    "module": "commonjs",
     "sourceMap": true,
     "inlineSources": true,
     "declaration": true,

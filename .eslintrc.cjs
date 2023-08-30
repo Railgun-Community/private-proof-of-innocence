@@ -10,6 +10,7 @@ module.exports = {
   globals: {
     Optional: 'readonly',
     MapType: 'readonly',
+    NumMapType: 'readonly',
     NodeJS: 'readonly',
     Response: 'readonly',
     Buffer: 'readonly',
