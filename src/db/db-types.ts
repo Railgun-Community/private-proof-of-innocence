@@ -8,6 +8,7 @@ export enum ShieldStatus {
   Blocked = 'Blocked',
 }
 
+// DO NOT CHANGE FIELDS WITHOUT CLEARING OR MIGRATING THE DB.
 export type ShieldDBEntry = {
   txid: string;
   hash: string;
