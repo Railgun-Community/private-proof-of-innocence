@@ -4,7 +4,7 @@ import { NetworkName } from '@railgun-community/shared-models';
 import * as WalletModule from '../../engine/wallet';
 import * as TxReceiptModule from '../../rpc-providers/tx-receipt';
 import { ShieldData } from '@railgun-community/wallet';
-import { TestMockListProvider } from '../../tests/test-mock-list-provider.test';
+import { TestMockListProviderExcludeSingleAddress } from '../../tests/list-providers/test-mock-list-provider-exclude-single-address.test';
 import { DatabaseClient } from '../../database/database-client';
 import { ShieldQueueDatabase } from '../../database/databases/shield-queue-database';
 import { ListProvider } from '../list-provider';
@@ -35,7 +35,9 @@ describe('list-provider', () => {
     await DatabaseClient.init();
     db = new ShieldQueueDatabase(networkName);
     await db.createCollectionIndices();
-    listProvider = new TestMockListProvider('test-mock-list-provider');
+    listProvider = new TestMockListProviderExcludeSingleAddress(
+      'test-mock-list-provider',
+    );
   });
 
   afterEach(() => {

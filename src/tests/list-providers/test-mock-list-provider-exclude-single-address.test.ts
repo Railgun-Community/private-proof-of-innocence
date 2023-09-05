@@ -4,12 +4,12 @@ import { NetworkName } from '@railgun-community/shared-models';
 import {
   ListProvider,
   ListProviderConfig,
-} from '../list-provider/list-provider';
-import { MOCK_EXCLUDED_ADDRESS_1 } from './mocks.test';
+} from '../../list-provider/list-provider';
+import { MOCK_EXCLUDED_ADDRESS_1 } from '../mocks.test';
 
 const EXCLUDED_ADDRESSES_LOWERCASE: string[] = [MOCK_EXCLUDED_ADDRESS_1];
 
-export class TestMockListProvider extends ListProvider {
+export class TestMockListProviderExcludeSingleAddress extends ListProvider {
   protected config: ListProviderConfig = {
     name: 'MOCK List Provider',
     description: `Excludes a single address.`,

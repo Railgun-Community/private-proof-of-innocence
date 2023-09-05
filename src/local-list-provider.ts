@@ -6,10 +6,10 @@ import {
   ListProviderConfig,
 } from './list-provider/list-provider';
 
-export class TESTListProvider extends ListProvider {
+export class LocalListProvider extends ListProvider {
   protected config: ListProviderConfig = {
-    name: 'MOCK List Provider',
-    description: `Excludes a single address.`,
+    name: 'Local List Provider',
+    description: `Run against this List Provider with 'yarn start'`,
   };
 
   protected async shouldAllowShield(
@@ -18,9 +18,16 @@ export class TESTListProvider extends ListProvider {
     fromAddressLowercase: string,
     timestamp: number,
   ): Promise<boolean> {
-    if (fromAddressLowercase.startsWith('0xa')) {
-      return false;
-    }
+    //
+    // Add custom logic to block certain addresses or transactions.
+    // If excluding, return false.
+    //
+    // Ex.
+    // if (BAD_ADDRESS_LIST.includes(fromAddressLowercase)) {
+    //   return false;
+    // }
+    //
+
     return true;
   }
 }

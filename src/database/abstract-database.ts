@@ -12,7 +12,12 @@ import {
   WithId,
 } from 'mongodb';
 import { DatabaseClient } from './database-client';
-import { CollectionName, DBIndexSpec } from '../models/database-types';
+import {
+  CollectionName,
+  DBFilter,
+  DBIndexSpec,
+  DBMaxMin,
+} from '../models/database-types';
 import { networkForName } from '../config/general';
 
 export abstract class AbstractDatabase<T extends Document> {
@@ -76,13 +81,17 @@ export abstract class AbstractDatabase<T extends Document> {
   }
 
   protected async findAll(
-    max: Optional<Partial<T>>,
-    filter: Optional<Filter<T>>,
-    sort: Optional<Sort>,
+    filter?: DBFilter<T>,
+    sort?: Sort,
+    max?: DBMaxMin<T>,
+    min?: DBMaxMin<T>,
   ): Promise<T[]> {
     let cursor = this.collection.find();
     if (isDefined(max)) {
       cursor = cursor.max(max).hint(Object.keys(max));
+    }
+    if (isDefined(min)) {
+      cursor = cursor.min(min).hint(Object.keys(min));
     }
     if (isDefined(filter)) {
       cursor = cursor.filter(filter);

@@ -41,10 +41,11 @@ describe('shield-queue-database', () => {
     };
     await db.insertPendingShield(pendingShield1);
 
+    const tenDaysAgo = daysAgo(10);
     const pendingShield2: ShieldData = {
       txid: '0x9876',
       hash: '0x5432',
-      timestamp: daysAgo(10),
+      timestamp: tenDaysAgo,
     };
     await db.insertPendingShield(pendingShield2);
 
@@ -57,9 +58,8 @@ describe('shield-queue-database', () => {
     await db.insertPendingShield(pendingShield3);
 
     const shieldQueueItem2: ShieldQueueDBItem = {
-      txid: '0x9876',
-      hash: '0x5432',
-      timestamp: daysAgo(10),
+      ...pendingShield2,
+      timestamp: tenDaysAgo,
       status: ShieldStatus.Pending,
       lastValidatedTimestamp: null,
     };

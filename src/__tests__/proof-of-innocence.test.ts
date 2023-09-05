@@ -2,7 +2,7 @@
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { ProofOfInnocenceNode } from '../proof-of-innocence-node';
-import { TestMockListProvider } from '../tests/test-mock-list-provider.test';
+import { TestMockListProviderExcludeSingleAddress } from '../tests/list-providers/test-mock-list-provider-exclude-single-address.test';
 
 chai.use(chaiAsPromised);
 // const { expect } = chai;
@@ -11,7 +11,9 @@ let node: ProofOfInnocenceNode;
 
 describe('proof-of-innocence-node', () => {
   before(() => {
-    const listProvider = new TestMockListProvider('test-mock-list-provider');
+    const listProvider = new TestMockListProviderExcludeSingleAddress(
+      'test-mock-list-provider',
+    );
     node = new ProofOfInnocenceNode(listProvider);
   });
 

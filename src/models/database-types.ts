@@ -1,7 +1,7 @@
 import { SortDirection } from 'mongodb';
 import { SerializedSnarkProof } from './general-types';
 
-export type DBMax<T> = Partial<T>;
+export type DBMaxMin<T> = Partial<T>;
 
 export type DBFilter<T> = Partial<T>;
 

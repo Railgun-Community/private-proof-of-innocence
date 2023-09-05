@@ -2,7 +2,7 @@ import { NetworkName, isDefined } from '@railgun-community/shared-models';
 import {
   CollectionName,
   DBFilter,
-  DBMax,
+  DBMaxMin,
   DBSort,
   ShieldQueueDBItem,
   ShieldStatus,
@@ -51,22 +51,22 @@ export class ShieldQueueDatabase extends AbstractDatabase<ShieldQueueDBItem> {
   }
 
   async getPendingShields(endTimestamp: number): Promise<ShieldQueueDBItem[]> {
-    const max: DBMax<ShieldQueueDBItem> = {
-      timestamp: endTimestamp,
-    };
     const filter: DBFilter<ShieldQueueDBItem> = {
       status: ShieldStatus.Pending,
     };
     const sort: DBSort<ShieldQueueDBItem> = {
       timestamp: 'ascending',
     };
-    return this.findAll(max, filter, sort);
+    const max: DBMaxMin<ShieldQueueDBItem> = {
+      timestamp: endTimestamp,
+    };
+    return this.findAll(filter, sort, max);
   }
 
   async getAllowedShields(): Promise<ShieldQueueDBItem[]> {
     const filter: DBFilter<ShieldQueueDBItem> = {
       status: ShieldStatus.Allowed,
     };
-    return this.findAll(undefined, filter, undefined);
+    return this.findAll(filter);
   }
 }
