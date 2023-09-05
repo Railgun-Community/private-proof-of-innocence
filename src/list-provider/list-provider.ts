@@ -1,18 +1,16 @@
-import {
-  NetworkName,
-  delay,
-  isDefined,
-} from '@railgun-community/shared-models';
+import { NetworkName, delay } from '@railgun-community/shared-models';
 import { networkForName } from '../config/general';
-import { ShieldData, getAllShields } from '@railgun-community/wallet';
+import { ShieldData } from '@railgun-community/wallet';
 import debug from 'debug';
 import { ShieldQueueDatabase } from '../database/databases/shield-queue-database';
 import { Config } from '../config/config';
 import { ShieldQueueDBItem } from '../models/database-types';
-import { getProviderForNetwork } from '../rpc-providers/active-network-providers';
-import { TransactionReceipt } from 'ethers';
 import { StatusDatabase } from '../database/databases/status-database';
 import { getNewShieldsFromWallet } from '../engine/wallet';
+import {
+  getTransactionReceipt,
+  getTimestampFromTransactionReceipt,
+} from '../rpc-providers/tx-receipt';
 
 export type ListProviderConfig = {
   name: string;
@@ -163,12 +161,16 @@ export abstract class ListProvider {
   ) {
     const { txid } = shieldData;
     try {
-      const txReceipt = await this.getTransactionReceipt(networkName, txid);
-      const timestamp = await this.getValidTimestamp(
+      const txReceipt = await getTransactionReceipt(networkName, txid);
+      const timestamp = await getTimestampFromTransactionReceipt(
         networkName,
         txReceipt,
-        endTimestamp,
       );
+      if (timestamp > endTimestamp) {
+        // Shield is too new to validate
+        throw new Error('Invalid timestamp');
+      }
+
       const shouldAllow = await this.shouldAllowShield(
         networkName,
         txid,
@@ -184,34 +186,5 @@ export abstract class ListProvider {
       dbg(`Error validating queued shield on ${networkName}: ${err.message}`);
       dbg(shieldData);
     }
-  }
-
-  private async getTransactionReceipt(
-    networkName: NetworkName,
-    txid: string,
-  ): Promise<TransactionReceipt> {
-    const provider = getProviderForNetwork(networkName);
-    const txReceipt = await provider.getTransactionReceipt(txid);
-    if (!isDefined(txReceipt)) {
-      throw new Error(`Transaction receipt not found for ${txid}`);
-    }
-    return txReceipt;
-  }
-
-  private async getValidTimestamp(
-    networkName: NetworkName,
-    txReceipt: TransactionReceipt,
-    endTimestamp: number,
-  ): Promise<number> {
-    const provider = getProviderForNetwork(networkName);
-    const block = await provider.getBlock(txReceipt.blockNumber);
-    if (!isDefined(block)) {
-      throw new Error(`Block data not found for ${txReceipt.blockNumber}`);
-    }
-    const timestamp = block.timestamp;
-    if (timestamp > endTimestamp / 1000) {
-      throw new Error('Invalid timestamp');
-    }
-    return timestamp;
   }
 }
