@@ -6,7 +6,7 @@ import {
   POIOrderedEventDBItem,
 } from '../../models/database-types';
 import { AbstractDatabase } from '../abstract-database';
-import { POIEvent } from '../../models/poi-types';
+import { SignedPOIEvent } from '../../models/poi-types';
 
 export class POIOrderedEventsDatabase extends AbstractDatabase<POIOrderedEventDBItem> {
   constructor(networkName: NetworkName) {
@@ -17,9 +17,11 @@ export class POIOrderedEventsDatabase extends AbstractDatabase<POIOrderedEventDB
     await this.createIndex(['index'], { unique: true });
   }
 
-  async insertValidPOIEvent(poiEvent: POIEvent): Promise<void> {
-    const { blindedCommitments, proof, signature } = poiEvent;
-    const index = (await this.countPOIEvents()) + 1;
+  async insertValidSignedPOIEvent(
+    signedPOIEvent: SignedPOIEvent,
+  ): Promise<void> {
+    const { blindedCommitments, proof, signature } = signedPOIEvent;
+    const index = await this.getNextIndex();
     const item: POIOrderedEventDBItem = {
       index,
       blindedCommitments,
@@ -44,7 +46,7 @@ export class POIOrderedEventsDatabase extends AbstractDatabase<POIOrderedEventDB
     );
   }
 
-  private async countPOIEvents(): Promise<number> {
-    return this.count();
+  async getNextIndex(): Promise<number> {
+    return (await this.count()) + 1;
   }
 }
