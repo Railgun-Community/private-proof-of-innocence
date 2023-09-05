@@ -34,10 +34,9 @@ export abstract class AbstractDatabase<T extends Document> {
 
     const { chain } = networkForName(networkName);
     const chainKey = `${chain.type}:${chain.id}`;
-
     this.db = DatabaseClient.client.db(chainKey);
-    this.collection = this.db.collection<T>(collection);
 
+    this.collection = this.db.collection<T>(collection);
     this.dbg = debug(`poi:db:${collection}`);
   }
 

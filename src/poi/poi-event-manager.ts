@@ -1,4 +1,4 @@
-import { NetworkName, isDefined } from '@railgun-community/shared-models';
+import { NetworkName } from '@railgun-community/shared-models';
 import { POIEvent, SignedPOIEvent } from '../models/poi-types';
 import { POIOrderedEventsDatabase } from '../database/databases/poi-ordered-events-database';
 import { SerializedSnarkProof } from '../models/general-types';
@@ -21,7 +21,8 @@ export class POIEventManager {
     Record<NetworkName, POIEventQueueItem[]>
   > = {};
 
-  static async queueValidUnsignedPOIEvent(
+  static async queueUnsignedPOIEvent(
+    listKey: string,
     networkName: NetworkName,
     blindedCommitments: string[],
     proof: SerializedSnarkProof,
@@ -34,10 +35,13 @@ export class POIEventManager {
     this.unsignedPOIEventQueue[networkName]?.push(poiEventQueueItem);
 
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    this.addPOIEventsFromQueue(networkName);
+    this.addPOIEventsFromQueue(listKey, networkName);
   }
 
-  static async addPOIEventsFromQueue(networkName: NetworkName): Promise<void> {
+  static async addPOIEventsFromQueue(
+    listKey: string,
+    networkName: NetworkName,
+  ): Promise<void> {
     // TODO: Get sync status - make sure not currently syncing List from other nodes.
     // if () {
     //   dbg('WARNING: Tried to add POI event while adding another one - risk of duplicate indices. Skipping.');
@@ -75,12 +79,12 @@ export class POIEventManager {
       signature,
     };
 
-    await db.insertValidSignedPOIEvent(signedPOIEvent);
+    await db.insertValidSignedPOIEvent(listKey, signedPOIEvent);
 
     POIEventManager.isAddingPOIEventForNetwork[networkName] = false;
 
     if (queueForNetwork.length > 0) {
-      return this.addPOIEventsFromQueue(networkName);
+      return this.addPOIEventsFromQueue(listKey, networkName);
     }
   }
 }

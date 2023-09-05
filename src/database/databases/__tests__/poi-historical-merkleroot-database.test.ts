@@ -11,6 +11,8 @@ const networkName = NetworkName.Ethereum;
 
 let db: POIHistoricalMerklerootDatabase;
 
+const listKey = 'abcdef';
+
 describe('poi-historical-merkleroot-database', () => {
   before(async () => {
     await DatabaseClient.init();
@@ -26,15 +28,26 @@ describe('poi-historical-merkleroot-database', () => {
     const merklerootA = '0x1234';
     const merklerootB = '0x5678';
 
-    await expect(db.containsMerkleroot(merklerootA)).to.eventually.equal(
+    await expect(
+      db.containsMerkleroot(listKey, merklerootA),
+    ).to.eventually.equal(
       false,
       "DB should not contain merklerootA before it's inserted",
     );
-    await expect(db.containsMerkleroot(merklerootB)).to.eventually.equal(false);
+    await expect(
+      db.containsMerkleroot(listKey, merklerootB),
+    ).to.eventually.equal(false);
 
-    await db.insertMerkleroot(merklerootA);
+    await db.insertMerkleroot(listKey, merklerootA);
 
-    await expect(db.containsMerkleroot(merklerootA)).to.eventually.equal(true);
-    await expect(db.containsMerkleroot(merklerootB)).to.eventually.equal(false);
+    await expect(
+      db.containsMerkleroot(listKey, merklerootA),
+    ).to.eventually.equal(true);
+    await expect(
+      db.containsMerkleroot(listKey, merklerootB),
+    ).to.eventually.equal(false);
+    await expect(
+      db.containsMerkleroot('wrong-key', merklerootA),
+    ).to.eventually.equal(false);
   });
 });

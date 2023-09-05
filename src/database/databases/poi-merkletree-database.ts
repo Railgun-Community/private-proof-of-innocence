@@ -11,6 +11,8 @@ export class POIMerkletreeDatabase extends AbstractDatabase<POIMerkletreeDBItem>
   }
 
   async createCollectionIndices() {
-    await this.createIndex(['tree', 'level', 'index'], { unique: true });
+    await this.createIndex(['tree', 'level', 'index', 'listKey'], {
+      unique: true,
+    });
   }
 }

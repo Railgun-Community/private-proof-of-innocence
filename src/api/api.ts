@@ -13,21 +13,38 @@ export class API {
 
   constructor() {
     this.app = express();
-  }
-
-  serve(host: string, port: string) {
-    if (this.server) {
-      throw new Error('API already running.');
-    }
-
     this.app.use(express.json());
-
     this.app.use(
       cors({
         methods: ['GET', 'POST'],
         origin: '*',
       }),
     );
+    this.addRoutes();
+  }
+
+  serve(host: string, port: string) {
+    if (this.server) {
+      throw new Error('API already running.');
+    }
+    this.server = this.app.listen(Number(port), host, () => {
+      dbg(`Listening at http://${host}:${port}`);
+    });
+  }
+
+  stop() {
+    this.server?.close();
+    this.server = undefined;
+  }
+
+  private addRoutes() {
+    this.addStatusRoutes();
+  }
+
+  private addStatusRoutes() {
+    this.app.get('/', (_req: Request, res: Response) => {
+      res.json({ status: 'ok' });
+    });
 
     this.app.get('/perf', (_req: Request, res: Response) => {
       res.json({
@@ -37,22 +54,16 @@ export class API {
         loadavg: os.loadavg(),
       });
     });
-
-    this.app.get('/', (_req: Request, res: Response) => {
-      res.json({ status: 'ok' });
-    });
-
-    this.app.get('/status', async (_req: Request, res: Response) => {
-      res.json({ status: 'ok' });
-    });
-
-    this.server = this.app.listen(Number(port), host, () => {
-      dbg(`Listening at http://${host}:${port}`);
-    });
   }
 
-  stop() {
-    this.server?.close();
-    this.server = undefined;
+  private addAggregatorRoutes() {
+    this.app.get('/list/:listKey/status', (_req: Request, res: Response) => {
+      const status = res.json({ length: [] });
+    });
+
+    this.app.get('/list/:listKey/events', (req: Request, res: Response) => {
+      // TODO: Query and return events in range.
+      res.json({ events: [] });
+    });
   }
 }

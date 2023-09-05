@@ -66,6 +66,7 @@ export type TransactProofMempoolDBItem = {
 
 // DO NOT CHANGE FIELDS WITHOUT CLEARING OR MIGRATING THE DB.
 export type POIOrderedEventDBItem = {
+  listKey: string;
   index: number;
   blindedCommitments: string[];
   proof: SerializedSnarkProof;
@@ -74,6 +75,7 @@ export type POIOrderedEventDBItem = {
 
 // DO NOT CHANGE FIELDS WITHOUT CLEARING OR MIGRATING THE DB.
 export type POIMerkletreeDBItem = {
+  listKey: string;
   tree: number;
   level: number;
   index: number;
@@ -82,5 +84,6 @@ export type POIMerkletreeDBItem = {
 
 // DO NOT CHANGE FIELDS WITHOUT CLEARING OR MIGRATING THE DB.
 export type POIHistoricalMerklerootDBItem = {
+  listKey: string;
   rootHash: string;
 };

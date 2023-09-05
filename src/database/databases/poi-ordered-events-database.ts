@@ -1,6 +1,7 @@
 import { NetworkName } from '@railgun-community/shared-models';
 import {
   CollectionName,
+  DBFilter,
   DBMaxMin,
   DBSort,
   POIOrderedEventDBItem,
@@ -14,15 +15,18 @@ export class POIOrderedEventsDatabase extends AbstractDatabase<POIOrderedEventDB
   }
 
   async createCollectionIndices() {
-    await this.createIndex(['index'], { unique: true });
+    await this.createIndex(['index']);
+    await this.createIndex(['index', 'listKey'], { unique: true });
   }
 
   async insertValidSignedPOIEvent(
+    listKey: string,
     signedPOIEvent: SignedPOIEvent,
   ): Promise<void> {
     const { blindedCommitments, proof, signature } = signedPOIEvent;
     const index = await this.getNextIndex();
     const item: POIOrderedEventDBItem = {
+      listKey,
       index,
       blindedCommitments,
       proof,
@@ -31,7 +35,10 @@ export class POIOrderedEventsDatabase extends AbstractDatabase<POIOrderedEventDB
     await this.insertOne(item);
   }
 
-  async getPOIEvents(startingIndex: number) {
+  async getPOIEvents(listKey: string, startingIndex: number) {
+    const filter: DBFilter<POIOrderedEventDBItem> = {
+      listKey,
+    };
     const min: DBMaxMin<POIOrderedEventDBItem> = {
       index: startingIndex,
     };
@@ -39,7 +46,7 @@ export class POIOrderedEventsDatabase extends AbstractDatabase<POIOrderedEventDB
       index: 'ascending',
     };
     return this.findAll(
-      undefined, // filter
+      filter,
       sort,
       undefined, // max
       min,

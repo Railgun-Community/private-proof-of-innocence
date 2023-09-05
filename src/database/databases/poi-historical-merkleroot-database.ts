@@ -11,18 +11,22 @@ export class POIHistoricalMerklerootDatabase extends AbstractDatabase<POIHistori
   }
 
   async createCollectionIndices() {
-    await this.createIndex(['rootHash'], { unique: true });
+    await this.createIndex(['rootHash', 'listKey'], { unique: true });
   }
 
-  async insertMerkleroot(rootHash: string): Promise<void> {
+  async insertMerkleroot(listKey: string, rootHash: string): Promise<void> {
     const item: POIHistoricalMerklerootDBItem = {
+      listKey,
       rootHash,
     };
     await this.insertOne(item);
   }
 
-  async containsMerkleroot(rootHash: string): Promise<boolean> {
-    const item = await this.findOne({ rootHash });
+  async containsMerkleroot(
+    listKey: string,
+    rootHash: string,
+  ): Promise<boolean> {
+    const item = await this.findOne({ listKey, rootHash });
     return isDefined(item);
   }
 }
