@@ -29,6 +29,9 @@ export const getPOIListEventRange = async (
       `Max event query range length is ${MAX_EVENT_QUERY_RANGE_LENGTH}`,
     );
   }
+  if (rangeLength < 1) {
+    throw new Error(`Invalid query range`);
+  }
 
   const db = new POIOrderedEventsDatabase(networkName);
   const dbEvents = await db.getPOIEvents(listKey, startIndex, endIndex);
