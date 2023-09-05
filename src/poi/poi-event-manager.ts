@@ -22,8 +22,8 @@ export class POIEventManager {
   > = {};
 
   static async queueUnsignedPOIEvent(
-    listKey: string,
     networkName: NetworkName,
+    listKey: string,
     blindedCommitments: string[],
     proof: SerializedSnarkProof,
   ) {
@@ -35,12 +35,12 @@ export class POIEventManager {
     this.unsignedPOIEventQueue[networkName]?.push(poiEventQueueItem);
 
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    this.addPOIEventsFromQueue(listKey, networkName);
+    this.addPOIEventsFromQueue(networkName, listKey);
   }
 
   static async addPOIEventsFromQueue(
-    listKey: string,
     networkName: NetworkName,
+    listKey: string,
   ): Promise<void> {
     // TODO: Get sync status - make sure not currently syncing List from other nodes.
     // if () {
@@ -66,10 +66,10 @@ export class POIEventManager {
     POIEventManager.isAddingPOIEventForNetwork[networkName] = true;
 
     const db = new POIOrderedEventsDatabase(networkName);
-    const index = await db.getNextIndex();
+    const nextIndex = await db.getCount(listKey);
 
     const poiEvent: POIEvent = {
-      index,
+      index: nextIndex,
       blindedCommitments: nextEvent.blindedCommitments,
       proof: nextEvent.proof,
     };
@@ -84,7 +84,7 @@ export class POIEventManager {
     POIEventManager.isAddingPOIEventForNetwork[networkName] = false;
 
     if (queueForNetwork.length > 0) {
-      return this.addPOIEventsFromQueue(listKey, networkName);
+      return this.addPOIEventsFromQueue(networkName, listKey);
     }
   }
 }

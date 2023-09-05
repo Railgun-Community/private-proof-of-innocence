@@ -23,8 +23,7 @@ export class POIOrderedEventsDatabase extends AbstractDatabase<POIOrderedEventDB
     listKey: string,
     signedPOIEvent: SignedPOIEvent,
   ): Promise<void> {
-    const { blindedCommitments, proof, signature } = signedPOIEvent;
-    const index = await this.getNextIndex();
+    const { index, blindedCommitments, proof, signature } = signedPOIEvent;
     const item: POIOrderedEventDBItem = {
       listKey,
       index,
@@ -35,25 +34,30 @@ export class POIOrderedEventsDatabase extends AbstractDatabase<POIOrderedEventDB
     await this.insertOne(item);
   }
 
-  async getPOIEvents(listKey: string, startingIndex: number) {
+  async getPOIEvents(
+    listKey: string,
+    startIndex: number,
+    endIndex?: number,
+  ): Promise<POIOrderedEventDBItem[]> {
     const filter: DBFilter<POIOrderedEventDBItem> = {
       listKey,
-    };
-    const min: DBMaxMin<POIOrderedEventDBItem> = {
-      index: startingIndex,
     };
     const sort: DBSort<POIOrderedEventDBItem> = {
       index: 'ascending',
     };
-    return this.findAll(
-      filter,
-      sort,
-      undefined, // max
-      min,
-    );
+    const max: DBMaxMin<POIOrderedEventDBItem> = {
+      index: endIndex,
+    };
+    const min: DBMaxMin<POIOrderedEventDBItem> = {
+      index: startIndex,
+    };
+    return this.findAll(filter, sort, max, min);
   }
 
-  async getNextIndex(): Promise<number> {
-    return this.count();
+  async getCount(listKey: string): Promise<number> {
+    const filter: DBFilter<POIOrderedEventDBItem> = {
+      listKey,
+    };
+    return this.count(filter);
   }
 }

@@ -3,6 +3,7 @@ import {
   Network,
   NetworkName,
   isDefined,
+  networkForChain,
 } from '@railgun-community/shared-models';
 
 export const networkForName = (networkName: NetworkName): Network => {
@@ -11,4 +12,18 @@ export const networkForName = (networkName: NetworkName): Network => {
     throw new Error(`No network info available for ${networkName}`);
   }
   return network;
+};
+
+export const networkNameForSerializedChain = (
+  chainType: string,
+  chainID: string,
+): NetworkName => {
+  const networkName = networkForChain({
+    type: Number(chainType),
+    id: Number(chainID),
+  })?.name;
+  if (!isDefined(networkName)) {
+    throw new Error('No network info available.');
+  }
+  return networkName;
 };

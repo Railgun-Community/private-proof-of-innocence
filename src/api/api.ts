@@ -3,6 +3,11 @@ import cors from 'cors';
 import os from 'os';
 import debug from 'debug';
 import { Server } from 'http';
+import {
+  getEventListStatus,
+  getPOIListEventRange,
+} from '../poi/poi-event-list';
+import { networkNameForSerializedChain } from '../config/general';
 
 const dbg = debug('poi:api');
 
@@ -39,6 +44,7 @@ export class API {
 
   private addRoutes() {
     this.addStatusRoutes();
+    this.addAggregatorRoutes();
   }
 
   private addStatusRoutes() {
@@ -57,13 +63,46 @@ export class API {
   }
 
   private addAggregatorRoutes() {
-    this.app.get('/list/:listKey/status', (_req: Request, res: Response) => {
-      const status = res.json({ length: [] });
-    });
+    this.safeGet(
+      '/list/:chainType/:chainID/:listKey/status',
+      async (req: Request, res: Response) => {
+        const { chainType, chainID, listKey } = req.params;
+        const networkName = networkNameForSerializedChain(chainType, chainID);
 
-    this.app.get('/list/:listKey/events', (req: Request, res: Response) => {
-      // TODO: Query and return events in range.
-      res.json({ events: [] });
+        const status = await getEventListStatus(networkName, listKey);
+        res.json(status);
+      },
+    );
+
+    this.safeGet(
+      '/list/:chainType/:chainID/:listKey/events/:startIndex/:endIndex',
+      async (req: Request, res: Response) => {
+        const { chainType, chainID, listKey, startIndex, endIndex } =
+          req.params;
+        const networkName = networkNameForSerializedChain(chainType, chainID);
+
+        const events = await getPOIListEventRange(
+          networkName,
+          listKey,
+          Number(startIndex),
+          Number(endIndex),
+        );
+        res.json({ events });
+      },
+    );
+  }
+
+  private safeGet(
+    route: string,
+    handler: (req: Request, res: Response) => Promise<void>,
+  ) {
+    this.app.get(route, async (req: Request, res: Response) => {
+      try {
+        await handler(req, res);
+      } catch (err) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        res.status(500).json({ error: err.message });
+      }
     });
   }
 }
