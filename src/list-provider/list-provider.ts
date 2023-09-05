@@ -44,6 +44,8 @@ export abstract class ListProvider {
 
   async init() {
     this.listKey = await getListPublicKey();
+    dbg(`${this.config.name} initialized.`);
+    dbg(`LIST KEY: ${this.listKey}`);
   }
 
   protected abstract shouldAllowShield(
@@ -119,11 +121,21 @@ export abstract class ListProvider {
       startingBlock,
     );
 
+    dbg(
+      `[${networkName}] Attempting to insert ${newShields.length} pending shields`,
+    );
+
     await Promise.all(
       newShields.map((shieldData) =>
         this.queueShieldSafe(networkName, shieldData),
       ),
     );
+  }
+
+  private static textForShieldData(shieldData: ShieldData): string {
+    return `${shieldData.txid} (${new Date(
+      shieldData.timestamp ?? 0,
+    ).toLocaleDateString()}`;
   }
 
   private async queueShieldSafe(
@@ -133,9 +145,16 @@ export abstract class ListProvider {
     try {
       const shieldQueueDB = new ShieldQueueDatabase(networkName);
       await shieldQueueDB.insertPendingShield(shieldData);
+      dbg(
+        `[${networkName}] Insert pending shield: ${ListProvider.textForShieldData(
+          shieldData,
+        )}`,
+      );
     } catch (err) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      dbg(`Error queuing shield on ${networkName}: ${err.message}`);
+      dbg(
+        `[${networkName}] Error queuing shield on ${networkName}: ${err.message}`,
+      );
       dbg(shieldData);
     }
   }
@@ -155,6 +174,11 @@ export abstract class ListProvider {
       dbg(`Error getting queued shields on ${networkName}: ${err.message}`);
       return;
     }
+
+    dbg(
+      `[${networkName}] Attempting to validate ${pendingShields.length} pending shields`,
+    );
+
     await Promise.all(
       pendingShields.map((shieldData) =>
         this.validateShield(networkName, shieldData, endTimestamp),

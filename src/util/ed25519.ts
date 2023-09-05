@@ -7,7 +7,9 @@ import { POIEvent, SignedPOIEvent } from '../models/poi-types';
 const getPKey = (): Uint8Array => {
   const pkey = process.env.pkey;
   if (!isDefined(pkey)) {
-    throw new Error('Set env pkey');
+    throw new Error(
+      'You must configure ed25519 pkey in .env file. Copy settings from .env.example to start.',
+    );
   }
   return hexStringToBytes(pkey);
 };

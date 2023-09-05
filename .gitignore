@@ -12,6 +12,9 @@ dist/
 engine.db
 mongo.db
 
+# Env
+.env
+
 # Test
 .nyc_output
 test.db

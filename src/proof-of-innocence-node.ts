@@ -8,9 +8,9 @@ const dbg = debug('poi:node');
 export class ProofOfInnocenceNode {
   private running = false;
 
-  private listProvider: ListProvider;
+  private listProvider: Optional<ListProvider>;
 
-  constructor(listProvider: ListProvider) {
+  constructor(listProvider?: ListProvider) {
     this.listProvider = listProvider;
   }
 
@@ -25,8 +25,8 @@ export class ProofOfInnocenceNode {
 
     await initModules();
 
-    await this.listProvider.init();
-    await this.listProvider.startPolling();
+    await this.listProvider?.init();
+    await this.listProvider?.startPolling();
 
     dbg(`Proof of Innocence node running...`);
   }

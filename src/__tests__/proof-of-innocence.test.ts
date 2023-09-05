@@ -7,19 +7,23 @@ import { TestMockListProviderExcludeSingleAddress } from '../tests/list-provider
 chai.use(chaiAsPromised);
 // const { expect } = chai;
 
-let node: ProofOfInnocenceNode;
+let nodeWithListProvider: ProofOfInnocenceNode;
+
+let nodeOnlyAggregator: ProofOfInnocenceNode;
 
 describe('proof-of-innocence-node', () => {
   before(() => {
     const listProvider = new TestMockListProviderExcludeSingleAddress();
-    node = new ProofOfInnocenceNode(listProvider);
+    nodeWithListProvider = new ProofOfInnocenceNode(listProvider);
   });
 
-  after(async () => {
-    await node.stop();
-  });
+  it('Should start up a node with list provider', async () => {
+    await nodeWithListProvider.start();
+    await nodeWithListProvider.stop();
+  }).timeout(10000);
 
-  it('Should start up the node', async () => {
-    await node.start();
+  it('Should start up a node with only aggregator', async () => {
+    await nodeOnlyAggregator.start();
+    await nodeOnlyAggregator.stop();
   }).timeout(10000);
 });
