@@ -13,8 +13,14 @@ let nodeOnlyAggregator: ProofOfInnocenceNode;
 
 describe('proof-of-innocence-node', () => {
   before(() => {
-    const listProvider = new TestMockListProviderExcludeSingleAddress();
-    nodeWithListProvider = new ProofOfInnocenceNode(listProvider);
+    const testListProvider = new TestMockListProviderExcludeSingleAddress();
+    nodeWithListProvider = new ProofOfInnocenceNode(
+      '0.0.0.0',
+      '3010',
+      testListProvider,
+    );
+
+    nodeOnlyAggregator = new ProofOfInnocenceNode('0.0.0.0', '3011');
   });
 
   it('Should start up a node with list provider', async () => {

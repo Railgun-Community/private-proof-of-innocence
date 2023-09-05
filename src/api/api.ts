@@ -1,42 +1,58 @@
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import os from 'os';
-import { Config } from '../config/config';
 import debug from 'debug';
+import { Server } from 'http';
 
 const dbg = debug('poi:api');
 
-const app = express();
-app.use(express.json());
+export class API {
+  private app: express.Express;
 
-app.use(
-  cors({
-    methods: ['GET', 'POST'],
-    origin: '*',
-  }),
-);
+  private server: Optional<Server>;
 
-app.get('/profile', (_req: Request, res: Response) => {
-  res.json({
-    time: new Date(),
-    memoryUsage: process.memoryUsage(),
-    freemem: os.freemem(),
-    loadavg: os.loadavg(),
-  });
-});
+  constructor() {
+    this.app = express();
+  }
 
-app.get('/', (_req: Request, res: Response) => {
-  res.json({ status: 'ok' });
-});
+  serve(host: string, port: string) {
+    if (this.server) {
+      throw new Error('API already running.');
+    }
 
-app.get('/status', async (_req: Request, res: Response) => {
-  res.json({ status: 'ok' });
-});
+    this.app.use(express.json());
 
-const startExpressAPIServer = () => {
-  app.listen(Number(Config.PORT), Config.HOST, () => {
-    dbg(`Listening at http://${Config.HOST}:${Config.PORT}`);
-  });
-};
+    this.app.use(
+      cors({
+        methods: ['GET', 'POST'],
+        origin: '*',
+      }),
+    );
 
-export { startExpressAPIServer };
+    this.app.get('/perf', (_req: Request, res: Response) => {
+      res.json({
+        time: new Date(),
+        memoryUsage: process.memoryUsage(),
+        freemem: os.freemem(),
+        loadavg: os.loadavg(),
+      });
+    });
+
+    this.app.get('/', (_req: Request, res: Response) => {
+      res.json({ status: 'ok' });
+    });
+
+    this.app.get('/status', async (_req: Request, res: Response) => {
+      res.json({ status: 'ok' });
+    });
+
+    this.server = this.app.listen(Number(port), host, () => {
+      dbg(`Listening at http://${host}:${port}`);
+    });
+  }
+
+  stop() {
+    this.server?.close();
+    this.server = undefined;
+  }
+}

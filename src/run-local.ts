@@ -10,6 +10,9 @@ import 'dotenv/config';
 
   const listProvider = new LocalListProvider();
 
-  const node = new ProofOfInnocenceNode(listProvider);
+  const host = process.env.HOST ?? '0.0.0.0';
+  const port = process.env.PORT ?? '3010';
+
+  const node = new ProofOfInnocenceNode(host, port, listProvider);
   await node.start();
 })();

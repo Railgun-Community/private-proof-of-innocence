@@ -1,10 +1,6 @@
 import { NetworkName } from '@railgun-community/shared-models';
 
 export class Config {
-  static HOST = process.env.HOST ?? '0.0.0.0';
-
-  static PORT = process.env.PORT ?? 3010;
-
   static CONNECTED_NODES: string[] = [];
 
   static LIST_KEYS: string[] = [];
