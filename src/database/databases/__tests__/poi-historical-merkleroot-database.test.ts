@@ -9,17 +9,20 @@ const { expect } = chai;
 
 const networkName = NetworkName.Ethereum;
 
+let db: POIHistoricalMerklerootDatabase;
+
 describe('poi-historical-merkleroot-database', () => {
   before(async () => {
     await DatabaseClient.init();
+    db = new POIHistoricalMerklerootDatabase(networkName);
+    await db.createCollectionIndex();
+  });
+
+  beforeEach(async () => {
+    await db.deleteAllItems_DANGEROUS();
   });
 
   it('Should insert items and query from merkleroot database', async () => {
-    const db = new POIHistoricalMerklerootDatabase(networkName);
-    await db.deleteAllItems_DANGEROUS();
-
-    await db.createCollectionIndex();
-
     const merklerootA = '0x1234';
     const merklerootB = '0x5678';
 
