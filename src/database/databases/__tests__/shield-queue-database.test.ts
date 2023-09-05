@@ -48,6 +48,14 @@ describe('shield-queue-database', () => {
     };
     await db.insertPendingShield(pendingShield2);
 
+    // Will skip insert because timestamp is undefined
+    const pendingShield3: ShieldData = {
+      txid: '0x123456',
+      hash: '0x567890',
+      timestamp: undefined,
+    };
+    await db.insertPendingShield(pendingShield3);
+
     const shieldQueueItem2: ShieldQueueDBItem = {
       txid: '0x9876',
       hash: '0x5432',
@@ -112,5 +120,11 @@ describe('shield-queue-database', () => {
         lastValidatedTimestamp: null,
       },
     ]);
+
+    // Set to "Blocked"
+    await db.updateShieldStatus(shieldQueueItemExpired, false);
+
+    const allowedShields2 = await db.getAllowedShields();
+    expect(allowedShields2.length).to.equal(0);
   });
 });
