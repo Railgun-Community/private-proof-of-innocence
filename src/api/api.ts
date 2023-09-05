@@ -93,9 +93,11 @@ export class API {
     );
 
     this.safeGet(
-      '/mempool-proofs/:chainType/:chainID/:bloomHash',
+      '/mempool-proofs/:chainType/:chainID',
       async (req: Request, res: Response) => {
-        const { chainType, chainID, bloomHash } = req.params;
+        const { chainType, chainID } = req.params;
+        const { bloomHash } = req.body;
+
         const networkName = networkNameForSerializedChain(chainType, chainID);
 
         // TODO
@@ -109,6 +111,8 @@ export class API {
       '/add-shield-proof/:chainType/:chainID',
       async (req: Request, res: Response) => {
         const { chainType, chainID } = req.params;
+        const { proof } = req.body;
+
         const networkName = networkNameForSerializedChain(chainType, chainID);
 
         // TODO
@@ -117,9 +121,11 @@ export class API {
     );
 
     this.safePost(
-      '/add-transact-proof/:chainType/:chainID/:listKey',
+      '/add-transact-proof/:chainType/:chainID',
       async (req: Request, res: Response) => {
-        const { chainType, chainID, listKey } = req.params;
+        const { chainType, chainID } = req.params;
+        const { listKey, proof } = req.body;
+
         const networkName = networkNameForSerializedChain(chainType, chainID);
 
         // TODO
@@ -128,9 +134,11 @@ export class API {
     );
 
     this.safeGet(
-      '/pois-per-list/:chainType/:chainID/:listKey',
+      '/pois-per-list/:chainType/:chainID',
       async (req: Request, res: Response) => {
-        const { chainType, chainID, listKey } = req.params;
+        const { chainType, chainID } = req.params;
+        const { listKeys, blindedCommitment } = req.body;
+
         const networkName = networkNameForSerializedChain(chainType, chainID);
 
         // TODO
@@ -139,9 +147,11 @@ export class API {
     );
 
     this.safeGet(
-      '/merkle-proofs/:chainType/:chainID/:listKey',
+      '/merkle-proofs/:chainType/:chainID',
       async (req: Request, res: Response) => {
-        const { chainType, chainID, listKey } = req.params;
+        const { chainType, chainID } = req.params;
+        const { listKeys, blindedCommitments } = req.body;
+
         const networkName = networkNameForSerializedChain(chainType, chainID);
 
         // TODO
