@@ -45,6 +45,7 @@ export class API {
   private addRoutes() {
     this.addStatusRoutes();
     this.addAggregatorRoutes();
+    this.addClientRoutes();
   }
 
   private addStatusRoutes() {
@@ -64,7 +65,7 @@ export class API {
 
   private addAggregatorRoutes() {
     this.safeGet(
-      '/list/:chainType/:chainID/:listKey/status',
+      '/list-status/:chainType/:chainID/:listKey',
       async (req: Request, res: Response) => {
         const { chainType, chainID, listKey } = req.params;
         const networkName = networkNameForSerializedChain(chainType, chainID);
@@ -75,7 +76,7 @@ export class API {
     );
 
     this.safeGet(
-      '/list/:chainType/:chainID/:listKey/events/:startIndex/:endIndex',
+      '/poi-events/:chainType/:chainID/:listKey/:startIndex/:endIndex',
       async (req: Request, res: Response) => {
         const { chainType, chainID, listKey, startIndex, endIndex } =
           req.params;
@@ -90,9 +91,80 @@ export class API {
         res.json({ events });
       },
     );
+
+    this.safeGet(
+      '/mempool-proofs/:chainType/:chainID/:bloomHash',
+      async (req: Request, res: Response) => {
+        const { chainType, chainID, bloomHash } = req.params;
+        const networkName = networkNameForSerializedChain(chainType, chainID);
+
+        // TODO
+        throw new Error('Unimplemented');
+      },
+    );
+  }
+
+  private addClientRoutes() {
+    this.safePost(
+      '/add-shield-proof/:chainType/:chainID',
+      async (req: Request, res: Response) => {
+        const { chainType, chainID } = req.params;
+        const networkName = networkNameForSerializedChain(chainType, chainID);
+
+        // TODO
+        throw new Error('Unimplemented');
+      },
+    );
+
+    this.safePost(
+      '/add-transact-proof/:chainType/:chainID/:listKey',
+      async (req: Request, res: Response) => {
+        const { chainType, chainID, listKey } = req.params;
+        const networkName = networkNameForSerializedChain(chainType, chainID);
+
+        // TODO
+        throw new Error('Unimplemented');
+      },
+    );
+
+    this.safeGet(
+      '/pois-per-list/:chainType/:chainID/:listKey',
+      async (req: Request, res: Response) => {
+        const { chainType, chainID, listKey } = req.params;
+        const networkName = networkNameForSerializedChain(chainType, chainID);
+
+        // TODO
+        throw new Error('Unimplemented');
+      },
+    );
+
+    this.safeGet(
+      '/merkle-proofs/:chainType/:chainID/:listKey',
+      async (req: Request, res: Response) => {
+        const { chainType, chainID, listKey } = req.params;
+        const networkName = networkNameForSerializedChain(chainType, chainID);
+
+        // TODO
+        throw new Error('Unimplemented');
+      },
+    );
   }
 
   private safeGet(
+    route: string,
+    handler: (req: Request, res: Response) => Promise<void>,
+  ) {
+    this.app.get(route, async (req: Request, res: Response) => {
+      try {
+        await handler(req, res);
+      } catch (err) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        res.status(500).json({ error: err.message });
+      }
+    });
+  }
+
+  private safePost(
     route: string,
     handler: (req: Request, res: Response) => Promise<void>,
   ) {

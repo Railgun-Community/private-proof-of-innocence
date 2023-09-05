@@ -1,3 +1,3 @@
-export type EventListStatus = {
+export type POIEventListStatus = {
   length: number;
 };

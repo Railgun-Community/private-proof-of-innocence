@@ -1,6 +1,6 @@
 import { NetworkName } from '@railgun-community/shared-models';
 import { POIOrderedEventsDatabase } from '../database/databases/poi-ordered-events-database';
-import { EventListStatus } from '../models/api-types';
+import { POIEventListStatus } from '../models/api-types';
 import { SignedPOIEvent } from '../models/poi-types';
 
 export const MAX_EVENT_QUERY_RANGE_LENGTH = 20;
@@ -8,7 +8,7 @@ export const MAX_EVENT_QUERY_RANGE_LENGTH = 20;
 export const getEventListStatus = async (
   networkName: NetworkName,
   listKey: string,
-): Promise<EventListStatus> => {
+): Promise<POIEventListStatus> => {
   const db = new POIOrderedEventsDatabase(networkName);
   const length = await db.getCount(listKey);
 
