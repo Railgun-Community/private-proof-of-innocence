@@ -35,18 +35,19 @@ export class ShieldQueueDatabase extends AbstractDatabase<ShieldQueueDBItem> {
   }
 
   async updateShieldStatus(
-    shieldData: ShieldQueueDBItem,
+    shieldQueueDBItem: ShieldQueueDBItem,
     shouldAllow: boolean,
   ): Promise<void> {
     const filter: DBFilter<ShieldQueueDBItem> = {
-      txid: shieldData.txid,
-      hash: shieldData.hash,
+      txid: shieldQueueDBItem.txid,
+      hash: shieldQueueDBItem.hash,
     };
-    const storedData: Partial<ShieldQueueDBItem> = {
+    const replacement: ShieldQueueDBItem = {
+      ...shieldQueueDBItem,
       status: shouldAllow ? ShieldStatus.Allowed : ShieldStatus.Blocked,
       lastValidatedTimestamp: Date.now(),
     };
-    return this.updateOne(filter, storedData);
+    return this.findOneAndReplace(filter, replacement);
   }
 
   async getPendingShields(endTimestamp: number): Promise<ShieldQueueDBItem[]> {
@@ -60,5 +61,12 @@ export class ShieldQueueDatabase extends AbstractDatabase<ShieldQueueDBItem> {
       timestamp: 'ascending',
     };
     return this.findAll(max, filter, sort);
+  }
+
+  async getAllowedShields(): Promise<ShieldQueueDBItem[]> {
+    const filter: DBFilter<ShieldQueueDBItem> = {
+      status: ShieldStatus.Allowed,
+    };
+    return this.findAll(undefined, filter, undefined);
   }
 }
