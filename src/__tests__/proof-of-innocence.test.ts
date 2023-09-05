@@ -11,9 +11,7 @@ let node: ProofOfInnocenceNode;
 
 describe('proof-of-innocence-node', () => {
   before(() => {
-    const listProvider = new TestMockListProviderExcludeSingleAddress(
-      'test-mock-list-provider',
-    );
+    const listProvider = new TestMockListProviderExcludeSingleAddress();
     node = new ProofOfInnocenceNode(listProvider);
   });
 

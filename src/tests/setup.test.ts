@@ -7,6 +7,10 @@ import { promiseTimeout } from '@railgun-community/shared-models';
 const TEST_DB_DIR = 'test.db';
 
 before(async function run() {
+  // Mock pkey
+  process.env.pkey =
+    '0x0012345678901234567890123456789000123456789012345678901234567890';
+
   Config.ENGINE_DB_DIR = TEST_DB_DIR;
 
   await promiseTimeout(

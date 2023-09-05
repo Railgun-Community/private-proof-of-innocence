@@ -5,6 +5,10 @@ export class Config {
 
   static PORT = process.env.PORT ?? 3010;
 
+  static CONNECTED_NODES: string[] = [];
+
+  static LIST_KEYS: string[] = [];
+
   static MONGODB_URL = process.env.MONGODB_URL;
 
   static NETWORK_NAMES: NetworkName[] = [

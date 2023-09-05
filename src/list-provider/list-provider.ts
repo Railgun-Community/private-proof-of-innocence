@@ -1,4 +1,8 @@
-import { NetworkName, delay } from '@railgun-community/shared-models';
+import {
+  NetworkName,
+  delay,
+  isDefined,
+} from '@railgun-community/shared-models';
 import { networkForName } from '../config/general';
 import { ShieldData } from '@railgun-community/wallet';
 import debug from 'debug';
@@ -11,6 +15,7 @@ import {
   getTransactionReceipt,
   getTimestampFromTransactionReceipt,
 } from '../rpc-providers/tx-receipt';
+import { getListPublicKey } from '../util/ed25519';
 
 export type ListProviderConfig = {
   name: string;
@@ -31,14 +36,14 @@ const DAYS_WAITING_PERIOD = 7;
 const dbg = debug('poi:list-provider');
 
 export abstract class ListProvider {
-  readonly id: string;
+  listKey!: string;
 
   protected abstract config: ListProviderConfig;
 
   private shouldPoll = false;
 
-  constructor(id: string) {
-    this.id = id;
+  async init() {
+    this.listKey = await getListPublicKey();
   }
 
   protected abstract shouldAllowShield(
@@ -49,6 +54,9 @@ export abstract class ListProvider {
   ): Promise<boolean>;
 
   async startPolling() {
+    if (!isDefined(this.listKey)) {
+      throw new Error('Must call init on ListProvider before polling.');
+    }
     dbg(
       `List ${this.config.name} polling for new shields and validating queued shields...`,
     );

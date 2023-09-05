@@ -33,8 +33,12 @@ export const verifyPOIEvent = async (
   signedPOIEvent: SignedPOIEvent,
   publicKey: string,
 ): Promise<boolean> => {
-  const message = getPOIEventMessage(signedPOIEvent);
-  return verify(signedPOIEvent.signature, message, publicKey);
+  try {
+    const message = getPOIEventMessage(signedPOIEvent);
+    return await verify(signedPOIEvent.signature, message, publicKey);
+  } catch (err) {
+    return false;
+  }
 };
 
 export const getListPublicKey = async (): Promise<string> => {

@@ -25,6 +25,7 @@ export class ProofOfInnocenceNode {
 
     await initModules();
 
+    await this.listProvider.init();
     await this.listProvider.startPolling();
 
     dbg(`Proof of Innocence node running...`);

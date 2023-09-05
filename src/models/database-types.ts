@@ -69,7 +69,7 @@ export type POIOrderedEventDBItem = {
   index: number;
   blindedCommitments: string[];
   proof: SerializedSnarkProof;
-  signature: string[];
+  signature: string;
 };
 
 // DO NOT CHANGE FIELDS WITHOUT CLEARING OR MIGRATING THE DB.

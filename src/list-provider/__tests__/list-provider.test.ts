@@ -35,9 +35,7 @@ describe('list-provider', () => {
     await DatabaseClient.init();
     db = new ShieldQueueDatabase(networkName);
     await db.createCollectionIndices();
-    listProvider = new TestMockListProviderExcludeSingleAddress(
-      'test-mock-list-provider',
-    );
+    listProvider = new TestMockListProviderExcludeSingleAddress();
   });
 
   afterEach(() => {
