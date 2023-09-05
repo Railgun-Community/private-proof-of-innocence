@@ -11,13 +11,13 @@ chai.use(chaiAsPromised);
 const { expect } = chai;
 
 describe('active-network-providers', () => {
-  after(async () => {
-    await stopEngine();
-  });
-
   before(async () => {
     startEngine();
-    await initNetworkProviders();
+    await initNetworkProviders([NetworkName.Ethereum]);
+  });
+
+  after(async () => {
+    await stopEngine();
   });
 
   it('Should init viable fallback providers', async () => {

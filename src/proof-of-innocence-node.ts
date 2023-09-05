@@ -22,7 +22,9 @@ export class ProofOfInnocenceNode {
 
     this.running = true;
     startExpressAPIServer();
+
     await initModules();
+
     await this.listProvider.startPolling();
 
     dbg(`Proof of Innocence node running...`);

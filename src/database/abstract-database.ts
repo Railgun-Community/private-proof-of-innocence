@@ -37,6 +37,10 @@ export abstract class AbstractDatabase<T extends Document> {
     this.dbg = debug(`poi:db:${collection}`);
   }
 
+  async deleteAllItems_DANGEROUS() {
+    await this.collection.drop();
+  }
+
   abstract createCollectionIndex(): Promise<void>;
 
   protected async insertOne(data: OptionalUnlessRequiredId<T>): Promise<void> {
@@ -94,6 +98,9 @@ export abstract class AbstractDatabase<T extends Document> {
     indexSpec: DBIndexSpec<T>,
     options?: CreateIndexesOptions,
   ) {
+    if (Object.keys(indexSpec).length === 0) {
+      return;
+    }
     return this.collection.createIndex(
       indexSpec as { [key: string]: IndexDirection },
       options,

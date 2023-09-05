@@ -23,14 +23,12 @@ export class DatabaseClient {
     }
 
     const client = await new MongoClient(Config.MONGODB_URL).connect();
-
     DatabaseClient.client = client;
-    await DatabaseClient.ensureDBIndicesAllChains();
 
     return client;
   }
 
-  private static async ensureDBIndicesAllChains(): Promise<void> {
+  static async ensureDBIndicesAllChains(): Promise<void> {
     await Promise.all(
       Config.NETWORK_NAMES.map(async (networkName: NetworkName) => {
         await Promise.all(

@@ -8,10 +8,16 @@ import { DatabaseClient } from '../database/database-client';
 const dbg = debug('poi:init');
 
 export const initModules = async () => {
+  // Init engine and RPCs
   startEngine();
   await initNetworkProviders();
+
+  // Set up mongo databases
   await DatabaseClient.init();
+  await DatabaseClient.ensureDBIndicesAllChains();
+
   setOnMerkletreeScanCallback(onMerkletreeScanCallback);
+
   dbg('Node init successful.');
 };
 
