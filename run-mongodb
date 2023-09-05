@@ -1,0 +1,6 @@
+#!/bin/bash
+set -e;
+
+mkdir -p mongo.db;
+
+mongod --dbpath=mongo.db;

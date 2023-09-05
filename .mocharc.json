@@ -1,5 +1,6 @@
 {
   "require": "ts-node/register",
+  "file": ["src/tests/setup.test.ts"],
   "spec": ["src/**/__tests__/*.test.ts"],
   "exit": true
 }

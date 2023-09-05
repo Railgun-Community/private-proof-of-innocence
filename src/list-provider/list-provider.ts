@@ -3,19 +3,15 @@ import {
   delay,
   isDefined,
 } from '@railgun-community/shared-models';
-import { getStatus } from '../db/status-db';
 import { networkForName } from '../config/general';
 import { ShieldData, getAllShields } from '@railgun-community/wallet';
 import debug from 'debug';
-import {
-  getPendingShields,
-  insertPendingShield,
-  updateShieldStatus,
-} from '../db/shields-db';
+import { ShieldQueueDatabase } from '../database/databases/shield-queue-database';
 import { Config } from '../config/config';
-import { ShieldDBEntry } from '../db/db-types';
+import { ShieldQueueDBItem } from '../models/database-types';
 import { getProviderForNetwork } from '../rpc-providers/active-network-providers';
 import { TransactionReceipt } from 'ethers';
+import { StatusDatabase } from '../database/databases/status-database';
 
 export type ListProviderConfig = {
   name: string;
@@ -106,14 +102,12 @@ export abstract class ListProvider {
   }
 
   async queueNewShields(networkName: NetworkName): Promise<void> {
-    const status = await getStatus(networkName);
+    const statusDB = new StatusDatabase(networkName);
+    const status = await statusDB.getStatus();
     const network = networkForName(networkName);
     const startingBlock = status?.latestBlockScanned ?? network.deploymentBlock;
 
     const newShields = await getAllShields(networkName, startingBlock);
-
-    console.log(startingBlock);
-    console.log(newShields.length);
 
     await Promise.all(
       newShields.map((shieldData) =>
@@ -127,7 +121,8 @@ export abstract class ListProvider {
     shieldData: ShieldData,
   ) {
     try {
-      await insertPendingShield(networkName, shieldData);
+      const shieldQueueDB = new ShieldQueueDatabase(networkName);
+      await shieldQueueDB.insertPendingShield(shieldData);
     } catch (err) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       dbg(`Error queuing shield on ${networkName}: ${err.message}`);
@@ -141,9 +136,10 @@ export abstract class ListProvider {
 
   async validateNextQueuedShieldBatch(networkName: NetworkName): Promise<void> {
     const endTimestamp = this.getMaxTimestampForValidation();
-    let pendingShields: ShieldDBEntry[];
+    let pendingShields: ShieldQueueDBItem[];
     try {
-      pendingShields = await getPendingShields(networkName, endTimestamp);
+      const shieldQueueDB = new ShieldQueueDatabase(networkName);
+      pendingShields = await shieldQueueDB.getPendingShields(endTimestamp);
     } catch (err) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       dbg(`Error getting queued shields on ${networkName}: ${err.message}`);
@@ -158,7 +154,7 @@ export abstract class ListProvider {
 
   private async validateShield(
     networkName: NetworkName,
-    shieldData: ShieldDBEntry,
+    shieldData: ShieldQueueDBItem,
     endTimestamp: number,
   ) {
     const { txid } = shieldData;
@@ -176,10 +172,9 @@ export abstract class ListProvider {
         timestamp,
       );
 
-      // TODO: Publish to Inclusion merkletree
-
       // Update status in DB
-      await updateShieldStatus(networkName, shieldData, shouldAllow);
+      const shieldQueueDB = new ShieldQueueDatabase(networkName);
+      await shieldQueueDB.updateShieldStatus(shieldData, shouldAllow);
     } catch (err) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       dbg(`Error validating queued shield on ${networkName}: ${err.message}`);

@@ -4,13 +4,17 @@ import {
   getProviderForNetwork,
   initNetworkProviders,
 } from '../active-network-providers';
-import { startEngine } from '../../engine/engine-init';
+import { startEngine, stopEngine } from '../../engine/engine-init';
 import { NetworkName } from '@railgun-community/shared-models';
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
 
 describe('active-network-providers', () => {
+  after(async () => {
+    await stopEngine();
+  });
+
   before(async () => {
     startEngine();
     await initNetworkProviders();

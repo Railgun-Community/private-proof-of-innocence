@@ -2,11 +2,20 @@
 import LevelDOWN from 'leveldown';
 import fs from 'fs';
 import { ArtifactStore, startRailgunEngine } from '@railgun-community/wallet';
+import { MONGOOSE_DB_URL, dropDatabase, setUpMongoose } from './mongoose.test';
+import { Config } from '../config/config';
 
 const TEST_DB = 'test.db';
 const db = new LevelDOWN(TEST_DB);
 
-before(() => {});
+before(async function run() {
+  await setUpMongoose();
+  Config.MONGODB_URL = MONGOOSE_DB_URL;
+});
+
+beforeEach(async () => {
+  await dropDatabase();
+});
 
 after(() => {
   const { warn } = console;
@@ -16,7 +25,7 @@ after(() => {
 });
 
 const fileExists = (path: string): Promise<boolean> => {
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     fs.promises
       .access(path)
       .then(() => resolve(true))
