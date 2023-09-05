@@ -8,6 +8,7 @@ import {
   ShieldQueueDBItem,
   ShieldStatus,
 } from '../../../models/database-types';
+import { daysAgo } from '../../../tests/util.test';
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
@@ -40,11 +41,10 @@ describe('shield-queue-database', () => {
     };
     await db.insertPendingShield(pendingShield1);
 
-    const tenDaysAgo = Date.now() - 10 * 24 * 60 * 60 * 1000;
     const pendingShield2: ShieldData = {
       txid: '0x9876',
       hash: '0x5432',
-      timestamp: tenDaysAgo,
+      timestamp: daysAgo(10),
     };
     await db.insertPendingShield(pendingShield2);
 
@@ -59,12 +59,11 @@ describe('shield-queue-database', () => {
     const shieldQueueItem2: ShieldQueueDBItem = {
       txid: '0x9876',
       hash: '0x5432',
-      timestamp: tenDaysAgo,
+      timestamp: daysAgo(10),
       status: ShieldStatus.Pending,
       lastValidatedTimestamp: null,
     };
-    const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-    await expect(db.getPendingShields(sevenDaysAgo)).to.eventually.deep.equal([
+    await expect(db.getPendingShields(daysAgo(7))).to.eventually.deep.equal([
       shieldQueueItem2,
     ]);
   });
@@ -90,17 +89,14 @@ describe('shield-queue-database', () => {
       status: ShieldStatus.Pending,
       lastValidatedTimestamp: null,
     };
-    const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-    await expect(db.getPendingShields(sevenDaysAgo)).to.eventually.deep.equal([
+    await expect(db.getPendingShields(daysAgo(7))).to.eventually.deep.equal([
       shieldQueueItemExpired,
     ]);
 
     // Set to "Allowed"
     await db.updateShieldStatus(shieldQueueItemExpired, true);
 
-    await expect(db.getPendingShields(sevenDaysAgo)).to.eventually.deep.equal(
-      [],
-    );
+    await expect(db.getPendingShields(daysAgo(7))).to.eventually.deep.equal([]);
 
     const allowedShields = await db.getAllowedShields();
     expect(allowedShields.length).to.equal(1);

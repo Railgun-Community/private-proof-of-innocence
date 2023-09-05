@@ -12,6 +12,7 @@ import { ShieldQueueDBItem } from '../models/database-types';
 import { getProviderForNetwork } from '../rpc-providers/active-network-providers';
 import { TransactionReceipt } from 'ethers';
 import { StatusDatabase } from '../database/databases/status-database';
+import { getNewShieldsFromWallet } from '../engine/wallet';
 
 export type ListProviderConfig = {
   name: string;
@@ -107,7 +108,10 @@ export abstract class ListProvider {
     const network = networkForName(networkName);
     const startingBlock = status?.latestBlockScanned ?? network.deploymentBlock;
 
-    const newShields = await getAllShields(networkName, startingBlock);
+    const newShields: ShieldData[] = await getNewShieldsFromWallet(
+      networkName,
+      startingBlock,
+    );
 
     await Promise.all(
       newShields.map((shieldData) =>
