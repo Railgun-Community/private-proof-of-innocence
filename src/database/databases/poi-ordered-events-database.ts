@@ -47,6 +47,6 @@ export class POIOrderedEventsDatabase extends AbstractDatabase<POIOrderedEventDB
   }
 
   async getNextIndex(): Promise<number> {
-    return (await this.count()) + 1;
+    return this.count();
   }
 }
