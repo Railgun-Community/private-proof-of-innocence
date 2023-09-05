@@ -10,8 +10,8 @@ export class POIHistoricalMerklerootDatabase extends AbstractDatabase<POIHistori
     super(networkName, CollectionName.POIHistoricalMerkleroots);
   }
 
-  async createCollectionIndex() {
-    await this.createIndex({ rootHash: 1 }, { unique: true });
+  async createCollectionIndices() {
+    await this.createIndex(['rootHash'], { unique: true });
   }
 
   async insertMerkleroot(rootHash: string): Promise<void> {

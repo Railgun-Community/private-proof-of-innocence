@@ -10,7 +10,6 @@ import {
   Sort,
   CreateIndexesOptions,
   WithId,
-  IndexDirection,
 } from 'mongodb';
 import { DatabaseClient } from './database-client';
 import { CollectionName, DBIndexSpec } from '../models/database-types';
@@ -38,10 +37,10 @@ export abstract class AbstractDatabase<T extends Document> {
   }
 
   async deleteAllItems_DANGEROUS() {
-    await this.collection.drop();
+    await this.collection.deleteMany();
   }
 
-  abstract createCollectionIndex(): Promise<void>;
+  abstract createCollectionIndices(): Promise<void>;
 
   protected async insertOne(data: OptionalUnlessRequiredId<T>): Promise<void> {
     try {
@@ -83,7 +82,7 @@ export abstract class AbstractDatabase<T extends Document> {
   ): Promise<T[]> {
     let cursor = this.collection.find();
     if (isDefined(max)) {
-      cursor = cursor.max(max);
+      cursor = cursor.max(max).hint(Object.keys(max));
     }
     if (isDefined(filter)) {
       cursor = cursor.filter(filter);
@@ -98,13 +97,10 @@ export abstract class AbstractDatabase<T extends Document> {
     indexSpec: DBIndexSpec<T>,
     options?: CreateIndexesOptions,
   ) {
-    if (Object.keys(indexSpec).length === 0) {
+    if (indexSpec.length === 0) {
       return;
     }
-    return this.collection.createIndex(
-      indexSpec as { [key: string]: IndexDirection },
-      options,
-    );
+    return this.collection.createIndex(indexSpec as string[], options);
   }
 
   private onInsertError(err: MongoError) {

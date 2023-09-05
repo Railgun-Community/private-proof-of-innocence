@@ -10,7 +10,7 @@ export class POIOrderedEventsDatabase extends AbstractDatabase<POIOrderedEventDB
     super(networkName, CollectionName.POIOrderedEvents);
   }
 
-  async createCollectionIndex() {
-    await this.createIndex({ index: 1 }, { unique: true });
+  async createCollectionIndices() {
+    await this.createIndex(['index'], { unique: true });
   }
 }

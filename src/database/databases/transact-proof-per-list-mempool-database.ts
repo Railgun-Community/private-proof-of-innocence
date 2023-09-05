@@ -10,9 +10,9 @@ export class TransactProofPerListMempoolDatabase extends AbstractDatabase<Transa
     super(networkName, CollectionName.TransactProofPerListMempool);
   }
 
-  async createCollectionIndex() {
+  async createCollectionIndices() {
     // TODO
-    await this.createIndex({}, { unique: true });
+    await this.createIndex([], { unique: true });
   }
 
   async insertValidTransactProof(

@@ -15,8 +15,9 @@ export class ShieldQueueDatabase extends AbstractDatabase<ShieldQueueDBItem> {
     super(networkName, CollectionName.ShieldQueue);
   }
 
-  async createCollectionIndex() {
-    await this.createIndex({ txid: 1, hash: 1 }, { unique: true });
+  async createCollectionIndices() {
+    await this.createIndex(['txid', 'hash'], { unique: true });
+    await this.createIndex(['timestamp']);
   }
 
   async insertPendingShield(shieldData: ShieldData): Promise<void> {

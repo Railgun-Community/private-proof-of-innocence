@@ -11,9 +11,9 @@ export class StatusDatabase extends AbstractDatabase<StatusDBItem> {
     super(networkName, CollectionName.Status);
   }
 
-  async createCollectionIndex() {
+  async createCollectionIndices() {
     // No index
-    await this.createIndex({}, {});
+    await this.createIndex([], {});
   }
 
   async getStatus(): Promise<Optional<StatusDBItem>> {

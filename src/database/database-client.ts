@@ -58,7 +58,7 @@ export class DatabaseClient {
                 db = new POIHistoricalMerklerootDatabase(networkName);
                 break;
             }
-            await db.createCollectionIndex();
+            await db.createCollectionIndices();
           }),
         );
       }),

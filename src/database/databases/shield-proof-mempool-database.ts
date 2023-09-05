@@ -10,13 +10,8 @@ export class ShieldProofMempoolDatabase extends AbstractDatabase<ShieldProofMemp
     super(networkName, CollectionName.ShieldProofMempool);
   }
 
-  async createCollectionIndex() {
-    await this.createIndex(
-      {
-        commitmentHash: 1,
-      },
-      { unique: true },
-    );
+  async createCollectionIndices() {
+    await this.createIndex(['commitmentHash'], { unique: true });
   }
 
   async insertValidShieldProof(item: ShieldProofMempoolDBItem): Promise<void> {

@@ -15,7 +15,7 @@ describe('poi-historical-merkleroot-database', () => {
   before(async () => {
     await DatabaseClient.init();
     db = new POIHistoricalMerklerootDatabase(networkName);
-    await db.createCollectionIndex();
+    await db.createCollectionIndices();
   });
 
   beforeEach(async () => {

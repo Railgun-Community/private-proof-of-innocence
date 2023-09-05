@@ -1,4 +1,4 @@
-import { IndexDirection, SortDirection } from 'mongodb';
+import { SortDirection } from 'mongodb';
 import { SerializedSnarkProof } from './general-types';
 
 export type DBMax<T> = Partial<T>;
@@ -7,7 +7,9 @@ export type DBFilter<T> = Partial<T>;
 
 export type DBSort<T> = Partial<Record<keyof T, SortDirection>>;
 
-export type DBIndexSpec<T> = Partial<Record<keyof T, IndexDirection>>;
+export type DBIndexSpec<T> = (keyof T)[];
+
+export type DBOptional<T> = Optional<T> | null;
 
 export enum CollectionName {
   // General
@@ -44,7 +46,7 @@ export type ShieldQueueDBItem = {
   hash: string;
   timestamp: number;
   status: ShieldStatus;
-  lastValidatedTimestamp: Optional<number>;
+  lastValidatedTimestamp: DBOptional<number>;
 };
 
 export type StatusDBItem = {
