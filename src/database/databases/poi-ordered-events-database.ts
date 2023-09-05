@@ -17,8 +17,9 @@ export class POIOrderedEventsDatabase extends AbstractDatabase<POIOrderedEventDB
     await this.createIndex(['index'], { unique: true });
   }
 
-  async insertValidPOIEvent(poiEvent: POIEvent) {
-    const { index, blindedCommitments, proof, signature } = poiEvent;
+  async insertValidPOIEvent(poiEvent: POIEvent): Promise<void> {
+    const { blindedCommitments, proof, signature } = poiEvent;
+    const index = (await this.countPOIEvents()) + 1;
     const item: POIOrderedEventDBItem = {
       index,
       blindedCommitments,
@@ -41,5 +42,9 @@ export class POIOrderedEventsDatabase extends AbstractDatabase<POIOrderedEventDB
       undefined, // max
       min,
     );
+  }
+
+  private async countPOIEvents(): Promise<number> {
+    return this.count();
   }
 }

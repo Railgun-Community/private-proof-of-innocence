@@ -102,6 +102,10 @@ export abstract class AbstractDatabase<T extends Document> {
     return cursor.project({ _id: 0 }).toArray() as Promise<T[]>;
   }
 
+  protected async count(filter?: DBFilter<T>) {
+    return this.collection.countDocuments();
+  }
+
   protected async createIndex(
     indexSpec: DBIndexSpec<T>,
     options?: CreateIndexesOptions,
