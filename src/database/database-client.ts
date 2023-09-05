@@ -2,6 +2,14 @@ import { NetworkName, isDefined } from '@railgun-community/shared-models';
 import { MongoClient } from 'mongodb';
 import { Config } from '../config/config';
 import { ShieldQueueDatabase } from './databases/shield-queue-database';
+import { StatusDatabase } from './databases/status-database';
+import { CollectionName } from '../models/database-types';
+import { AbstractDatabase } from './abstract-database';
+import { ShieldProofMempoolDatabase } from './databases/shield-proof-mempool-database';
+import { TransactProofPerListMempoolDatabase } from './databases/transact-proof-per-list-mempool-database';
+import { POIOrderedEventsDatabase } from './databases/poi-ordered-events-database';
+import { POIMerkletreeDatabase } from './databases/poi-merkletree-database';
+import { POIHistoricalMerklerootDatabase } from './databases/poi-historical-merkleroot-database';
 
 export class DatabaseClient {
   static client?: MongoClient;
@@ -17,16 +25,44 @@ export class DatabaseClient {
     const client = await new MongoClient(Config.MONGODB_URL).connect();
 
     DatabaseClient.client = client;
-    await DatabaseClient.ensureShieldIndicesAllChains();
+    await DatabaseClient.ensureDBIndicesAllChains();
 
     return client;
   }
 
-  private static async ensureShieldIndicesAllChains(): Promise<void> {
+  private static async ensureDBIndicesAllChains(): Promise<void> {
     await Promise.all(
       Config.NETWORK_NAMES.map(async (networkName: NetworkName) => {
-        const shieldQueueDb = new ShieldQueueDatabase(networkName);
-        await shieldQueueDb.createIndex({ txid: 1, hash: 1 }, { unique: true });
+        await Promise.all(
+          Object.values(CollectionName).map(async (collectionName) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            let db: AbstractDatabase<any>;
+            switch (collectionName) {
+              case CollectionName.Status:
+                db = new StatusDatabase(networkName);
+                break;
+              case CollectionName.ShieldQueue:
+                db = new ShieldQueueDatabase(networkName);
+                break;
+              case CollectionName.ShieldProofMempool:
+                db = new ShieldProofMempoolDatabase(networkName);
+                break;
+              case CollectionName.TransactProofPerListMempool:
+                db = new TransactProofPerListMempoolDatabase(networkName);
+                break;
+              case CollectionName.POIOrderedEvents:
+                db = new POIOrderedEventsDatabase(networkName);
+                break;
+              case CollectionName.POIMerkletree:
+                db = new POIMerkletreeDatabase(networkName);
+                break;
+              case CollectionName.POIHistoricalMerkleroots:
+                db = new POIHistoricalMerklerootDatabase(networkName);
+                break;
+            }
+            await db.createCollectionIndex();
+          }),
+        );
       }),
     );
   }

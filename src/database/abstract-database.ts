@@ -8,12 +8,12 @@ import {
   Document,
   Filter,
   Sort,
-  IndexSpecification,
   CreateIndexesOptions,
   WithId,
+  IndexDirection,
 } from 'mongodb';
 import { DatabaseClient } from './database-client';
-import { CollectionName } from '../models/database-types';
+import { CollectionName, DBIndexSpec } from '../models/database-types';
 import { networkForName } from '../config/general';
 
 export abstract class AbstractDatabase<T extends Document> {
@@ -36,6 +36,8 @@ export abstract class AbstractDatabase<T extends Document> {
 
     this.dbg = debug(`poi:db:${collection}`);
   }
+
+  abstract createCollectionIndex(): Promise<void>;
 
   protected async insertOne(data: OptionalUnlessRequiredId<T>): Promise<void> {
     try {
@@ -88,11 +90,14 @@ export abstract class AbstractDatabase<T extends Document> {
     return cursor.project({ _id: 0 }).toArray() as Promise<T[]>;
   }
 
-  async createIndex(
-    indexSpec: IndexSpecification,
+  protected async createIndex(
+    indexSpec: DBIndexSpec<T>,
     options?: CreateIndexesOptions,
   ) {
-    return this.collection.createIndex(indexSpec, options);
+    return this.collection.createIndex(
+      indexSpec as { [key: string]: IndexDirection },
+      options,
+    );
   }
 
   private onInsertError(err: MongoError) {

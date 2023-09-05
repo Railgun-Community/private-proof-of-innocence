@@ -1,16 +1,22 @@
 import { NetworkName, isDefined } from '@railgun-community/shared-models';
 import {
   CollectionName,
+  DBFilter,
+  DBMax,
+  DBSort,
   ShieldQueueDBItem,
   ShieldStatus,
 } from '../../models/database-types';
 import { AbstractDatabase } from '../abstract-database';
 import { ShieldData } from '@railgun-community/wallet';
-import { Filter, Sort } from 'mongodb';
 
 export class ShieldQueueDatabase extends AbstractDatabase<ShieldQueueDBItem> {
   constructor(networkName: NetworkName) {
     super(networkName, CollectionName.ShieldQueue);
+  }
+
+  async createCollectionIndex() {
+    await this.createIndex({ txid: 1, hash: 1 }, { unique: true });
   }
 
   async insertPendingShield(shieldData: ShieldData): Promise<void> {
@@ -31,7 +37,7 @@ export class ShieldQueueDatabase extends AbstractDatabase<ShieldQueueDBItem> {
     shieldData: ShieldQueueDBItem,
     shouldAllow: boolean,
   ): Promise<void> {
-    const filter: Filter<ShieldQueueDBItem> = {
+    const filter: DBFilter<ShieldQueueDBItem> = {
       txid: shieldData.txid,
       hash: shieldData.hash,
     };
@@ -43,13 +49,13 @@ export class ShieldQueueDatabase extends AbstractDatabase<ShieldQueueDBItem> {
   }
 
   async getPendingShields(endTimestamp: number): Promise<ShieldQueueDBItem[]> {
-    const max: Partial<ShieldQueueDBItem> = {
+    const max: DBMax<ShieldQueueDBItem> = {
       timestamp: endTimestamp,
     };
-    const filter = {
+    const filter: DBFilter<ShieldQueueDBItem> = {
       status: ShieldStatus.Pending,
     };
-    const sort: Sort = {
+    const sort: DBSort<ShieldQueueDBItem> = {
       timestamp: 'ascending',
     };
     return this.findAll(max, filter, sort);
