@@ -65,6 +65,10 @@ export abstract class AbstractDatabase<T extends Document> {
     }
   }
 
+  protected async exists(filter: Filter<T>): Promise<boolean> {
+    return (await this.findOne(filter)) != null;
+  }
+
   protected async findOne(filter: Filter<T>): Promise<Optional<WithId<T>>> {
     const options = { projection: { _id: 0 } };
     const item = await this.collection.findOne(filter, options);
@@ -101,8 +105,8 @@ export abstract class AbstractDatabase<T extends Document> {
     return cursor.project({ _id: 0 }).toArray() as Promise<T[]>;
   }
 
-  protected async count(filter?: DBFilter<T>) {
-    return this.collection.countDocuments();
+  protected async count(filter?: Filter<T>) {
+    return this.collection.countDocuments(filter);
   }
 
   protected async createIndex(

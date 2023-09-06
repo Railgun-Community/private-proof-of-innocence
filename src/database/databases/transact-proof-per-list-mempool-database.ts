@@ -4,6 +4,7 @@ import {
   TransactProofMempoolDBItem,
 } from '../../models/database-types';
 import { AbstractDatabase } from '../abstract-database';
+import { TransactProofData } from '../../models/proof-types';
 
 export class TransactProofPerListMempoolDatabase extends AbstractDatabase<TransactProofMempoolDBItem> {
   constructor(networkName: NetworkName) {
@@ -11,13 +12,32 @@ export class TransactProofPerListMempoolDatabase extends AbstractDatabase<Transa
   }
 
   async createCollectionIndices() {
-    // TODO
-    await this.createIndex([], { unique: true });
+    await this.createIndex(['listKey', 'blindedCommitmentFirstInput'], {
+      unique: true,
+    });
   }
 
   async insertValidTransactProof(
-    item: TransactProofMempoolDBItem,
+    listKey: string,
+    transactProofData: TransactProofData,
   ): Promise<void> {
+    const { snarkProof, publicInputs } = transactProofData;
+    const {
+      poiMerkleroots,
+      txMerkleroot,
+      blindedCommitmentInputs,
+      blindedCommitmentOutputs,
+    } = publicInputs;
+
+    const item: TransactProofMempoolDBItem = {
+      listKey,
+      snarkProof,
+      poiMerkleroots,
+      txMerkleroot,
+      blindedCommitmentInputs,
+      blindedCommitmentOutputs,
+      blindedCommitmentFirstInput: blindedCommitmentInputs[0],
+    };
     return this.insertOne(item);
   }
 }

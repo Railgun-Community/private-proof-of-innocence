@@ -18,6 +18,8 @@ export class ShieldQueueDatabase extends AbstractDatabase<ShieldQueueDBItem> {
   async createCollectionIndices() {
     await this.createIndex(['txid', 'hash'], { unique: true });
     await this.createIndex(['timestamp']);
+    await this.createIndex(['status']);
+    await this.createIndex(['hash']);
   }
 
   async insertPendingShield(shieldData: ShieldData): Promise<void> {
@@ -32,6 +34,13 @@ export class ShieldQueueDatabase extends AbstractDatabase<ShieldQueueDBItem> {
       lastValidatedTimestamp: undefined,
     };
     return this.insertOne(storedData);
+  }
+
+  async commitmentHashExists(hash: string): Promise<boolean> {
+    const filter: DBFilter<ShieldQueueDBItem> = {
+      hash,
+    };
+    return this.exists(filter);
   }
 
   async updateShieldStatus(

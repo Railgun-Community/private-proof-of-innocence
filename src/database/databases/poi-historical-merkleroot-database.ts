@@ -1,9 +1,10 @@
-import { NetworkName, isDefined } from '@railgun-community/shared-models';
+import { NetworkName } from '@railgun-community/shared-models';
 import {
   CollectionName,
   POIHistoricalMerklerootDBItem,
 } from '../../models/database-types';
 import { AbstractDatabase } from '../abstract-database';
+import { Filter } from 'mongodb';
 
 export class POIHistoricalMerklerootDatabase extends AbstractDatabase<POIHistoricalMerklerootDBItem> {
   constructor(networkName: NetworkName) {
@@ -22,11 +23,19 @@ export class POIHistoricalMerklerootDatabase extends AbstractDatabase<POIHistori
     await this.insertOne(item);
   }
 
-  async containsMerkleroot(
+  async merklerootExists(listKey: string, rootHash: string): Promise<boolean> {
+    return this.exists({ listKey, rootHash });
+  }
+
+  async allMerklerootsExist(
     listKey: string,
-    rootHash: string,
+    rootHashes: string[],
   ): Promise<boolean> {
-    const item = await this.findOne({ listKey, rootHash });
-    return isDefined(item);
+    const filter: Filter<POIHistoricalMerklerootDBItem> = {
+      listKey,
+      rootHash: { $in: rootHashes },
+    };
+    const count = await this.count(filter);
+    return count === rootHashes.length;
   }
 }

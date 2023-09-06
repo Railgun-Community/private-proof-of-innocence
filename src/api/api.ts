@@ -111,7 +111,7 @@ export class API {
       '/add-shield-proof/:chainType/:chainID',
       async (req: Request, res: Response) => {
         const { chainType, chainID } = req.params;
-        const { proof } = req.body;
+        const { shieldProofData } = req.body;
 
         const networkName = networkNameForSerializedChain(chainType, chainID);
 
@@ -124,7 +124,7 @@ export class API {
       '/add-transact-proof/:chainType/:chainID',
       async (req: Request, res: Response) => {
         const { chainType, chainID } = req.params;
-        const { listKey, proof } = req.body;
+        const { listKey, transactProofData } = req.body;
 
         const networkName = networkNameForSerializedChain(chainType, chainID);
 

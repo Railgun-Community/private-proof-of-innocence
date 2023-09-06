@@ -1,15 +1,15 @@
 import { NetworkName } from '@railgun-community/shared-models';
 import { POIEvent, SignedPOIEvent } from '../models/poi-types';
 import { POIOrderedEventsDatabase } from '../database/databases/poi-ordered-events-database';
-import { SerializedSnarkProof } from '../models/general-types';
 import debug from 'debug';
 import { signPOIEvent } from '../util/ed25519';
+import { SnarkProof } from '../models/proof-types';
 
 const dbg = debug('poi:events');
 
 type POIEventQueueItem = {
   blindedCommitments: string[];
-  proof: SerializedSnarkProof;
+  proof: SnarkProof;
 };
 
 export class POIEventManager {
@@ -25,7 +25,7 @@ export class POIEventManager {
     networkName: NetworkName,
     listKey: string,
     blindedCommitments: string[],
-    proof: SerializedSnarkProof,
+    proof: SnarkProof,
   ) {
     const poiEventQueueItem: POIEventQueueItem = {
       blindedCommitments,

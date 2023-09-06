@@ -1,9 +1,9 @@
-import { SerializedSnarkProof } from './general-types';
+import { SnarkProof } from './proof-types';
 
 export type POIEvent = {
   index: number;
   blindedCommitments: string[];
-  proof: SerializedSnarkProof;
+  proof: SnarkProof;
 };
 
 export type SignedPOIEvent = POIEvent & {

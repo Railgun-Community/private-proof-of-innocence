@@ -1,5 +1,5 @@
 import { SortDirection } from 'mongodb';
-import { SerializedSnarkProof } from './general-types';
+import { SnarkProof } from './proof-types';
 
 export type DBMaxMin<T> = Partial<T>;
 
@@ -55,13 +55,20 @@ export type StatusDBItem = {
 
 // DO NOT CHANGE FIELDS WITHOUT CLEARING OR MIGRATING THE DB.
 export type ShieldProofMempoolDBItem = {
-  snarkProof: SerializedSnarkProof;
+  snarkProof: SnarkProof;
   commitmentHash: string;
+  blindedCommitment: string;
 };
 
 // DO NOT CHANGE FIELDS WITHOUT CLEARING OR MIGRATING THE DB.
 export type TransactProofMempoolDBItem = {
-  snarkProof: SerializedSnarkProof;
+  listKey: string;
+  snarkProof: SnarkProof;
+  poiMerkleroots: string[];
+  txMerkleroot: string;
+  blindedCommitmentInputs: string[];
+  blindedCommitmentOutputs: string[];
+  blindedCommitmentFirstInput: string;
 };
 
 // DO NOT CHANGE FIELDS WITHOUT CLEARING OR MIGRATING THE DB.
@@ -69,7 +76,7 @@ export type POIOrderedEventDBItem = {
   listKey: string;
   index: number;
   blindedCommitments: string[];
-  proof: SerializedSnarkProof;
+  proof: SnarkProof;
   signature: string;
 };
 
