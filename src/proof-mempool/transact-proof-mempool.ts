@@ -1,10 +1,11 @@
 import { NetworkName } from '@railgun-community/shared-models';
 import { TransactProofPerListMempoolDatabase } from '../database/databases/transact-proof-per-list-mempool-database';
 import { TransactProofData } from '../models/proof-types';
-import { groth16 } from 'snarkjs';
 import TransactProofVkey from './json/transact-proof-vkey.json';
 import { POIHistoricalMerklerootDatabase } from '../database/databases/poi-historical-merkleroot-database';
 import { TransactProofMempoolCache } from './transact-proof-mempool-cache';
+import { verifySnarkProof } from './snark-proof-verify';
+import { ProofMempoolCountingBloomFilter } from './proof-mempool-bloom-filters';
 
 export class TransactProofMempool {
   static async submitProof(
@@ -46,7 +47,7 @@ export class TransactProofMempool {
     // TODO-HIGH-PRI
 
     // 3. Verify snark proof
-    const verifiedProof = await this.verifySnarkProof(transactProofData);
+    const verifiedProof = await this.verifyProof(transactProofData);
     if (!verifiedProof) {
       return false;
     }
@@ -54,15 +55,38 @@ export class TransactProofMempool {
     return true;
   }
 
-  private static async verifySnarkProof(
+  private static async verifyProof(
     transactProofData: TransactProofData,
   ): Promise<boolean> {
+    // TODO-HIGH-PRI
     const publicSignals: string[] = [];
 
-    return groth16.verify(
+    return verifySnarkProof(
       TransactProofVkey,
       publicSignals,
       transactProofData.snarkProof,
     );
+  }
+
+  static getFilteredProofs(
+    listKey: string,
+    networkName: NetworkName,
+    countingBloomFilterSerialized: string,
+  ): TransactProofData[] {
+    const transactProofDatas: TransactProofData[] =
+      TransactProofMempoolCache.getTransactProofs(listKey, networkName);
+
+    const bloomFilter = ProofMempoolCountingBloomFilter.deserialize(
+      countingBloomFilterSerialized,
+    );
+
+    const filteredProofs: TransactProofData[] = transactProofDatas.filter(
+      (transactProofData) => {
+        const blindedCommitmentFirstInput =
+          transactProofData.publicInputs.blindedCommitmentInputs[0];
+        return !bloomFilter.has(blindedCommitmentFirstInput);
+      },
+    );
+    return filteredProofs;
   }
 }

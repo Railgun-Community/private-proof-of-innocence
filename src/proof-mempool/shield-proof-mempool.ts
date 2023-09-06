@@ -1,10 +1,11 @@
 import { NetworkName } from '@railgun-community/shared-models';
 import { ShieldProofData } from '../models/proof-types';
-import { groth16 } from 'snarkjs';
 import ShieldProofVkey from './json/shield-proof-vkey.json';
 import { ShieldQueueDatabase } from '../database/databases/shield-queue-database';
 import { ShieldProofMempoolDatabase } from '../database/databases/shield-proof-mempool-database';
 import { ShieldProofMempoolCache } from './shield-proof-mempool-cache';
+import { verifySnarkProof } from './snark-proof-verify';
+import { ProofMempoolBloomFilter } from './proof-mempool-bloom-filters';
 
 export class ShieldProofMempool {
   static async submitProof(
@@ -36,7 +37,7 @@ export class ShieldProofMempool {
     }
 
     // 2. Verify snark proof
-    const verifiedProof = await this.verifySnarkProof(shieldProofData);
+    const verifiedProof = await this.verifyProof(shieldProofData);
     if (!verifiedProof) {
       return false;
     }
@@ -44,15 +45,35 @@ export class ShieldProofMempool {
     return true;
   }
 
-  private static async verifySnarkProof(
+  private static async verifyProof(
     shieldProofData: ShieldProofData,
   ): Promise<boolean> {
+    // TODO-HIGH-PRI
     const publicSignals: string[] = [];
 
-    return groth16.verify(
+    return verifySnarkProof(
       ShieldProofVkey,
       publicSignals,
       shieldProofData.snarkProof,
     );
+  }
+
+  static getFilteredProofs(
+    networkName: NetworkName,
+    bloomFilterSerialized: string,
+  ): ShieldProofData[] {
+    const shieldProofDatas: ShieldProofData[] =
+      ShieldProofMempoolCache.getShieldProofs(networkName);
+
+    const bloomFilter = ProofMempoolBloomFilter.deserialize(
+      bloomFilterSerialized,
+    );
+
+    const filteredProofs: ShieldProofData[] = shieldProofDatas.filter(
+      (shieldProofData) => {
+        return !bloomFilter.has(shieldProofData.publicInputs.commitmentHash);
+      },
+    );
+    return filteredProofs;
   }
 }

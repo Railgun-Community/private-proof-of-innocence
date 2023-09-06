@@ -1,7 +1,7 @@
 import { NetworkName } from '@railgun-community/shared-models';
 import { ShieldProofData } from '../models/proof-types';
 import { BloomFilter } from 'bloom-filters';
-import { ProofBloomFilter } from './proof-bloom-filter';
+import { ProofMempoolBloomFilter } from './proof-mempool-bloom-filters';
 
 export class ShieldProofMempoolCache {
   private static shieldProofMempoolCache: Partial<
@@ -11,7 +11,11 @@ export class ShieldProofMempoolCache {
   private static bloomFilter: BloomFilter;
 
   static async init() {
-    ShieldProofMempoolCache.bloomFilter = ProofBloomFilter.createBloomFilter();
+    ShieldProofMempoolCache.bloomFilter = ProofMempoolBloomFilter.create();
+  }
+
+  static getShieldProofs(networkName: NetworkName): ShieldProofData[] {
+    return this.shieldProofMempoolCache[networkName] ?? [];
   }
 
   static addToCache(
@@ -28,7 +32,9 @@ export class ShieldProofMempoolCache {
     ShieldProofMempoolCache.bloomFilter.add(commitmentHash);
   }
 
-  static getBloomFilterData(): string {
-    return ShieldProofMempoolCache.bloomFilter.saveAsJSON()._filter.content;
+  static serializeBloomFilter(): string {
+    return ProofMempoolBloomFilter.serialize(
+      ShieldProofMempoolCache.bloomFilter,
+    );
   }
 }

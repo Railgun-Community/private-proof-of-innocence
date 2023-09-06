@@ -42,7 +42,7 @@ export class POIEventManager {
     networkName: NetworkName,
     listKey: string,
   ): Promise<void> {
-    // TODO: Get sync status - make sure not currently syncing List from other nodes.
+    // TODO-HIGH-PRI: Get sync status - make sure not currently syncing List from other nodes.
     // if () {
     //   dbg('WARNING: Tried to add POI event while adding another one - risk of duplicate indices. Skipping.');
     //   return;

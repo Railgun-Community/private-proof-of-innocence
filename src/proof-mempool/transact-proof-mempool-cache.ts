@@ -1,7 +1,7 @@
 import { NetworkName } from '@railgun-community/shared-models';
 import { TransactProofData } from '../models/proof-types';
 import { CountingBloomFilter } from 'bloom-filters';
-import { ProofBloomFilter } from './proof-bloom-filter';
+import { ProofMempoolCountingBloomFilter } from './proof-mempool-bloom-filters';
 
 export class TransactProofMempoolCache {
   // { listKey: {networkName: {blindedCommitmentFirstInput: TransactProofData} } }
@@ -14,12 +14,23 @@ export class TransactProofMempoolCache {
 
   static async init() {
     TransactProofMempoolCache.bloomFilter =
-      ProofBloomFilter.createCountingBloomFilter();
+      ProofMempoolCountingBloomFilter.create();
+  }
+
+  static getTransactProofs(
+    listKey: string,
+    networkName: NetworkName,
+  ): TransactProofData[] {
+    const cache = TransactProofMempoolCache.getCacheForNetworkAndList(
+      listKey,
+      networkName,
+    );
+    return Array.from(cache.values());
   }
 
   private static getCacheForNetworkAndList(
-    networkName: NetworkName,
     listKey: string,
+    networkName: NetworkName,
   ) {
     TransactProofMempoolCache.transactProofMempoolCache[listKey] ??= {};
     const cacheForList = TransactProofMempoolCache.transactProofMempoolCache[
@@ -35,8 +46,8 @@ export class TransactProofMempoolCache {
     transactProofData: TransactProofData,
   ) {
     const cache = TransactProofMempoolCache.getCacheForNetworkAndList(
-      networkName,
       listKey,
+      networkName,
     );
 
     const blindedCommitmentFirstInput =
@@ -52,10 +63,11 @@ export class TransactProofMempoolCache {
     blindedCommitmentFirstInput: string,
   ) {
     const cache = TransactProofMempoolCache.getCacheForNetworkAndList(
-      networkName,
       listKey,
+      networkName,
     );
     cache.delete(blindedCommitmentFirstInput);
+
     TransactProofMempoolCache.removeFromBloomFilter(
       blindedCommitmentFirstInput,
     );
@@ -69,7 +81,9 @@ export class TransactProofMempoolCache {
     TransactProofMempoolCache.bloomFilter.remove(blindedCommitmentFirstInput);
   }
 
-  static getBloomFilterData(): string {
-    return TransactProofMempoolCache.bloomFilter.saveAsJSON()._filter.content;
+  static serializeBloomFilter(): string {
+    return ProofMempoolCountingBloomFilter.serialize(
+      TransactProofMempoolCache.bloomFilter,
+    );
   }
 }

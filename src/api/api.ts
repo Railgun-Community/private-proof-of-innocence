@@ -10,6 +10,14 @@ import {
 import { networkNameForSerializedChain } from '../config/general';
 import { ShieldProofMempool } from '../proof-mempool/shield-proof-mempool';
 import { TransactProofMempool } from '../proof-mempool/transact-proof-mempool';
+import {
+  GetMerkleProofsParams,
+  GetPOIsPerListParams,
+  GetShieldProofsParams,
+  GetTransactProofsParams,
+  SubmitShieldProofParams,
+  SubmitTransactProofParams,
+} from '../models/api-types';
 
 const dbg = debug('poi:api');
 
@@ -95,14 +103,36 @@ export class API {
     );
 
     this.safeGet(
-      '/mempool-proofs/:chainType/:chainID',
+      '/shield-proofs/:chainType/:chainID',
       async (req: Request, res: Response) => {
         const { chainType, chainID } = req.params;
-        const { bloomHash } = req.body;
+        const { bloomFilterSerialized } = req.body as GetShieldProofsParams;
 
         const networkName = networkNameForSerializedChain(chainType, chainID);
 
-        // TODO
+        const filteredShieldProofs = ShieldProofMempool.getFilteredProofs(
+          networkName,
+          bloomFilterSerialized,
+        );
+        res.json({ filteredShieldProofs });
+      },
+    );
+
+    this.safeGet(
+      '/transact-proofs/:chainType/:chainID',
+      async (req: Request, res: Response) => {
+        const { chainType, chainID } = req.params;
+        const { listKey, bloomFilterSerialized } =
+          req.body as GetTransactProofsParams;
+
+        const networkName = networkNameForSerializedChain(chainType, chainID);
+
+        const filteredShieldProofs = TransactProofMempool.getFilteredProofs(
+          listKey,
+          networkName,
+          bloomFilterSerialized,
+        );
+        res.json({ filteredShieldProofs });
         throw new Error('Unimplemented');
       },
     );
@@ -113,7 +143,7 @@ export class API {
       '/submit-shield-proof/:chainType/:chainID',
       async (req: Request, res: Response) => {
         const { chainType, chainID } = req.params;
-        const { shieldProofData } = req.body;
+        const { shieldProofData } = req.body as SubmitShieldProofParams;
 
         const networkName = networkNameForSerializedChain(chainType, chainID);
 
@@ -126,7 +156,8 @@ export class API {
       '/submit-transact-proof/:chainType/:chainID',
       async (req: Request, res: Response) => {
         const { chainType, chainID } = req.params;
-        const { listKey, transactProofData } = req.body;
+        const { listKey, transactProofData } =
+          req.body as SubmitTransactProofParams;
 
         const networkName = networkNameForSerializedChain(chainType, chainID);
 
@@ -143,11 +174,12 @@ export class API {
       '/pois-per-list/:chainType/:chainID',
       async (req: Request, res: Response) => {
         const { chainType, chainID } = req.params;
-        const { listKeys, blindedCommitment } = req.body;
+        const { listKeys, blindedCommitment } =
+          req.body as GetPOIsPerListParams;
 
         const networkName = networkNameForSerializedChain(chainType, chainID);
 
-        // TODO
+        // TODO-HIGH-PRI
         throw new Error('Unimplemented');
       },
     );
@@ -156,11 +188,12 @@ export class API {
       '/merkle-proofs/:chainType/:chainID',
       async (req: Request, res: Response) => {
         const { chainType, chainID } = req.params;
-        const { listKeys, blindedCommitments } = req.body;
+        const { listKeys, blindedCommitments } =
+          req.body as GetMerkleProofsParams;
 
         const networkName = networkNameForSerializedChain(chainType, chainID);
 
-        // TODO
+        // TODO-HIGH-PRI
         throw new Error('Unimplemented');
       },
     );
