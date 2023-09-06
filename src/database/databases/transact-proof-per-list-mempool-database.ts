@@ -29,9 +29,24 @@ export class TransactProofPerListMempoolDatabase extends AbstractDatabase<Transa
     return this.insertOne(item);
   }
 
-  async getAllTransactProofs(): Promise<TransactProofData[]> {
+  async getAllTransactProofsAndLists(): Promise<
+    {
+      transactProofData: TransactProofData;
+      listKey: string;
+    }[]
+  > {
     // TODO: Add a filter based on createdAt?
-    const transactProofDatas = await this.findAll();
-    return transactProofDatas;
+    const transactProofDBDatas = await this.findAll();
+
+    return transactProofDBDatas.map((transactProofDBData) => ({
+      transactProofData: {
+        snarkProof: transactProofDBData.snarkProof,
+        poiMerkleroots: transactProofDBData.poiMerkleroots,
+        txMerkleroot: transactProofDBData.txMerkleroot,
+        blindedCommitmentInputs: transactProofDBData.blindedCommitmentInputs,
+        blindedCommitmentOutputs: transactProofDBData.blindedCommitmentInputs,
+      },
+      listKey: transactProofDBData.listKey,
+    }));
   }
 }

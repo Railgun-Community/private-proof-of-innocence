@@ -68,6 +68,21 @@ export class TransactProofMempool {
     );
   }
 
+  static async inflateCacheFromDatabase() {
+    const networkNames = Object.values(NetworkName);
+    for (const networkName of networkNames) {
+      const db = new TransactProofPerListMempoolDatabase(networkName);
+      const transactProofsAndLists = await db.getAllTransactProofsAndLists();
+      transactProofsAndLists.forEach(({ transactProofData, listKey }) => {
+        TransactProofMempoolCache.addToCache(
+          listKey,
+          networkName,
+          transactProofData,
+        );
+      });
+    }
+  }
+
   static getFilteredProofs(
     listKey: string,
     networkName: NetworkName,

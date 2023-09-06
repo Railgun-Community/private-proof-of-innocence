@@ -23,7 +23,12 @@ export class ShieldProofMempoolDatabase extends AbstractDatabase<ShieldProofMemp
 
   async getAllShieldProofs(): Promise<ShieldProofData[]> {
     // TODO: Add a filter based on createdAt?
-    const shieldProofs = await this.findAll();
-    return shieldProofs;
+    const shieldProofDBDatas = await this.findAll();
+
+    return shieldProofDBDatas.map((shieldProofDBData) => ({
+      snarkProof: shieldProofDBData.snarkProof,
+      commitmentHash: shieldProofDBData.commitmentHash,
+      blindedCommitment: shieldProofDBData.blindedCommitment,
+    }));
   }
 }
