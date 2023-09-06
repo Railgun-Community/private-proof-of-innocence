@@ -75,6 +75,10 @@ export abstract class AbstractDatabase<T extends Document> {
     return item ?? undefined;
   }
 
+  protected async deleteOne(filter: Filter<T>): Promise<void> {
+    await this.collection.deleteOne(filter);
+  }
+
   protected async findOneAndReplace(
     filter: Filter<T>,
     replacement: T,

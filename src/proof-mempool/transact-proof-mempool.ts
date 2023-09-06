@@ -13,6 +13,10 @@ export class TransactProofMempool {
     networkName: NetworkName,
     transactProofData: TransactProofData,
   ) {
+    if (transactProofData.blindedCommitmentInputs.length < 1) {
+      throw new Error('Requires blindedCommitmentInputs');
+    }
+
     const verified = await this.verify(listKey, networkName, transactProofData);
     if (!verified) {
       throw new Error('Invalid proof');
@@ -25,6 +29,21 @@ export class TransactProofMempool {
       listKey,
       networkName,
       transactProofData,
+    );
+  }
+
+  static async removeProof(
+    listKey: string,
+    networkName: NetworkName,
+    firstBlindedCommitmentInput: string,
+  ) {
+    const db = new TransactProofPerListMempoolDatabase(networkName);
+    await db.deleteProof(listKey, firstBlindedCommitmentInput);
+
+    TransactProofMempoolCache.removeFromCache(
+      listKey,
+      networkName,
+      firstBlindedCommitmentInput,
     );
   }
 
@@ -97,9 +116,9 @@ export class TransactProofMempool {
 
     const filteredProofs: TransactProofData[] = transactProofDatas.filter(
       (transactProofData) => {
-        const blindedCommitmentFirstInput =
+        const firstBlindedCommitmentInput =
           transactProofData.blindedCommitmentInputs[0];
-        return !bloomFilter.has(blindedCommitmentFirstInput);
+        return !bloomFilter.has(firstBlindedCommitmentInput);
       },
     );
     return filteredProofs;

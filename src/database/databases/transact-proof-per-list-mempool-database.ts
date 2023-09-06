@@ -1,6 +1,7 @@
 import { NetworkName } from '@railgun-community/shared-models';
 import {
   CollectionName,
+  DBFilter,
   TransactProofMempoolDBItem,
 } from '../../models/database-types';
 import { AbstractDatabase } from '../abstract-database';
@@ -12,7 +13,7 @@ export class TransactProofPerListMempoolDatabase extends AbstractDatabase<Transa
   }
 
   async createCollectionIndices() {
-    await this.createIndex(['listKey', 'blindedCommitmentFirstInput'], {
+    await this.createIndex(['listKey', 'firstBlindedCommitmentInput'], {
       unique: true,
     });
   }
@@ -24,9 +25,20 @@ export class TransactProofPerListMempoolDatabase extends AbstractDatabase<Transa
     const item: TransactProofMempoolDBItem = {
       ...transactProofData,
       listKey,
-      blindedCommitmentFirstInput: transactProofData.blindedCommitmentInputs[0],
+      firstBlindedCommitmentInput: transactProofData.blindedCommitmentInputs[0],
     };
     return this.insertOne(item);
+  }
+
+  async deleteProof(
+    listKey: string,
+    firstBlindedCommitmentInput: string,
+  ): Promise<void> {
+    const filter: DBFilter<TransactProofMempoolDBItem> = {
+      listKey,
+      firstBlindedCommitmentInput,
+    };
+    return this.deleteOne(filter);
   }
 
   async getAllTransactProofsAndLists(): Promise<

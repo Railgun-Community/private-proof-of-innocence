@@ -68,7 +68,7 @@ export type TransactProofMempoolDBItem = {
   txMerkleroot: string;
   blindedCommitmentInputs: string[];
   blindedCommitmentOutputs: string[];
-  blindedCommitmentFirstInput: string;
+  firstBlindedCommitmentInput: string;
 };
 
 // DO NOT CHANGE FIELDS WITHOUT CLEARING OR MIGRATING THE DB.

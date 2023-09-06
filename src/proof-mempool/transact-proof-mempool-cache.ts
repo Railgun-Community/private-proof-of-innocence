@@ -3,7 +3,7 @@ import { TransactProofData } from '../models/proof-types';
 import { ProofMempoolCountingBloomFilter } from './proof-mempool-bloom-filters';
 
 export class TransactProofMempoolCache {
-  // { listKey: {networkName: {blindedCommitmentFirstInput: TransactProofData} } }
+  // { listKey: {networkName: {firstBlindedCommitmentInput: TransactProofData} } }
   private static transactProofMempoolCache: Record<
     string,
     Partial<Record<NetworkName, Map<string, TransactProofData>>>
@@ -44,35 +44,35 @@ export class TransactProofMempoolCache {
       networkName,
     );
 
-    const blindedCommitmentFirstInput =
+    const firstBlindedCommitmentInput =
       transactProofData.blindedCommitmentInputs[0];
-    cache.set(blindedCommitmentFirstInput, transactProofData);
+    cache.set(firstBlindedCommitmentInput, transactProofData);
 
-    TransactProofMempoolCache.addToBloomFilter(blindedCommitmentFirstInput);
+    TransactProofMempoolCache.addToBloomFilter(firstBlindedCommitmentInput);
   }
 
   static removeFromCache(
     listKey: string,
     networkName: NetworkName,
-    blindedCommitmentFirstInput: string,
+    firstBlindedCommitmentInput: string,
   ) {
     const cache = TransactProofMempoolCache.getCacheForNetworkAndList(
       listKey,
       networkName,
     );
-    cache.delete(blindedCommitmentFirstInput);
+    cache.delete(firstBlindedCommitmentInput);
 
     TransactProofMempoolCache.removeFromBloomFilter(
-      blindedCommitmentFirstInput,
+      firstBlindedCommitmentInput,
     );
   }
 
-  private static addToBloomFilter(blindedCommitmentFirstInput: string) {
-    TransactProofMempoolCache.bloomFilter.add(blindedCommitmentFirstInput);
+  private static addToBloomFilter(firstBlindedCommitmentInput: string) {
+    TransactProofMempoolCache.bloomFilter.add(firstBlindedCommitmentInput);
   }
 
-  private static removeFromBloomFilter(blindedCommitmentFirstInput: string) {
-    TransactProofMempoolCache.bloomFilter.remove(blindedCommitmentFirstInput);
+  private static removeFromBloomFilter(firstBlindedCommitmentInput: string) {
+    TransactProofMempoolCache.bloomFilter.remove(firstBlindedCommitmentInput);
   }
 
   static serializeBloomFilter(): string {
