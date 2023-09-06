@@ -83,6 +83,16 @@ export class ShieldQueueDatabase extends AbstractDatabase<ShieldQueueDBItem> {
     return this.findAll(filter);
   }
 
+  async getLatestPendingShield(): Promise<Optional<ShieldQueueDBItem>> {
+    const filter: DBFilter<ShieldQueueDBItem> = {
+      status: ShieldStatus.Pending,
+    };
+    const sort: DBSort<ShieldQueueDBItem> = {
+      timestamp: 'descending',
+    };
+    return this.findOne(filter, sort);
+  }
+
   async getCount(status?: ShieldStatus): Promise<number> {
     const filter: DBFilter<ShieldQueueDBItem> = {
       status,

@@ -10,6 +10,7 @@ import {
   Sort,
   CreateIndexesOptions,
   WithId,
+  FindOptions,
 } from 'mongodb';
 import { DatabaseClient } from './database-client';
 import {
@@ -69,8 +70,11 @@ export abstract class AbstractDatabase<T extends Document> {
     return (await this.findOne(filter)) != null;
   }
 
-  protected async findOne(filter: Filter<T>): Promise<Optional<WithId<T>>> {
-    const options = { projection: { _id: 0 } };
+  protected async findOne(
+    filter: Filter<T>,
+    sort?: Sort,
+  ): Promise<Optional<WithId<T>>> {
+    const options: FindOptions<T> = { projection: { _id: 0 }, sort };
     const item = await this.collection.findOne(filter, options);
     return item ?? undefined;
   }
