@@ -18,6 +18,8 @@ import {
   SubmitShieldProofParams,
   SubmitTransactProofParams,
 } from '../models/api-types';
+import { POILookup } from '../poi/poi-lookup';
+import { POIMerkletreeManager } from '../poi/poi-merkletree-manager';
 
 const dbg = debug('poi:api');
 
@@ -98,7 +100,7 @@ export class API {
           Number(startIndex),
           Number(endIndex),
         );
-        res.json({ events });
+        res.json(events);
       },
     );
 
@@ -110,11 +112,11 @@ export class API {
 
         const networkName = networkNameForSerializedChain(chainType, chainID);
 
-        const filteredShieldProofs = ShieldProofMempool.getFilteredProofs(
+        const proofs = ShieldProofMempool.getFilteredProofs(
           networkName,
           bloomFilterSerialized,
         );
-        res.json({ filteredShieldProofs });
+        res.json(proofs);
       },
     );
 
@@ -127,13 +129,12 @@ export class API {
 
         const networkName = networkNameForSerializedChain(chainType, chainID);
 
-        const filteredShieldProofs = TransactProofMempool.getFilteredProofs(
+        const proofs = TransactProofMempool.getFilteredProofs(
           listKey,
           networkName,
           bloomFilterSerialized,
         );
-        res.json({ filteredShieldProofs });
-        throw new Error('Unimplemented');
+        res.json(proofs);
       },
     );
   }
@@ -179,8 +180,12 @@ export class API {
 
         const networkName = networkNameForSerializedChain(chainType, chainID);
 
-        // TODO-HIGH-PRI
-        throw new Error('Unimplemented');
+        const poiExistenceMap = await POILookup.getPOIExistencePerList(
+          listKeys,
+          networkName,
+          blindedCommitment,
+        );
+        res.json(poiExistenceMap);
       },
     );
 
@@ -188,13 +193,17 @@ export class API {
       '/merkle-proofs/:chainType/:chainID',
       async (req: Request, res: Response) => {
         const { chainType, chainID } = req.params;
-        const { listKeys, blindedCommitments } =
+        const { listKey, blindedCommitments } =
           req.body as GetMerkleProofsParams;
 
         const networkName = networkNameForSerializedChain(chainType, chainID);
 
-        // TODO-HIGH-PRI
-        throw new Error('Unimplemented');
+        const merkleProofs = await POIMerkletreeManager.getMerkleProofs(
+          listKey,
+          networkName,
+          blindedCommitments,
+        );
+        res.json(merkleProofs);
       },
     );
   }

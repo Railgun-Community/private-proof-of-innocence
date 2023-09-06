@@ -28,6 +28,14 @@ export type GetPOIsPerListParams = {
 };
 
 export type GetMerkleProofsParams = {
-  listKeys: string[];
+  listKey: string;
   blindedCommitments: string[];
+};
+
+export type POIExistenceListMap = {
+  [listKey: string]: boolean[];
+};
+
+export type POIMerkleProof = {
+  // TODO
 };

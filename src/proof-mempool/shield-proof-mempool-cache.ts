@@ -1,6 +1,5 @@
 import { NetworkName } from '@railgun-community/shared-models';
 import { ShieldProofData } from '../models/proof-types';
-import { BloomFilter } from 'bloom-filters';
 import { ProofMempoolBloomFilter } from './proof-mempool-bloom-filters';
 
 export class ShieldProofMempoolCache {
@@ -8,11 +7,7 @@ export class ShieldProofMempoolCache {
     Record<NetworkName, ShieldProofData[]>
   > = {};
 
-  private static bloomFilter: BloomFilter;
-
-  static async init() {
-    ShieldProofMempoolCache.bloomFilter = ProofMempoolBloomFilter.create();
-  }
+  private static bloomFilter = ProofMempoolBloomFilter.create();
 
   static getShieldProofs(networkName: NetworkName): ShieldProofData[] {
     return this.shieldProofMempoolCache[networkName] ?? [];

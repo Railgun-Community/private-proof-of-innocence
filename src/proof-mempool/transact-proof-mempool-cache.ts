@@ -1,6 +1,5 @@
 import { NetworkName } from '@railgun-community/shared-models';
 import { TransactProofData } from '../models/proof-types';
-import { CountingBloomFilter } from 'bloom-filters';
 import { ProofMempoolCountingBloomFilter } from './proof-mempool-bloom-filters';
 
 export class TransactProofMempoolCache {
@@ -10,12 +9,7 @@ export class TransactProofMempoolCache {
     Partial<Record<NetworkName, Map<string, TransactProofData>>>
   > = {};
 
-  private static bloomFilter: CountingBloomFilter;
-
-  static async init() {
-    TransactProofMempoolCache.bloomFilter =
-      ProofMempoolCountingBloomFilter.create();
-  }
+  private static bloomFilter = ProofMempoolCountingBloomFilter.create();
 
   static getTransactProofs(
     listKey: string,
