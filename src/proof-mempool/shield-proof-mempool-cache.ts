@@ -25,7 +25,7 @@ export class ShieldProofMempoolCache {
     this.shieldProofMempoolCache[networkName] ??= [];
     this.shieldProofMempoolCache[networkName]?.push(shieldProofData);
 
-    this.addToBloomFilter(shieldProofData.publicInputs.commitmentHash);
+    this.addToBloomFilter(shieldProofData.commitmentHash);
   }
 
   private static addToBloomFilter(commitmentHash: string) {

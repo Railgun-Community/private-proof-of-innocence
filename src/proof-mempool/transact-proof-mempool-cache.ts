@@ -51,7 +51,7 @@ export class TransactProofMempoolCache {
     );
 
     const blindedCommitmentFirstInput =
-      transactProofData.publicInputs.blindedCommitmentInputs[0];
+      transactProofData.blindedCommitmentInputs[0];
     cache.set(blindedCommitmentFirstInput, transactProofData);
 
     TransactProofMempoolCache.addToBloomFilter(blindedCommitmentFirstInput);

@@ -21,23 +21,17 @@ export class TransactProofPerListMempoolDatabase extends AbstractDatabase<Transa
     listKey: string,
     transactProofData: TransactProofData,
   ): Promise<void> {
-    const { snarkProof, publicInputs } = transactProofData;
-    const {
-      poiMerkleroots,
-      txMerkleroot,
-      blindedCommitmentInputs,
-      blindedCommitmentOutputs,
-    } = publicInputs;
-
     const item: TransactProofMempoolDBItem = {
+      ...transactProofData,
       listKey,
-      snarkProof,
-      poiMerkleroots,
-      txMerkleroot,
-      blindedCommitmentInputs,
-      blindedCommitmentOutputs,
-      blindedCommitmentFirstInput: blindedCommitmentInputs[0],
+      blindedCommitmentFirstInput: transactProofData.blindedCommitmentInputs[0],
     };
     return this.insertOne(item);
+  }
+
+  async getAllTransactProofs(): Promise<TransactProofData[]> {
+    // TODO: Add a filter based on createdAt?
+    const transactProofDatas = await this.findAll();
+    return transactProofDatas;
   }
 }

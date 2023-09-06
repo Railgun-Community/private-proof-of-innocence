@@ -1,23 +1,15 @@
-export type ShieldProofPublicInputs = {
+export type ShieldProofData = {
+  snarkProof: SnarkProof;
   commitmentHash: string;
   blindedCommitment: string;
 };
 
-export type ShieldProofData = {
+export type TransactProofData = {
   snarkProof: SnarkProof;
-  publicInputs: ShieldProofPublicInputs;
-};
-
-export type TransactProofPublicInputs = {
   poiMerkleroots: string[];
   txMerkleroot: string;
   blindedCommitmentInputs: string[];
   blindedCommitmentOutputs: string[];
-};
-
-export type TransactProofData = {
-  snarkProof: SnarkProof;
-  publicInputs: TransactProofPublicInputs;
 };
 
 export type SnarkProof = {

@@ -37,7 +37,7 @@ export class TransactProofMempool {
     const poiMerklerootDb = new POIHistoricalMerklerootDatabase(networkName);
     const allMerklerootsExist = await poiMerklerootDb.allMerklerootsExist(
       listKey,
-      transactProofData.publicInputs.poiMerkleroots,
+      transactProofData.poiMerkleroots,
     );
     if (!allMerklerootsExist) {
       return false;
@@ -83,7 +83,7 @@ export class TransactProofMempool {
     const filteredProofs: TransactProofData[] = transactProofDatas.filter(
       (transactProofData) => {
         const blindedCommitmentFirstInput =
-          transactProofData.publicInputs.blindedCommitmentInputs[0];
+          transactProofData.blindedCommitmentInputs[0];
         return !bloomFilter.has(blindedCommitmentFirstInput);
       },
     );

@@ -30,7 +30,7 @@ export class ShieldProofMempool {
     // 1. Verify if shield commitmentHash is in historical list of Shields
     const db = new ShieldQueueDatabase(networkName);
     const shieldExists = await db.commitmentHashExists(
-      shieldProofData.publicInputs.commitmentHash,
+      shieldProofData.commitmentHash,
     );
     if (!shieldExists) {
       return false;
@@ -58,6 +58,17 @@ export class ShieldProofMempool {
     );
   }
 
+  static async inflateCacheFromDatabase() {
+    const networkNames = Object.values(NetworkName);
+    for (const networkName of networkNames) {
+      const db = new ShieldProofMempoolDatabase(networkName);
+      const shieldProofDatas: ShieldProofData[] = await db.getAllShieldProofs();
+      shieldProofDatas.forEach((shieldProofData) => {
+        ShieldProofMempoolCache.addToCache(networkName, shieldProofData);
+      });
+    }
+  }
+
   static getFilteredProofs(
     networkName: NetworkName,
     bloomFilterSerialized: string,
@@ -68,10 +79,9 @@ export class ShieldProofMempool {
     const bloomFilter = ProofMempoolBloomFilter.deserialize(
       bloomFilterSerialized,
     );
-
     const filteredProofs: ShieldProofData[] = shieldProofDatas.filter(
       (shieldProofData) => {
-        return !bloomFilter.has(shieldProofData.publicInputs.commitmentHash);
+        return !bloomFilter.has(shieldProofData.commitmentHash);
       },
     );
     return filteredProofs;

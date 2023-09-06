@@ -18,14 +18,12 @@ export class ShieldProofMempoolDatabase extends AbstractDatabase<ShieldProofMemp
   async insertValidShieldProof(
     shieldProofData: ShieldProofData,
   ): Promise<void> {
-    const { snarkProof, publicInputs } = shieldProofData;
-    const { commitmentHash, blindedCommitment } = publicInputs;
+    return this.insertOne(shieldProofData);
+  }
 
-    const item: ShieldProofMempoolDBItem = {
-      snarkProof,
-      commitmentHash,
-      blindedCommitment,
-    };
-    return this.insertOne(item);
+  async getAllShieldProofs(): Promise<ShieldProofData[]> {
+    // TODO: Add a filter based on createdAt?
+    const shieldProofs = await this.findAll();
+    return shieldProofs;
   }
 }
