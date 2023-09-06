@@ -1,6 +1,7 @@
 import { NetworkName } from '@railgun-community/shared-models';
 import { ShieldProofData } from '../models/proof-types';
 import { BloomFilter } from 'bloom-filters';
+import { ProofBloomFilter } from './proof-bloom-filter';
 
 export class ShieldProofMempoolCache {
   private static shieldProofMempoolCache: Partial<
@@ -10,14 +11,7 @@ export class ShieldProofMempoolCache {
   private static bloomFilter: BloomFilter;
 
   static async init() {
-    // For 100,000 elements, approx 1/1_000_000 false positive rate.
-    const sizeInBits = 2_875_518;
-    const numberHashes = 20;
-
-    ShieldProofMempoolCache.bloomFilter = new BloomFilter(
-      sizeInBits,
-      numberHashes,
-    );
+    ShieldProofMempoolCache.bloomFilter = ProofBloomFilter.createBloomFilter();
   }
 
   static addToCache(
@@ -34,7 +28,7 @@ export class ShieldProofMempoolCache {
     ShieldProofMempoolCache.bloomFilter.add(commitmentHash);
   }
 
-  static getBloomFilterData(): object {
-    return ShieldProofMempoolCache.bloomFilter.saveAsJSON();
+  static getBloomFilterData(): string {
+    return ShieldProofMempoolCache.bloomFilter.saveAsJSON()._filter.content;
   }
 }

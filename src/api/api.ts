@@ -8,6 +8,8 @@ import {
   getPOIListEventRange,
 } from '../poi/poi-event-list';
 import { networkNameForSerializedChain } from '../config/general';
+import { ShieldProofMempool } from '../proof-mempool/shield-proof-mempool';
+import { TransactProofMempool } from '../proof-mempool/transact-proof-mempool';
 
 const dbg = debug('poi:api');
 
@@ -108,28 +110,32 @@ export class API {
 
   private addClientRoutes() {
     this.safePost(
-      '/add-shield-proof/:chainType/:chainID',
+      '/submit-shield-proof/:chainType/:chainID',
       async (req: Request, res: Response) => {
         const { chainType, chainID } = req.params;
         const { shieldProofData } = req.body;
 
         const networkName = networkNameForSerializedChain(chainType, chainID);
 
-        // TODO
-        throw new Error('Unimplemented');
+        await ShieldProofMempool.submitProof(networkName, shieldProofData);
+        res.status(200);
       },
     );
 
     this.safePost(
-      '/add-transact-proof/:chainType/:chainID',
+      '/submit-transact-proof/:chainType/:chainID',
       async (req: Request, res: Response) => {
         const { chainType, chainID } = req.params;
         const { listKey, transactProofData } = req.body;
 
         const networkName = networkNameForSerializedChain(chainType, chainID);
 
-        // TODO
-        throw new Error('Unimplemented');
+        await TransactProofMempool.submitProof(
+          listKey,
+          networkName,
+          transactProofData,
+        );
+        res.status(200);
       },
     );
 

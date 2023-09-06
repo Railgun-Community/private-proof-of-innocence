@@ -7,7 +7,7 @@ import { POIHistoricalMerklerootDatabase } from '../database/databases/poi-histo
 import { TransactProofMempoolCache } from './transact-proof-mempool-cache';
 
 export class TransactProofMempool {
-  static async addProof(
+  static async submitProof(
     listKey: string,
     networkName: NetworkName,
     transactProofData: TransactProofData,

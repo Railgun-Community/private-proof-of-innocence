@@ -28,26 +28,27 @@ describe('poi-historical-merkleroot-database', () => {
     const merklerootA = '0x1234';
     const merklerootB = '0x5678';
 
-    await expect(
-      db.containsMerkleroot(listKey, merklerootA),
-    ).to.eventually.equal(
+    await expect(db.merklerootExists(listKey, merklerootA)).to.eventually.equal(
       false,
       "DB should not contain merklerootA before it's inserted",
     );
-    await expect(
-      db.containsMerkleroot(listKey, merklerootB),
-    ).to.eventually.equal(false);
+    await expect(db.merklerootExists(listKey, merklerootB)).to.eventually.equal(
+      false,
+    );
 
     await db.insertMerkleroot(listKey, merklerootA);
 
+    await expect(db.merklerootExists(listKey, merklerootA)).to.eventually.equal(
+      true,
+    );
     await expect(
-      db.containsMerkleroot(listKey, merklerootA),
+      db.allMerklerootsExist(listKey, [merklerootA]),
     ).to.eventually.equal(true);
+    await expect(db.merklerootExists(listKey, merklerootB)).to.eventually.equal(
+      false,
+    );
     await expect(
-      db.containsMerkleroot(listKey, merklerootB),
-    ).to.eventually.equal(false);
-    await expect(
-      db.containsMerkleroot('wrong-key', merklerootA),
+      db.merklerootExists('wrong-key', merklerootA),
     ).to.eventually.equal(false);
   });
 });

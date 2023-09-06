@@ -1,6 +1,7 @@
 import { NetworkName } from '@railgun-community/shared-models';
 import { TransactProofData } from '../models/proof-types';
 import { CountingBloomFilter } from 'bloom-filters';
+import { ProofBloomFilter } from './proof-bloom-filter';
 
 export class TransactProofMempoolCache {
   // { listKey: {networkName: {blindedCommitmentFirstInput: TransactProofData} } }
@@ -12,14 +13,8 @@ export class TransactProofMempoolCache {
   private static bloomFilter: CountingBloomFilter;
 
   static async init() {
-    // For 100,000 elements, approx 1/1_000_000 false positive rate.
-    const sizeInBits = 2_875_518;
-    const numberHashes = 20;
-
-    TransactProofMempoolCache.bloomFilter = new CountingBloomFilter(
-      sizeInBits,
-      numberHashes,
-    );
+    TransactProofMempoolCache.bloomFilter =
+      ProofBloomFilter.createCountingBloomFilter();
   }
 
   private static getCacheForNetworkAndList(
@@ -74,7 +69,7 @@ export class TransactProofMempoolCache {
     TransactProofMempoolCache.bloomFilter.remove(blindedCommitmentFirstInput);
   }
 
-  static getBloomFilterData(): object {
-    return TransactProofMempoolCache.bloomFilter.saveAsJSON();
+  static getBloomFilterData(): string {
+    return TransactProofMempoolCache.bloomFilter.saveAsJSON()._filter.content;
   }
 }

@@ -7,7 +7,7 @@ import { ShieldProofMempoolDatabase } from '../database/databases/shield-proof-m
 import { ShieldProofMempoolCache } from './shield-proof-mempool-cache';
 
 export class ShieldProofMempool {
-  static async addProof(
+  static async submitProof(
     networkName: NetworkName,
     shieldProofData: ShieldProofData,
   ) {
