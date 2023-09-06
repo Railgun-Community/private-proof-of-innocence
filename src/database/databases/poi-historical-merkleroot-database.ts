@@ -4,7 +4,7 @@ import {
   POIHistoricalMerklerootDBItem,
 } from '../../models/database-types';
 import { AbstractDatabase } from '../abstract-database';
-import { Filter } from 'mongodb';
+import { IndexDescription } from 'mongodb';
 
 export class POIHistoricalMerklerootDatabase extends AbstractDatabase<POIHistoricalMerklerootDBItem> {
   constructor(networkName: NetworkName) {
@@ -13,6 +13,10 @@ export class POIHistoricalMerklerootDatabase extends AbstractDatabase<POIHistori
 
   async createCollectionIndices() {
     await this.createIndex(['rootHash', 'listKey'], { unique: true });
+  }
+
+  async getCollectionIndexes(): Promise<IndexDescription[]> {
+    return this.listCollectionIndexes();
   }
 
   async insertMerkleroot(listKey: string, rootHash: string): Promise<void> {

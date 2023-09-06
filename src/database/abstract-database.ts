@@ -10,7 +10,7 @@ import {
   Sort,
   CreateIndexesOptions,
   WithId,
-  FindOptions,
+  IndexDescription,
 } from 'mongodb';
 import { DatabaseClient } from './database-client';
 import {
@@ -52,7 +52,7 @@ export abstract class AbstractDatabase<T extends Document> {
       await this.collection.insertOne(data);
     } catch (err) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-      this.onInsertError(err);
+      this.onInsertError(err); // this method suppresses duplicate key errors, code 11000
     }
   }
 
@@ -129,6 +129,10 @@ export abstract class AbstractDatabase<T extends Document> {
       return;
     }
     return this.collection.createIndex(indexSpec as string[], options);
+  }
+
+  protected async listCollectionIndexes(): Promise<IndexDescription[]> {
+    return this.collection.listIndexes().toArray();
   }
 
   private onInsertError(err: MongoError) {

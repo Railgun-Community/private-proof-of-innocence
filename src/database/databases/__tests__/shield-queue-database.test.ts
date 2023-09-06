@@ -28,6 +28,28 @@ describe('shield-queue-database', () => {
     await db.deleteAllItems_DANGEROUS();
   });
 
+  it('Should create collection indices', async () => {
+    // Fetch all indexes for the collection
+    const indexes = await db.getCollectionIndexes();
+
+    // Check if an index exists for the 'index' field
+    const indexFieldExists = indexes.some(index => {
+      return 'key' in index &&
+        'txid' in index.key &&
+        'hash' in index.key &&
+        index.unique === true;
+    });
+
+    // Check if a unique index exists for the combination of 'index' and 'listKey' fields
+    const combinedIndexExists = indexes.some(index => {
+      return 'key' in index &&
+        'timestamp' in index.key
+    });
+
+    expect(indexFieldExists).to.equal(true);
+    expect(combinedIndexExists).to.equal(true);
+  });
+
   it('Should insert items and query from shield queue database', async () => {
     const now = Date.now();
 

@@ -51,4 +51,21 @@ describe('poi-historical-merkleroot-database', () => {
       db.merklerootExists('wrong-key', merklerootA),
     ).to.eventually.equal(false);
   });
+
+  it('Should create collection indices', async () => {
+    // List all indexes for the collection
+    const indexes = await db.getCollectionIndexes(); // have to access through the wrapper
+
+    // Check that an index on 'listKey' and 'rootHash' exists
+    const indexExists = indexes.some(index => {
+      return (
+        'key' in index &&
+        'listKey' in index.key &&
+        'rootHash' in index.key &&
+        index.unique === true
+      );
+    });
+
+    expect(indexExists).to.be.true;
+  });
 });

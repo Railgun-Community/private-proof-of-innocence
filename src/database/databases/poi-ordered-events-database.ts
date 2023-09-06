@@ -9,6 +9,7 @@ import {
 } from '../../models/database-types';
 import { AbstractDatabase } from '../abstract-database';
 import { SignedPOIEvent } from '../../models/poi-types';
+import { IndexDescription } from 'mongodb';
 
 export class POIOrderedEventsDatabase extends AbstractDatabase<POIOrderedEventDBItem> {
   constructor(networkName: NetworkName) {
@@ -18,6 +19,10 @@ export class POIOrderedEventsDatabase extends AbstractDatabase<POIOrderedEventDB
   async createCollectionIndices() {
     await this.createIndex(['index', 'listKey'], { unique: true });
     await this.createIndex(['index']);
+  }
+
+  async getCollectionIndexes(): Promise<IndexDescription[]> {
+    return this.listCollectionIndexes();
   }
 
   async insertValidSignedPOIEvent(

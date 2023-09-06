@@ -14,6 +14,7 @@ import { TransactProofPerListMempoolDatabase } from './databases/transact-proof-
 import { POIOrderedEventsDatabase } from './databases/poi-ordered-events-database';
 import { POIMerkletreeDatabase } from './databases/poi-merkletree-database';
 import { POIHistoricalMerklerootDatabase } from './databases/poi-historical-merkleroot-database';
+import { TestDatabase } from './databases/test-database';
 
 export class DatabaseClient {
   static client?: MongoClient;
@@ -69,7 +70,11 @@ export class DatabaseClient {
               case CollectionName.POIHistoricalMerkleroots:
                 db = new POIHistoricalMerklerootDatabase(networkName);
                 break;
+              case CollectionName.Test:
+                db = new TestDatabase(networkName);
+                break;
             }
+
             await db.createCollectionIndices();
           }),
         );

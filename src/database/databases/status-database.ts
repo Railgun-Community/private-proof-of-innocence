@@ -5,6 +5,7 @@ import {
   StatusDBItem,
 } from '../../models/database-types';
 import { AbstractDatabase } from '../abstract-database';
+import { IndexDescription } from 'mongodb';
 
 export class StatusDatabase extends AbstractDatabase<StatusDBItem> {
   constructor(networkName: NetworkName) {
@@ -14,6 +15,10 @@ export class StatusDatabase extends AbstractDatabase<StatusDBItem> {
   async createCollectionIndices() {
     // No index
     await this.createIndex([], {});
+  }
+
+  async getCollectionIndexes(): Promise<IndexDescription[]> {
+    return this.listCollectionIndexes();
   }
 
   async getStatus(): Promise<Optional<StatusDBItem>> {
