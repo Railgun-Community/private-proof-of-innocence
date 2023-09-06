@@ -5,6 +5,7 @@ import {
   DBMaxMin,
   DBSort,
   POIOrderedEventDBItem,
+  ShieldStatus,
 } from '../../models/database-types';
 import { AbstractDatabase } from '../abstract-database';
 import { SignedPOIEvent } from '../../models/poi-types';

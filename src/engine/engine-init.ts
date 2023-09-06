@@ -4,6 +4,7 @@ import {
   stopRailgunEngine,
   ArtifactStore,
   loadProvider,
+  setLoggers,
 } from '@railgun-community/wallet';
 import fs from 'fs';
 import {
@@ -11,6 +12,10 @@ import {
   NetworkName,
 } from '@railgun-community/shared-models';
 import { Config } from '../config/config';
+import debug from 'debug';
+
+const dbgLog = debug('poi:engine:log');
+const dbgError = debug('poi:engine:error');
 
 let engineStarted = false;
 
@@ -39,7 +44,9 @@ export const startEngine = () => {
   const levelDB = new LevelDOWN(Config.ENGINE_DB_DIR);
 
   const walletSource = 'relayer';
-  const shouldDebug = false;
+  const shouldDebug = true;
+
+  setLoggers(dbgLog, dbgError);
 
   startRailgunEngine(
     walletSource,
@@ -49,6 +56,7 @@ export const startEngine = () => {
     false, // useNativeArtifacts
     false, // skipMerkletreeScans
   );
+
   engineStarted = true;
 };
 

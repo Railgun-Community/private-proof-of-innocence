@@ -92,6 +92,7 @@ export abstract class AbstractDatabase<T extends Document> {
     sort?: Sort,
     max?: DBMaxMin<T>,
     min?: DBMaxMin<T>,
+    limit?: number,
   ): Promise<T[]> {
     let cursor = this.collection.find();
     if (isDefined(max)) {
@@ -105,6 +106,9 @@ export abstract class AbstractDatabase<T extends Document> {
     }
     if (isDefined(sort)) {
       cursor = cursor.sort(sort);
+    }
+    if (isDefined(limit)) {
+      cursor = cursor.limit(limit);
     }
     return cursor.project({ _id: 0 }).toArray() as Promise<T[]>;
   }

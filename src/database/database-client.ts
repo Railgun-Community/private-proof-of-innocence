@@ -1,4 +1,8 @@
-import { NetworkName, isDefined } from '@railgun-community/shared-models';
+import {
+  NetworkName,
+  isDefined,
+  promiseTimeout,
+} from '@railgun-community/shared-models';
 import { MongoClient } from 'mongodb';
 import { Config } from '../config/config';
 import { ShieldQueueDatabase } from './databases/shield-queue-database';
@@ -18,14 +22,22 @@ export class DatabaseClient {
     if (DatabaseClient.client) {
       return DatabaseClient.client;
     }
+
+    await promiseTimeout(
+      DatabaseClient.createClient(),
+      2000,
+      new Error('Could not connect to MongoDB'),
+    );
+
+    return DatabaseClient.client;
+  }
+
+  private static async createClient() {
     if (!isDefined(Config.MONGODB_URL)) {
       throw new Error('Set MONGODB_URL as mongodb:// string');
     }
-
     const client = await new MongoClient(Config.MONGODB_URL).connect();
     DatabaseClient.client = client;
-
-    return client;
   }
 
   static async ensureDBIndicesAllChains(): Promise<void> {

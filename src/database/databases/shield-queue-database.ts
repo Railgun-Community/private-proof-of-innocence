@@ -16,7 +16,7 @@ export class ShieldQueueDatabase extends AbstractDatabase<ShieldQueueDBItem> {
   }
 
   async createCollectionIndices() {
-    await this.createIndex(['txid'], { unique: true });
+    await this.createIndex(['txid']);
     await this.createIndex(['hash'], { unique: true });
     await this.createIndex(['timestamp']);
     await this.createIndex(['status']);
@@ -59,7 +59,10 @@ export class ShieldQueueDatabase extends AbstractDatabase<ShieldQueueDBItem> {
     return this.findOneAndReplace(filter, replacement);
   }
 
-  async getPendingShields(endTimestamp: number): Promise<ShieldQueueDBItem[]> {
+  async getPendingShields(
+    endTimestamp: number,
+    limit?: number,
+  ): Promise<ShieldQueueDBItem[]> {
     const filter: DBFilter<ShieldQueueDBItem> = {
       status: ShieldStatus.Pending,
     };
@@ -69,7 +72,7 @@ export class ShieldQueueDatabase extends AbstractDatabase<ShieldQueueDBItem> {
     const max: DBMaxMin<ShieldQueueDBItem> = {
       timestamp: endTimestamp,
     };
-    return this.findAll(filter, sort, max);
+    return this.findAll(filter, sort, max, undefined, limit);
   }
 
   async getAllowedShields(): Promise<ShieldQueueDBItem[]> {
@@ -77,5 +80,12 @@ export class ShieldQueueDatabase extends AbstractDatabase<ShieldQueueDBItem> {
       status: ShieldStatus.Allowed,
     };
     return this.findAll(filter);
+  }
+
+  async getCount(status?: ShieldStatus): Promise<number> {
+    const filter: DBFilter<ShieldQueueDBItem> = {
+      status,
+    };
+    return this.count(filter);
   }
 }

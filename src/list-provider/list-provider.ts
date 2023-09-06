@@ -16,6 +16,7 @@ import {
   getTimestampFromTransactionReceipt,
 } from '../rpc-providers/tx-receipt';
 import { getListPublicKey } from '../util/ed25519';
+import { Constants } from '../config/constants';
 
 export type ListProviderConfig = {
   name: string;
@@ -24,14 +25,11 @@ export type ListProviderConfig = {
   validateShieldsOverrideDelayMsec?: number;
 };
 
-// 30 minutes
-const DEFAULT_QUEUE_SHIELDS_DELAY_MSEC = 30 * 60 * 1000;
+// 20 minutes
+const DEFAULT_QUEUE_SHIELDS_DELAY_MSEC = 20 * 60 * 1000;
 
 // 30 seconds
 const DEFAULT_VALIDATE_SHIELDS_DELAY_MSEC = 30 * 1000;
-
-// DO NOT MODIFY
-const DAYS_WAITING_PERIOD = 7;
 
 const dbg = debug('poi:list-provider');
 
@@ -91,6 +89,9 @@ export abstract class ListProvider {
       this.config.queueShieldsOverrideDelayMsec ??
         DEFAULT_QUEUE_SHIELDS_DELAY_MSEC,
     );
+
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    this.runQueueShieldsPoller();
   }
 
   private async runValidateQueuedShieldsPoller() {
@@ -108,6 +109,9 @@ export abstract class ListProvider {
       this.config.queueShieldsOverrideDelayMsec ??
         DEFAULT_VALIDATE_SHIELDS_DELAY_MSEC,
     );
+
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    this.runValidateQueuedShieldsPoller();
   }
 
   async queueNewShields(networkName: NetworkName): Promise<void> {
@@ -130,13 +134,19 @@ export abstract class ListProvider {
         this.queueShieldSafe(networkName, shieldData),
       ),
     );
+
+    if (newShields.length > 0) {
+      const lastShieldScanned = newShields[newShields.length - 1];
+      const latestBlockScanned = lastShieldScanned.blockNumber;
+      await statusDB.saveStatus(latestBlockScanned);
+    }
   }
 
-  private static textForShieldData(shieldData: ShieldData): string {
-    return `${shieldData.txid} (${new Date(
-      shieldData.timestamp ?? 0,
-    ).toLocaleDateString()}`;
-  }
+  // private static textForShieldData(shieldData: ShieldData): string {
+  //   return `${shieldData.txid} (${new Date(
+  //     shieldData.timestamp ?? 0,
+  //   ).toLocaleDateString()}`;
+  // }
 
   private async queueShieldSafe(
     networkName: NetworkName,
@@ -145,11 +155,6 @@ export abstract class ListProvider {
     try {
       const shieldQueueDB = new ShieldQueueDatabase(networkName);
       await shieldQueueDB.insertPendingShield(shieldData);
-      dbg(
-        `[${networkName}] Insert pending shield: ${ListProvider.textForShieldData(
-          shieldData,
-        )}`,
-      );
     } catch (err) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       dbg(
@@ -160,7 +165,7 @@ export abstract class ListProvider {
   }
 
   private getMaxTimestampForValidation() {
-    return Date.now() - DAYS_WAITING_PERIOD * 24 * 60 * 60 * 1000;
+    return Date.now() - Constants.DAYS_WAITING_PERIOD * 24 * 60 * 60 * 1000;
   }
 
   async validateNextQueuedShieldBatch(networkName: NetworkName): Promise<void> {
@@ -168,7 +173,14 @@ export abstract class ListProvider {
     let pendingShields: ShieldQueueDBItem[];
     try {
       const shieldQueueDB = new ShieldQueueDatabase(networkName);
-      pendingShields = await shieldQueueDB.getPendingShields(endTimestamp);
+      const limit = 100;
+      pendingShields = await shieldQueueDB.getPendingShields(
+        endTimestamp,
+        limit,
+      );
+      if (pendingShields.length === 0) {
+        return;
+      }
     } catch (err) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       dbg(`Error getting queued shields on ${networkName}: ${err.message}`);
@@ -176,7 +188,7 @@ export abstract class ListProvider {
     }
 
     dbg(
-      `[${networkName}] Attempting to validate ${pendingShields.length} pending shields`,
+      `[${networkName}] Validating ${pendingShields.length} pending shields...`,
     );
 
     await Promise.all(

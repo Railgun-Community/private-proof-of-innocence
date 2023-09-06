@@ -20,6 +20,7 @@ import {
 } from '../models/api-types';
 import { POILookup } from '../poi/poi-lookup';
 import { POIMerkletreeManager } from '../poi/poi-merkletree-manager';
+import { getShieldQueueStatus } from '../shield-queue/shield-queue';
 
 const dbg = debug('poi:api');
 
@@ -76,6 +77,17 @@ export class API {
   }
 
   private addAggregatorRoutes() {
+    this.safeGet(
+      '/shield-queue-status/:chainType/:chainID',
+      async (req: Request, res: Response) => {
+        const { chainType, chainID } = req.params;
+        const networkName = networkNameForSerializedChain(chainType, chainID);
+
+        const status = await getShieldQueueStatus(networkName);
+        res.json(status);
+      },
+    );
+
     this.safeGet(
       '/list-status/:chainType/:chainID/:listKey',
       async (req: Request, res: Response) => {
