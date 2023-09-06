@@ -47,6 +47,7 @@ export type ShieldQueueDBItem = {
   timestamp: number;
   status: ShieldStatus;
   lastValidatedTimestamp: DBOptional<number>;
+  blockNumber: number;
 };
 
 export type StatusDBItem = {

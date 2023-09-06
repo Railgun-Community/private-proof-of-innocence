@@ -11,7 +11,8 @@ chai.use(chaiAsPromised);
 const { expect } = chai;
 
 describe('active-network-providers', () => {
-  before(async () => {
+  before(async function run() {
+    this.timeout(20000);
     startEngine();
     await initNetworkProviders([NetworkName.Ethereum]);
   });

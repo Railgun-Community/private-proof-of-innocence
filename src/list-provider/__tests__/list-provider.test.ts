@@ -52,11 +52,13 @@ describe('list-provider', () => {
         txid: '0x1234',
         hash: '0x2345',
         timestamp: 1662421336, // Sept 5, 2022
+        blockNumber: 123436,
       },
       {
         txid: '0x5678',
         hash: '0x6789',
         timestamp: Date.now(),
+        blockNumber: 123436,
       },
     ];
     createStubGetAllShields(shieldDatas);
@@ -69,6 +71,7 @@ describe('list-provider', () => {
       timestamp: 1662421336, // Sept 5, 2022
       status: ShieldStatus.Pending,
       lastValidatedTimestamp: null,
+      blockNumber: 123436,
     };
     await expect(db.getPendingShields(daysAgo(7))).to.eventually.deep.equal([
       pendingShield,
@@ -81,11 +84,13 @@ describe('list-provider', () => {
         txid: '0x1234',
         hash: '0x2345',
         timestamp: 1662421336, // Sept 5, 2022
+        blockNumber: 123436,
       },
       {
         txid: '0x5678',
         hash: '0x6789',
         timestamp: 1662421336, // Sept 5, 2022
+        blockNumber: 123436,
       },
     ];
     createStubGetAllShields(shieldDatas);
@@ -139,6 +144,7 @@ describe('list-provider', () => {
         timestamp: 1662421336,
         status: ShieldStatus.Allowed,
         lastValidatedTimestamp: null,
+        blockNumber: 123436,
       },
     ]);
 

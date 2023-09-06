@@ -32,6 +32,7 @@ export class ShieldQueueDatabase extends AbstractDatabase<ShieldQueueDBItem> {
       timestamp: shieldData.timestamp,
       status: ShieldStatus.Pending,
       lastValidatedTimestamp: undefined,
+      blockNumber: shieldData.blockNumber,
     };
     return this.insertOne(storedData);
   }

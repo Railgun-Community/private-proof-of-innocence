@@ -63,6 +63,7 @@ describe('shield-proof-mempool', () => {
       txid: '0x0000',
       hash: shieldProofData.commitmentHash,
       timestamp: 1234567890,
+      blockNumber: 123456,
     });
     await expect(
       ShieldProofMempool.submitProof(networkName, shieldProofData),
@@ -94,11 +95,13 @@ describe('shield-proof-mempool', () => {
       txid: '0x0000',
       hash: shieldProofData1.commitmentHash,
       timestamp: 1234567890,
+      blockNumber: 123436,
     });
     await shieldQueueDB.insertPendingShield({
       txid: '0x0001',
       hash: shieldProofData2.commitmentHash,
       timestamp: 1234567890,
+      blockNumber: 123436,
     });
 
     await ShieldProofMempool.submitProof(networkName, shieldProofData1);
@@ -147,11 +150,13 @@ describe('shield-proof-mempool', () => {
       txid: '0x0000',
       hash: shieldProofData1.commitmentHash,
       timestamp: 1234567890,
+      blockNumber: 123436,
     });
     await shieldQueueDB.insertPendingShield({
       txid: '0x0001',
       hash: shieldProofData2.commitmentHash,
       timestamp: 1234567890,
+      blockNumber: 123436,
     });
 
     await ShieldProofMempool.submitProof(networkName, shieldProofData1);

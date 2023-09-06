@@ -38,6 +38,7 @@ describe('shield-queue-database', () => {
       txid: '0x1234',
       hash: '0x5678',
       timestamp: now,
+      blockNumber: 123456,
     };
     await db.insertPendingShield(pendingShield1);
 
@@ -46,6 +47,7 @@ describe('shield-queue-database', () => {
       txid: '0x9876',
       hash: '0x5432',
       timestamp: tenDaysAgo,
+      blockNumber: 123456,
     };
     await db.insertPendingShield(pendingShield2);
 
@@ -54,6 +56,7 @@ describe('shield-queue-database', () => {
       txid: '0x123456',
       hash: '0x567890',
       timestamp: undefined,
+      blockNumber: 123436,
     };
     await db.insertPendingShield(pendingShield3);
 
@@ -79,6 +82,7 @@ describe('shield-queue-database', () => {
       txid: '0x9876',
       hash: '0x5432',
       timestamp: tenDaysAgo,
+      blockNumber: 123436,
     };
     await db.insertPendingShield(pendingShieldExpired);
 
@@ -88,6 +92,7 @@ describe('shield-queue-database', () => {
       timestamp: tenDaysAgo,
       status: ShieldStatus.Pending,
       lastValidatedTimestamp: null,
+      blockNumber: 123436,
     };
     await expect(db.getPendingShields(daysAgo(7))).to.eventually.deep.equal([
       shieldQueueItemExpired,
