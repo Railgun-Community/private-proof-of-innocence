@@ -80,4 +80,9 @@ export class TransactProofMempoolCache {
       TransactProofMempoolCache.bloomFilter,
     );
   }
+
+  static clearCache_FOR_TEST_ONLY() {
+    this.transactProofMempoolCache = {};
+    this.bloomFilter = ProofMempoolCountingBloomFilter.create();
+  }
 }

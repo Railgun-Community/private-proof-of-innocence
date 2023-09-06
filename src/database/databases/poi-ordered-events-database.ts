@@ -15,8 +15,8 @@ export class POIOrderedEventsDatabase extends AbstractDatabase<POIOrderedEventDB
   }
 
   async createCollectionIndices() {
-    await this.createIndex(['index']);
     await this.createIndex(['index', 'listKey'], { unique: true });
+    await this.createIndex(['index']);
   }
 
   async insertValidSignedPOIEvent(

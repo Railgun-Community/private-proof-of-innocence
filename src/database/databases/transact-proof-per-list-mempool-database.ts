@@ -30,6 +30,17 @@ export class TransactProofPerListMempoolDatabase extends AbstractDatabase<Transa
     return this.insertOne(item);
   }
 
+  async proofExists(
+    listKey: string,
+    firstBlindedCommitmentInput: string,
+  ): Promise<boolean> {
+    const filter: DBFilter<TransactProofMempoolDBItem> = {
+      listKey,
+      firstBlindedCommitmentInput,
+    };
+    return this.exists(filter);
+  }
+
   async deleteProof(
     listKey: string,
     firstBlindedCommitmentInput: string,

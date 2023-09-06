@@ -1,6 +1,7 @@
 import { NetworkName } from '@railgun-community/shared-models';
 import {
   CollectionName,
+  DBFilter,
   ShieldProofMempoolDBItem,
 } from '../../models/database-types';
 import { AbstractDatabase } from '../abstract-database';
@@ -19,6 +20,13 @@ export class ShieldProofMempoolDatabase extends AbstractDatabase<ShieldProofMemp
     shieldProofData: ShieldProofData,
   ): Promise<void> {
     return this.insertOne(shieldProofData);
+  }
+
+  async proofExists(commitmentHash: string): Promise<boolean> {
+    const filter: DBFilter<ShieldProofMempoolDBItem> = {
+      commitmentHash,
+    };
+    return this.exists(filter);
   }
 
   async getAllShieldProofs(): Promise<ShieldProofData[]> {

@@ -25,6 +25,8 @@
     "tsc-test": "tsc -p tsconfig.test.json && tsc-alias -p tsconfig.test.json",
     "compile-test": "npm run clean && npm run tsc-test",
     "test-coverage": "npm run compile-test && c8 mocha",
+    "prod-db": "./run-mongodb-prod",
+    "test-db": "./run-mongodb-test",
     "test": "npm run compile-test && NODE_ENV=test mocha"
   },
   "dependencies": {

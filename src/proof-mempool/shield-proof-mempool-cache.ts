@@ -32,4 +32,9 @@ export class ShieldProofMempoolCache {
       ShieldProofMempoolCache.bloomFilter,
     );
   }
+
+  static clearCache_FOR_TEST_ONLY() {
+    this.shieldProofMempoolCache = {};
+    this.bloomFilter = ProofMempoolBloomFilter.create();
+  }
 }

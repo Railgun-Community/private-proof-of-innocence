@@ -14,11 +14,11 @@ export class ShieldProofMempool {
   ) {
     const verified = await this.verify(networkName, shieldProofData);
     if (!verified) {
-      throw new Error('Invalid proof');
+      return;
     }
 
-    const db = new ShieldProofMempoolDatabase(networkName);
-    await db.insertValidShieldProof(shieldProofData);
+    const shieldProofMempoolDB = new ShieldProofMempoolDatabase(networkName);
+    await shieldProofMempoolDB.insertValidShieldProof(shieldProofData);
 
     ShieldProofMempoolCache.addToCache(networkName, shieldProofData);
   }
@@ -28,8 +28,8 @@ export class ShieldProofMempool {
     shieldProofData: ShieldProofData,
   ): Promise<boolean> {
     // 1. Verify if shield commitmentHash is in historical list of Shields
-    const db = new ShieldQueueDatabase(networkName);
-    const shieldExists = await db.commitmentHashExists(
+    const shieldQueueDB = new ShieldQueueDatabase(networkName);
+    const shieldExists = await shieldQueueDB.commitmentHashExists(
       shieldProofData.commitmentHash,
     );
     if (!shieldExists) {
@@ -39,7 +39,7 @@ export class ShieldProofMempool {
     // 2. Verify snark proof
     const verifiedProof = await this.verifyProof(shieldProofData);
     if (!verifiedProof) {
-      return false;
+      throw new Error('Invalid proof');
     }
 
     return true;

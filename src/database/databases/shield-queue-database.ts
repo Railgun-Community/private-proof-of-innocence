@@ -16,10 +16,10 @@ export class ShieldQueueDatabase extends AbstractDatabase<ShieldQueueDBItem> {
   }
 
   async createCollectionIndices() {
-    await this.createIndex(['txid', 'hash'], { unique: true });
+    await this.createIndex(['txid'], { unique: true });
+    await this.createIndex(['hash'], { unique: true });
     await this.createIndex(['timestamp']);
     await this.createIndex(['status']);
-    await this.createIndex(['hash']);
   }
 
   async insertPendingShield(shieldData: ShieldData): Promise<void> {

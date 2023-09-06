@@ -19,7 +19,7 @@ export class TransactProofMempool {
 
     const verified = await this.verify(listKey, networkName, transactProofData);
     if (!verified) {
-      throw new Error('Invalid proof');
+      return;
     }
 
     const db = new TransactProofPerListMempoolDatabase(networkName);
@@ -68,7 +68,7 @@ export class TransactProofMempool {
     // 3. Verify snark proof
     const verifiedProof = await this.verifyProof(transactProofData);
     if (!verifiedProof) {
-      return false;
+      throw new Error('Invalid proof');
     }
 
     return true;

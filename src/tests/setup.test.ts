@@ -5,6 +5,7 @@ import { Config } from '../config/config';
 import { promiseTimeout } from '@railgun-community/shared-models';
 
 const TEST_DB_DIR = 'test.db';
+const TEST_MONGO_DB_DIR = 'mongo.test.db';
 
 before(async function run() {
   // Mock pkey
@@ -16,7 +17,7 @@ before(async function run() {
   await promiseTimeout(
     setUpMongoose(),
     2000,
-    new Error('Mongoose DB setup timed out'),
+    new Error('Mongoose DB setup timed out - make sure you run ./'),
   );
   Config.MONGODB_URL = MONGOOSE_DB_URL;
 });
@@ -25,5 +26,8 @@ after(async () => {
   const { warn } = console;
   fs.rm(TEST_DB_DIR, { recursive: true }, () => {
     warn('Error removing test db.');
+  });
+  fs.rm(TEST_MONGO_DB_DIR, { recursive: true }, () => {
+    warn('Error removing mongo test db.');
   });
 });
