@@ -26,6 +26,9 @@ export enum CollectionName {
   POIOrderedEvents = 'POIOrderedEvents',
   POIMerkletree = 'POIMerkletree',
   POIHistoricalMerkleroots = 'POIHistoricalMerkleroots',
+
+  // Test
+  Test = 'Test',
 }
 
 export enum ShieldStatus {
@@ -96,3 +99,7 @@ export type POIHistoricalMerklerootDBItem = {
   listKey: string;
   rootHash: string;
 };
+
+export type TestDBItem = {
+  test: string;
+}

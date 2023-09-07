@@ -8,6 +8,7 @@ import {
 } from '../../models/database-types';
 import { AbstractDatabase } from '../abstract-database';
 import { SignedPOIEvent } from '../../models/poi-types';
+import { IndexDescription } from 'mongodb';
 
 export class POIOrderedEventsDatabase extends AbstractDatabase<POIOrderedEventDBItem> {
   constructor(networkName: NetworkName) {
@@ -19,6 +20,10 @@ export class POIOrderedEventsDatabase extends AbstractDatabase<POIOrderedEventDB
     await this.createIndex(['index']);
     await this.createIndex(['listKey']);
     await this.createIndex(['firstBlindedCommitmentInput']);
+  }
+
+  async getCollectionIndexes(): Promise<IndexDescription[]> {
+    return this.listCollectionIndexes();
   }
 
   async insertValidSignedPOIEvent(
@@ -48,12 +53,16 @@ export class POIOrderedEventsDatabase extends AbstractDatabase<POIOrderedEventDB
     const sort: DBSort<POIOrderedEventDBItem> = {
       index: 'ascending',
     };
-    const max: DBMaxMin<POIOrderedEventDBItem> = {
-      index: endIndex,
-    };
+
+    // Set startIndex as the min index
     const min: DBMaxMin<POIOrderedEventDBItem> = {
       index: startIndex,
     };
+
+    // If endIndex is defined, set it as the max index
+    const max: DBMaxMin<POIOrderedEventDBItem> = {};
+    if (typeof endIndex !== 'undefined') { max.index = endIndex; }
+
     return this.findAll(filter, sort, max, min);
   }
 

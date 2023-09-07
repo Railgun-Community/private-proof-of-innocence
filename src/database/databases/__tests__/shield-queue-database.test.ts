@@ -28,6 +28,38 @@ describe('shield-queue-database', () => {
     await db.deleteAllItems_DANGEROUS();
   });
 
+  it('Should create collection indices', async () => {
+    // Fetch all indexes for the collection
+    const indexes = await db.getCollectionIndexes();
+
+    // Check if an index exists for the 'txid' field
+    const txidIndexExists = indexes.some(index => {
+      return 'key' in index && 'txid' in index.key;
+    });
+
+    // Check if an index exists for the 'hash' field with a unique constraint
+    const hashIndexExists = indexes.some(index => {
+      return 'key' in index && 'hash' in index.key && index.unique === true;
+    });
+
+    // Check if an index exists for the 'timestamp' field
+    const timestampIndexExists = indexes.some(index => {
+      return 'key' in index && 'timestamp' in index.key;
+    });
+
+    // Check if an index exists for the 'status' field
+    const statusIndexExists = indexes.some(index => {
+      return 'key' in index && 'status' in index.key;
+    });
+
+    // Assert that each index exists
+    expect(txidIndexExists).to.equal(true);
+    expect(hashIndexExists).to.equal(true);
+    expect(timestampIndexExists).to.equal(true);
+    expect(statusIndexExists).to.equal(true);
+  });
+
+
   it('Should insert items and query from shield queue database', async () => {
     const now = Date.now();
 
@@ -69,6 +101,15 @@ describe('shield-queue-database', () => {
     await expect(db.getPendingShields(daysAgo(7))).to.eventually.deep.equal([
       shieldQueueItem2,
     ]);
+
+    const pendingCount = await db.getCount(ShieldStatus.Pending);
+    expect(pendingCount).to.equal(2);  // 2 pending status shields
+
+    const allowedCount = await db.getCount(ShieldStatus.Allowed);
+    expect(allowedCount).to.equal(0);  // No allowed status shields
+
+    const blockedCount = await db.getCount(ShieldStatus.Blocked);
+    expect(blockedCount).to.equal(0);  // No block status shields
   });
 
   it('Should update pending shield status', async () => {
@@ -128,4 +169,39 @@ describe('shield-queue-database', () => {
     const allowedShields2 = await db.getAllowedShields();
     expect(allowedShields2.length).to.equal(0);
   });
+
+  it('Should get the latest pending shield', async () => {
+    // Insert pending shields with different timestamps
+    const pendingShield1: ShieldData = {
+      txid: '0x1234',
+      hash: '0x5678',
+      timestamp: Date.now() - 2000,  // 2 seconds ago
+      blockNumber: 123456,
+    };
+    await db.insertPendingShield(pendingShield1);
+
+    const pendingShield2: ShieldData = {
+      txid: '0x9876',
+      hash: '0x5432',
+      timestamp: Date.now() - 1000,  // 1 second ago
+      blockNumber: 123456,
+    };
+    await db.insertPendingShield(pendingShield2);
+
+    // Get the latest pending shield
+    const latestPendingShield = await db.getLatestPendingShield();
+
+    // Validate returned shield is latest one based on timestamp
+    expect(latestPendingShield?.txid).to.equal(pendingShield2.txid);
+    expect(latestPendingShield?.hash).to.equal(pendingShield2.hash);
+    expect(latestPendingShield?.timestamp).to.equal(pendingShield2.timestamp);
+
+    // Delete all pending shields
+    await db.deleteAllItems_DANGEROUS();
+
+    // Validate latestPendingShield now returns undefined
+    const latestPendingShieldAfterDeletion = await db.getLatestPendingShield();
+    expect(latestPendingShieldAfterDeletion).to.be.undefined;
+  });
+
 });
