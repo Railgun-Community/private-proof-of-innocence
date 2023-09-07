@@ -11,6 +11,7 @@ import {
   CreateIndexesOptions,
   WithId,
   IndexDescription,
+  FindOptions,
 } from 'mongodb';
 import { DatabaseClient } from './database-client';
 import {

@@ -4,7 +4,7 @@ import {
   POIHistoricalMerklerootDBItem,
 } from '../../models/database-types';
 import { AbstractDatabase } from '../abstract-database';
-import { IndexDescription } from 'mongodb';
+import { Filter, IndexDescription } from 'mongodb';
 
 export class POIHistoricalMerklerootDatabase extends AbstractDatabase<POIHistoricalMerklerootDBItem> {
   constructor(networkName: NetworkName) {

@@ -5,7 +5,6 @@ import {
   DBMaxMin,
   DBSort,
   POIOrderedEventDBItem,
-  ShieldStatus,
 } from '../../models/database-types';
 import { AbstractDatabase } from '../abstract-database';
 import { SignedPOIEvent } from '../../models/poi-types';
@@ -51,12 +50,16 @@ export class POIOrderedEventsDatabase extends AbstractDatabase<POIOrderedEventDB
     const sort: DBSort<POIOrderedEventDBItem> = {
       index: 'ascending',
     };
-    const max: DBMaxMin<POIOrderedEventDBItem> = {
-      index: endIndex,
-    };
+
+    // Set startIndex as the min index
     const min: DBMaxMin<POIOrderedEventDBItem> = {
       index: startIndex,
     };
+
+    // If endIndex is defined, set it as the max index
+    const max: DBMaxMin<POIOrderedEventDBItem> = {};
+    if (typeof endIndex !== 'undefined') { max.index = endIndex; }
+
     return this.findAll(filter, sort, max, min);
   }
 

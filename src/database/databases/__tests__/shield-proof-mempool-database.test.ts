@@ -41,11 +41,12 @@ describe('ShieldProofMempoolDatabase', () => {
     it('Should insert and get a valid shield proof mempool item', async () => {
         const shieldProofMempoolItem: ShieldProofMempoolDBItem = {
             snarkProof: {
-                a: 'someA',
-                b: ['someB', 'someB'],
-                c: 'someC',
+                pi_a: ['somePi_a1', 'somePi_a2'],
+                pi_b: [['somePi_b11', 'somePi_b12'], ['somePi_b21', 'somePi_b22']],
+                pi_c: ['somePi_c1', 'somePi_c2'],
             },
             commitmentHash: 'someCommitmentHash',
+            blindedCommitment: 'someBlindedCommitment',
         };
 
         // Insert the item
@@ -57,10 +58,9 @@ describe('ShieldProofMempoolDatabase', () => {
         expect(fetchedItem).to.not.be.undefined;
 
         if (fetchedItem) {
-            expect(fetchedItem.snarkProof.a).to.equal('someA');
-            expect(fetchedItem.snarkProof.b).to.deep.equal(['someB', 'someB']);
-            expect(fetchedItem.snarkProof.c).to.equal('someC');
-            expect(fetchedItem.commitmentHash).to.equal('someCommitmentHash');
+            expect(fetchedItem.commitmentHash).to.equal(shieldProofMempoolItem.commitmentHash);
+            expect(fetchedItem.blindedCommitment).to.equal(shieldProofMempoolItem.blindedCommitment);
+            expect(fetchedItem.snarkProof).to.deep.equal(shieldProofMempoolItem.snarkProof);
         }
     });
 });

@@ -24,6 +24,23 @@ describe('poi-historical-merkleroot-database', () => {
     await db.deleteAllItems_DANGEROUS();
   });
 
+  it('Should create collection indices', async () => {
+    // List all indexes for the collection
+    const indexes = await db.getCollectionIndexes(); // have to access through the wrapper
+
+    // Check that an index on 'listKey' and 'rootHash' exists
+    const indexExists = indexes.some(index => {
+      return (
+        'key' in index &&
+        'listKey' in index.key &&
+        'rootHash' in index.key &&
+        index.unique === true
+      );
+    });
+
+    expect(indexExists).to.be.true;
+  });
+
   it('Should insert items and query from merkleroot database', async () => {
     const merklerootA = '0x1234';
     const merklerootB = '0x5678';
@@ -52,20 +69,58 @@ describe('poi-historical-merkleroot-database', () => {
     ).to.eventually.equal(false);
   });
 
-  it('Should create collection indices', async () => {
-    // List all indexes for the collection
-    const indexes = await db.getCollectionIndexes(); // have to access through the wrapper
+  // async insertMerkleroot(listKey: string, rootHash: string): Promise<void> {
+  //   const item: POIHistoricalMerklerootDBItem = {
+  //     listKey,
+  //     rootHash,
+  //   };
+  //   await this.insertOne(item);
+  // }
 
-    // Check that an index on 'listKey' and 'rootHash' exists
-    const indexExists = indexes.some(index => {
-      return (
-        'key' in index &&
-        'listKey' in index.key &&
-        'rootHash' in index.key &&
-        index.unique === true
-      );
-    });
+  // async merklerootExists(listKey: string, rootHash: string): Promise<boolean> {
+  //   return this.exists({ listKey, rootHash });
+  // }
 
-    expect(indexExists).to.be.true;
+  // async allMerklerootsExist(
+  //   listKey: string,
+  //   rootHashes: string[],
+  // ): Promise<boolean> {
+  //   const filter: Filter<POIHistoricalMerklerootDBItem> = {
+  //     listKey,
+  //     rootHash: { $in: rootHashes },
+  //   };
+  //   const count = await this.count(filter);
+  //   return count === rootHashes.length;
+  // }
+
+  it('Should have the correct merkle root', async () => {
+    // Insert the merkle root
+    const merkleroot = '0x1234';
+
+    await db.insertMerkleroot(listKey, merkleroot);
+
+    // Check that the merkle root exists
+    await expect(db.merklerootExists(listKey, merkleroot)).to.eventually.equal(
+      true,
+    );
+
+    // Check that the merkle root does not exist for a different list key
+    await expect(
+      db.merklerootExists('wrong-key', merkleroot),
+    ).to.eventually.equal(false);
+
+    // Check that the merkle root does not exist for a different merkle root
+    await expect(
+      db.merklerootExists(listKey, '0x5678'),
+    ).to.eventually.equal(false);
+
+    // Insert another merkle root
+    const merkleroot2 = '0x5678';
+    await db.insertMerkleroot(listKey, merkleroot2);
+
+    // Check all merkle roots exist
+    await expect(
+      db.allMerklerootsExist(listKey, [merkleroot, merkleroot2]),
+    ).to.eventually.equal(true);
   });
 });

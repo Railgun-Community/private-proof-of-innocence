@@ -106,4 +106,23 @@ describe('abstract-database', () => {
         // Restore the original MONGODB_URL
         Config.MONGODB_URL = originalUrl;
     });
+
+    it('Should delete one item', async () => {
+        const filter = { test: 'some data' };
+
+        // Insert an item to delete
+        await db.insert(filter);
+
+        // Verify that the item was inserted
+        const verifyItem = await db.getItem(filter);
+        expect(verifyItem).to.not.be.null;
+        expect(verifyItem).to.not.be.undefined;
+
+        // Delete the item
+        await db.delete(filter);
+
+        // Verify that the item was deleted
+        const deletedItem = await db.getItem(filter);
+        expect(deletedItem).to.be.undefined;
+    });
 });

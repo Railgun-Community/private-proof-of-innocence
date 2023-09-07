@@ -26,32 +26,77 @@ describe('TransactProofPerListMempoolDatabase', () => {
         await db.deleteAllItems_DANGEROUS();
     });
 
+    it('Should create collection indeces', async () => {
+        // Fetch all indexes for the collection
+        const indexes = await db.getCollectionIndexes();
+
+        // Check if a unique index exists for the combination of 'listKey' and 'firstBlindedCommitmentInput' fields
+        const uniqueCombinedIndexExists = indexes.some(index => {
+            return 'key' in index &&
+                'listKey' in index.key &&
+                'firstBlindedCommitmentInput' in index.key &&
+                index.unique === true;
+        });
+
+        // Assert that the unique index exists
+        expect(uniqueCombinedIndexExists).to.equal(true);
+    });
+
     it('Should correctly initialize TransactProofPerListMempoolDatabase', () => {
         expect(db).to.be.instanceOf(TransactProofPerListMempoolDatabase);
     });
 
-    it('Should not create additional collection indices', async () => {
-        // Fetch all indexes for the collection
-        const indexes = await db.getCollectionIndexes();
-
-        // Filter out the default MongoDB index on the `_id` field
-        const additionalIndexes = indexes.filter(index => {
-            return !('key' in index && '_id' in index.key);
-        });
-
-        expect(additionalIndexes.length).to.equal(0);
-    });
-
     it('Should insert and get a valid transact proof', async () => {
+        const listKey = 'someListKey';
         const transactProofItem: TransactProofMempoolDBItem = {
+            listKey: listKey,
             snarkProof: {
-                a: 'someA',
-                b: ['someB', 'someB'],
-                c: 'someC',
-            }
+                pi_a: ['pi_a_0', 'pi_a_1'],
+                pi_b: [['pi_b_0_0', 'pi_b_0_1'], ['pi_b_1_0', 'pi_b_1_1']],
+                pi_c: ['pi_c_0', 'pi_c_1'],
+            },
+            poiMerkleroots: ['poiMerkleroots_0', 'poiMerkleroots_1'],
+            txMerkleroot: 'txMerkleroot',
+            blindedCommitmentInputs: ['blindedCommitmentInputs_0', 'blindedCommitmentInputs_1'],
+            blindedCommitmentOutputs: ['blindedCommitmentOutputs_0', 'blindedCommitmentOutputs_1'],
+            firstBlindedCommitmentInput: 'firstBlindedCommitmentInput', // This will be ignored
         };
 
         // Insert the item
-        await db.insertValidTransactProof(transactProofItem);
+        await db.insertValidTransactProof(listKey, transactProofItem);
+
+        // Check that the proof exists and is in getAllTransactProofsAndLists
+        expect(await db.proofExists(listKey, 'blindedCommitmentInputs_0')).to.equal(true); // Changed this to match the first item in blindedCommitmentInputs
+    });
+
+
+    it('Should delete a transact proof', async () => {
+        // Insert a proof into the database
+        const listKey = 'someListKey';
+        const transactProofItem: TransactProofMempoolDBItem = {
+            listKey: listKey,
+            snarkProof: {
+                pi_a: ['pi_a_0', 'pi_a_1'],
+                pi_b: [['pi_b_0_0', 'pi_b_0_1'], ['pi_b_1_0', 'pi_b_1_1']],
+                pi_c: ['pi_c_0', 'pi_c_1'],
+            },
+            poiMerkleroots: ['poiMerkleroots_0', 'poiMerkleroots_1'],
+            txMerkleroot: 'txMerkleroot',
+            blindedCommitmentInputs: ['blindedCommitmentInputs_0', 'blindedCommitmentInputs_1'],
+            blindedCommitmentOutputs: ['blindedCommitmentOutputs_0', 'blindedCommitmentOutputs_1'],
+            firstBlindedCommitmentInput: 'firstBlindedCommitmentInput',
+        };
+
+        // Insert the item
+        await db.insertValidTransactProof(listKey, transactProofItem);
+
+        // Check that the proof exists
+        expect(await db.proofExists(listKey, transactProofItem.blindedCommitmentInputs[0])).to.equal(true);
+
+        // Delete the proof
+        await db.deleteProof(listKey, transactProofItem.blindedCommitmentInputs[0]);
+
+        // Check that the proof no longer exists
+        expect(await db.proofExists(listKey, transactProofItem.blindedCommitmentInputs[0])).to.equal(false);
     });
 });

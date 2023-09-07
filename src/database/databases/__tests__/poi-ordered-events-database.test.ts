@@ -54,9 +54,9 @@ describe('POIOrderedEventsDatabase', () => {
             index: 0,
             blindedCommitments: ['commitment1', 'commitment2'],
             proof: {
-                a: 'someA',
-                b: ['someB', 'someB'],
-                c: 'someC',
+                pi_a: ['somePi_a1', 'somePi_a2'],
+                pi_b: [['somePi_b11', 'somePi_b12'], ['somePi_b21', 'somePi_b22']],
+                pi_c: ['somePi_c1', 'somePi_c2'],
             },
             signature: 'someSignature',
         };
@@ -70,9 +70,9 @@ describe('POIOrderedEventsDatabase', () => {
         expect(retrievedEvent.proof).to.deep.equal(signedPOIEvent.proof);
         expect(retrievedEvent.signature).to.equal(signedPOIEvent.signature);
 
-        // Check that the index of the retrieved event is as expected
-        const nextIndex = await db.getNextIndex();
-        expect(retrievedEvent.index).to.equal(nextIndex - 1);  // Assumes one item has been inserted
+        // Call getCount and check the returned value
+        const count = await db.getCount(listKey);
+        expect(count).to.equal(1);
     });
 
     it('Should fetch POI events with a given listKey and startingIndex', async () => {
@@ -80,10 +80,5 @@ describe('POIOrderedEventsDatabase', () => {
         const events = await db.getPOIEvents(listKey, 0);
 
         expect(events.length).to.equal(0);
-    });
-
-    it('Should get the next index', async () => {
-        const nextIndex = await db.getNextIndex();
-        expect(nextIndex).to.equal(0);
     });
 });
