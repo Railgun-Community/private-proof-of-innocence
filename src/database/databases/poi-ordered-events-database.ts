@@ -5,7 +5,6 @@ import {
   DBMaxMin,
   DBSort,
   POIOrderedEventDBItem,
-  ShieldStatus,
 } from '../../models/database-types';
 import { AbstractDatabase } from '../abstract-database';
 import { SignedPOIEvent } from '../../models/poi-types';
@@ -18,6 +17,8 @@ export class POIOrderedEventsDatabase extends AbstractDatabase<POIOrderedEventDB
   async createCollectionIndices() {
     await this.createIndex(['index', 'listKey'], { unique: true });
     await this.createIndex(['index']);
+    await this.createIndex(['listKey']);
+    await this.createIndex(['firstBlindedCommitmentInput']);
   }
 
   async insertValidSignedPOIEvent(
@@ -29,6 +30,7 @@ export class POIOrderedEventsDatabase extends AbstractDatabase<POIOrderedEventDB
       listKey,
       index,
       blindedCommitments,
+      firstBlindedCommitmentInput: blindedCommitments[0],
       proof,
       signature,
     };
@@ -60,5 +62,16 @@ export class POIOrderedEventsDatabase extends AbstractDatabase<POIOrderedEventDB
       listKey,
     };
     return this.count(filter);
+  }
+
+  async eventExists(
+    listKey: string,
+    firstBlindedCommitmentInput: string,
+  ): Promise<boolean> {
+    const filter: DBFilter<POIOrderedEventDBItem> = {
+      listKey,
+      firstBlindedCommitmentInput,
+    };
+    return this.exists(filter);
   }
 }

@@ -12,8 +12,8 @@ export class ShieldProofMempool {
     networkName: NetworkName,
     shieldProofData: ShieldProofData,
   ) {
-    const verified = await this.verify(networkName, shieldProofData);
-    if (!verified) {
+    const shouldAdd = await this.shouldAdd(networkName, shieldProofData);
+    if (!shouldAdd) {
       return;
     }
 
@@ -23,7 +23,7 @@ export class ShieldProofMempool {
     ShieldProofMempoolCache.addToCache(networkName, shieldProofData);
   }
 
-  private static async verify(
+  private static async shouldAdd(
     networkName: NetworkName,
     shieldProofData: ShieldProofData,
   ): Promise<boolean> {

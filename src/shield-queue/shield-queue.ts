@@ -9,7 +9,7 @@ type ShieldQueueStatus = {
   pending: number;
   allowed: number;
   blocked: number;
-  addedPoi: number;
+  addedPOI: number;
   latestPendingShield: Optional<string>;
 };
 
@@ -21,7 +21,7 @@ export const getShieldQueueStatus = async (
   const pending = await db.getCount(ShieldStatus.Pending);
   const allowed = await db.getCount(ShieldStatus.Allowed);
   const blocked = await db.getCount(ShieldStatus.Blocked);
-  const addedPoi = await db.getCount(ShieldStatus.AddedPOI);
+  const addedPOI = await db.getCount(ShieldStatus.AddedPOI);
 
   const latestPendingShield = await db.getLatestPendingShield();
   const latestPendingShieldTime = latestPendingShield
@@ -32,7 +32,7 @@ export const getShieldQueueStatus = async (
     pending,
     allowed,
     blocked,
-    addedPoi,
+    addedPOI,
     latestPendingShield: latestPendingShieldTime,
   };
 };
