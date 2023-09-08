@@ -6,6 +6,7 @@ import { POIHistoricalMerklerootDatabase } from '../database/databases/poi-histo
 import { TransactProofMempoolCache } from './transact-proof-mempool-cache';
 import { verifySnarkProof } from './snark-proof-verify';
 import { ProofMempoolCountingBloomFilter } from './proof-mempool-bloom-filters';
+import { POIOrderedEventsDatabase } from '../database/databases/poi-ordered-events-database';
 
 export class TransactProofMempool {
   static async submitProof(
@@ -17,8 +18,12 @@ export class TransactProofMempool {
       throw new Error('Requires blindedCommitmentInputs');
     }
 
-    const verified = await this.verify(listKey, networkName, transactProofData);
-    if (!verified) {
+    const shouldAdd = await this.shouldAdd(
+      listKey,
+      networkName,
+      transactProofData,
+    );
+    if (!shouldAdd) {
       return;
     }
 
@@ -47,7 +52,7 @@ export class TransactProofMempool {
     );
   }
 
-  private static async verify(
+  private static async shouldAdd(
     listKey: string,
     networkName: NetworkName,
     transactProofData: TransactProofData,
@@ -65,7 +70,17 @@ export class TransactProofMempool {
     // 2. Verify Railgun TX Merkleroot exists against Railgun TX Merkletree (Engine)
     // TODO-HIGH-PRI
 
-    // 3. Verify snark proof
+    // 3. Verify that OrderedEvent for this list doesn't exist.
+    const orderedEventsDB = new POIOrderedEventsDatabase(networkName);
+    const orderedEventExists = await orderedEventsDB.eventExists(
+      listKey,
+      transactProofData.blindedCommitmentInputs[0],
+    );
+    if (orderedEventExists) {
+      return false;
+    }
+
+    // 4. Verify snark proof
     const verifiedProof = await this.verifyProof(transactProofData);
     if (!verifiedProof) {
       throw new Error('Invalid proof');

@@ -16,10 +16,10 @@ describe('StatusDatabase', () => {
     before(async () => {
         await DatabaseClient.init();
         db = new StatusDatabase(networkName);
-
+      
         // Insert dummy document, ensures DB gets a namespace since is empty 
         await db.saveStatus(0);
-
+      
         await db.createCollectionIndices();
     });
 

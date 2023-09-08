@@ -80,6 +80,7 @@ export type POIOrderedEventDBItem = {
   listKey: string;
   index: number;
   blindedCommitments: string[];
+  firstBlindedCommitmentInput: string;
   proof: SnarkProof;
   signature: string;
 };
