@@ -26,10 +26,6 @@ export class POIOrderedEventsDatabase extends AbstractDatabase<POIOrderedEventDB
     return this.listCollectionIndexes();
   }
 
-  async getCollectionIndexes(): Promise<IndexDescription[]> {
-    return this.listCollectionIndexes();
-  }
-
   async insertValidSignedPOIEvent(
     listKey: string,
     signedPOIEvent: SignedPOIEvent,
