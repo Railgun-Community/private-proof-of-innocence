@@ -15,6 +15,7 @@ import { POIOrderedEventsDatabase } from './databases/poi-ordered-events-databas
 import { POIMerkletreeDatabase } from './databases/poi-merkletree-database';
 import { POIHistoricalMerklerootDatabase } from './databases/poi-historical-merkleroot-database';
 import { TestDatabase } from './databases/test-database';
+import { RailgunTxidMerkletreeStatusDatabase } from './databases/railgun-txid-merkletree-status-database';
 
 export class DatabaseClient {
   static client?: MongoClient;
@@ -51,6 +52,9 @@ export class DatabaseClient {
             switch (collectionName) {
               case CollectionName.Status:
                 db = new StatusDatabase(networkName);
+                break;
+              case CollectionName.RailgunTxidMerkletreeStatus:
+                db = new RailgunTxidMerkletreeStatusDatabase(networkName);
                 break;
               case CollectionName.ShieldQueue:
                 db = new ShieldQueueDatabase(networkName);

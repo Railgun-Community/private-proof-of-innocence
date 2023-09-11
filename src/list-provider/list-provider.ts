@@ -53,7 +53,7 @@ export abstract class ListProvider {
     timestamp: number,
   ): Promise<boolean>;
 
-  async startPolling() {
+  startPolling() {
     if (!isDefined(this.listKey)) {
       throw new Error('Must call init on ListProvider before polling.');
     }
@@ -68,7 +68,7 @@ export abstract class ListProvider {
     this.runValidateQueuedShieldsPoller();
   }
 
-  async stopPolling() {
+  stopPolling() {
     dbg(`Stopping ${this.config.name} polling...`);
 
     this.shouldPoll = false;

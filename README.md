@@ -15,6 +15,6 @@ Mac MongoDB (https://www.mongodb.com/docs/manual/tutorial/install-mongodb-on-os-
 - brew tap mongodb/brew
 - brew install mongodb-community@7.0
 
-2. Run `./run-mongodb` to start local MongoDB server.
+2. Run `./run-mongodb-test` to start local MongoDB server.
 
 3. Run `yarn test` or `yarn test-coverage`.

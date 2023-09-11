@@ -36,7 +36,7 @@ export class ProofOfInnocenceNode {
     await initModules();
 
     await this.listProvider?.init();
-    await this.listProvider?.startPolling();
+    this.listProvider?.startPolling();
 
     dbg(`Proof of Innocence node running...`);
   }
@@ -47,7 +47,7 @@ export class ProofOfInnocenceNode {
     this.api?.stop();
 
     await uninitModules();
-    await this.listProvider?.stopPolling();
+    this.listProvider?.stopPolling();
 
     this.running = false;
 

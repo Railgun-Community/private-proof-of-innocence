@@ -15,12 +15,16 @@ import {
   GetPOIsPerListParams,
   GetShieldProofsParams,
   GetTransactProofsParams,
+  NodeStatusAllNetworks,
   SubmitShieldProofParams,
   SubmitTransactProofParams,
+  ValidateTxidMerklerootParams,
 } from '../models/api-types';
 import { POILookup } from '../poi/poi-lookup';
 import { POIMerkletreeManager } from '../poi/poi-merkletree-manager';
 import { getShieldQueueStatus } from '../shield-queue/shield-queue';
+import { RailgunTxidMerkletreeManager } from '../railgun-txids/railgun-txid-merkletree-manager';
+import { getNodeStatusAllNetworks } from '../status/node-status';
 
 const dbg = debug('poi:api');
 
@@ -55,6 +59,34 @@ export class API {
     this.server = undefined;
   }
 
+  private safeGet(
+    route: string,
+    handler: (req: Request, res: Response) => Promise<void>,
+  ) {
+    this.app.get(route, async (req: Request, res: Response) => {
+      try {
+        await handler(req, res);
+      } catch (err) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        res.status(500).json({ error: err.message });
+      }
+    });
+  }
+
+  private safePost(
+    route: string,
+    handler: (req: Request, res: Response) => Promise<void>,
+  ) {
+    this.app.get(route, async (req: Request, res: Response) => {
+      try {
+        await handler(req, res);
+      } catch (err) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        res.status(500).json({ error: err.message });
+      }
+    });
+  }
+
   private addRoutes() {
     this.addStatusRoutes();
     this.addAggregatorRoutes();
@@ -77,6 +109,12 @@ export class API {
   }
 
   private addAggregatorRoutes() {
+    this.safeGet('/node-status', async (req: Request, res: Response) => {
+      const nodeStatusAllNetworks: NodeStatusAllNetworks =
+        await getNodeStatusAllNetworks();
+      res.json(nodeStatusAllNetworks);
+    });
+
     this.safeGet(
       '/shield-queue-status/:chainType/:chainID',
       async (req: Request, res: Response) => {
@@ -218,33 +256,40 @@ export class API {
         res.json(merkleProofs);
       },
     );
-  }
 
-  private safeGet(
-    route: string,
-    handler: (req: Request, res: Response) => Promise<void>,
-  ) {
-    this.app.get(route, async (req: Request, res: Response) => {
-      try {
-        await handler(req, res);
-      } catch (err) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-        res.status(500).json({ error: err.message });
-      }
-    });
-  }
+    this.safeGet(
+      '/validated-txid/:chainType/:chainID',
+      async (req: Request, res: Response) => {
+        const { chainType, chainID } = req.params;
 
-  private safePost(
-    route: string,
-    handler: (req: Request, res: Response) => Promise<void>,
-  ) {
-    this.app.get(route, async (req: Request, res: Response) => {
-      try {
-        await handler(req, res);
-      } catch (err) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-        res.status(500).json({ error: err.message });
-      }
-    });
+        const networkName = networkNameForSerializedChain(chainType, chainID);
+
+        const validatedRailgunTxidStatus =
+          RailgunTxidMerkletreeManager.getValidatedRailgunTxidStatus(
+            networkName,
+          );
+        res.json(validatedRailgunTxidStatus);
+      },
+    );
+
+    this.safeGet(
+      '/validate-txid-merkleroot/:chainType/:chainID',
+      async (req: Request, res: Response) => {
+        const { chainType, chainID } = req.params;
+        const { tree, index, merkleroot } =
+          req.body as ValidateTxidMerklerootParams;
+
+        const networkName = networkNameForSerializedChain(chainType, chainID);
+
+        const isValid =
+          await RailgunTxidMerkletreeManager.checkIfMerklerootExists(
+            networkName,
+            tree,
+            index,
+            merkleroot,
+          );
+        res.json(isValid);
+      },
+    );
   }
 }

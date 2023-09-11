@@ -1,3 +1,4 @@
+import { NetworkName } from '@railgun-community/shared-models';
 import { ShieldProofData, TransactProofData } from './proof-types';
 
 export type POIEventListStatus = {
@@ -32,10 +33,41 @@ export type GetMerkleProofsParams = {
   blindedCommitments: string[];
 };
 
+export type ValidateTxidMerklerootParams = {
+  tree: number;
+  index: number;
+  merkleroot: string;
+};
+
 export type POIExistenceListMap = {
   [listKey: string]: boolean[];
 };
 
 export type POIMerkleProof = {
   // TODO
+};
+
+export type TxidMerkletreeSyncStatus = {
+  currentTxidIndex: number;
+  currentMerkleroot: string;
+  validatedTxidIndex: number;
+  validatedMerkleroot: string;
+};
+
+export type RailgunTxidStatus = {
+  currentTxidIndex: Optional<number>;
+  currentMerkleroot: Optional<string>;
+  validatedTxidIndex: Optional<number>;
+  validatedMerkleroot: Optional<string>;
+};
+
+export type ValidatedRailgunTxidStatus = {
+  validatedTxidIndex: Optional<number>;
+  validatedMerkleroot: Optional<string>;
+};
+
+export type NodeStatusAllNetworks = Partial<Record<NetworkName, NodeStatus>>;
+
+export type NodeStatus = {
+  txidStatus: RailgunTxidStatus;
 };

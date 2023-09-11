@@ -14,6 +14,7 @@ export type DBOptional<T> = Optional<T> | null;
 export enum CollectionName {
   // General
   Status = 'Status',
+  RailgunTxidMerkletreeStatus = 'RailgunTxidMerkletreeStatus',
 
   // Pending shields
   ShieldQueue = 'ShieldQueue',
@@ -55,6 +56,11 @@ export type ShieldQueueDBItem = {
 
 export type StatusDBItem = {
   latestBlockScanned: number;
+};
+
+export type RailgunTxidMerkletreeStatusDBItem = {
+  validatedTxidIndex: number;
+  validatedTxidMerkleroot: string;
 };
 
 // DO NOT CHANGE FIELDS WITHOUT CLEARING OR MIGRATING THE DB.
@@ -102,4 +108,4 @@ export type POIHistoricalMerklerootDBItem = {
 
 export type TestDBItem = {
   test: string;
-}
+};
