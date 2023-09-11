@@ -8,6 +8,7 @@ export type TransactProofData = {
   snarkProof: SnarkProof;
   poiMerkleroots: string[];
   txMerkleroot: string;
+  txidIndex: number;
   blindedCommitmentInputs: string[];
   blindedCommitmentOutputs: string[];
 };

@@ -7,6 +7,7 @@ import { TransactProofMempoolCache } from './transact-proof-mempool-cache';
 import { verifySnarkProof } from './snark-proof-verify';
 import { ProofMempoolCountingBloomFilter } from './proof-mempool-bloom-filters';
 import { POIOrderedEventsDatabase } from '../database/databases/poi-ordered-events-database';
+import { RailgunTxidMerkletreeManager } from '../railgun-txids/railgun-txid-merkletree-manager';
 
 export class TransactProofMempool {
   static async submitProof(
@@ -68,7 +69,15 @@ export class TransactProofMempool {
     }
 
     // 2. Verify Railgun TX Merkleroot exists against Railgun TX Merkletree (Engine)
-    // TODO-HIGH-PRI
+    const isValidTxMerkleroot =
+      await RailgunTxidMerkletreeManager.checkIfMerklerootExistsByTxidIndex(
+        networkName,
+        transactProofData.txidIndex,
+        transactProofData.txMerkleroot,
+      );
+    if (!isValidTxMerkleroot) {
+      return false;
+    }
 
     // 3. Verify that OrderedEvent for this list doesn't exist.
     const orderedEventsDB = new POIOrderedEventsDatabase(networkName);

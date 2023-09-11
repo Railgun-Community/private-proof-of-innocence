@@ -28,6 +28,15 @@ export class RailgunTxidMerkletreeManager {
     return validateRailgunTxidMerkleroot(networkName, tree, index, merkleroot);
   }
 
+  static async checkIfMerklerootExistsByTxidIndex(
+    networkName: NetworkName,
+    txidIndex: number,
+    merkleroot: string,
+  ): Promise<boolean> {
+    const { tree, index } = this.getTreeAndIndexFromTxidIndex(txidIndex);
+    return validateRailgunTxidMerkleroot(networkName, tree, index, merkleroot);
+  }
+
   static async fullResetRailgunTxidMerkletrees(networkName: NetworkName) {
     return fullResetRailgunTxidMerkletrees(networkName);
   }
