@@ -5,7 +5,6 @@ import {
   RailgunTxidMerkletreeStatusDBItem,
 } from '../../models/database-types';
 import { AbstractDatabase } from '../abstract-database';
-import { IndexDescription } from 'mongodb';
 
 export class RailgunTxidMerkletreeStatusDatabase extends AbstractDatabase<RailgunTxidMerkletreeStatusDBItem> {
   constructor(networkName: NetworkName) {

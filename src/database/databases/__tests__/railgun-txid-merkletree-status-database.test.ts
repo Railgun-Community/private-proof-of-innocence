@@ -16,6 +16,10 @@ describe('RailgunTxidMerkletreeStatusDatabase', () => {
     before(async () => {
         await DatabaseClient.init();
         db = new RailgunTxidMerkletreeStatusDatabase(networkName);
+
+        // Insert dummy document, ensures DB gets a namespace since is empty 
+        await db.saveValidatedTxidStatus(0, 'someRoot');
+
         await db.createCollectionIndices();
     });
 
