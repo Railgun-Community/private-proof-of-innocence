@@ -10,6 +10,7 @@ import { POIMerkletreeDatabase } from '../database/databases/poi-merkletree-data
 import { poseidon } from 'circomlibjs';
 import { MerkleProof } from '../models/proof-types';
 import { POIMerkletreeDBItem } from '../models/database-types';
+import debug from 'debug';
 
 // Static value from calculation in RAILGUN Engine SDK.
 const MERKLE_ZERO_VALUE: string =
@@ -17,6 +18,8 @@ const MERKLE_ZERO_VALUE: string =
 
 const TREE_DEPTH = 16;
 const TREE_MAX_ITEMS = 65_536;
+
+const dbg = debug('poi:poi-merkletree');
 
 export class POIMerkletree {
   private readonly db: POIMerkletreeDatabase;
@@ -140,7 +143,7 @@ export class POIMerkletree {
     return { tree: latestTree, index: treeLength - 1 };
   }
 
-  private async getNextTreeAndIndex(): Promise<{
+  async getNextTreeAndIndex(): Promise<{
     tree: number;
     index: number;
   }> {
@@ -153,7 +156,14 @@ export class POIMerkletree {
     return { tree: latestTree, index: latestIndex + 1 };
   }
 
-  async insertLeaves(nodeHashes: string[]): Promise<void> {
+  private static getTXIDIndex(tree: number, index: number): number {
+    return tree * TREE_MAX_ITEMS + index;
+  }
+
+  async insertLeaves(
+    startTxidIndex: number,
+    nodeHashes: string[],
+  ): Promise<void> {
     if (this.isUpdating) {
       return;
     }
@@ -162,19 +172,35 @@ export class POIMerkletree {
 
     const { tree, index } = await this.getNextTreeAndIndex();
 
+    const nextTxidIndex = POIMerkletree.getTXIDIndex(tree, index);
+    if (nextTxidIndex !== startTxidIndex) {
+      dbg('Invalid txidIndex for POI merkletree insert');
+      this.isUpdating = false;
+      throw new Error(
+        `Invalid txidIndex for POI merkletree insert: merkletree at ${nextTxidIndex}, event at ${startTxidIndex}`,
+      );
+    }
+
     let nextTree = tree;
     let startIndex = index;
 
+    let nodeHashesStartIndex = 0;
+
     // Insert leaves into each tree.
     // Iterate through trees once the MAX_ITEMS is reached.
-    while (nodeHashes.length > 0) {
-      const remainingSpotsInTree = TREE_MAX_ITEMS - index;
-      const nodeHashesForTree = nodeHashes.splice(0, remainingSpotsInTree);
+    while (nodeHashes.length > nodeHashesStartIndex) {
+      const remainingSpotsInTree = TREE_MAX_ITEMS - startIndex;
+      const endIndex = nodeHashesStartIndex + remainingSpotsInTree;
+      const nodeHashesForTree = nodeHashes.slice(
+        nodeHashesStartIndex,
+        endIndex,
+      );
 
       await this.insertLeavesInTree(nextTree, startIndex, nodeHashesForTree);
 
       nextTree += 1;
       startIndex = 0;
+      nodeHashesStartIndex += nodeHashesForTree.length;
     }
 
     this.isUpdating = false;

@@ -4,6 +4,7 @@ import { NetworkName } from '@railgun-community/shared-models';
 import { DatabaseClient } from '../../database/database-client';
 import { POIMerkletree } from '../poi-merkletree';
 import { POIMerkletreeDatabase } from '../../database/databases/poi-merkletree-database';
+import Sinon from 'sinon';
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
@@ -59,10 +60,10 @@ describe('poi-merkletree', () => {
       '14fceeac99eb8419a2796d1958fc2050d489bf5a3eb170ef16a667060344ba90',
     );
 
-    await merkletree.insertLeaves([
+    await merkletree.insertLeaves(0, [
       'ab2f9d1ebd74c3e1f1ccee452a80ae27a94f14a542a4fd8b0c9ad9a1b7f9ffe5',
     ]);
-    await merkletree.insertLeaves([
+    await merkletree.insertLeaves(1, [
       '8902638fe6fc05e4f1cd7c06940d6217591a0ccb003ed45198782fbff38e9f2d',
       '19889087c2ff4c4a164060a832a3ba11cce0c2e2dbd42da10c57101efb966fcd',
     ]);
@@ -80,8 +81,35 @@ describe('poi-merkletree', () => {
     );
   });
 
+  it('Should create second merkle tree when first is filled', async () => {
+    // Stub getNextTreeAndIndex to return last index of first tree
+    const treeLengthStub = Sinon.stub(
+      POIMerkletree.prototype,
+      'getNextTreeAndIndex',
+    ).resolves({ tree: 0, index: 65535 });
+
+    await expect(
+      merkletree.insertLeaves(65536, []),
+    ).to.eventually.be.rejectedWith(
+      'Invalid txidIndex for POI merkletree insert',
+    );
+
+    await merkletree.insertLeaves(65535, [
+      '65536',
+      'ab2f9d1ebd74c3e1f1ccee452a80ae27a94f14a542a4fd8b0c9ad9a1b7f9ffe5',
+      '8902638fe6fc05e4f1cd7c06940d6217591a0ccb003ed45198782fbff38e9f2d',
+      '19889087c2ff4c4a164060a832a3ba11cce0c2e2dbd42da10c57101efb966fcd',
+    ]);
+
+    expect(await merkletree.getRoot(1)).to.equal(
+      '1bf92404b5bebd9e2c41a9d4cd55d9c9b369b0eab5fc1f9643ec1e60c75ab763',
+    );
+
+    treeLengthStub.restore();
+  });
+
   it('Should generate and validate merkle proofs', async () => {
-    await merkletree.insertLeaves(['02', '04', '08', '10', '20', '40']);
+    await merkletree.insertLeaves(0, ['02', '04', '08', '10', '20', '40']);
 
     // Get proof
     const proof = await merkletree.getMerkleProof(0, 3);
@@ -120,12 +148,10 @@ describe('poi-merkletree', () => {
 
     // Insert 600 leaves
     const nums = Array.from(Array(600).keys());
-
     const nodeHashes: string[] = nums.map((num) => {
       return BigInt(num).toString(16);
     });
-
-    await merkletree.insertLeaves(nodeHashes);
+    await merkletree.insertLeaves(0, nodeHashes);
 
     // Get proof
     const proof2 = await merkletree.getMerkleProof(0, 34);
