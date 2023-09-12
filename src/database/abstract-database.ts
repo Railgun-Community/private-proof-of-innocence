@@ -67,16 +67,6 @@ export abstract class AbstractDatabase<T extends Document> {
     }
   }
 
-  protected async upsertOne(filter: Filter<T>, item: T) {
-    try {
-      await this.collection.updateOne(filter, item, { upsert: true });
-    } catch (err) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      this.dbg(err.message);
-      throw err;
-    }
-  }
-
   protected async exists(filter: Filter<T>): Promise<boolean> {
     return (await this.findOne(filter)) != null;
   }
@@ -94,12 +84,13 @@ export abstract class AbstractDatabase<T extends Document> {
     await this.collection.deleteOne(filter);
   }
 
-  protected async findOneAndReplace(
-    filter: Filter<T>,
-    replacement: T,
-  ): Promise<void> {
+  protected async deleteMany(filter: Filter<T>): Promise<void> {
+    await this.collection.deleteMany(filter);
+  }
+
+  protected async upsertOne(filter: Filter<T>, item: T): Promise<void> {
     const options = { upsert: true };
-    await this.collection.findOneAndReplace(filter, replacement, options);
+    await this.collection.findOneAndReplace(filter, item, options);
   }
 
   protected async findAll(

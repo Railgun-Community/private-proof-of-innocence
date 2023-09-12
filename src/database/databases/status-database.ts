@@ -31,6 +31,6 @@ export class StatusDatabase extends AbstractDatabase<StatusDBItem> {
     const replacement: StatusDBItem = {
       latestBlockScanned,
     };
-    await this.findOneAndReplace(filter, replacement);
+    await this.upsertOne(filter, replacement);
   }
 }

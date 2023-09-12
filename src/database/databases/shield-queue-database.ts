@@ -62,7 +62,7 @@ export class ShieldQueueDatabase extends AbstractDatabase<ShieldQueueDBItem> {
       status: shouldAllow ? ShieldStatus.Allowed : ShieldStatus.Blocked,
       lastValidatedTimestamp: Date.now(),
     };
-    return this.findOneAndReplace(filter, replacement);
+    return this.upsertOne(filter, replacement);
   }
 
   async getPendingShields(

@@ -35,6 +35,6 @@ export class RailgunTxidMerkletreeStatusDatabase extends AbstractDatabase<Railgu
       validatedTxidIndex,
       validatedTxidMerkleroot,
     };
-    await this.findOneAndReplace(filter, replacement);
+    await this.upsertOne(filter, replacement);
   }
 }

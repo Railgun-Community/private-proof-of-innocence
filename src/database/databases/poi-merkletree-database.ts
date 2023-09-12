@@ -23,10 +23,23 @@ export class POIMerkletreeDatabase extends AbstractDatabase<POIMerkletreeDBItem>
   }
 
   async updatePOIMerkletreeNodes(items: POIMerkletreeDBItem[]): Promise<void> {
-    await Promise.all(items.map(this.insertMerkletreeNode));
+    await Promise.all(
+      items.map(async (item) => await this.insertMerkletreeNode(item)),
+    );
   }
 
-  private async insertMerkletreeNode(item: POIMerkletreeDBItem) {
+  async deleteAllPOIMerkletreeNodesForTree(
+    listKey: string,
+    tree: number,
+  ): Promise<void> {
+    const filter: DBFilter<POIMerkletreeDBItem> = {
+      listKey,
+      tree,
+    };
+    await this.deleteMany(filter);
+  }
+
+  private async insertMerkletreeNode(item: POIMerkletreeDBItem): Promise<void> {
     const filter: DBFilter<POIMerkletreeDBItem> = {
       listKey: item.listKey,
       tree: item.tree,
@@ -34,7 +47,7 @@ export class POIMerkletreeDatabase extends AbstractDatabase<POIMerkletreeDBItem>
       index: item.index,
     };
     if (item.level === 0) {
-      // Never replace items at level 0.
+      // Only insert, never replace items at level 0.
       return this.insertOne(item);
     }
     return this.upsertOne(filter, item);

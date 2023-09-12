@@ -1,5 +1,11 @@
 import { NetworkName, isDefined } from '@railgun-community/shared-models';
-import { nToHex, hexToBigInt, ByteLength } from '@railgun-community/wallet';
+import {
+  nToHex,
+  hexToBigInt,
+  ByteLength,
+  numberify,
+  hexlify,
+} from '@railgun-community/wallet';
 import { POIMerkletreeDatabase } from '../database/databases/poi-merkletree-database';
 import { poseidon } from 'circomlibjs';
 import { MerkleProof } from '../models/proof-types';
@@ -17,9 +23,11 @@ export class POIMerkletree {
 
   private readonly listKey: string;
 
-  private readonly zeros: string[] = [];
+  readonly zeros: string[] = [];
 
   private treeLengths: number[] = [];
+
+  private isUpdating = false;
 
   private readonly cachedNodeHashes: {
     [tree: number]: { [level: number]: { [index: number]: string } };
@@ -89,7 +97,7 @@ export class POIMerkletree {
     return this.getNodeHash(tree, TREE_DEPTH, 0);
   }
 
-  async getNodeHash(
+  private async getNodeHash(
     tree: number,
     level: number,
     index: number,
@@ -149,13 +157,16 @@ export class POIMerkletree {
     return this.treeLengths[treeIndex];
   }
 
-  async latestTree(): Promise<number> {
+  private async latestTree(): Promise<number> {
     let latestTree = 0;
     while ((await this.getTreeLength(latestTree)) > 0) latestTree += 1;
     return Math.max(0, latestTree - 1);
   }
 
-  async getLatestTreeAndIndex(): Promise<{ tree: number; index: number }> {
+  private async getLatestTreeAndIndex(): Promise<{
+    tree: number;
+    index: number;
+  }> {
     const latestTree = await this.latestTree();
     const treeLength = await this.getTreeLength(latestTree);
     return { tree: latestTree, index: treeLength - 1 };
@@ -174,20 +185,17 @@ export class POIMerkletree {
     return { tree: latestTree, index: latestIndex + 1 };
   }
 
-  static nextTreeAndIndex(
-    tree: number,
-    index: number,
-  ): { tree: number; index: number } {
-    if (index + 1 >= TREE_MAX_ITEMS) {
-      return { tree: tree + 1, index: 0 };
-    }
-    return { tree, index: index + 1 };
-  }
-
   async insertLeaf(nodeHash: string): Promise<void> {
+    if (this.isUpdating) {
+      return;
+    }
+
+    this.isUpdating = true;
+
     const { tree, index } = await this.getNextTreeAndIndex();
 
     const firstLevelHashWriteGroup: string[][] = [];
+    firstLevelHashWriteGroup[0] = [];
     firstLevelHashWriteGroup[0][index] = nodeHash;
 
     const hashWriteGroup: string[][] = await this.fillHashWriteGroup(
@@ -198,6 +206,9 @@ export class POIMerkletree {
     );
 
     await this.writeToDB(tree, hashWriteGroup);
+    this.treeLengths[tree] += 1;
+
+    this.isUpdating = false;
   }
 
   async rebuildTree(tree: number): Promise<void> {
@@ -243,6 +254,11 @@ export class POIMerkletree {
         items.push(item);
       });
     });
+
+    // Delete tree in DB
+    await this.db.deleteAllPOIMerkletreeNodesForTree(this.listKey, tree);
+
+    // Re-insert entire tree in DB
     await this.db.updatePOIMerkletreeNodes(items);
   }
 
@@ -309,6 +325,7 @@ export class POIMerkletree {
     const items: POIMerkletreeDBItem[] = [];
     hashWriteGroup.forEach((levelItems, level) => {
       levelItems.forEach((nodeHash, index) => {
+        this.cacheNodeHash(tree, level, index, nodeHash);
         const item: POIMerkletreeDBItem = this.createDBItem(
           tree,
           level,
@@ -319,5 +336,24 @@ export class POIMerkletree {
       });
     });
     await this.db.updatePOIMerkletreeNodes(items);
+  }
+
+  static verifyProof(proof: MerkleProof): boolean {
+    // Get indices as BN form
+    const indices = numberify(proof.indices);
+
+    // Calculate proof root and return if it matches the proof in the MerkleProof
+    // Loop through each element and hash till we've reduced to 1 element
+    const calculatedRoot = proof.elements.reduce((current, element, index) => {
+      // If index is right
+      if (indices.testn(index)) {
+        return POIMerkletree.hashLeftRight(element, current);
+      }
+
+      // If index is left
+      return POIMerkletree.hashLeftRight(current, element);
+    }, proof.leaf);
+
+    return hexlify(proof.root) === hexlify(calculatedRoot);
   }
 }
