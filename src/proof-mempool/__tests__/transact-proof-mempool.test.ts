@@ -53,7 +53,7 @@ describe('transact-proof-mempool', () => {
 
   after(() => {
     snarkVerifyStub.restore();
-    snarkVerifyStub.restore();
+    txidMerklerootExistsStub.restore();
   });
 
   it('Should only add valid transact proofs', async () => {
