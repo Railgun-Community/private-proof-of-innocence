@@ -30,10 +30,17 @@ export class POIOrderedEventsDatabase extends AbstractDatabase<POIOrderedEventDB
     listKey: string,
     signedPOIEvent: SignedPOIEvent,
   ): Promise<void> {
-    const { index, blindedCommitments, proof, signature } = signedPOIEvent;
+    const {
+      index,
+      blindedCommitmentStartingIndex,
+      blindedCommitments,
+      proof,
+      signature,
+    } = signedPOIEvent;
     const item: POIOrderedEventDBItem = {
       listKey,
       index,
+      blindedCommitmentStartingIndex,
       blindedCommitments,
       firstBlindedCommitmentInput: blindedCommitments[0],
       proof,
@@ -73,6 +80,18 @@ export class POIOrderedEventsDatabase extends AbstractDatabase<POIOrderedEventDB
       listKey,
     };
     return this.count(filter);
+  }
+
+  async getLastAddedItem(
+    listKey: string,
+  ): Promise<Optional<POIOrderedEventDBItem>> {
+    const filter: DBFilter<POIOrderedEventDBItem> = {
+      listKey,
+    };
+    const sort: DBSort<POIOrderedEventDBItem> = {
+      index: 'descending',
+    };
+    return this.findOne(filter, sort);
   }
 
   async eventExists(

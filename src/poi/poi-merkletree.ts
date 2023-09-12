@@ -10,7 +10,7 @@ import { POIMerkletreeDatabase } from '../database/databases/poi-merkletree-data
 import { poseidon } from 'circomlibjs';
 import { MerkleProof } from '../models/proof-types';
 import { POIMerkletreeDBItem } from '../models/database-types';
-import debug from 'debug';
+import { POIHistoricalMerklerootDatabase } from '../database/databases/poi-historical-merkleroot-database';
 
 // Static value from calculation in RAILGUN Engine SDK.
 const MERKLE_ZERO_VALUE: string =
@@ -19,10 +19,10 @@ const MERKLE_ZERO_VALUE: string =
 const TREE_DEPTH = 16;
 const TREE_MAX_ITEMS = 65_536;
 
-const dbg = debug('poi:poi-merkletree');
-
 export class POIMerkletree {
-  private readonly db: POIMerkletreeDatabase;
+  private readonly merkletreeDB: POIMerkletreeDatabase;
+
+  private readonly merklerootDB: POIHistoricalMerklerootDatabase;
 
   private readonly listKey: string;
 
@@ -37,7 +37,8 @@ export class POIMerkletree {
   } = {};
 
   constructor(networkName: NetworkName, listKey: string) {
-    this.db = new POIMerkletreeDatabase(networkName);
+    this.merkletreeDB = new POIMerkletreeDatabase(networkName);
+    this.merklerootDB = new POIHistoricalMerklerootDatabase(networkName);
     this.listKey = listKey;
     this.calculateZeros();
   }
@@ -64,7 +65,8 @@ export class POIMerkletree {
   }
 
   async deleteNodes_DANGEROUS(tree: number): Promise<void> {
-    await this.db.deleteAllItems_DANGEROUS();
+    await this.merkletreeDB.deleteAllItems_DANGEROUS();
+    await this.merklerootDB.deleteAllItems_DANGEROUS();
     this.cachedNodeHashes[tree] = {};
     this.treeLengths[tree] = 0;
   }
@@ -81,7 +83,12 @@ export class POIMerkletree {
     ) {
       return this.cachedNodeHashes[tree][level][index];
     }
-    const hash = await this.db.getPOINodeHash(this.listKey, tree, level, index);
+    const hash = await this.merkletreeDB.getPOINodeHash(
+      this.listKey,
+      tree,
+      level,
+      index,
+    );
     if (!isDefined(hash)) {
       return this.zeros[level];
     }
@@ -116,7 +123,7 @@ export class POIMerkletree {
   }
 
   private async getTreeLengthFromDBCount(tree: number): Promise<number> {
-    return this.db.countLeavesInTree(this.listKey, tree);
+    return this.merkletreeDB.countLeavesInTree(this.listKey, tree);
   }
 
   async getTreeLength(tree: number): Promise<number> {
@@ -156,21 +163,60 @@ export class POIMerkletree {
     return { tree: latestTree, index: latestIndex + 1 };
   }
 
-  static getTXIDIndex(tree: number, index: number): number {
+  static getEventBlindedCommitmentIndex(tree: number, index: number): number {
     return tree * TREE_MAX_ITEMS + index;
   }
 
-  static getTreeAndIndexFromEventIndex(eventIndex: number): {
+  static getTreeAndIndexFromEventBlindedCommitmentIndex(
+    blindedCommitmentStartingIndex: number,
+  ): {
     tree: number;
     index: number;
   } {
     return {
-      tree: Math.floor(eventIndex / TREE_MAX_ITEMS),
-      index: eventIndex % TREE_MAX_ITEMS,
+      tree: Math.floor(blindedCommitmentStartingIndex / TREE_MAX_ITEMS),
+      index: blindedCommitmentStartingIndex % TREE_MAX_ITEMS,
     };
   }
 
-  async insertLeaves(eventIndex: number, nodeHashes: string[]): Promise<void> {
+  private static validateBlindedCommitmentIndex(
+    blindedCommitmentStartingIndex: number,
+    tree: number,
+    index: number,
+  ): boolean {
+    const nextEventBlindedCommitmentIndex =
+      POIMerkletree.getEventBlindedCommitmentIndex(tree, index);
+    return nextEventBlindedCommitmentIndex === blindedCommitmentStartingIndex;
+  }
+
+  async insertLeaf(blindedCommitmentStartingIndex: number, nodeHash: string) {
+    if (this.isUpdating) {
+      return;
+    }
+    this.isUpdating = true;
+
+    const { tree, index } = await this.getNextTreeAndIndex();
+    const isValidIndex = POIMerkletree.validateBlindedCommitmentIndex(
+      blindedCommitmentStartingIndex,
+      tree,
+      index,
+    );
+    if (!isValidIndex) {
+      this.isUpdating = false;
+      throw new Error(
+        `Invalid blindedCommitmentStartingIndex for POI merkletree insert`,
+      );
+    }
+
+    await this.insertLeavesInTree(tree, index, [nodeHash]);
+
+    this.isUpdating = false;
+  }
+
+  async insertMultipleLeaves_TEST_ONLY(
+    blindedCommitmentStartingIndex: number,
+    nodeHashes: string[],
+  ): Promise<void> {
     if (this.isUpdating) {
       return;
     }
@@ -178,13 +224,15 @@ export class POIMerkletree {
     this.isUpdating = true;
 
     const { tree, index } = await this.getNextTreeAndIndex();
-
-    const nextEventIndex = POIMerkletree.getTXIDIndex(tree, index);
-    if (nextEventIndex !== eventIndex) {
-      dbg('Invalid eventIndex for POI merkletree insert');
+    const isValidIndex = POIMerkletree.validateBlindedCommitmentIndex(
+      blindedCommitmentStartingIndex,
+      tree,
+      index,
+    );
+    if (!isValidIndex) {
       this.isUpdating = false;
       throw new Error(
-        `Invalid eventIndex for POI merkletree insert: merkletree at ${nextEventIndex}, event at ${eventIndex}`,
+        `Invalid blindedCommitmentStartingIndex for POI merkletree insert`,
       );
     }
 
@@ -284,10 +332,13 @@ export class POIMerkletree {
     });
 
     // Delete tree in DB
-    await this.db.deleteAllPOIMerkletreeNodesForTree(this.listKey, tree);
+    await this.merkletreeDB.deleteAllPOIMerkletreeNodesForTree(
+      this.listKey,
+      tree,
+    );
 
     // Re-insert entire tree in DB
-    await this.db.updatePOIMerkletreeNodes(items);
+    await this.merkletreeDB.updatePOIMerkletreeNodes(items);
   }
 
   private async fillHashWriteGroup(
@@ -363,11 +414,18 @@ export class POIMerkletree {
         items.push(item);
       });
     });
-    await this.db.updatePOIMerkletreeNodes(items);
+
+    await this.merkletreeDB.updatePOIMerkletreeNodes(items);
+
+    const merkleroot = await this.getRoot(tree);
+    await this.merklerootDB.insertMerkleroot(this.listKey, merkleroot);
   }
 
   async getMerkleProofFromNodeHash(nodeHash: string): Promise<MerkleProof> {
-    const node = await this.db.getLeafNodeFromHash(this.listKey, nodeHash);
+    const node = await this.merkletreeDB.getLeafNodeFromHash(
+      this.listKey,
+      nodeHash,
+    );
     if (!isDefined(node)) {
       throw new Error(
         `No POI node for blinded commitment (node hash) ${nodeHash}`,
@@ -377,7 +435,7 @@ export class POIMerkletree {
   }
 
   async nodeHashExists(nodeHash: string): Promise<boolean> {
-    return this.db.nodeHashExists(this.listKey, nodeHash);
+    return this.merkletreeDB.nodeHashExists(this.listKey, nodeHash);
   }
 
   async getMerkleProof(tree: number, index: number): Promise<MerkleProof> {

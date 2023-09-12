@@ -12,6 +12,7 @@ describe('ed25519', () => {
   it('Should sign and verify POI Events', async () => {
     const poiEvent: POIEvent = {
       index: 0,
+      blindedCommitmentStartingIndex: 0,
       blindedCommitments: ['0x1234', '0x5678'],
       proof: {
         pi_a: ['0x1234', '0x5678'],
@@ -25,7 +26,7 @@ describe('ed25519', () => {
 
     const signature = await signPOIEvent(poiEvent);
     expect(signature).to.equal(
-      '96ef61bac58de958eed777b839ad72a73a4e0de7c351d011ea284c60809a76d5b081813b6db426d7d6ce5f9048baa458fb9bdf171f5f8fe5435fc51a24c32e03',
+      'd84a6d50dc5d59987579421bd2bcbb96ae6d4d470a3e779958a9e53433dcf073b8732d4a15cbde4efb7d0af19a3f9db272c39a71b98bf5f2c214fd993257860c',
     );
 
     const publicKey = await getListPublicKey();

@@ -86,6 +86,7 @@ export type TransactProofMempoolDBItem = {
 export type POIOrderedEventDBItem = {
   listKey: string;
   index: number;
+  blindedCommitmentStartingIndex: number;
   blindedCommitments: string[];
   firstBlindedCommitmentInput: string;
   proof: SnarkProof;

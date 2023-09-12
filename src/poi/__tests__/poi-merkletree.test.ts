@@ -5,21 +5,26 @@ import { DatabaseClient } from '../../database/database-client';
 import { POIMerkletree } from '../poi-merkletree';
 import { POIMerkletreeDatabase } from '../../database/databases/poi-merkletree-database';
 import Sinon from 'sinon';
+import { POIHistoricalMerklerootDatabase } from '../../database/databases/poi-historical-merkleroot-database';
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
 
 const networkName = NetworkName.Ethereum;
 
-let db: POIMerkletreeDatabase;
+let merkletreeDB: POIMerkletreeDatabase;
+let merklerootDB: POIHistoricalMerklerootDatabase;
 let merkletree: POIMerkletree;
+
+const listKey = 'test-key';
 
 describe('poi-merkletree', () => {
   before(async () => {
     await DatabaseClient.init();
-    db = new POIMerkletreeDatabase(networkName);
-    await db.createCollectionIndices();
-    merkletree = new POIMerkletree(networkName, 'test-key');
+    merkletreeDB = new POIMerkletreeDatabase(networkName);
+    await merkletreeDB.createCollectionIndices();
+    merklerootDB = new POIHistoricalMerklerootDatabase(networkName);
+    merkletree = new POIMerkletree(networkName, listKey);
   });
 
   beforeEach(async () => {
@@ -60,10 +65,11 @@ describe('poi-merkletree', () => {
       '14fceeac99eb8419a2796d1958fc2050d489bf5a3eb170ef16a667060344ba90',
     );
 
-    await merkletree.insertLeaves(0, [
+    await merkletree.insertLeaf(
+      0,
       'ab2f9d1ebd74c3e1f1ccee452a80ae27a94f14a542a4fd8b0c9ad9a1b7f9ffe5',
-    ]);
-    await merkletree.insertLeaves(1, [
+    );
+    await merkletree.insertMultipleLeaves_TEST_ONLY(1, [
       '8902638fe6fc05e4f1cd7c06940d6217591a0ccb003ed45198782fbff38e9f2d',
       '19889087c2ff4c4a164060a832a3ba11cce0c2e2dbd42da10c57101efb966fcd',
     ]);
@@ -72,6 +78,12 @@ describe('poi-merkletree', () => {
     expect(await merkletree.getRoot(0)).to.equal(
       '1bf92404b5bebd9e2c41a9d4cd55d9c9b369b0eab5fc1f9643ec1e60c75ab763',
     );
+    expect(
+      await merklerootDB.merklerootExists(
+        listKey,
+        '1bf92404b5bebd9e2c41a9d4cd55d9c9b369b0eab5fc1f9643ec1e60c75ab763',
+      ),
+    ).to.equal(true);
 
     await merkletree.rebuildTree(0);
 
@@ -95,12 +107,12 @@ describe('poi-merkletree', () => {
     ).resolves({ tree: 0, index: 65535 });
 
     await expect(
-      merkletree.insertLeaves(65536, []),
+      merkletree.insertMultipleLeaves_TEST_ONLY(65536, []),
     ).to.eventually.be.rejectedWith(
-      'Invalid eventIndex for POI merkletree insert',
+      'Invalid blindedCommitmentStartingIndex for POI merkletree insert',
     );
 
-    await merkletree.insertLeaves(65535, [
+    await merkletree.insertMultipleLeaves_TEST_ONLY(65535, [
       '65536',
       'ab2f9d1ebd74c3e1f1ccee452a80ae27a94f14a542a4fd8b0c9ad9a1b7f9ffe5',
       '8902638fe6fc05e4f1cd7c06940d6217591a0ccb003ed45198782fbff38e9f2d',
@@ -115,7 +127,14 @@ describe('poi-merkletree', () => {
   });
 
   it('Should generate and validate merkle proofs', async () => {
-    await merkletree.insertLeaves(0, ['02', '04', '08', '10', '20', '40']);
+    await merkletree.insertMultipleLeaves_TEST_ONLY(0, [
+      '02',
+      '04',
+      '08',
+      '10',
+      '20',
+      '40',
+    ]);
 
     // Get proof
     const proof = await merkletree.getMerkleProof(0, 3);
@@ -157,7 +176,7 @@ describe('poi-merkletree', () => {
     const nodeHashes: string[] = nums.map((num) => {
       return BigInt(num).toString(16);
     });
-    await merkletree.insertLeaves(0, nodeHashes);
+    await merkletree.insertMultipleLeaves_TEST_ONLY(0, nodeHashes);
 
     // Get proof
     const proof2 = await merkletree.getMerkleProofFromNodeHash('22');

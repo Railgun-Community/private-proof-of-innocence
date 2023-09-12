@@ -37,9 +37,16 @@ export const getPOIListEventRange = async (
   const dbEvents = await db.getPOIEvents(listKey, startIndex, endIndex);
 
   return dbEvents.map((dbEvent) => {
-    const { index, blindedCommitments, proof, signature } = dbEvent;
+    const {
+      index,
+      blindedCommitmentStartingIndex,
+      blindedCommitments,
+      proof,
+      signature,
+    } = dbEvent;
     return {
       index,
+      blindedCommitmentStartingIndex,
       blindedCommitments,
       proof,
       signature,

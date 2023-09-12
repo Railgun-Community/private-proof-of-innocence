@@ -4,6 +4,7 @@ import { POIOrderedEventsDatabase } from '../database/databases/poi-ordered-even
 import debug from 'debug';
 import { signPOIEvent } from '../util/ed25519';
 import { SnarkProof } from '../models/proof-types';
+import { POIMerkletreeManager } from './poi-merkletree-manager';
 
 const dbg = debug('poi:events');
 
@@ -66,10 +67,17 @@ export class POIEventManager {
     POIEventManager.isAddingPOIEventForNetwork[networkName] = true;
 
     const db = new POIOrderedEventsDatabase(networkName);
-    const nextIndex = await db.getCount(listKey);
+    const lastAddedItem = await db.getLastAddedItem(listKey);
+
+    const nextIndex = lastAddedItem ? lastAddedItem.index + 1 : 0;
+    const blindedCommitmentStartingIndex = lastAddedItem
+      ? lastAddedItem.blindedCommitmentStartingIndex +
+        lastAddedItem.blindedCommitments.length
+      : 0;
 
     const poiEvent: POIEvent = {
       index: nextIndex,
+      blindedCommitmentStartingIndex,
       blindedCommitments: nextEvent.blindedCommitments,
       proof: nextEvent.proof,
     };
@@ -80,6 +88,12 @@ export class POIEventManager {
     };
 
     await db.insertValidSignedPOIEvent(listKey, signedPOIEvent);
+
+    await POIMerkletreeManager.addPOIEvent(
+      listKey,
+      networkName,
+      signedPOIEvent,
+    );
 
     POIEventManager.isAddingPOIEventForNetwork[networkName] = false;
 

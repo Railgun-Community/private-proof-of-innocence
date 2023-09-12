@@ -4,6 +4,7 @@ import { POIMerkletree } from './poi-merkletree';
 import { MerkleProof } from '../models/proof-types';
 import { POIExistenceListMap } from '../models/api-types';
 import { QueryLimits } from '../config/query-limits';
+import { SignedPOIEvent } from '../models/poi-types';
 
 export class POIMerkletreeManager {
   private static merkletrees: Record<
@@ -31,6 +32,22 @@ export class POIMerkletreeManager {
       throw new Error('No merkletree for list/network');
     }
     return merkletree;
+  }
+
+  static async addPOIEvent(
+    listKey: string,
+    networkName: NetworkName,
+    signedPOIEvent: SignedPOIEvent,
+  ) {
+    const merkletree = POIMerkletreeManager.getMerkletreeForListAndNetwork(
+      listKey,
+      networkName,
+    );
+    const startIndex = signedPOIEvent.blindedCommitmentStartingIndex;
+    for (let i = 0; i < signedPOIEvent.blindedCommitments.length; i += 1) {
+      const blindedCommitment = signedPOIEvent.blindedCommitments[i];
+      await merkletree.insertLeaf(startIndex + i, blindedCommitment);
+    }
   }
 
   static async getMerkleProofs(

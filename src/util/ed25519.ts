@@ -18,6 +18,7 @@ const getPOIEventMessage = (poiEvent: POIEvent) => {
   return utf8ToBytes(
     JSON.stringify({
       index: poiEvent.index,
+      blindedCommitmentStartingIndex: poiEvent.blindedCommitmentStartingIndex,
       blindedCommitments: poiEvent.blindedCommitments,
       proof: poiEvent.proof,
     }),
