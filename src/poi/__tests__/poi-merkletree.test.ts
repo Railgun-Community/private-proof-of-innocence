@@ -79,6 +79,12 @@ describe('poi-merkletree', () => {
     expect(await merkletree.getRoot(0)).to.equal(
       '1bf92404b5bebd9e2c41a9d4cd55d9c9b369b0eab5fc1f9643ec1e60c75ab763',
     );
+
+    expect(
+      await merkletree.nodeHashExists(
+        '8902638fe6fc05e4f1cd7c06940d6217591a0ccb003ed45198782fbff38e9f2d',
+      ),
+    ).to.equal(true);
   });
 
   it('Should create second merkle tree when first is filled', async () => {
@@ -154,7 +160,7 @@ describe('poi-merkletree', () => {
     await merkletree.insertLeaves(0, nodeHashes);
 
     // Get proof
-    const proof2 = await merkletree.getMerkleProof(0, 34);
+    const proof2 = await merkletree.getMerkleProofFromNodeHash('22');
 
     expect(proof2.root).to.not.equal(proof.root);
     // Check proof is what we expect

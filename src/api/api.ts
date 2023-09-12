@@ -24,6 +24,7 @@ import { POIMerkletreeManager } from '../poi/poi-merkletree-manager';
 import { getShieldQueueStatus } from '../shield-queue/shield-queue';
 import { RailgunTxidMerkletreeManager } from '../railgun-txids/railgun-txid-merkletree-manager';
 import { getNodeStatusAllNetworks } from '../status/node-status';
+import { QueryLimits } from '../config/query-limits';
 
 const dbg = debug('poi:api');
 
@@ -229,6 +230,15 @@ export class API {
 
         const networkName = networkNameForSerializedChain(chainType, chainID);
 
+        if (
+          QueryLimits.GET_POI_EXISTENCE_MAX_BLINDED_COMMITMENTS >
+          blindedCommitments.length
+        ) {
+          throw new Error(
+            `Too many blinded commitments: max ${QueryLimits.GET_POI_EXISTENCE_MAX_BLINDED_COMMITMENTS}`,
+          );
+        }
+
         const poiExistenceMap =
           await POIMerkletreeManager.getPOIExistencePerList(
             listKeys,
@@ -247,6 +257,15 @@ export class API {
           req.body as GetMerkleProofsParams;
 
         const networkName = networkNameForSerializedChain(chainType, chainID);
+
+        if (
+          QueryLimits.GET_MERKLE_PROOFS_MAX_BLINDED_COMMITMENTS >
+          blindedCommitments.length
+        ) {
+          throw new Error(
+            `Too many blinded commitments: max ${QueryLimits.GET_MERKLE_PROOFS_MAX_BLINDED_COMMITMENTS}`,
+          );
+        }
 
         const merkleProofs = await POIMerkletreeManager.getMerkleProofs(
           listKey,

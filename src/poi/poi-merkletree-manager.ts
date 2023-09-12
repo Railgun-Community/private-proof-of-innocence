@@ -3,6 +3,7 @@ import { Config } from '../config/config';
 import { POIMerkletree } from './poi-merkletree';
 import { MerkleProof } from '../models/proof-types';
 import { POIExistenceListMap } from '../models/api-types';
+import { QueryLimits } from '../config/query-limits';
 
 export class POIMerkletreeManager {
   private static merkletrees: Record<
@@ -56,6 +57,15 @@ export class POIMerkletreeManager {
     networkName: NetworkName,
     blindedCommitments: string[],
   ): Promise<POIExistenceListMap> {
+    if (
+      QueryLimits.GET_POI_EXISTENCE_MAX_BLINDED_COMMITMENTS >
+      blindedCommitments.length
+    ) {
+      throw new Error(
+        `Too many blinded commitments: max ${QueryLimits.GET_POI_EXISTENCE_MAX_BLINDED_COMMITMENTS}`,
+      );
+    }
+
     const existenceListMap: POIExistenceListMap = {};
     await Promise.all(
       listKeys.map(async (listKey) => {
