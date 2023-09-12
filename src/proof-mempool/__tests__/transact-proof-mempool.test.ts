@@ -8,7 +8,7 @@ import { NetworkName } from '@railgun-community/shared-models';
 import { TransactProofData } from '../../models/proof-types';
 import { MOCK_SNARK_PROOF } from '../../tests/mocks.test';
 import { TransactProofPerListMempoolDatabase } from '../../database/databases/transact-proof-per-list-mempool-database';
-import { DatabaseClient } from '../../database/database-client';
+import { DatabaseClient } from '../../database/database-client-init';
 import { TransactProofMempoolCache } from '../transact-proof-mempool-cache';
 import { ProofMempoolBloomFilter } from '../proof-mempool-bloom-filters';
 import { POIHistoricalMerklerootDatabase } from '../../database/databases/poi-historical-merkleroot-database';

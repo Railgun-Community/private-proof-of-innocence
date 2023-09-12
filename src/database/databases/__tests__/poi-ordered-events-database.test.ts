@@ -2,7 +2,7 @@ import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { POIOrderedEventsDatabase } from '../poi-ordered-events-database';
 import { NetworkName } from '@railgun-community/shared-models';
-import { DatabaseClient } from '../../database-client';
+import { DatabaseClient } from '../../database-client-init';
 import { SignedPOIEvent } from '../../../models/poi-types';
 
 chai.use(chaiAsPromised);
@@ -29,7 +29,7 @@ describe('POIOrderedEventsDatabase', () => {
 
   it('Should create collection indices', async () => {
     // Fetch all indexes for the collection
-    const indexes = await db.getCollectionIndexes();
+    const indexes = await db.listCollectionIndexes();
 
     // Check if an index exists for the 'index' field
     const indexFieldExists = indexes.some((index) => {

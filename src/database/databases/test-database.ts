@@ -1,7 +1,7 @@
 import { NetworkName } from '@railgun-community/shared-models';
 import { AbstractDatabase } from '../abstract-database';
 import { TestDBItem, CollectionName } from '../../models/database-types';
-import { IndexDescription, WithId } from 'mongodb';
+import { WithId } from 'mongodb';
 
 export class TestDatabase extends AbstractDatabase<TestDBItem> {
     constructor(networkName: NetworkName) {
@@ -10,10 +10,6 @@ export class TestDatabase extends AbstractDatabase<TestDBItem> {
 
     async createCollectionIndices() {
         await this.createIndex(['test'], { unique: true });
-    }
-
-    async getCollectionIndexes(): Promise<IndexDescription[]> {
-        return this.listCollectionIndexes();
     }
 
     async getItem(filter: Partial<TestDBItem>): Promise<WithId<TestDBItem> | null | undefined> {

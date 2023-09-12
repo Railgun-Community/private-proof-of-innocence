@@ -2,7 +2,7 @@ import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { StatusDatabase } from '../status-database';
 import { NetworkName } from '@railgun-community/shared-models';
-import { DatabaseClient } from '../../database-client';
+import { DatabaseClient } from '../../database-client-init';
 import { StatusDBItem } from '../../../models/database-types';
 
 chai.use(chaiAsPromised);
@@ -16,10 +16,10 @@ describe('StatusDatabase', () => {
     before(async () => {
         await DatabaseClient.init();
         db = new StatusDatabase(networkName);
-      
+
         // Insert dummy document, ensures DB gets a namespace since is empty 
         await db.saveStatus(0);
-      
+
         await db.createCollectionIndices();
     });
 
@@ -34,7 +34,7 @@ describe('StatusDatabase', () => {
 
     it('Should not create additional collection indices', async () => {
         // Fetch all indexes for the collection
-        const indexes = await db.getCollectionIndexes();
+        const indexes = await db.listCollectionIndexes();
 
         // Filter out the default MongoDB index on the `_id` field
         const additionalIndexes = indexes.filter(index => {

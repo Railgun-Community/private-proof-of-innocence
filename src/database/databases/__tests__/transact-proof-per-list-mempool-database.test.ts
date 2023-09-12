@@ -2,8 +2,15 @@ import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { TransactProofPerListMempoolDatabase } from '../transact-proof-per-list-mempool-database';
 import { NetworkName } from '@railgun-community/shared-models';
+<<<<<<< Updated upstream
 import { DatabaseClient } from '../../database-client';
 import { TransactProofMempoolDBItem } from '../../../models/database-types';
+=======
+import { DatabaseClient } from '../../database-client-init';
+import {
+    TransactProofMempoolDBItem,
+} from '../../../models/database-types';
+>>>>>>> Stashed changes
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
@@ -42,9 +49,15 @@ describe('TransactProofPerListMempoolDatabase', () => {
     expect(uniqueCombinedIndexExists).to.equal(true);
   });
 
+<<<<<<< Updated upstream
   it('Should correctly initialize TransactProofPerListMempoolDatabase', () => {
     expect(db).to.be.instanceOf(TransactProofPerListMempoolDatabase);
   });
+=======
+    it('Should create collection indeces', async () => {
+        // Fetch all indexes for the collection
+        const indexes = await db.listCollectionIndexes();
+>>>>>>> Stashed changes
 
   it('Should insert and get a valid transact proof', async () => {
     const listKey = 'someListKey';

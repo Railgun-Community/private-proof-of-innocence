@@ -3,7 +3,7 @@ import { startEngine, stopEngine } from '../engine/engine-init';
 import { initNetworkProviders } from '../rpc-providers/active-network-providers';
 import { setOnMerkletreeScanCallback } from '@railgun-community/wallet';
 import { onMerkletreeScanCallback } from '../status/merkletree-scan-callback';
-import { DatabaseClient } from '../database/database-client';
+import { DatabaseClient } from '../database/database-client-init';
 import { ShieldProofMempool } from '../proof-mempool/shield-proof-mempool';
 import { TransactProofMempool } from '../proof-mempool/transact-proof-mempool';
 import { POIMerkletreeManager } from '../poi/poi-merkletree-manager';

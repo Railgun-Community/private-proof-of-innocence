@@ -1,7 +1,8 @@
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { NetworkName } from '@railgun-community/shared-models';
-import { DatabaseClient } from '../../database-client';
+import { DatabaseClient } from '../../database-client-init';
+import { DatabaseClientStorage } from '../../database-client-storage';
 import { TestDatabase } from '../test-database';
 import {
     TestDBItem,
@@ -23,7 +24,7 @@ describe('abstract-database', () => {
     let db: TestDatabase;
 
     it('Should throw error if DatabaseClient is not initialized', async () => {
-        DatabaseClient.client = undefined;
+        DatabaseClientStorage.client = undefined;
         expect(() => new TestDatabase(networkName)).to.throw('DatabaseClient not initialized');
         await DatabaseClient.init();  // Re-initialize for the following tests
     });
@@ -36,7 +37,7 @@ describe('abstract-database', () => {
 
     it('Should create collection indices', async () => {
         // List all indexes for the collection
-        const indexes = await db.getCollectionIndexes(); // have to access through the wrapper
+        const indexes = await db.listCollectionIndexes();
 
         // Check that an index on 'test' exists
         const indexExists = indexes.some(index => {
@@ -95,7 +96,7 @@ describe('abstract-database', () => {
         const originalUrl = Config.MONGODB_URL;
 
         // Set DatabaseClient.client to undefined to make sure init() doesn't return early
-        DatabaseClient.client = undefined;
+        DatabaseClientStorage.client = undefined;
 
         // Set the MONGODB_URL to undefined to simulate the condition
         Config.MONGODB_URL = undefined;

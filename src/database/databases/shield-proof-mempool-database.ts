@@ -5,7 +5,6 @@ import {
   ShieldProofMempoolDBItem,
 } from '../../models/database-types';
 import { AbstractDatabase } from '../abstract-database';
-import { IndexDescription } from 'mongodb';
 import { ShieldProofData } from '../../models/proof-types';
 
 export class ShieldProofMempoolDatabase extends AbstractDatabase<ShieldProofMempoolDBItem> {
@@ -15,10 +14,6 @@ export class ShieldProofMempoolDatabase extends AbstractDatabase<ShieldProofMemp
 
   async createCollectionIndices() {
     await this.createIndex(['commitmentHash'], { unique: true });
-  }
-
-  async getCollectionIndexes(): Promise<IndexDescription[]> {
-    return this.listCollectionIndexes();
   }
 
   async insertValidShieldProof(

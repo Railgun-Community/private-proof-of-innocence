@@ -5,7 +5,7 @@ import * as WalletModule from '../../engine/wallet';
 import * as TxReceiptModule from '../../rpc-providers/tx-receipt';
 import { ShieldData } from '@railgun-community/wallet';
 import { TestMockListProviderExcludeSingleAddress } from '../../tests/list-providers/test-mock-list-provider-exclude-single-address.test';
-import { DatabaseClient } from '../../database/database-client';
+import { DatabaseClient } from '../../database/database-client-init';
 import { ShieldQueueDatabase } from '../../database/databases/shield-queue-database';
 import { ListProvider } from '../list-provider';
 import sinon, { SinonStub } from 'sinon';

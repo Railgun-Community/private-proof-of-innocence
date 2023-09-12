@@ -6,7 +6,6 @@ import {
 } from '../../models/database-types';
 import { AbstractDatabase } from '../abstract-database';
 import { TransactProofData } from '../../models/proof-types';
-import { IndexDescription } from 'mongodb';
 
 export class TransactProofPerListMempoolDatabase extends AbstractDatabase<TransactProofMempoolDBItem> {
   constructor(networkName: NetworkName) {
@@ -17,10 +16,6 @@ export class TransactProofPerListMempoolDatabase extends AbstractDatabase<Transa
     await this.createIndex(['listKey', 'firstBlindedCommitmentInput'], {
       unique: true,
     });
-  }
-
-  async getCollectionIndexes(): Promise<IndexDescription[]> {
-    return this.listCollectionIndexes();
   }
 
   async insertValidTransactProof(

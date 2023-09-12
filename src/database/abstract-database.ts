@@ -13,7 +13,7 @@ import {
   IndexDescription,
   FindOptions,
 } from 'mongodb';
-import { DatabaseClient } from './database-client';
+import { DatabaseClientStorage } from './database-client-storage';
 import {
   CollectionName,
   DBFilter,
@@ -30,13 +30,13 @@ export abstract class AbstractDatabase<T extends Document> {
   private dbg: debug.Debugger;
 
   constructor(networkName: NetworkName, collection: CollectionName) {
-    if (!DatabaseClient.client) {
+    if (!DatabaseClientStorage.client) {
       throw new Error('DatabaseClient not initialized');
     }
 
     const { chain } = networkForName(networkName);
     const chainKey = `${chain.type}:${chain.id}`;
-    this.db = DatabaseClient.client.db(chainKey);
+    this.db = DatabaseClientStorage.client.db(chainKey);
 
     this.collection = this.db.collection<T>(collection);
     this.dbg = debug(`poi:db:${collection}`);
@@ -47,6 +47,10 @@ export abstract class AbstractDatabase<T extends Document> {
   }
 
   abstract createCollectionIndices(): Promise<void>;
+
+  public async listCollectionIndexes(): Promise<IndexDescription[]> {
+    return this.collection.listIndexes().toArray();
+  }
 
   protected async insertOne(data: OptionalUnlessRequiredId<T>): Promise<void> {
     try {
@@ -131,10 +135,6 @@ export abstract class AbstractDatabase<T extends Document> {
       return;
     }
     return this.collection.createIndex(indexSpec as string[], options);
-  }
-
-  protected async listCollectionIndexes(): Promise<IndexDescription[]> {
-    return this.collection.listIndexes().toArray();
   }
 
   private onInsertError(err: MongoError) {
