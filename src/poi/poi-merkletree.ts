@@ -200,7 +200,7 @@ export class POIMerkletree {
     await this.writeToDB(tree, hashWriteGroup);
   }
 
-  async rebuildAndWriteTree(tree: number): Promise<void> {
+  async rebuildTree(tree: number): Promise<void> {
     const firstLevelHashWriteGroup: string[][] = [];
 
     firstLevelHashWriteGroup[0] = [];

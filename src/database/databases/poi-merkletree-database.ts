@@ -33,6 +33,10 @@ export class POIMerkletreeDatabase extends AbstractDatabase<POIMerkletreeDBItem>
       level: item.level,
       index: item.index,
     };
+    if (item.level === 0) {
+      // Never replace items at level 0.
+      return this.insertOne(item);
+    }
     return this.upsertOne(filter, item);
   }
 
