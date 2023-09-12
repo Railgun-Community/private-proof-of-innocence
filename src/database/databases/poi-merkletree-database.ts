@@ -5,6 +5,7 @@ import {
   POIMerkletreeDBItem,
 } from '../../models/database-types';
 import { AbstractDatabase } from '../abstract-database';
+import { IndexDescription } from 'mongodb';
 
 export class POIMerkletreeDatabase extends AbstractDatabase<POIMerkletreeDBItem> {
   constructor(networkName: NetworkName) {
@@ -16,7 +17,6 @@ export class POIMerkletreeDatabase extends AbstractDatabase<POIMerkletreeDBItem>
       unique: true,
     });
   }
-<<<<<<< Updated upstream
 
   async getCollectionIndexes(): Promise<IndexDescription[]> {
     return this.listCollectionIndexes();
@@ -99,6 +99,4 @@ export class POIMerkletreeDatabase extends AbstractDatabase<POIMerkletreeDBItem>
     };
     return this.count(filter);
   }
-=======
->>>>>>> Stashed changes
 }

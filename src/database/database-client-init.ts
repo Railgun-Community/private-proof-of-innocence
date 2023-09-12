@@ -16,6 +16,8 @@ import { POIMerkletreeDatabase } from './databases/poi-merkletree-database';
 import { POIHistoricalMerklerootDatabase } from './databases/poi-historical-merkleroot-database';
 import { TestDatabase } from './databases/test-database';
 import { DatabaseClientStorage } from './database-client-storage';
+import { RailgunTxidMerkletreeManager } from 'railgun-txids/railgun-txid-merkletree-manager';
+import { RailgunTxidMerkletreeStatusDatabase } from './databases/railgun-txid-merkletree-status-database';
 
 export class DatabaseClient {
   static async init() {
@@ -60,6 +62,9 @@ export class DatabaseClient {
               case CollectionName.TransactProofPerListMempool:
                 db = new TransactProofPerListMempoolDatabase(networkName);
                 break;
+              case CollectionName.RailgunTxidMerkletreeStatus:
+                db = new RailgunTxidMerkletreeStatusDatabase(networkName);
+                break;
               case CollectionName.POIOrderedEvents:
                 db = new POIOrderedEventsDatabase(networkName);
                 break;
@@ -72,6 +77,8 @@ export class DatabaseClient {
               case CollectionName.Test:
                 db = new TestDatabase(networkName);
                 break;
+              default:
+                throw new Error(`Unsupported collection name: ${collectionName}`);
             }
 
             await db.createCollectionIndices();
