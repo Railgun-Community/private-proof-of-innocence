@@ -17,10 +17,6 @@ export class RailgunTxidMerkletreeStatusDatabase extends AbstractDatabase<Railgu
     await this.createIndex([], {});
   }
 
-  async getCollectionIndexes(): Promise<IndexDescription[]> {
-    return this.listCollectionIndexes();
-  }
-
   async getStatus(): Promise<Optional<RailgunTxidMerkletreeStatusDBItem>> {
     const filter: DBFilter<RailgunTxidMerkletreeStatusDBItem> = {};
     return this.findOne(filter);

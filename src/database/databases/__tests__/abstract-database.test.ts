@@ -5,6 +5,7 @@ import { DatabaseClient } from '../../database-client-init';
 import { DatabaseClientStorage } from '../../database-client-storage';
 import { TestDatabase } from '../test-database';
 import {
+    CollectionName,
     TestDBItem,
 } from '../../../models/database-types';
 import { MongoError } from 'mongodb';

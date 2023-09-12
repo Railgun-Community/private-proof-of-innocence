@@ -16,7 +16,6 @@ import { POIMerkletreeDatabase } from './databases/poi-merkletree-database';
 import { POIHistoricalMerklerootDatabase } from './databases/poi-historical-merkleroot-database';
 import { TestDatabase } from './databases/test-database';
 import { DatabaseClientStorage } from './database-client-storage';
-import { RailgunTxidMerkletreeManager } from 'railgun-txids/railgun-txid-merkletree-manager';
 import { RailgunTxidMerkletreeStatusDatabase } from './databases/railgun-txid-merkletree-status-database';
 
 export class DatabaseClient {
