@@ -70,6 +70,7 @@ export class TransactProofPerListMempoolDatabase extends AbstractDatabase<Transa
       transactProofData: {
         snarkProof: transactProofDBData.snarkProof,
         poiMerkleroots: transactProofDBData.poiMerkleroots,
+        txidIndex: transactProofDBData.txidIndex,
         txMerkleroot: transactProofDBData.txMerkleroot,
         blindedCommitmentInputs: transactProofDBData.blindedCommitmentInputs,
         blindedCommitmentOutputs: transactProofDBData.blindedCommitmentInputs,

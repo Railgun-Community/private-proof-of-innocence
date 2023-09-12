@@ -67,6 +67,16 @@ export abstract class AbstractDatabase<T extends Document> {
     }
   }
 
+  protected async upsertOne(filter: Filter<T>, item: T) {
+    try {
+      await this.collection.updateOne(filter, item, { upsert: true });
+    } catch (err) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      this.dbg(err.message);
+      throw err;
+    }
+  }
+
   protected async exists(filter: Filter<T>): Promise<boolean> {
     return (await this.findOne(filter)) != null;
   }

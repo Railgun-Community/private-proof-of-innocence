@@ -53,6 +53,7 @@ describe('shield-proof-mempool', () => {
 
     // 1. FAIL: Snark verifies, but commitmentHash is not in ShieldQueue.
     snarkVerifyStub.resolves(true);
+    await ShieldProofMempool.submitProof(networkName, shieldProofData);
     await expect(
       shieldProofMempoolDB.proofExists(shieldProofData.commitmentHash),
     ).to.eventually.equal(false);

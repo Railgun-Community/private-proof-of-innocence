@@ -75,6 +75,7 @@ export type TransactProofMempoolDBItem = {
   listKey: string;
   snarkProof: SnarkProof;
   poiMerkleroots: string[];
+  txidIndex: number;
   txMerkleroot: string;
   blindedCommitmentInputs: string[];
   blindedCommitmentOutputs: string[];

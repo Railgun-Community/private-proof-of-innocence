@@ -43,7 +43,7 @@ export const startEngine = () => {
   }
   const levelDB = new LevelDOWN(Config.ENGINE_DB_DIR);
 
-  const walletSource = 'relayer';
+  const walletSource = 'poi';
   const shouldDebug = true;
 
   setLoggers(dbgLog, dbgError);
@@ -55,6 +55,7 @@ export const startEngine = () => {
     testArtifactStore,
     false, // useNativeArtifacts
     false, // skipMerkletreeScans
+    true, // isPOINode
   );
 
   engineStarted = true;
