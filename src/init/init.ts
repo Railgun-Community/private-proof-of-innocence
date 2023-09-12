@@ -6,6 +6,7 @@ import { onMerkletreeScanCallback } from '../status/merkletree-scan-callback';
 import { DatabaseClient } from '../database/database-client';
 import { ShieldProofMempool } from '../proof-mempool/shield-proof-mempool';
 import { TransactProofMempool } from '../proof-mempool/transact-proof-mempool';
+import { POIMerkletreeManager } from '../poi/poi-merkletree-manager';
 
 const dbg = debug('poi:init');
 
@@ -14,6 +15,7 @@ export const initModules = async () => {
   dbg('Initializing Engine and RPCs...');
   startEngine();
   await initNetworkProviders();
+  setOnMerkletreeScanCallback(onMerkletreeScanCallback);
 
   dbg('Setting up databases...');
   await DatabaseClient.init();
@@ -25,7 +27,8 @@ export const initModules = async () => {
   dbg('Inflating Transact Proof mempool cache...');
   await TransactProofMempool.inflateCacheFromDatabase();
 
-  setOnMerkletreeScanCallback(onMerkletreeScanCallback);
+  dbg('Generating POI Merkletrees for each list and network...');
+  POIMerkletreeManager.initListMerkletrees();
 
   dbg('Node init successful.');
 };

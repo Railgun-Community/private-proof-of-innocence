@@ -18,3 +18,10 @@ export type SnarkProof = {
   pi_b: [[string, string], [string, string]];
   pi_c: [string, string];
 };
+
+export type MerkleProof = {
+  leaf: string; // hash of commitment
+  elements: string[];
+  indices: string;
+  root: string;
+};

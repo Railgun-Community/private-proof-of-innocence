@@ -881,10 +881,10 @@
   resolved "https://registry.yarnpkg.com/@railgun-community/shared-models/-/shared-models-5.4.0.tgz#ceaab8f1c4e237a16ac7a94747f12b5a6f88a2df"
   integrity sha512-BoAPnDHEzhA7VG2jft60RbBjujtcy+V6xVCUKpC9UA32I4kB3W+Pd7Q/YU3jyyH8PoCi6CpmOv7+VK+oZn9gHg==
 
-"@railgun-community/wallet@5.6.8":
-  version "5.6.8"
-  resolved "https://registry.yarnpkg.com/@railgun-community/wallet/-/wallet-5.6.8.tgz#233701cd9af9c677fb1752f5ead5ce90f1c160b2"
-  integrity sha512-opW8pbnE4cdnXN99pD7YYYxDRC5C8bQa3w6Xq9wZ867I16VNkFMH6/ox4l+5H2+t9UWyv9X+D01haNr9KyaImA==
+"@railgun-community/wallet@5.6.9":
+  version "5.6.9"
+  resolved "https://registry.yarnpkg.com/@railgun-community/wallet/-/wallet-5.6.9.tgz#778a40c18e94e5680a943f02a15bbe7360e50137"
+  integrity sha512-ID6BRmPsQcD7SHmB4jyzMNxdohgS3Nrx3MzI7IIwtXPfUGKtqwBNBS04qK5Hc9g2tJdlOuUi8PwhLfnaEx9pnw==
   dependencies:
     "@graphql-mesh/cache-localforage" "^0.7.20"
     "@graphql-mesh/cross-helpers" "^0.3.4"

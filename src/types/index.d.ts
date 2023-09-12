@@ -5,3 +5,7 @@ declare type NumMapType<T> = { [index: number]: T };
 declare module 'bits-to-bytes';
 
 declare module 'snarkjs';
+
+declare module 'circomlibjs' {
+  export function poseidon(inputs: bigint[]): bigint;
+}

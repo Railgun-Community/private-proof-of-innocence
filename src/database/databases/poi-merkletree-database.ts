@@ -51,4 +51,13 @@ export class POIMerkletreeDatabase extends AbstractDatabase<POIMerkletreeDBItem>
     const item = await this.findOne(filter);
     return item?.nodeHash;
   }
+
+  async countLeavesInTree(listKey: string, tree: number): Promise<number> {
+    const filter: DBFilter<POIMerkletreeDBItem> = {
+      listKey,
+      tree,
+      level: 0,
+    };
+    return this.count(filter);
+  }
 }
