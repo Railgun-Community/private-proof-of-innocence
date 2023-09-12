@@ -43,10 +43,6 @@ export type POIExistenceListMap = {
   [listKey: string]: boolean[];
 };
 
-export type POIMerkleProof = {
-  // TODO
-};
-
 export type TxidMerkletreeSyncStatus = {
   currentTxidIndex: number;
   currentMerkleroot: string;

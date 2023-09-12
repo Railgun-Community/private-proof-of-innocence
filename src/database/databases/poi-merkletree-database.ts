@@ -69,6 +69,19 @@ export class POIMerkletreeDatabase extends AbstractDatabase<POIMerkletreeDBItem>
     return item?.nodeHash;
   }
 
+  async getLeafNodeFromHash(
+    listKey: string,
+    nodeHash: string,
+  ): Promise<Optional<POIMerkletreeDBItem>> {
+    const filter: DBFilter<POIMerkletreeDBItem> = {
+      listKey,
+      level: 0,
+      nodeHash,
+    };
+    const item = await this.findOne(filter);
+    return item;
+  }
+
   async countLeavesInTree(listKey: string, tree: number): Promise<number> {
     const filter: DBFilter<POIMerkletreeDBItem> = {
       listKey,

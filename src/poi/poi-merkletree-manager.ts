@@ -1,7 +1,7 @@
-import { NetworkName } from '@railgun-community/shared-models';
-import { POIMerkleProof } from '../models/api-types';
+import { NetworkName, isDefined } from '@railgun-community/shared-models';
 import { Config } from '../config/config';
 import { POIMerkletree } from './poi-merkletree';
+import { MerkleProof } from '../models/proof-types';
 
 export class POIMerkletreeManager {
   private static merkletrees: Record<
@@ -24,8 +24,18 @@ export class POIMerkletreeManager {
     listKey: string,
     networkName: NetworkName,
     blindedCommitments: string[],
-  ): Promise<POIMerkleProof[]> {
-    // TODO-HIGH-PRI
-    throw new Error('Unimplemented');
+  ): Promise<MerkleProof[]> {
+    const merkletree = this.merkletrees[listKey][networkName];
+    if (!isDefined(merkletree)) {
+      throw new Error('No merkletree for list/network');
+    }
+
+    const merkleProofs: MerkleProof[] = await Promise.all(
+      blindedCommitments.map((blindedCommitment) => {
+        const nodeHash = blindedCommitment;
+        return merkletree.getMerkleProofFromNodeHash(nodeHash);
+      }),
+    );
+    return merkleProofs;
   }
 }

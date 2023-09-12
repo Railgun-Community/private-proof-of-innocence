@@ -61,7 +61,9 @@ export class POIOrderedEventsDatabase extends AbstractDatabase<POIOrderedEventDB
 
     // If endIndex is defined, set it as the max index
     const max: DBMaxMin<POIOrderedEventDBItem> = {};
-    if (typeof endIndex !== 'undefined') { max.index = endIndex; }
+    if (typeof endIndex !== 'undefined') {
+      max.index = endIndex;
+    }
 
     return this.findAll(filter, sort, max, min);
   }
@@ -82,5 +84,16 @@ export class POIOrderedEventsDatabase extends AbstractDatabase<POIOrderedEventDB
       firstBlindedCommitmentInput,
     };
     return this.exists(filter);
+  }
+
+  async getEventForFirstBlindedCommitmentInput(
+    listKey: string,
+    firstBlindedCommitmentInput: string,
+  ): Promise<Optional<POIOrderedEventDBItem>> {
+    const filter: DBFilter<POIOrderedEventDBItem> = {
+      listKey,
+      firstBlindedCommitmentInput,
+    };
+    return this.findOne(filter);
   }
 }

@@ -156,14 +156,21 @@ export class POIMerkletree {
     return { tree: latestTree, index: latestIndex + 1 };
   }
 
-  private static getTXIDIndex(tree: number, index: number): number {
+  static getTXIDIndex(tree: number, index: number): number {
     return tree * TREE_MAX_ITEMS + index;
   }
 
-  async insertLeaves(
-    startTxidIndex: number,
-    nodeHashes: string[],
-  ): Promise<void> {
+  static getTreeAndIndexFromEventIndex(eventIndex: number): {
+    tree: number;
+    index: number;
+  } {
+    return {
+      tree: Math.floor(eventIndex / TREE_MAX_ITEMS),
+      index: eventIndex % TREE_MAX_ITEMS,
+    };
+  }
+
+  async insertLeaves(eventIndex: number, nodeHashes: string[]): Promise<void> {
     if (this.isUpdating) {
       return;
     }
@@ -172,12 +179,12 @@ export class POIMerkletree {
 
     const { tree, index } = await this.getNextTreeAndIndex();
 
-    const nextTxidIndex = POIMerkletree.getTXIDIndex(tree, index);
-    if (nextTxidIndex !== startTxidIndex) {
-      dbg('Invalid txidIndex for POI merkletree insert');
+    const nextEventIndex = POIMerkletree.getTXIDIndex(tree, index);
+    if (nextEventIndex !== eventIndex) {
+      dbg('Invalid eventIndex for POI merkletree insert');
       this.isUpdating = false;
       throw new Error(
-        `Invalid txidIndex for POI merkletree insert: merkletree at ${nextTxidIndex}, event at ${startTxidIndex}`,
+        `Invalid eventIndex for POI merkletree insert: merkletree at ${nextEventIndex}, event at ${eventIndex}`,
       );
     }
 
@@ -359,7 +366,26 @@ export class POIMerkletree {
     await this.db.updatePOIMerkletreeNodes(items);
   }
 
+  async getMerkleProofFromNodeHash(nodeHash: string): Promise<MerkleProof> {
+    const node = await this.db.getLeafNodeFromHash(this.listKey, nodeHash);
+    if (!isDefined(node)) {
+      throw new Error(
+        `No POI node for blinded commitment (node hash) ${nodeHash}`,
+      );
+    }
+    return this.getMerkleProof(node.tree, node.index);
+  }
+
   async getMerkleProof(tree: number, index: number): Promise<MerkleProof> {
+    const treeLength = await this.getTreeLength(tree);
+    if (index >= treeLength) {
+      throw new Error(
+        `Invalid index for POI merkletree proof: last index ${
+          treeLength - 1
+        }, requested ${index}`,
+      );
+    }
+
     // Fetch leaf
     const leaf = await this.getNodeHash(tree, 0, index);
 
