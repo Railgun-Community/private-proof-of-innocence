@@ -25,7 +25,7 @@ export type SubmitTransactProofParams = {
 
 export type GetPOIsPerListParams = {
   listKeys: string[];
-  blindedCommitment: string;
+  blindedCommitments: string[];
 };
 
 export type GetMerkleProofsParams = {

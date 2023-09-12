@@ -91,7 +91,7 @@ describe('poi-merkletree', () => {
     await expect(
       merkletree.insertLeaves(65536, []),
     ).to.eventually.be.rejectedWith(
-      'Invalid txidIndex for POI merkletree insert',
+      'Invalid eventIndex for POI merkletree insert',
     );
 
     await merkletree.insertLeaves(65535, [

@@ -2,6 +2,7 @@ import { NetworkName, isDefined } from '@railgun-community/shared-models';
 import { Config } from '../config/config';
 import { POIMerkletree } from './poi-merkletree';
 import { MerkleProof } from '../models/proof-types';
+import { POIExistenceListMap } from '../models/api-types';
 
 export class POIMerkletreeManager {
   private static merkletrees: Record<
@@ -20,15 +21,26 @@ export class POIMerkletreeManager {
     });
   }
 
+  private static getMerkletreeForListAndNetwork(
+    listKey: string,
+    networkName: NetworkName,
+  ) {
+    const merkletree = this.merkletrees[listKey][networkName];
+    if (!isDefined(merkletree)) {
+      throw new Error('No merkletree for list/network');
+    }
+    return merkletree;
+  }
+
   static async getMerkleProofs(
     listKey: string,
     networkName: NetworkName,
     blindedCommitments: string[],
   ): Promise<MerkleProof[]> {
-    const merkletree = this.merkletrees[listKey][networkName];
-    if (!isDefined(merkletree)) {
-      throw new Error('No merkletree for list/network');
-    }
+    const merkletree = POIMerkletreeManager.getMerkletreeForListAndNetwork(
+      listKey,
+      networkName,
+    );
 
     const merkleProofs: MerkleProof[] = await Promise.all(
       blindedCommitments.map((blindedCommitment) => {
@@ -37,5 +49,28 @@ export class POIMerkletreeManager {
       }),
     );
     return merkleProofs;
+  }
+
+  static async getPOIExistencePerList(
+    listKeys: string[],
+    networkName: NetworkName,
+    blindedCommitments: string[],
+  ): Promise<POIExistenceListMap> {
+    const existenceListMap: POIExistenceListMap = {};
+    await Promise.all(
+      listKeys.map(async (listKey) => {
+        const merkletree = POIMerkletreeManager.getMerkletreeForListAndNetwork(
+          listKey,
+          networkName,
+        );
+        existenceListMap[listKey] = await Promise.all(
+          blindedCommitments.map((blindedCommitment) => {
+            const nodeHash = blindedCommitment;
+            return merkletree.nodeHashExists(nodeHash);
+          }),
+        );
+      }),
+    );
+    return existenceListMap;
   }
 }

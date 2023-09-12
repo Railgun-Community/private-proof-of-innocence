@@ -20,7 +20,6 @@ import {
   SubmitTransactProofParams,
   ValidateTxidMerklerootParams,
 } from '../models/api-types';
-import { POILookup } from '../poi/poi-lookup';
 import { POIMerkletreeManager } from '../poi/poi-merkletree-manager';
 import { getShieldQueueStatus } from '../shield-queue/shield-queue';
 import { RailgunTxidMerkletreeManager } from '../railgun-txids/railgun-txid-merkletree-manager';
@@ -225,16 +224,17 @@ export class API {
       '/pois-per-list/:chainType/:chainID',
       async (req: Request, res: Response) => {
         const { chainType, chainID } = req.params;
-        const { listKeys, blindedCommitment } =
+        const { listKeys, blindedCommitments } =
           req.body as GetPOIsPerListParams;
 
         const networkName = networkNameForSerializedChain(chainType, chainID);
 
-        const poiExistenceMap = await POILookup.getPOIExistencePerList(
-          listKeys,
-          networkName,
-          blindedCommitment,
-        );
+        const poiExistenceMap =
+          await POIMerkletreeManager.getPOIExistencePerList(
+            listKeys,
+            networkName,
+            blindedCommitments,
+          );
         res.json(poiExistenceMap);
       },
     );

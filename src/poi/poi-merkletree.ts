@@ -376,6 +376,10 @@ export class POIMerkletree {
     return this.getMerkleProof(node.tree, node.index);
   }
 
+  async nodeHashExists(nodeHash: string): Promise<boolean> {
+    return this.db.nodeHashExists(this.listKey, nodeHash);
+  }
+
   async getMerkleProof(tree: number, index: number): Promise<MerkleProof> {
     const treeLength = await this.getTreeLength(tree);
     if (index >= treeLength) {
