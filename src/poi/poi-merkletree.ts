@@ -56,45 +56,14 @@ export class POIMerkletree {
     );
   }
 
-  async getMerkleProof(tree: number, index: number): Promise<MerkleProof> {
-    // Fetch leaf
-    const leaf = await this.getNodeHash(tree, 0, index);
-
-    // Get indexes of path elements to fetch
-    const elementsIndexes: number[] = [index ^ 1];
-
-    // Loop through each level and calculate index
-    while (elementsIndexes.length < TREE_DEPTH) {
-      // Shift right and flip last bit
-      elementsIndexes.push(
-        (elementsIndexes[elementsIndexes.length - 1] >> 1) ^ 1,
-      );
-    }
-
-    // Fetch path elements
-    const elements = await Promise.all(
-      elementsIndexes.map((elementIndex, level) =>
-        this.getNodeHash(tree, level, elementIndex),
-      ),
-    );
-
-    // Convert index to bytes data, the binary representation is the indices of the merkle path
-    const indices = nToHex(BigInt(index), ByteLength.UINT_256);
-
-    // Fetch root
-    const root = await this.getRoot(tree);
-
-    // Return proof
-    return {
-      leaf,
-      elements,
-      indices,
-      root,
-    };
-  }
-
   getRoot(tree: number): Promise<string> {
     return this.getNodeHash(tree, TREE_DEPTH, 0);
+  }
+
+  async deleteNodes_DANGEROUS(tree: number): Promise<void> {
+    await this.db.deleteAllItems_DANGEROUS();
+    this.cachedNodeHashes[tree] = {};
+    this.treeLengths[tree] = 0;
   }
 
   private async getNodeHash(
@@ -147,14 +116,13 @@ export class POIMerkletree {
     return this.db.countLeavesInTree(this.listKey, tree);
   }
 
-  async getTreeLength(treeIndex: number): Promise<number> {
-    if (this.treeLengths[treeIndex] != null) {
-      return this.treeLengths[treeIndex];
+  async getTreeLength(tree: number): Promise<number> {
+    if (this.treeLengths[tree] != null) {
+      return this.treeLengths[tree];
     }
 
-    this.treeLengths[treeIndex] =
-      await this.getTreeLengthFromDBCount(treeIndex);
-    return this.treeLengths[treeIndex];
+    this.treeLengths[tree] = await this.getTreeLengthFromDBCount(tree);
+    return this.treeLengths[tree];
   }
 
   private async latestTree(): Promise<number> {
@@ -185,7 +153,7 @@ export class POIMerkletree {
     return { tree: latestTree, index: latestIndex + 1 };
   }
 
-  async insertLeaf(nodeHash: string): Promise<void> {
+  async insertLeaves(nodeHashes: string[]): Promise<void> {
     if (this.isUpdating) {
       return;
     }
@@ -194,21 +162,48 @@ export class POIMerkletree {
 
     const { tree, index } = await this.getNextTreeAndIndex();
 
+    let nextTree = tree;
+    let startIndex = index;
+
+    // Insert leaves into each tree.
+    // Iterate through trees once the MAX_ITEMS is reached.
+    while (nodeHashes.length > 0) {
+      const remainingSpotsInTree = TREE_MAX_ITEMS - index;
+      const nodeHashesForTree = nodeHashes.splice(0, remainingSpotsInTree);
+
+      await this.insertLeavesInTree(nextTree, startIndex, nodeHashesForTree);
+
+      nextTree += 1;
+      startIndex = 0;
+    }
+
+    this.isUpdating = false;
+  }
+
+  private async insertLeavesInTree(
+    tree: number,
+    startIndex: number,
+    nodeHashes: string[],
+  ): Promise<void> {
     const firstLevelHashWriteGroup: string[][] = [];
     firstLevelHashWriteGroup[0] = [];
-    firstLevelHashWriteGroup[0][index] = nodeHash;
+
+    nodeHashes.forEach((nodeHash, nodeIndex) => {
+      firstLevelHashWriteGroup[0][startIndex + nodeIndex] = nodeHash;
+    });
+
+    const endIndex = startIndex + nodeHashes.length;
 
     const hashWriteGroup: string[][] = await this.fillHashWriteGroup(
       firstLevelHashWriteGroup,
       tree,
-      index,
-      index + 1, // endIndex
+      startIndex,
+      endIndex,
     );
 
     await this.writeToDB(tree, hashWriteGroup);
-    this.treeLengths[tree] += 1;
 
-    this.isUpdating = false;
+    this.treeLengths[tree] += nodeHashes.length;
   }
 
   async rebuildTree(tree: number): Promise<void> {
@@ -336,6 +331,43 @@ export class POIMerkletree {
       });
     });
     await this.db.updatePOIMerkletreeNodes(items);
+  }
+
+  async getMerkleProof(tree: number, index: number): Promise<MerkleProof> {
+    // Fetch leaf
+    const leaf = await this.getNodeHash(tree, 0, index);
+
+    // Get indexes of path elements to fetch
+    const elementsIndexes: number[] = [index ^ 1];
+
+    // Loop through each level and calculate index
+    while (elementsIndexes.length < TREE_DEPTH) {
+      // Shift right and flip last bit
+      elementsIndexes.push(
+        (elementsIndexes[elementsIndexes.length - 1] >> 1) ^ 1,
+      );
+    }
+
+    // Fetch path elements
+    const elements = await Promise.all(
+      elementsIndexes.map((elementIndex, level) =>
+        this.getNodeHash(tree, level, elementIndex),
+      ),
+    );
+
+    // Convert index to bytes data, the binary representation is the indices of the merkle path
+    const indices = nToHex(BigInt(index), ByteLength.UINT_256);
+
+    // Fetch root
+    const root = await this.getRoot(tree);
+
+    // Return proof
+    return {
+      leaf,
+      elements,
+      indices,
+      root,
+    };
   }
 
   static verifyProof(proof: MerkleProof): boolean {
