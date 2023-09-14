@@ -5,6 +5,7 @@ import { API } from './api/api';
 
 const dbg = debug('poi:node');
 
+// Entry point for the Proof of Innocence node
 export class ProofOfInnocenceNode {
   private running = false;
 
