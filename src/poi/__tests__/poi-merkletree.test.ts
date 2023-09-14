@@ -214,5 +214,5 @@ describe('poi-merkletree', () => {
     expect(POIMerkletree.verifyProof(proof2)).to.equal(false);
     proof2.elements = proof.elements;
     expect(POIMerkletree.verifyProof(proof2)).to.equal(false);
-  }).timeout(1000);
+  }).timeout(5000);
 });

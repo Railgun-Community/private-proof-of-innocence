@@ -6,6 +6,7 @@ import { ShieldProofMempoolDatabase } from '../database/databases/shield-proof-m
 import { ShieldProofMempoolCache } from './shield-proof-mempool-cache';
 import { verifySnarkProof } from './snark-proof-verify';
 import { ProofMempoolBloomFilter } from './proof-mempool-bloom-filters';
+import { QueryLimits } from '../config/query-limits';
 
 export class ShieldProofMempool {
   static async submitProof(
@@ -27,7 +28,16 @@ export class ShieldProofMempool {
     networkName: NetworkName,
     shieldProofData: ShieldProofData,
   ): Promise<boolean> {
-    // 1. Verify if shield commitmentHash is in historical list of Shields
+    // 1. Verify that doesn't already exist
+    const shieldProofMempoolDB = new ShieldProofMempoolDatabase(networkName);
+    const exists = await shieldProofMempoolDB.proofExists(
+      shieldProofData.commitmentHash,
+    );
+    if (exists) {
+      return false;
+    }
+
+    // 2. Verify if shield commitmentHash is in historical list of Shields
     const shieldQueueDB = new ShieldQueueDatabase(networkName);
     const shieldExists = await shieldQueueDB.commitmentHashExists(
       shieldProofData.commitmentHash,
@@ -36,7 +46,7 @@ export class ShieldProofMempool {
       return false;
     }
 
-    // 2. Verify snark proof
+    // 3. Verify snark proof
     const verifiedProof = await this.verifyProof(shieldProofData);
     if (!verifiedProof) {
       throw new Error('Invalid proof');
@@ -84,6 +94,6 @@ export class ShieldProofMempool {
         return !bloomFilter.has(shieldProofData.commitmentHash);
       },
     );
-    return filteredProofs;
+    return filteredProofs.slice(0, QueryLimits.PROOF_MEMPOOL_SYNCED_ITEMS);
   }
 }

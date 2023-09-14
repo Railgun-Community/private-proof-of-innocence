@@ -8,7 +8,7 @@ chai.use(chaiAsPromised);
 const { expect } = chai;
 
 describe('init', () => {
-  after(async () => {});
+  before(async () => {});
 
   it('Should run init scripts', async () => {
     const stubInitNetworkProviders = sinon

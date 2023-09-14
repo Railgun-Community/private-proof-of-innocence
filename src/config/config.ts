@@ -1,8 +1,6 @@
 import { NetworkName } from '@railgun-community/shared-models';
 
 export class Config {
-  static CONNECTED_NODES: string[] = [];
-
   static LIST_KEYS: string[] = [];
 
   static MONGODB_URL = process.env.MONGODB_URL;

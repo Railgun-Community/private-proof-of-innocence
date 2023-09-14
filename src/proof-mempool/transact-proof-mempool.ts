@@ -8,6 +8,7 @@ import { verifySnarkProof } from './snark-proof-verify';
 import { ProofMempoolCountingBloomFilter } from './proof-mempool-bloom-filters';
 import { POIOrderedEventsDatabase } from '../database/databases/poi-ordered-events-database';
 import { RailgunTxidMerkletreeManager } from '../railgun-txids/railgun-txid-merkletree-manager';
+import { QueryLimits } from '../config/query-limits';
 
 export class TransactProofMempool {
   static async submitProof(
@@ -58,7 +59,17 @@ export class TransactProofMempool {
     networkName: NetworkName,
     transactProofData: TransactProofData,
   ): Promise<boolean> {
-    // 1. Verify all POI Merkleroots exist
+    // 1. Verify that doesn't already exist
+    const db = new TransactProofPerListMempoolDatabase(networkName);
+    const exists = await db.proofExists(
+      listKey,
+      transactProofData.blindedCommitmentInputs[0],
+    );
+    if (exists) {
+      return false;
+    }
+
+    // 2. Verify all POI Merkleroots exist
     const poiMerklerootDb = new POIHistoricalMerklerootDatabase(networkName);
     const allMerklerootsExist = await poiMerklerootDb.allMerklerootsExist(
       listKey,
@@ -68,7 +79,7 @@ export class TransactProofMempool {
       return false;
     }
 
-    // 2. Verify Railgun TX Merkleroot exists against Railgun TX Merkletree (Engine)
+    // 3. Verify Railgun TX Merkleroot exists against Railgun TX Merkletree (Engine)
     const isValidTxMerkleroot =
       await RailgunTxidMerkletreeManager.checkIfMerklerootExistsByTxidIndex(
         networkName,
@@ -79,7 +90,7 @@ export class TransactProofMempool {
       return false;
     }
 
-    // 3. Verify that OrderedEvent for this list doesn't exist.
+    // 4. Verify that OrderedEvent for this list doesn't exist.
     const orderedEventsDB = new POIOrderedEventsDatabase(networkName);
     const orderedEventExists = await orderedEventsDB.eventExists(
       listKey,
@@ -89,7 +100,7 @@ export class TransactProofMempool {
       return false;
     }
 
-    // 4. Verify snark proof
+    // 5. Verify snark proof
     const verifiedProof = await this.verifyProof(transactProofData);
     if (!verifiedProof) {
       throw new Error('Invalid proof');
@@ -145,6 +156,6 @@ export class TransactProofMempool {
         return !bloomFilter.has(firstBlindedCommitmentInput);
       },
     );
-    return filteredProofs;
+    return filteredProofs.slice(0, QueryLimits.PROOF_MEMPOOL_SYNCED_ITEMS);
   }
 }

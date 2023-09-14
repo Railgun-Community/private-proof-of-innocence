@@ -10,7 +10,6 @@ export type GetShieldProofsParams = {
 };
 
 export type GetTransactProofsParams = {
-  listKey: string;
   bloomFilterSerialized: string;
 };
 
@@ -62,8 +61,12 @@ export type ValidatedRailgunTxidStatus = {
   validatedMerkleroot: Optional<string>;
 };
 
-export type NodeStatusAllNetworks = Partial<Record<NetworkName, NodeStatus>>;
+export type NodeStatusAllNetworks = {
+  listKeys: string[];
+  forNetwork: Partial<Record<NetworkName, NodeStatusForNetwork>>;
+};
 
-export type NodeStatus = {
+export type NodeStatusForNetwork = {
   txidStatus: RailgunTxidStatus;
+  eventListStatuses: Record<string, POIEventListStatus>;
 };

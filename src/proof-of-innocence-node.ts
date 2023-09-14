@@ -2,6 +2,7 @@ import debug from 'debug';
 import { initModules, uninitModules } from './init/init';
 import { ListProvider } from './list-provider/list-provider';
 import { API } from './api/api';
+import { RoundRobinSyncer } from './sync/round-robin-syncer';
 
 const dbg = debug('poi:node');
 
@@ -15,12 +16,21 @@ export class ProofOfInnocenceNode {
 
   private listProvider: Optional<ListProvider>;
 
-  private api: Optional<API>;
+  private roundRobinSyncer: RoundRobinSyncer;
 
-  constructor(host: string, port: string, listProvider?: ListProvider) {
+  private api: API;
+
+  constructor(
+    host: string,
+    port: string,
+    connectedNodeURLs: string[],
+    listProvider?: ListProvider,
+  ) {
     this.host = host;
     this.port = port;
     this.listProvider = listProvider;
+    this.roundRobinSyncer = new RoundRobinSyncer(connectedNodeURLs);
+    this.api = new API();
   }
 
   async start() {
@@ -31,13 +41,14 @@ export class ProofOfInnocenceNode {
 
     this.running = true;
 
-    this.api = new API();
-    this.api.serve(this.host, this.port);
-
     await initModules();
 
     await this.listProvider?.init();
     this.listProvider?.startPolling();
+
+    this.api.serve(this.host, this.port);
+
+    this.roundRobinSyncer.startPolling();
 
     dbg(`Proof of Innocence node running...`);
   }
@@ -50,8 +61,14 @@ export class ProofOfInnocenceNode {
     await uninitModules();
     this.listProvider?.stopPolling();
 
+    this.roundRobinSyncer.stopPolling();
+
     this.running = false;
 
     dbg(`Proof of Innocence node stopped.`);
+  }
+
+  getPollStatus() {
+    return this.roundRobinSyncer.getPollStatus();
   }
 }

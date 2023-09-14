@@ -88,7 +88,7 @@ export class RailgunTxidMerkletreeManager {
   }
 
   static async updateValidatedRailgunTxidStatus(
-    node: string,
+    nodeURL: string,
     networkName: NetworkName,
     txidStatusOtherNode: RailgunTxidStatus,
   ): Promise<void> {
@@ -130,7 +130,7 @@ export class RailgunTxidMerkletreeManager {
     }
 
     const isValid = await POINodeRequest.validateRailgunTxidMerkleroot(
-      node,
+      nodeURL,
       networkName,
       tree,
       index,
