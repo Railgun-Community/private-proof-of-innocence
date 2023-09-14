@@ -9,6 +9,7 @@ import {
   ShieldStatus,
 } from '../../../models/database-types';
 import { daysAgo } from '../../../tests/util.test';
+import { getShieldQueueStatus } from '../../../shield-queue/shield-queue';
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
@@ -33,22 +34,22 @@ describe('shield-queue-database', () => {
     const indexes = await db.listCollectionIndexes();
 
     // Check if an index exists for the 'txid' field
-    const txidIndexExists = indexes.some(index => {
+    const txidIndexExists = indexes.some((index) => {
       return 'key' in index && 'txid' in index.key;
     });
 
     // Check if an index exists for the 'hash' field with a unique constraint
-    const hashIndexExists = indexes.some(index => {
+    const hashIndexExists = indexes.some((index) => {
       return 'key' in index && 'hash' in index.key && index.unique === true;
     });
 
     // Check if an index exists for the 'timestamp' field
-    const timestampIndexExists = indexes.some(index => {
+    const timestampIndexExists = indexes.some((index) => {
       return 'key' in index && 'timestamp' in index.key;
     });
 
     // Check if an index exists for the 'status' field
-    const statusIndexExists = indexes.some(index => {
+    const statusIndexExists = indexes.some((index) => {
       return 'key' in index && 'status' in index.key;
     });
 
@@ -58,7 +59,6 @@ describe('shield-queue-database', () => {
     expect(timestampIndexExists).to.equal(true);
     expect(statusIndexExists).to.equal(true);
   });
-
 
   it('Should insert items and query from shield queue database', async () => {
     const now = Date.now();
@@ -103,13 +103,22 @@ describe('shield-queue-database', () => {
     ]);
 
     const pendingCount = await db.getCount(ShieldStatus.Pending);
-    expect(pendingCount).to.equal(2);  // 2 pending status shields
+    expect(pendingCount).to.equal(2); // 2 pending status shields
 
     const allowedCount = await db.getCount(ShieldStatus.Allowed);
-    expect(allowedCount).to.equal(0);  // No allowed status shields
+    expect(allowedCount).to.equal(0); // No allowed status shields
 
     const blockedCount = await db.getCount(ShieldStatus.Blocked);
-    expect(blockedCount).to.equal(0);  // No block status shields
+    expect(blockedCount).to.equal(0); // No block status shields
+
+    const shieldQueueStatus = await getShieldQueueStatus(networkName);
+    shieldQueueStatus.latestPendingShield = undefined;
+    expect(shieldQueueStatus).to.deep.equal({
+      addedPOI: 0,
+      allowed: 0,
+      blocked: 0,
+      pending: 2,
+    });
   });
 
   it('Should update pending shield status', async () => {
@@ -175,7 +184,7 @@ describe('shield-queue-database', () => {
     const pendingShield1: ShieldData = {
       txid: '0x1234',
       hash: '0x5678',
-      timestamp: Date.now() - 2000,  // 2 seconds ago
+      timestamp: Date.now() - 2000, // 2 seconds ago
       blockNumber: 123456,
     };
     await db.insertPendingShield(pendingShield1);
@@ -183,7 +192,7 @@ describe('shield-queue-database', () => {
     const pendingShield2: ShieldData = {
       txid: '0x9876',
       hash: '0x5432',
-      timestamp: Date.now() - 1000,  // 1 second ago
+      timestamp: Date.now() - 1000, // 1 second ago
       blockNumber: 123456,
     };
     await db.insertPendingShield(pendingShield2);
@@ -203,5 +212,4 @@ describe('shield-queue-database', () => {
     const latestPendingShieldAfterDeletion = await db.getLatestPendingShield();
     expect(latestPendingShieldAfterDeletion).to.be.undefined;
   });
-
 });
