@@ -91,6 +91,10 @@ export class ShieldQueueDatabase extends AbstractDatabase<ShieldQueueDBItem> {
     return this.findOne(filter);
   }
 
+  async getShieldStatus(hash: string): Promise<Optional<ShieldStatus>> {
+    return (await this.findOne({ hash }))?.status;
+  }
+
   async getAllowedShields(): Promise<ShieldQueueDBItem[]> {
     const filter: DBFilter<ShieldQueueDBItem> = {
       status: ShieldStatus.Allowed,

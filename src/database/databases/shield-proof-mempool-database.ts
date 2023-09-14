@@ -34,6 +34,18 @@ export class ShieldProofMempoolDatabase extends AbstractDatabase<ShieldProofMemp
     return this.findOne({ commitmentHash });
   }
 
+  async getShieldProofForBlindedCommitment(
+    blindedCommitment: string,
+  ): Promise<Optional<ShieldProofMempoolDBItem>> {
+    return this.findOne({ blindedCommitment });
+  }
+
+  async proofExistsForBlindedCommitment(
+    blindedCommitment: string,
+  ): Promise<boolean> {
+    return this.getShieldProofForBlindedCommitment(blindedCommitment) != null;
+  }
+
   async streamShieldProofs(): Promise<DBStream<ShieldProofMempoolDBItem>> {
     return this.stream();
   }

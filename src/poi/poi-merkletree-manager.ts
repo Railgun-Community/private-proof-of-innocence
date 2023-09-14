@@ -2,9 +2,11 @@ import { NetworkName, isDefined } from '@railgun-community/shared-models';
 import { Config } from '../config/config';
 import { POIMerkletree } from './poi-merkletree';
 import { MerkleProof } from '../models/proof-types';
-import { POIExistenceListMap } from '../models/api-types';
-import { QueryLimits } from '../config/query-limits';
+import { POIStatus, POIStatusListMap } from '../models/api-types';
 import { SignedPOIEvent } from '../models/poi-types';
+import { ShieldProofMempoolDatabase } from '../database/databases/shield-proof-mempool-database';
+import { ShieldQueueDatabase } from '../database/databases/shield-queue-database';
+import { ShieldStatus } from '../models/database-types';
 
 export class POIMerkletreeManager {
   private static merkletrees: Record<
@@ -70,35 +72,54 @@ export class POIMerkletreeManager {
     return merkleProofs;
   }
 
-  static async getPOIExistencePerList(
+  static async getPOIStatusPerList(
     listKeys: string[],
     networkName: NetworkName,
     blindedCommitments: string[],
-  ): Promise<POIExistenceListMap> {
-    if (
-      QueryLimits.GET_POI_EXISTENCE_MAX_BLINDED_COMMITMENTS >
-      blindedCommitments.length
-    ) {
-      throw new Error(
-        `Too many blinded commitments: max ${QueryLimits.GET_POI_EXISTENCE_MAX_BLINDED_COMMITMENTS}`,
-      );
-    }
-
-    const existenceListMap: POIExistenceListMap = {};
+  ): Promise<POIStatusListMap> {
+    const statusListMap: POIStatusListMap = {};
     await Promise.all(
       listKeys.map(async (listKey) => {
-        const merkletree = POIMerkletreeManager.getMerkletreeForListAndNetwork(
-          listKey,
-          networkName,
-        );
-        existenceListMap[listKey] = await Promise.all(
-          blindedCommitments.map((blindedCommitment) => {
-            const nodeHash = blindedCommitment;
-            return merkletree.nodeHashExists(nodeHash);
-          }),
+        statusListMap[listKey] = await Promise.all(
+          blindedCommitments.map((blindedCommitment) =>
+            POIMerkletreeManager.getPOIStatus(
+              listKey,
+              networkName,
+              blindedCommitment,
+            ),
+          ),
         );
       }),
     );
-    return existenceListMap;
+    return statusListMap;
+  }
+
+  private static async getPOIStatus(
+    listKey: string,
+    networkName: NetworkName,
+    blindedCommitment: string,
+  ): Promise<POIStatus> {
+    const merkletree = POIMerkletreeManager.getMerkletreeForListAndNetwork(
+      listKey,
+      networkName,
+    );
+
+    const hasValidPOI = await merkletree.nodeHashExists(blindedCommitment);
+    if (hasValidPOI) {
+      return POIStatus.Valid;
+    }
+
+    const shieldProofDB = new ShieldProofMempoolDatabase(networkName);
+    const pendingShieldProofExists =
+      await shieldProofDB.proofExistsForBlindedCommitment(blindedCommitment);
+    if (pendingShieldProofExists) {
+      return POIStatus.Pending;
+    }
+
+    // TODO: How do we check if pending transact proof exists?
+
+    // TODO: We should have status for transaction blocked.
+
+    return POIStatus.Missing;
   }
 }

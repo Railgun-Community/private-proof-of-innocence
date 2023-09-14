@@ -38,8 +38,17 @@ export type ValidateTxidMerklerootParams = {
   merkleroot: string;
 };
 
-export type POIExistenceListMap = {
-  [listKey: string]: boolean[];
+export enum POIStatus {
+  // POI valdated in event list
+  Valid = 'Valid',
+  // Proof submitted, but not validated yet
+  Pending = 'Pending',
+  // No proof
+  Missing = 'Missing',
+}
+
+export type POIStatusListMap = {
+  [listKey: string]: POIStatus[];
 };
 
 export type TxidMerkletreeSyncStatus = {

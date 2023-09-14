@@ -252,13 +252,12 @@ export class API {
           );
         }
 
-        const poiExistenceMap =
-          await POIMerkletreeManager.getPOIExistencePerList(
-            listKeys,
-            networkName,
-            blindedCommitments,
-          );
-        res.json(poiExistenceMap);
+        const poiStatusMap = await POIMerkletreeManager.getPOIStatusPerList(
+          listKeys,
+          networkName,
+          blindedCommitments,
+        );
+        res.json(poiStatusMap);
       },
     );
 
