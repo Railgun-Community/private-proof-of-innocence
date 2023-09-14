@@ -5,12 +5,15 @@ import * as SnarkProofVerifyModule from '../snark-proof-verify';
 import Sinon, { SinonStub } from 'sinon';
 import { NetworkName } from '@railgun-community/shared-models';
 import { ShieldProofData } from '../../models/proof-types';
-import { MOCK_SNARK_PROOF } from '../../tests/mocks.test';
+import { MOCK_LIST_KEYS, MOCK_SNARK_PROOF } from '../../tests/mocks.test';
 import { ShieldProofMempoolDatabase } from '../../database/databases/shield-proof-mempool-database';
 import { DatabaseClient } from '../../database/database-client-init';
 import { ShieldQueueDatabase } from '../../database/databases/shield-queue-database';
 import { ShieldProofMempoolCache } from '../shield-proof-mempool-cache';
 import { ProofMempoolBloomFilter } from '../proof-mempool-bloom-filters';
+import { ListProviderPOIEventQueue } from '../../list-provider/list-provider-poi-event-queue';
+import { ShieldData } from '@railgun-community/wallet';
+import { ShieldQueueDBItem, ShieldStatus } from '../../models/database-types';
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
@@ -55,15 +58,27 @@ describe('shield-proof-mempool', () => {
 
     // 1. THROW: commitmentHash is in ShieldQueue, but snark fails verification.
     snarkVerifyStub.resolves(false);
-    await shieldQueueDB.insertPendingShield({
+    const shieldItem: ShieldData = {
       txid: '0x0000',
       hash: shieldProofData.commitmentHash,
       timestamp: 1234567890,
       blockNumber: 123456,
-    });
+    };
+    await shieldQueueDB.insertPendingShield(shieldItem);
     await expect(
       ShieldProofMempool.submitProof(networkName, shieldProofData),
     ).to.be.rejectedWith('Invalid proof');
+
+    ListProviderPOIEventQueue.listKey = MOCK_LIST_KEYS[0];
+
+    const listProviderEventQueueSpy = Sinon.spy(
+      ListProviderPOIEventQueue,
+      'queueUnsignedPOIShieldEvent',
+    );
+
+    const shieldDBItem =
+      (await shieldQueueDB.getLatestPendingShield()) as ShieldQueueDBItem;
+    await shieldQueueDB.updateShieldStatus(shieldDBItem, ShieldStatus.Allowed);
 
     // 2. SUCCESS: snark verifies and commitmentHash recognized.
     snarkVerifyStub.resolves(true);
@@ -71,6 +86,9 @@ describe('shield-proof-mempool', () => {
     await expect(
       shieldProofMempoolDB.proofExists(shieldProofData.commitmentHash),
     ).to.eventually.equal(true);
+
+    expect(listProviderEventQueueSpy.calledOnce).to.equal(true);
+    listProviderEventQueueSpy.restore();
   });
 
   it('Should add to cache and get bloom-filtered shield proofs', async () => {

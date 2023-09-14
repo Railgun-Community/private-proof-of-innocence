@@ -12,7 +12,15 @@ import sinon, { SinonStub } from 'sinon';
 import { ShieldQueueDBItem, ShieldStatus } from '../../models/database-types';
 import { daysAgo } from '../../tests/util.test';
 import { TransactionReceipt } from 'ethers';
-import { MOCK_EXCLUDED_ADDRESS_1 } from '../../tests/mocks.test';
+import {
+  MOCK_EXCLUDED_ADDRESS_1,
+  MOCK_LIST_KEYS,
+  MOCK_SNARK_PROOF,
+} from '../../tests/mocks.test';
+import Sinon from 'sinon';
+import { ListProviderPOIEventQueue } from '../list-provider-poi-event-queue';
+import { ShieldProofData } from '../../models/proof-types';
+import { ShieldProofMempoolDatabase } from '../../database/databases/shield-proof-mempool-database';
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
@@ -35,7 +43,9 @@ describe('list-provider', () => {
     await DatabaseClient.init();
     db = new ShieldQueueDatabase(networkName);
     await db.createCollectionIndices();
-    listProvider = new TestMockListProviderExcludeSingleAddress('test-key');
+    listProvider = new TestMockListProviderExcludeSingleAddress(
+      MOCK_LIST_KEYS[0],
+    );
   });
 
   afterEach(() => {
@@ -80,12 +90,14 @@ describe('list-provider', () => {
 
   it('Should validate queued shield batch', async () => {
     const shieldDatas: ShieldData[] = [
+      // will be Allowed
       {
         txid: '0x1234',
         hash: '0x2345',
         timestamp: 1662421336, // Sept 5, 2022
         blockNumber: 123436,
       },
+      // will be Blocked
       {
         txid: '0x5678',
         hash: '0x6789',
@@ -124,6 +136,19 @@ describe('list-provider', () => {
       .stub(TxReceiptModule, 'getTimestampFromTransactionReceipt')
       .resolves(1662421336);
 
+    const listProviderEventQueueSpy = Sinon.spy(
+      ListProviderPOIEventQueue,
+      'queueUnsignedPOIShieldEvent',
+    );
+
+    const shieldProofData: ShieldProofData = {
+      snarkProof: MOCK_SNARK_PROOF,
+      commitmentHash: '0x2345',
+      blindedCommitment: '0x6789',
+    };
+    const shieldProofMempoolDB = new ShieldProofMempoolDatabase(networkName);
+    await shieldProofMempoolDB.insertShieldProof(shieldProofData);
+
     await listProvider.validateNextQueuedShieldBatch(networkName);
 
     const allowedShields = await db.getAllowedShields();
@@ -150,5 +175,9 @@ describe('list-provider', () => {
 
     txReceiptMock.restore();
     timestampMock.restore();
+
+    expect(listProviderEventQueueSpy.calledOnce).to.equal(true);
+    listProviderEventQueueSpy.restore();
+    await shieldProofMempoolDB.deleteAllItems_DANGEROUS();
   });
 });

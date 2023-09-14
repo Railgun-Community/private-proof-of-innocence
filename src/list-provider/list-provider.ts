@@ -18,6 +18,7 @@ import {
 import { Constants } from '../config/constants';
 import { ListProviderPOIEventQueue } from './list-provider-poi-event-queue';
 import { ListProviderPOIEventUpdater } from './list-provider-poi-event-updater';
+import { ShieldProofMempoolDatabase } from '../database/databases/shield-proof-mempool-database';
 
 export type ListProviderConfig = {
   name: string;
@@ -238,6 +239,22 @@ export abstract class ListProvider {
         shieldData,
         shouldAllow ? ShieldStatus.Allowed : ShieldStatus.Blocked,
       );
+
+      if (shouldAllow) {
+        // Try to add to the active POI list.
+        const shieldProofMempoolDB = new ShieldProofMempoolDatabase(
+          networkName,
+        );
+        const shieldProofData = await shieldProofMempoolDB.getShieldProof(
+          shieldData.hash,
+        );
+        if (shieldProofData) {
+          ListProviderPOIEventQueue.queueUnsignedPOIShieldEvent(
+            networkName,
+            shieldProofData,
+          );
+        }
+      }
     } catch (err) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       dbg(`Error validating queued shield on ${networkName}: ${err.message}`);
