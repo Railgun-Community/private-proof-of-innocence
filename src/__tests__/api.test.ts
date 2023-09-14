@@ -2,8 +2,7 @@ import { ProofOfInnocenceNode } from '../proof-of-innocence-node';
 import { LocalListProvider } from '../local-list-provider';
 import supertest, { Response } from 'supertest';
 import { expect } from 'chai';
-import { SubmitShieldProofParams } from '../models/api-types';
-import { SnarkProof, ShieldProofData } from '../models/proof-types';
+import { NodeStatusAllNetworks } from '../models/api-types';
 
 describe('API', function () {
     let node: ProofOfInnocenceNode;
@@ -15,8 +14,9 @@ describe('API', function () {
 
         const host = '0.0.0.0';
         const port = '3010';
+        const connectedNodeURLs = ['http://localhost:3000'];
 
-        node = new ProofOfInnocenceNode(host, port, listProvider);
+        node = new ProofOfInnocenceNode(host, port, connectedNodeURLs, listProvider);
         await node.start();
 
         request = supertest(`http://${host}:${port}`);
@@ -42,66 +42,20 @@ describe('API', function () {
     });
 
     it('Should return node status for /node-status', async () => {
-        // TODO: Make this type global
-        type NodeStatusResponse = {
-            Ethereum: {
-                txidStatus: {
-                    currentMerkleroot: string;
-                    currentTxidIndex: number;
-                    validatedMerkleroot?: string;
-                    validatedTxidIndex?: number;
-                };
-            };
-            Ethereum_Goerli: {
-                txidStatus: {
-                    currentMerkleroot: string;
-                    currentTxidIndex: number;
-                    validatedMerkleroot?: string;
-                    validatedTxidIndex?: number;
-                };
-            };
-        };
-
-
         const response: Response = await request.get('/node-status');
-        const body = response.body as NodeStatusResponse;
+        const body = response.body as NodeStatusAllNetworks;
 
         expect(response.status).to.equal(200);
-        expect(body).to.have.keys(['Ethereum', 'Ethereum_Goerli']);
-        expect(body.Ethereum).to.have.keys(['txidStatus']);
-        expect(body.Ethereum.txidStatus).to.include.all.keys(['currentMerkleroot', 'currentTxidIndex']);
-        expect(body.Ethereum_Goerli).to.have.keys(['txidStatus']);
-        expect(body.Ethereum_Goerli.txidStatus).to.include.all.keys(['currentMerkleroot', 'currentTxidIndex']);
+        expect(body).to.have.keys(['listKeys', 'forNetwork']);
+        expect(body.forNetwork).to.have.keys(['Ethereum', 'Ethereum_Goerli']);
+        expect(body.forNetwork.Ethereum).to.have.keys(['txidStatus', 'eventListStatuses']);
+
+        if (body.forNetwork.Ethereum) {
+            expect(body.forNetwork.Ethereum.txidStatus).to.have.all.keys(['currentTxidIndex', 'currentMerkleroot', 'validatedTxidIndex', 'validatedMerkleroot']);
+        }
+
+        if (body.forNetwork.Ethereum_Goerli) {
+            expect(body.forNetwork.Ethereum_Goerli.txidStatus).to.have.all.keys(['currentTxidIndex', 'currentMerkleroot', 'validatedTxidIndex', 'validatedMerkleroot']);
+        }
     });
-
-    // it('Should handle POST /submit-shield-proof/:chainType/:chainID', async () => {
-    //     // Mock data
-    //     const chainType = 'Ethereum';
-    //     const chainID = '1';
-
-    //     const snarkProof: SnarkProof = {
-    //         pi_a: ['123', '456'],
-    //         pi_b: [['789', '012'], ['345', '678']],
-    //         pi_c: ['901', '234']
-    //     };
-
-    //     const shieldProofData: ShieldProofData = {
-    //         snarkProof,
-    //         commitmentHash: 'mockCommitmentHash',
-    //         blindedCommitment: 'mockBlindedCommitment'
-    //     };
-
-    //     const submitShieldProofParams: SubmitShieldProofParams = {
-    //         shieldProofData
-    //     };
-
-    //     // Send request and receive response
-    //     const response: Response = await request
-    //         .post(`/submit-shield-proof/${chainType}/${chainID}`)
-    //         .send(submitShieldProofParams);
-
-    //     // Assertions
-    //     expect(response.status).to.equal(200);
-    //     // ... any other checks
-    // });
 });
