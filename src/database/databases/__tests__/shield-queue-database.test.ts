@@ -112,12 +112,13 @@ describe('shield-queue-database', () => {
     expect(blockedCount).to.equal(0); // No block status shields
 
     const shieldQueueStatus = await getShieldQueueStatus(networkName);
-    shieldQueueStatus.latestPendingShield = undefined;
+    expect(shieldQueueStatus.latestPendingShield).to.be.a('string');
     expect(shieldQueueStatus).to.deep.equal({
       addedPOI: 0,
       allowed: 0,
       blocked: 0,
       pending: 2,
+      latestPendingShield: shieldQueueStatus.latestPendingShield,
     });
   });
 

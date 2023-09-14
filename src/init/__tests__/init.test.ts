@@ -8,14 +8,14 @@ chai.use(chaiAsPromised);
 const { expect } = chai;
 
 describe('init', () => {
-  after(async () => {});
+  before(async () => {});
 
   it('Should run init scripts', async () => {
     const stubInitNetworkProviders = sinon
       .stub(activeProvidersModule, 'initNetworkProviders')
       .resolves();
 
-    await initModules();
+    await initModules(['http://localhost:3010']);
 
     expect(stubInitNetworkProviders.calledOnce).to.be.true;
 

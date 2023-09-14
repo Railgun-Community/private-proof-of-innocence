@@ -12,7 +12,18 @@ import 'dotenv/config';
 
   const host = process.env.HOST ?? '0.0.0.0';
   const port = process.env.PORT ?? '3010';
+  const connectedNodeURLs: string[] = (
+    process.env.CONNECTED_NODE_URLS ?? ''
+  ).split(',');
+  const listKeys: string[] = (process.env.LIST_KEYS ?? '').split(',');
 
-  const node = new ProofOfInnocenceNode(host, port, listProvider);
+  Config.LIST_KEYS = listKeys;
+
+  const node = new ProofOfInnocenceNode(
+    host,
+    port,
+    connectedNodeURLs,
+    listProvider,
+  );
   await node.start();
 })();

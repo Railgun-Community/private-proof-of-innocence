@@ -12,13 +12,21 @@ export class ProofOfInnocenceNode {
 
   private host: string;
 
+  private connectedNodeURLs: string[];
+
   private listProvider: Optional<ListProvider>;
 
   private api: Optional<API>;
 
-  constructor(host: string, port: string, listProvider?: ListProvider) {
+  constructor(
+    host: string,
+    port: string,
+    connectedNodeURLs: string[],
+    listProvider?: ListProvider,
+  ) {
     this.host = host;
     this.port = port;
+    this.connectedNodeURLs = connectedNodeURLs;
     this.listProvider = listProvider;
   }
 
@@ -33,7 +41,7 @@ export class ProofOfInnocenceNode {
     this.api = new API();
     this.api.serve(this.host, this.port);
 
-    await initModules();
+    await initModules(this.connectedNodeURLs);
 
     await this.listProvider?.init();
     this.listProvider?.startPolling();
