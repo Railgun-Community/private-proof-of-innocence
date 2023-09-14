@@ -22,6 +22,7 @@ import { getShieldQueueStatus } from '../shield-queue/shield-queue';
 import { RailgunTxidMerkletreeManager } from '../railgun-txids/railgun-txid-merkletree-manager';
 import { QueryLimits } from '../config/query-limits';
 import { NodeStatus } from '../status/node-status';
+import { Config } from '../config/config';
 
 const dbg = debug('poi:api');
 
@@ -86,6 +87,12 @@ export class API {
     });
   }
 
+  private assertHasListKey(listKey: string) {
+    if (!Config.LIST_KEYS.includes(listKey)) {
+      throw new Error('Missing listKey');
+    }
+  }
+
   private addRoutes() {
     this.addStatusRoutes();
     this.addAggregatorRoutes();
@@ -129,6 +136,7 @@ export class API {
       '/list-status/:chainType/:chainID/:listKey',
       async (req: Request, res: Response) => {
         const { chainType, chainID, listKey } = req.params;
+        this.assertHasListKey(listKey);
         const networkName = networkNameForSerializedChain(chainType, chainID);
 
         const status = await POIEventList.getEventListStatus(
@@ -144,6 +152,7 @@ export class API {
       async (req: Request, res: Response) => {
         const { chainType, chainID, listKey, startIndex, endIndex } =
           req.params;
+        this.assertHasListKey(listKey);
         const networkName = networkNameForSerializedChain(chainType, chainID);
 
         const start = Number(startIndex);
@@ -189,6 +198,7 @@ export class API {
       async (req: Request, res: Response) => {
         const { chainType, chainID, listKey } = req.params;
         const { bloomFilterSerialized } = req.body as GetTransactProofsParams;
+        this.assertHasListKey(listKey);
 
         const networkName = networkNameForSerializedChain(chainType, chainID);
 
@@ -222,6 +232,7 @@ export class API {
         const { chainType, chainID } = req.params;
         const { listKey, transactProofData } =
           req.body as SubmitTransactProofParams;
+        this.assertHasListKey(listKey);
 
         const networkName = networkNameForSerializedChain(chainType, chainID);
 
@@ -240,6 +251,9 @@ export class API {
         const { chainType, chainID } = req.params;
         const { listKeys, blindedCommitments } =
           req.body as GetPOIsPerListParams;
+        listKeys.forEach((listKey) => {
+          this.assertHasListKey(listKey);
+        });
 
         const networkName = networkNameForSerializedChain(chainType, chainID);
 
@@ -267,6 +281,7 @@ export class API {
         const { chainType, chainID } = req.params;
         const { listKey, blindedCommitments } =
           req.body as GetMerkleProofsParams;
+        this.assertHasListKey(listKey);
 
         const networkName = networkNameForSerializedChain(chainType, chainID);
 

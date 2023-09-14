@@ -18,8 +18,9 @@ import { POIEventList } from '../poi/poi-event-list';
 import { Config } from '../config/config';
 import { ShieldQueueDatabase } from '../database/databases/shield-queue-database';
 import { ShieldStatus } from '../models/database-types';
+import debug from 'debug';
 
-// const dbg = debug('poi:event-queue');
+const dbg = debug('poi:event-queue');
 
 export class ListProviderPOIEventQueue {
   private static isAddingPOIEventForNetwork: Partial<
@@ -27,6 +28,8 @@ export class ListProviderPOIEventQueue {
   > = {};
 
   private static poiEventQueue: Partial<Record<NetworkName, POIEvent[]>> = {};
+
+  private static minimumNextAddIndex: Partial<Record<NetworkName, number>> = {};
 
   static listKey: string;
 
@@ -96,19 +99,44 @@ export class ListProviderPOIEventQueue {
     ListProviderPOIEventQueue.addPOIEventsFromQueue(networkName);
   }
 
+  private static getMinimumNextAddIndex(networkName: NetworkName) {
+    return ListProviderPOIEventQueue.minimumNextAddIndex[networkName] ?? 0;
+  }
+
+  static updateMinimumNextAddIndex(
+    networkName: NetworkName,
+    syncedIndex: number,
+  ) {
+    ListProviderPOIEventQueue.minimumNextAddIndex[networkName] = Math.max(
+      ListProviderPOIEventQueue.getMinimumNextAddIndex(networkName),
+      syncedIndex,
+    );
+  }
+
   private static async addPOIEventsFromQueue(
     networkName: NetworkName,
   ): Promise<void> {
-    // TODO-HIGH-PRI: Get sync status - make sure not currently syncing List from other nodes.
-    // if () {
-    //   dbg('WARNING: Tried to add POI event while adding another one - risk of duplicate indices. Skipping.');
-    //   return;
-    // }
     if (
       ListProviderPOIEventQueue.isAddingPOIEventForNetwork[networkName] === true
     ) {
       return;
     }
+
+    const orderedEventsDB = new POIOrderedEventsDatabase(networkName);
+    const lastAddedItem = await orderedEventsDB.getLastAddedItem(
+      ListProviderPOIEventQueue.listKey,
+    );
+    const nextIndex = lastAddedItem ? lastAddedItem.index + 1 : 0;
+
+    if (
+      nextIndex <= ListProviderPOIEventQueue.getMinimumNextAddIndex(networkName)
+    ) {
+      dbg(
+        'WARNING: Tried to add POI event while unsynced - risk of duplicate indices. Skipping until synced.',
+      );
+      return;
+    }
+
     const queueForNetwork =
       ListProviderPOIEventQueue.poiEventQueue[networkName];
     if (!queueForNetwork || queueForNetwork.length === 0) {
@@ -120,7 +148,6 @@ export class ListProviderPOIEventQueue {
       return;
     }
 
-    const orderedEventsDB = new POIOrderedEventsDatabase(networkName);
     if (
       await orderedEventsDB.eventExists(
         ListProviderPOIEventQueue.listKey,
@@ -132,11 +159,6 @@ export class ListProviderPOIEventQueue {
 
     ListProviderPOIEventQueue.isAddingPOIEventForNetwork[networkName] = true;
 
-    const lastAddedItem = await orderedEventsDB.getLastAddedItem(
-      ListProviderPOIEventQueue.listKey,
-    );
-
-    const nextIndex = lastAddedItem ? lastAddedItem.index + 1 : 0;
     const blindedCommitmentStartingIndex = lastAddedItem
       ? lastAddedItem.blindedCommitmentStartingIndex +
         lastAddedItem.blindedCommitments.length
