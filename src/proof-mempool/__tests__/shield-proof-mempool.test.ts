@@ -118,18 +118,16 @@ describe('shield-proof-mempool', () => {
       blockNumber: 123436,
     });
 
-    await ShieldProofMempool.submitProof(networkName, shieldProofData1);
-    await ShieldProofMempool.submitProof(networkName, shieldProofData2);
+    await ShieldProofMempool.submitProof(networkName, { ...shieldProofData1 });
+    await ShieldProofMempool.submitProof(networkName, { ...shieldProofData2 });
 
-    expect(
-      ShieldProofMempoolCache.getShieldProofs(networkName).length,
-    ).to.equal(2);
+    expect(ShieldProofMempoolCache.getNumInCache(networkName)).to.equal(2);
 
     const bloomFilter = ProofMempoolBloomFilter.create();
     const bloomFilterSerializedNoData =
       ProofMempoolBloomFilter.serialize(bloomFilter);
     expect(
-      ShieldProofMempool.getFilteredProofs(
+      await ShieldProofMempool.getFilteredProofs(
         networkName,
         bloomFilterSerializedNoData,
       ),
@@ -139,7 +137,7 @@ describe('shield-proof-mempool', () => {
     const bloomFilterSerializedWithProof1 =
       ProofMempoolBloomFilter.serialize(bloomFilter);
     expect(
-      ShieldProofMempool.getFilteredProofs(
+      await ShieldProofMempool.getFilteredProofs(
         networkName,
         bloomFilterSerializedWithProof1,
       ),
@@ -176,18 +174,12 @@ describe('shield-proof-mempool', () => {
     await ShieldProofMempool.submitProof(networkName, shieldProofData1);
     await ShieldProofMempool.submitProof(networkName, shieldProofData2);
 
-    expect(
-      ShieldProofMempoolCache.getShieldProofs(networkName).length,
-    ).to.equal(2);
+    expect(ShieldProofMempoolCache.getNumInCache(networkName)).to.equal(2);
 
     ShieldProofMempoolCache.clearCache_FOR_TEST_ONLY();
-    expect(
-      ShieldProofMempoolCache.getShieldProofs(networkName).length,
-    ).to.equal(0);
+    expect(ShieldProofMempoolCache.getNumInCache(networkName)).to.equal(0);
 
     await ShieldProofMempool.inflateCacheFromDatabase();
-    expect(
-      ShieldProofMempoolCache.getShieldProofs(networkName).length,
-    ).to.equal(2);
+    expect(ShieldProofMempoolCache.getNumInCache(networkName)).to.equal(2);
   });
 });

@@ -10,8 +10,6 @@ import { TransactProofData } from '../models/proof-types';
 // const dbg = debug('poi:event-updater');
 
 export class ListProviderPOIEventUpdater {
-  private static shouldPoll = false;
-
   private static listKey: string;
 
   static init(listKey: string) {
@@ -19,21 +17,11 @@ export class ListProviderPOIEventUpdater {
   }
 
   static startPolling() {
-    this.shouldPoll = true;
-
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.poll();
   }
 
-  static stopPolling() {
-    this.shouldPoll = false;
-  }
-
   private static async poll() {
-    if (!this.shouldPoll) {
-      return;
-    }
-
     for (const networkName of Config.NETWORK_NAMES) {
       await this.addPOIEventsForShields(networkName);
       await this.addPOIEventsForTransacts(networkName);

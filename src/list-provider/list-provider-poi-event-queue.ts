@@ -28,8 +28,6 @@ export class ListProviderPOIEventQueue {
 
   private static poiEventQueue: Partial<Record<NetworkName, POIEvent[]>> = {};
 
-  private static shouldPoll = false;
-
   static listKey: string;
 
   static init(listKey: string) {
@@ -41,21 +39,11 @@ export class ListProviderPOIEventQueue {
       throw new Error('Must call ListProviderPOIEventQueue.init');
     }
 
-    ListProviderPOIEventQueue.shouldPoll = true;
-
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     ListProviderPOIEventQueue.poll();
   }
 
-  static stopPolling() {
-    ListProviderPOIEventQueue.shouldPoll = false;
-  }
-
   private static async poll() {
-    if (!ListProviderPOIEventQueue.shouldPoll) {
-      return;
-    }
-
     for (const networkName of Config.NETWORK_NAMES) {
       await ListProviderPOIEventQueue.addPOIEventsFromQueue(networkName);
     }

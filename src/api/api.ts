@@ -176,7 +176,7 @@ export class API {
 
         const networkName = networkNameForSerializedChain(chainType, chainID);
 
-        const proofs = ShieldProofMempool.getFilteredProofs(
+        const proofs = await ShieldProofMempool.getFilteredProofs(
           networkName,
           bloomFilterSerialized,
         );

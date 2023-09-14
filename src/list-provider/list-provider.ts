@@ -40,8 +40,6 @@ export abstract class ListProvider {
 
   protected abstract config: ListProviderConfig;
 
-  private shouldPoll = false;
-
   constructor(listKey: string) {
     dbg(`LIST KEY: ${listKey}`);
 
@@ -66,7 +64,6 @@ export abstract class ListProvider {
       `List ${this.config.name} polling for new shields and validating queued shields...`,
     );
 
-    this.shouldPoll = true;
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.runQueueShieldsPoller();
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -76,20 +73,7 @@ export abstract class ListProvider {
     ListProviderPOIEventUpdater.startPolling();
   }
 
-  stopPolling() {
-    dbg(`Stopping ${this.config.name} polling...`);
-
-    this.shouldPoll = false;
-
-    ListProviderPOIEventQueue.stopPolling();
-    ListProviderPOIEventUpdater.stopPolling();
-  }
-
   private async runQueueShieldsPoller() {
-    if (!this.shouldPoll) {
-      return;
-    }
-
     // Run for each network in series.
     for (let i = 0; i < Config.NETWORK_NAMES.length; i++) {
       const networkName = Config.NETWORK_NAMES[i];
@@ -106,10 +90,6 @@ export abstract class ListProvider {
   }
 
   private async runValidateQueuedShieldsPoller() {
-    if (!this.shouldPoll) {
-      return;
-    }
-
     // Run for each network in series.
     for (let i = 0; i < Config.NETWORK_NAMES.length; i++) {
       const networkName = Config.NETWORK_NAMES[i];

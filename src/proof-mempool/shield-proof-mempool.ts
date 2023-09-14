@@ -119,22 +119,34 @@ export class ShieldProofMempool {
     return db.getShieldProof(commitmentHash);
   }
 
-  static getFilteredProofs(
+  static async getFilteredProofs(
     networkName: NetworkName,
     bloomFilterSerialized: string,
-  ): ShieldProofData[] {
-    // TODO: FIX. THIS WILL BE HUGE AT SCALE.
-    const shieldProofDatas: ShieldProofData[] =
-      ShieldProofMempoolCache.getShieldProofs(networkName);
-
+  ): Promise<ShieldProofData[]> {
     const bloomFilter = ProofMempoolBloomFilter.deserialize(
       bloomFilterSerialized,
     );
-    const filteredProofs: ShieldProofData[] = shieldProofDatas.filter(
-      (shieldProofData) => {
-        return !bloomFilter.has(shieldProofData.commitmentHash);
-      },
-    );
-    return filteredProofs.slice(0, QueryLimits.PROOF_MEMPOOL_SYNCED_ITEMS);
+
+    const db = new ShieldProofMempoolDatabase(networkName);
+    const shieldProofStream = await db.streamShieldProofs();
+
+    const filteredShieldProofs: ShieldProofData[] = [];
+
+    for await (const shieldProofDBItem of shieldProofStream) {
+      if (!bloomFilter.has(shieldProofDBItem.commitmentHash)) {
+        filteredShieldProofs.push({
+          snarkProof: shieldProofDBItem.snarkProof,
+          commitmentHash: shieldProofDBItem.commitmentHash,
+          blindedCommitment: shieldProofDBItem.blindedCommitment,
+        });
+      }
+      if (
+        filteredShieldProofs.length >= QueryLimits.PROOF_MEMPOOL_SYNCED_ITEMS
+      ) {
+        break;
+      }
+    }
+
+    return filteredShieldProofs;
   }
 }

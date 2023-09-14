@@ -23,8 +23,6 @@ export class RoundRobinSyncer {
 
   private currentNodeIndex = 0;
 
-  private shouldPoll = false;
-
   private pollStatus = PollStatus.IDLE;
 
   constructor(connectedNodeURLs: string[]) {
@@ -37,24 +35,15 @@ export class RoundRobinSyncer {
 
   startPolling() {
     if (this.connectedNodeURLs.length === 0) {
+      dbg('No connected nodes - not polling.');
       return;
     }
-
-    this.shouldPoll = true;
 
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.poll();
   }
 
-  stopPolling() {
-    this.shouldPoll = false;
-  }
-
   private async poll() {
-    if (!this.shouldPoll) {
-      return;
-    }
-
     const nodeURL = this.connectedNodeURLs[this.currentNodeIndex];
 
     try {

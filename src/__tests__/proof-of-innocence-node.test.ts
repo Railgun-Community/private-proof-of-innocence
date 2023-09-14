@@ -60,7 +60,5 @@ describe('proof-of-innocence-node', () => {
         `Should be polling, got ${nodeWithListProvider.getPollStatus()}`,
       );
     }
-
-    await nodeWithListProvider.stop();
   }).timeout(200000);
 });

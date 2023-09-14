@@ -4,29 +4,28 @@ import { ProofMempoolBloomFilter } from './proof-mempool-bloom-filters';
 import { BloomFilter } from 'bloom-filters';
 
 export class ShieldProofMempoolCache {
-  private static shieldProofMempoolCache: Partial<
-    Record<NetworkName, ShieldProofData[]>
-  > = {};
+  private static numInCache: Partial<Record<NetworkName, number>> = {};
 
   private static bloomFilters: Partial<Record<NetworkName, BloomFilter>> = {};
-
-  static getShieldProofs(networkName: NetworkName): ShieldProofData[] {
-    return ShieldProofMempoolCache.shieldProofMempoolCache[networkName] ?? [];
-  }
 
   static addToCache(
     networkName: NetworkName,
     shieldProofData: ShieldProofData,
   ) {
-    ShieldProofMempoolCache.shieldProofMempoolCache[networkName] ??= [];
-    ShieldProofMempoolCache.shieldProofMempoolCache[networkName]?.push(
-      shieldProofData,
-    );
-
+    ShieldProofMempoolCache.incrementNumInCache(networkName);
     ShieldProofMempoolCache.addToBloomFilter(
       networkName,
       shieldProofData.commitmentHash,
     );
+  }
+
+  private static incrementNumInCache(networkName: NetworkName) {
+    const numInCache = ShieldProofMempoolCache.getNumInCache(networkName);
+    ShieldProofMempoolCache.numInCache[networkName] = numInCache + 1;
+  }
+
+  static getNumInCache(networkName: NetworkName) {
+    return ShieldProofMempoolCache.numInCache[networkName] ?? 0;
   }
 
   private static getBloomFilter(networkName: NetworkName): BloomFilter {
@@ -49,7 +48,7 @@ export class ShieldProofMempoolCache {
   }
 
   static clearCache_FOR_TEST_ONLY() {
-    ShieldProofMempoolCache.shieldProofMempoolCache = {};
+    ShieldProofMempoolCache.numInCache = {};
     ShieldProofMempoolCache.bloomFilters = {};
   }
 

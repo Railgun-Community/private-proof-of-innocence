@@ -51,21 +51,6 @@ export class ProofOfInnocenceNode {
     dbg(`Proof of Innocence node running...`);
   }
 
-  async stop() {
-    dbg(`Stopping Proof of Innocence node...`);
-
-    this.api?.stop();
-
-    await uninitModules();
-    this.listProvider?.stopPolling();
-
-    this.roundRobinSyncer.stopPolling();
-
-    this.running = false;
-
-    dbg(`Proof of Innocence node stopped.`);
-  }
-
   getPollStatus() {
     return this.roundRobinSyncer.getPollStatus();
   }
