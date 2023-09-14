@@ -4,7 +4,7 @@ import { POIOrderedEventsDatabase } from '../database/databases/poi-ordered-even
 import debug from 'debug';
 import { signPOIEvent } from '../util/ed25519';
 import { SnarkProof } from '../models/proof-types';
-import { POIMerkletreeManager } from './poi-merkletree-manager';
+import { POIMerkletreeManager } from '../poi/poi-merkletree-manager';
 
 const dbg = debug('poi:events');
 
@@ -13,7 +13,7 @@ type POIEventQueueItem = {
   proof: SnarkProof;
 };
 
-export class POIEventManager {
+export class ListProviderPOIEventManager {
   private static isAddingPOIEventForNetwork: Partial<
     Record<NetworkName, boolean>
   > = {};
@@ -48,7 +48,10 @@ export class POIEventManager {
     //   dbg('WARNING: Tried to add POI event while adding another one - risk of duplicate indices. Skipping.');
     //   return;
     // }
-    if (POIEventManager.isAddingPOIEventForNetwork[networkName] === true) {
+    if (
+      ListProviderPOIEventManager.isAddingPOIEventForNetwork[networkName] ===
+      true
+    ) {
       dbg(
         'WARNING: Tried to add POI event while adding another one - risk of duplicate indices. Skipping.',
       );
@@ -64,7 +67,7 @@ export class POIEventManager {
       return;
     }
 
-    POIEventManager.isAddingPOIEventForNetwork[networkName] = true;
+    ListProviderPOIEventManager.isAddingPOIEventForNetwork[networkName] = true;
 
     const db = new POIOrderedEventsDatabase(networkName);
     const lastAddedItem = await db.getLastAddedItem(listKey);
@@ -95,7 +98,7 @@ export class POIEventManager {
       signedPOIEvent,
     );
 
-    POIEventManager.isAddingPOIEventForNetwork[networkName] = false;
+    ListProviderPOIEventManager.isAddingPOIEventForNetwork[networkName] = false;
 
     if (queueForNetwork.length > 0) {
       return this.addPOIEventsFromQueue(networkName, listKey);

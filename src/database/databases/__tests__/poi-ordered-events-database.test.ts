@@ -4,7 +4,7 @@ import { POIOrderedEventsDatabase } from '../poi-ordered-events-database';
 import { NetworkName } from '@railgun-community/shared-models';
 import { DatabaseClient } from '../../database-client-init';
 import { SignedPOIEvent } from '../../../models/poi-types';
-import { getPOIListEventRange } from '../../../poi/poi-event-list';
+import { POIEventList } from '../../../poi/poi-event-list';
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
@@ -148,7 +148,12 @@ describe('POIOrderedEventsDatabase', () => {
     const events = await db.getPOIEvents(listKey, startIndex, endIndex);
 
     // Retrieve only the 2nd event
-    const eventRange = await getPOIListEventRange(networkName, listKey, 1, 2);
+    const eventRange = await POIEventList.getPOIListEventRange(
+      networkName,
+      listKey,
+      1,
+      2,
+    );
     expect(eventRange).to.deep.equal([signedPOIEvent2]);
 
     // Check that the length of the events is as expected

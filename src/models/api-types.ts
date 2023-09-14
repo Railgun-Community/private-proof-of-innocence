@@ -62,8 +62,11 @@ export type ValidatedRailgunTxidStatus = {
   validatedMerkleroot: Optional<string>;
 };
 
-export type NodeStatusAllNetworks = Partial<Record<NetworkName, NodeStatus>>;
+export type NodeStatusAllNetworks = Partial<
+  Record<NetworkName, NodeOverallStatus>
+>;
 
-export type NodeStatus = {
+export type NodeOverallStatus = {
   txidStatus: RailgunTxidStatus;
+  eventListStatuses: Record<string, POIEventListStatus>;
 };

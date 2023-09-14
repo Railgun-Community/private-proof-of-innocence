@@ -3,10 +3,7 @@ import cors from 'cors';
 import os from 'os';
 import debug from 'debug';
 import { Server } from 'http';
-import {
-  getEventListStatus,
-  getPOIListEventRange,
-} from '../poi/poi-event-list';
+import { POIEventList } from '../poi/poi-event-list';
 import { networkNameForSerializedChain } from '../config/general';
 import { ShieldProofMempool } from '../proof-mempool/shield-proof-mempool';
 import { TransactProofMempool } from '../proof-mempool/transact-proof-mempool';
@@ -23,8 +20,8 @@ import {
 import { POIMerkletreeManager } from '../poi/poi-merkletree-manager';
 import { getShieldQueueStatus } from '../shield-queue/shield-queue';
 import { RailgunTxidMerkletreeManager } from '../railgun-txids/railgun-txid-merkletree-manager';
-import { getNodeStatusAllNetworks } from '../status/node-status';
 import { QueryLimits } from '../config/query-limits';
+import { NodeStatus } from '../status/node-status';
 
 const dbg = debug('poi:api');
 
@@ -111,7 +108,7 @@ export class API {
   private addAggregatorRoutes() {
     this.safeGet('/node-status', async (req: Request, res: Response) => {
       const nodeStatusAllNetworks: NodeStatusAllNetworks =
-        await getNodeStatusAllNetworks();
+        await NodeStatus.getNodeStatusAllNetworks();
       res.json(nodeStatusAllNetworks);
     });
 
@@ -132,7 +129,10 @@ export class API {
         const { chainType, chainID, listKey } = req.params;
         const networkName = networkNameForSerializedChain(chainType, chainID);
 
-        const status = await getEventListStatus(networkName, listKey);
+        const status = await POIEventList.getEventListStatus(
+          networkName,
+          listKey,
+        );
         res.json(status);
       },
     );
@@ -144,11 +144,23 @@ export class API {
           req.params;
         const networkName = networkNameForSerializedChain(chainType, chainID);
 
-        const events = await getPOIListEventRange(
+        const start = Number(startIndex);
+        const end = Number(endIndex);
+        const rangeLength = end - start;
+        if (rangeLength > QueryLimits.MAX_EVENT_QUERY_RANGE_LENGTH) {
+          throw new Error(
+            `Max event query range length is ${QueryLimits.MAX_EVENT_QUERY_RANGE_LENGTH}`,
+          );
+        }
+        if (rangeLength < 0) {
+          throw new Error(`Invalid query range`);
+        }
+
+        const events = await POIEventList.getPOIListEventRange(
           networkName,
           listKey,
-          Number(startIndex),
-          Number(endIndex),
+          start,
+          end,
         );
         res.json(events);
       },
