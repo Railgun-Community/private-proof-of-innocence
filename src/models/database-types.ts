@@ -1,5 +1,6 @@
 import { SortDirection } from 'mongodb';
 import { SnarkProof } from './proof-types';
+import { Readable } from 'stream';
 
 export type DBMaxMin<T> = Partial<T>;
 
@@ -10,6 +11,8 @@ export type DBSort<T> = Partial<Record<keyof T, SortDirection>>;
 export type DBIndexSpec<T> = (keyof T)[];
 
 export type DBOptional<T> = Optional<T> | null;
+
+export type DBStream<T> = Readable & AsyncIterable<T>;
 
 export enum CollectionName {
   // General
@@ -75,11 +78,10 @@ export type TransactProofMempoolDBItem = {
   listKey: string;
   snarkProof: SnarkProof;
   poiMerkleroots: string[];
-  txidIndex: number;
-  txMerkleroot: string;
-  blindedCommitmentInputs: string[];
+  txidMerkleroot: string;
+  txidMerklerootIndex: number;
   blindedCommitmentOutputs: string[];
-  firstBlindedCommitmentInput: string;
+  firstBlindedCommitment: string;
 };
 
 // DO NOT CHANGE FIELDS WITHOUT CLEARING OR MIGRATING THE DB.
@@ -88,7 +90,7 @@ export type POIOrderedEventDBItem = {
   index: number;
   blindedCommitmentStartingIndex: number;
   blindedCommitments: string[];
-  firstBlindedCommitmentInput: string;
+  firstBlindedCommitment: string;
   proof: SnarkProof;
   signature: string;
 };

@@ -3,9 +3,7 @@ import chaiAsPromised from 'chai-as-promised';
 import { TransactProofPerListMempoolDatabase } from '../transact-proof-per-list-mempool-database';
 import { NetworkName } from '@railgun-community/shared-models';
 import { DatabaseClient } from '../../database-client-init';
-import {
-  TransactProofMempoolDBItem,
-} from '../../../models/database-types';
+import { TransactProofMempoolDBItem } from '../../../models/database-types';
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
@@ -30,12 +28,12 @@ describe('TransactProofPerListMempoolDatabase', () => {
     // Fetch all indexes for the collection
     const indexes = await db.listCollectionIndexes();
 
-    // Check if a unique index exists for the combination of 'listKey' and 'firstBlindedCommitmentInput' fields
+    // Check if a unique index exists for the combination of 'listKey' and 'firstBlindedCommitment' fields
     const uniqueCombinedIndexExists = indexes.some((index) => {
       return (
         'key' in index &&
         'listKey' in index.key &&
-        'firstBlindedCommitmentInput' in index.key &&
+        'firstBlindedCommitment' in index.key &&
         index.unique === true
       );
     });
@@ -52,12 +50,12 @@ describe('TransactProofPerListMempoolDatabase', () => {
     // Fetch all indexes for the collection
     const indexes = await db.listCollectionIndexes();
 
-    // Check if a unique index exists for the combination of 'listKey' and 'firstBlindedCommitmentInput' fields
+    // Check if a unique index exists for the combination of 'listKey' and 'firstBlindedCommitment' fields
     const uniqueCombinedIndexExists = indexes.some((index) => {
       return (
         'key' in index &&
         'listKey' in index.key &&
-        'firstBlindedCommitmentInput' in index.key &&
+        'firstBlindedCommitment' in index.key &&
         index.unique === true
       );
     });
@@ -79,26 +77,22 @@ describe('TransactProofPerListMempoolDatabase', () => {
         pi_c: ['pi_c_0', 'pi_c_1'],
       },
       poiMerkleroots: ['poiMerkleroots_0', 'poiMerkleroots_1'],
-      txidIndex: 58,
-      txMerkleroot: 'txMerkleroot',
-      blindedCommitmentInputs: [
-        'blindedCommitmentInputs_0',
-        'blindedCommitmentInputs_1',
-      ],
+      txidMerklerootIndex: 58,
+      txidMerkleroot: 'txMerkleroot',
       blindedCommitmentOutputs: [
         'blindedCommitmentOutputs_0',
         'blindedCommitmentOutputs_1',
       ],
-      firstBlindedCommitmentInput: 'firstBlindedCommitmentInput', // This will be ignored
+      firstBlindedCommitment: 'firstBlindedCommitment', // This will be ignored
     };
 
     // Insert the item
     await db.insertValidTransactProof(listKey, transactProofItem);
 
     // Check that the proof exists and is in getAllTransactProofsAndLists
-    expect(await db.proofExists(listKey, 'blindedCommitmentInputs_0')).to.equal(
-      true,
-    ); // Changed this to match the first item in blindedCommitmentInputs
+    expect(
+      await db.proofExists(listKey, 'blindedCommitmentOutputs_0'),
+    ).to.equal(true); // Changed this to match the first item in blindedCommitmentOutputs
   });
 
   it('Should delete a transact proof', async () => {
@@ -115,17 +109,13 @@ describe('TransactProofPerListMempoolDatabase', () => {
         pi_c: ['pi_c_0', 'pi_c_1'],
       },
       poiMerkleroots: ['poiMerkleroots_0', 'poiMerkleroots_1'],
-      txidIndex: 59,
-      txMerkleroot: 'txMerkleroot',
-      blindedCommitmentInputs: [
-        'blindedCommitmentInputs_0',
-        'blindedCommitmentInputs_1',
-      ],
+      txidMerklerootIndex: 59,
+      txidMerkleroot: 'txMerkleroot',
       blindedCommitmentOutputs: [
         'blindedCommitmentOutputs_0',
         'blindedCommitmentOutputs_1',
       ],
-      firstBlindedCommitmentInput: 'firstBlindedCommitmentInput',
+      firstBlindedCommitment: 'firstBlindedCommitment',
     };
 
     // Insert the item
@@ -135,18 +125,21 @@ describe('TransactProofPerListMempoolDatabase', () => {
     expect(
       await db.proofExists(
         listKey,
-        transactProofItem.blindedCommitmentInputs[0],
+        transactProofItem.blindedCommitmentOutputs[0],
       ),
     ).to.equal(true);
 
     // Delete the proof
-    await db.deleteProof(listKey, transactProofItem.blindedCommitmentInputs[0]);
+    await db.deleteProof(
+      listKey,
+      transactProofItem.blindedCommitmentOutputs[0],
+    );
 
     // Check that the proof no longer exists
     expect(
       await db.proofExists(
         listKey,
-        transactProofItem.blindedCommitmentInputs[0],
+        transactProofItem.blindedCommitmentOutputs[0],
       ),
     ).to.equal(false);
   });

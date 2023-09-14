@@ -1,40 +1,62 @@
 import { NetworkName } from '@railgun-community/shared-models';
 import { ShieldProofData } from '../models/proof-types';
 import { ProofMempoolBloomFilter } from './proof-mempool-bloom-filters';
+import { BloomFilter } from 'bloom-filters';
 
 export class ShieldProofMempoolCache {
   private static shieldProofMempoolCache: Partial<
     Record<NetworkName, ShieldProofData[]>
   > = {};
 
-  private static bloomFilter = ProofMempoolBloomFilter.create();
+  private static bloomFilters: Partial<Record<NetworkName, BloomFilter>> = {};
 
   static getShieldProofs(networkName: NetworkName): ShieldProofData[] {
-    return this.shieldProofMempoolCache[networkName] ?? [];
+    return ShieldProofMempoolCache.shieldProofMempoolCache[networkName] ?? [];
   }
 
   static addToCache(
     networkName: NetworkName,
     shieldProofData: ShieldProofData,
   ) {
-    this.shieldProofMempoolCache[networkName] ??= [];
-    this.shieldProofMempoolCache[networkName]?.push(shieldProofData);
+    ShieldProofMempoolCache.shieldProofMempoolCache[networkName] ??= [];
+    ShieldProofMempoolCache.shieldProofMempoolCache[networkName]?.push(
+      shieldProofData,
+    );
 
-    this.addToBloomFilter(shieldProofData.commitmentHash);
+    ShieldProofMempoolCache.addToBloomFilter(
+      networkName,
+      shieldProofData.commitmentHash,
+    );
   }
 
-  private static addToBloomFilter(commitmentHash: string) {
-    ShieldProofMempoolCache.bloomFilter.add(commitmentHash);
+  private static getBloomFilter(networkName: NetworkName): BloomFilter {
+    ShieldProofMempoolCache.bloomFilters[networkName] ??=
+      ProofMempoolBloomFilter.create();
+    return ShieldProofMempoolCache.bloomFilters[networkName] as BloomFilter;
   }
 
-  static serializeBloomFilter(): string {
+  private static addToBloomFilter(
+    networkName: NetworkName,
+    commitmentHash: string,
+  ) {
+    ShieldProofMempoolCache.getBloomFilter(networkName).add(commitmentHash);
+  }
+
+  static serializeBloomFilter(networkName: NetworkName): string {
     return ProofMempoolBloomFilter.serialize(
-      ShieldProofMempoolCache.bloomFilter,
+      ShieldProofMempoolCache.getBloomFilter(networkName),
     );
   }
 
   static clearCache_FOR_TEST_ONLY() {
-    this.shieldProofMempoolCache = {};
-    this.bloomFilter = ProofMempoolBloomFilter.create();
+    ShieldProofMempoolCache.shieldProofMempoolCache = {};
+    ShieldProofMempoolCache.bloomFilters = {};
+  }
+
+  static bloomFilterIncludesCommitmentHash(
+    networkName: NetworkName,
+    commitmentHash: string,
+  ): boolean {
+    return this.getBloomFilter(networkName).has(commitmentHash);
   }
 }

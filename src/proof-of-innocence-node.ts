@@ -42,7 +42,6 @@ export class ProofOfInnocenceNode {
 
     await initModules();
 
-    await this.listProvider?.init();
     this.listProvider?.startPolling();
 
     this.api.serve(this.host, this.port);

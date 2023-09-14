@@ -8,15 +8,16 @@ import { ShieldData } from '@railgun-community/wallet';
 import debug from 'debug';
 import { ShieldQueueDatabase } from '../database/databases/shield-queue-database';
 import { Config } from '../config/config';
-import { ShieldQueueDBItem } from '../models/database-types';
+import { ShieldQueueDBItem, ShieldStatus } from '../models/database-types';
 import { StatusDatabase } from '../database/databases/status-database';
 import { getNewShieldsFromWallet } from '../engine/wallet';
 import {
   getTransactionReceipt,
   getTimestampFromTransactionReceipt,
 } from '../rpc-providers/tx-receipt';
-import { getListPublicKey } from '../util/ed25519';
 import { Constants } from '../config/constants';
+import { ListProviderPOIEventQueue } from './list-provider-poi-event-queue';
+import { ListProviderPOIEventUpdater } from './list-provider-poi-event-updater';
 
 export type ListProviderConfig = {
   name: string;
@@ -34,16 +35,26 @@ const DEFAULT_VALIDATE_SHIELDS_DELAY_MSEC = 30 * 1000;
 const dbg = debug('poi:list-provider');
 
 export abstract class ListProvider {
-  listKey!: string;
+  listKey: string;
 
   protected abstract config: ListProviderConfig;
 
   private shouldPoll = false;
 
-  async init() {
-    this.listKey = await getListPublicKey();
-    dbg(`${this.config.name} initialized.`);
-    dbg(`LIST KEY: ${this.listKey}`);
+  private listProviderPOIEventUpdater: ListProviderPOIEventUpdater;
+
+  private listProviderPOIEventQueue: ListProviderPOIEventQueue;
+
+  constructor(listKey: string) {
+    dbg(`LIST KEY: ${listKey}`);
+
+    this.listKey = listKey;
+
+    this.listProviderPOIEventQueue = new ListProviderPOIEventQueue(listKey);
+    this.listProviderPOIEventUpdater = new ListProviderPOIEventUpdater(
+      listKey,
+      this.listProviderPOIEventQueue,
+    );
   }
 
   protected abstract shouldAllowShield(
@@ -66,12 +77,18 @@ export abstract class ListProvider {
     this.runQueueShieldsPoller();
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.runValidateQueuedShieldsPoller();
+
+    this.listProviderPOIEventQueue.startPolling();
+    this.listProviderPOIEventUpdater.startPolling();
   }
 
   stopPolling() {
     dbg(`Stopping ${this.config.name} polling...`);
 
     this.shouldPoll = false;
+
+    this.listProviderPOIEventQueue.stopPolling();
+    this.listProviderPOIEventUpdater.stopPolling();
   }
 
   private async runQueueShieldsPoller() {
@@ -224,7 +241,10 @@ export abstract class ListProvider {
 
       // Update status in DB
       const shieldQueueDB = new ShieldQueueDatabase(networkName);
-      await shieldQueueDB.updateShieldStatus(shieldData, shouldAllow);
+      await shieldQueueDB.updateShieldStatus(
+        shieldData,
+        shouldAllow ? ShieldStatus.Allowed : ShieldStatus.Blocked,
+      );
     } catch (err) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       dbg(`Error validating queued shield on ${networkName}: ${err.message}`);

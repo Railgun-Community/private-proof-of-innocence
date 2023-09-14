@@ -7,9 +7,8 @@ export type ShieldProofData = {
 export type TransactProofData = {
   snarkProof: SnarkProof;
   poiMerkleroots: string[];
-  txMerkleroot: string;
-  txidIndex: number;
-  blindedCommitmentInputs: string[];
+  txidMerkleroot: string;
+  txidMerklerootIndex: number;
   blindedCommitmentOutputs: string[];
 };
 

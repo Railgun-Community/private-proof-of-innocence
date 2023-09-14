@@ -79,6 +79,22 @@ export class ShieldProofMempool {
     }
   }
 
+  static async getShieldProofDataForCommitmentHash(
+    networkName: NetworkName,
+    commitmentHash: string,
+  ): Promise<Optional<ShieldProofData>> {
+    const includesCommitmentHash =
+      ShieldProofMempoolCache.bloomFilterIncludesCommitmentHash(
+        networkName,
+        commitmentHash,
+      );
+    if (includesCommitmentHash) {
+      return;
+    }
+    const db = new ShieldProofMempoolDatabase(networkName);
+    return db.getShieldProof(commitmentHash);
+  }
+
   static getFilteredProofs(
     networkName: NetworkName,
     bloomFilterSerialized: string,

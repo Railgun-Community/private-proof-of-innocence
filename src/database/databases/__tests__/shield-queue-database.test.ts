@@ -150,7 +150,7 @@ describe('shield-queue-database', () => {
     ]);
 
     // Set to "Allowed"
-    await db.updateShieldStatus(shieldQueueItemExpired, true);
+    await db.updateShieldStatus(shieldQueueItemExpired, ShieldStatus.Allowed);
 
     await expect(db.getPendingShields(daysAgo(7))).to.eventually.deep.equal([]);
 
@@ -174,7 +174,7 @@ describe('shield-queue-database', () => {
     ]);
 
     // Set to "Blocked"
-    await db.updateShieldStatus(shieldQueueItemExpired, false);
+    await db.updateShieldStatus(shieldQueueItemExpired, ShieldStatus.Blocked);
 
     const allowedShields2 = await db.getAllowedShields();
     expect(allowedShields2.length).to.equal(0);

@@ -206,7 +206,7 @@ export class RoundRobinSyncer {
     const shieldProofs = await POINodeRequest.getFilteredShieldProofs(
       nodeURL,
       networkName,
-      ShieldProofMempoolCache.serializeBloomFilter(),
+      ShieldProofMempoolCache.serializeBloomFilter(networkName),
     );
     for (const shieldProof of shieldProofs) {
       await ShieldProofMempool.submitProof(networkName, shieldProof);
@@ -244,7 +244,7 @@ export class RoundRobinSyncer {
       nodeURL,
       networkName,
       listKey,
-      TransactProofMempoolCache.serializeBloomFilter(),
+      TransactProofMempoolCache.serializeBloomFilter(networkName),
     );
     for (const transactProof of transactProofs) {
       await TransactProofMempool.submitProof(

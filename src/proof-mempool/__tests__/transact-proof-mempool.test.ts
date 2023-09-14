@@ -60,10 +60,9 @@ describe('transact-proof-mempool', () => {
     const transactProofData: TransactProofData = {
       snarkProof: MOCK_SNARK_PROOF,
       poiMerkleroots: ['0x1111', '0x2222'],
-      txidIndex: 55,
-      txMerkleroot: '0x1234567890',
-      blindedCommitmentInputs: ['0x3333', '0x4444'],
-      blindedCommitmentOutputs: ['0x5555', '0x6666'],
+      txidMerklerootIndex: 55,
+      txidMerkleroot: '0x1234567890',
+      blindedCommitmentOutputs: ['0x3333', '0x4444'],
     };
 
     // 1. FAIL: Snark verifies, but only one merkleroot is in POI Historical Merkleroots.
@@ -81,7 +80,7 @@ describe('transact-proof-mempool', () => {
     await expect(
       transactProofMempoolDB.proofExists(
         listKey,
-        transactProofData.blindedCommitmentInputs[0],
+        transactProofData.blindedCommitmentOutputs[0],
       ),
     ).to.eventually.equal(false);
 
@@ -111,7 +110,7 @@ describe('transact-proof-mempool', () => {
     await expect(
       transactProofMempoolDB.proofExists(
         listKey,
-        transactProofData.blindedCommitmentInputs[0],
+        transactProofData.blindedCommitmentOutputs[0],
       ),
     ).to.eventually.equal(false);
 
@@ -126,7 +125,7 @@ describe('transact-proof-mempool', () => {
     await expect(
       transactProofMempoolDB.proofExists(
         listKey,
-        transactProofData.blindedCommitmentInputs[0],
+        transactProofData.blindedCommitmentOutputs[0],
       ),
     ).to.eventually.equal(true);
   });
@@ -135,18 +134,16 @@ describe('transact-proof-mempool', () => {
     const transactProofData1: TransactProofData = {
       snarkProof: MOCK_SNARK_PROOF,
       poiMerkleroots: ['0x1111', '0x2222'],
-      txidIndex: 56,
-      txMerkleroot: '0x1234567890',
-      blindedCommitmentInputs: ['0x3333', '0x4444'],
-      blindedCommitmentOutputs: ['0x5555', '0x6666'],
+      txidMerklerootIndex: 56,
+      txidMerkleroot: '0x1234567890',
+      blindedCommitmentOutputs: ['0x3333', '0x4444'],
     };
     const transactProofData2: TransactProofData = {
       snarkProof: MOCK_SNARK_PROOF,
       poiMerkleroots: ['0x9999', '0x8888'],
-      txidIndex: 57,
-      txMerkleroot: '0x0987654321',
-      blindedCommitmentInputs: ['0x7777', '0x6666'],
-      blindedCommitmentOutputs: ['0x5555', '0x4444'],
+      txidMerklerootIndex: 57,
+      txidMerkleroot: '0x0987654321',
+      blindedCommitmentOutputs: ['0x7777', '0x6666'],
     };
 
     snarkVerifyStub.resolves(true);
@@ -195,7 +192,7 @@ describe('transact-proof-mempool', () => {
       ),
     ).to.deep.equal([transactProofData1, transactProofData2]);
 
-    bloomFilter.add(transactProofData1.blindedCommitmentInputs[0]);
+    bloomFilter.add(transactProofData1.blindedCommitmentOutputs[0]);
     const bloomFilterSerializedWithProof1 =
       ProofMempoolBloomFilter.serialize(bloomFilter);
     expect(
@@ -211,18 +208,16 @@ describe('transact-proof-mempool', () => {
     const transactProofData1: TransactProofData = {
       snarkProof: MOCK_SNARK_PROOF,
       poiMerkleroots: ['0x1111', '0x2222'],
-      txidIndex: 58,
-      txMerkleroot: '0x1234567890',
-      blindedCommitmentInputs: ['0x3333', '0x4444'],
-      blindedCommitmentOutputs: ['0x5555', '0x6666'],
+      txidMerklerootIndex: 58,
+      txidMerkleroot: '0x1234567890',
+      blindedCommitmentOutputs: ['0x3333', '0x4444'],
     };
     const transactProofData2: TransactProofData = {
       snarkProof: MOCK_SNARK_PROOF,
       poiMerkleroots: ['0x9999', '0x8888'],
-      txidIndex: 59,
-      txMerkleroot: '0x0987654321',
-      blindedCommitmentInputs: ['0x7777', '0x6666'],
-      blindedCommitmentOutputs: ['0x5555', '0x4444'],
+      txidMerklerootIndex: 59,
+      txidMerkleroot: '0x0987654321',
+      blindedCommitmentOutputs: ['0x7777', '0x6666'],
     };
 
     snarkVerifyStub.resolves(true);

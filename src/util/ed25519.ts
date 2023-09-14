@@ -2,7 +2,7 @@ import { getPublicKey, sign, verify } from '@noble/ed25519';
 import { utf8ToBytes } from '@noble/hashes/utils';
 import { isDefined } from '@railgun-community/shared-models';
 import { bytesToHex, hexStringToBytes } from '@railgun-community/wallet';
-import { POIEvent, SignedPOIEvent } from '../models/poi-types';
+import { SignedPOIEvent, UnsignedPOIEvent } from '../models/poi-types';
 
 const getPKey = (): Uint8Array => {
   const pkey = process.env.pkey;
@@ -14,20 +14,23 @@ const getPKey = (): Uint8Array => {
   return hexStringToBytes(pkey);
 };
 
-const getPOIEventMessage = (poiEvent: POIEvent) => {
+const getPOIEventMessage = (unsignedPOIEvent: UnsignedPOIEvent) => {
   return utf8ToBytes(
     JSON.stringify({
-      index: poiEvent.index,
-      blindedCommitmentStartingIndex: poiEvent.blindedCommitmentStartingIndex,
-      blindedCommitments: poiEvent.blindedCommitments,
-      proof: poiEvent.proof,
+      index: unsignedPOIEvent.index,
+      blindedCommitmentStartingIndex:
+        unsignedPOIEvent.blindedCommitmentStartingIndex,
+      blindedCommitments: unsignedPOIEvent.blindedCommitments,
+      proof: unsignedPOIEvent.proof,
     }),
   );
 };
 
-export const signPOIEvent = async (poiEvent: POIEvent): Promise<string> => {
+export const signPOIEvent = async (
+  unsignedPOIEvent: UnsignedPOIEvent,
+): Promise<string> => {
   const pkey = getPKey();
-  const message = getPOIEventMessage(poiEvent);
+  const message = getPOIEventMessage(unsignedPOIEvent);
   const signatureUint8Array = await sign(message, pkey);
   return bytesToHex(signatureUint8Array);
 };

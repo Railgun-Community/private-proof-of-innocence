@@ -16,8 +16,8 @@ export class TransactProofMempool {
     networkName: NetworkName,
     transactProofData: TransactProofData,
   ) {
-    if (transactProofData.blindedCommitmentInputs.length < 1) {
-      throw new Error('Requires blindedCommitmentInputs');
+    if (transactProofData.blindedCommitmentOutputs.length < 1) {
+      throw new Error('Requires blindedCommitmentOutputs');
     }
 
     const shouldAdd = await this.shouldAdd(
@@ -42,15 +42,15 @@ export class TransactProofMempool {
   static async removeProof(
     listKey: string,
     networkName: NetworkName,
-    firstBlindedCommitmentInput: string,
+    firstBlindedCommitment: string,
   ) {
     const db = new TransactProofPerListMempoolDatabase(networkName);
-    await db.deleteProof(listKey, firstBlindedCommitmentInput);
+    await db.deleteProof(listKey, firstBlindedCommitment);
 
     TransactProofMempoolCache.removeFromCache(
       listKey,
       networkName,
-      firstBlindedCommitmentInput,
+      firstBlindedCommitment,
     );
   }
 
@@ -63,7 +63,7 @@ export class TransactProofMempool {
     const db = new TransactProofPerListMempoolDatabase(networkName);
     const exists = await db.proofExists(
       listKey,
-      transactProofData.blindedCommitmentInputs[0],
+      transactProofData.blindedCommitmentOutputs[0],
     );
     if (exists) {
       return false;
@@ -83,8 +83,8 @@ export class TransactProofMempool {
     const isValidTxMerkleroot =
       await RailgunTxidMerkletreeManager.checkIfMerklerootExistsByTxidIndex(
         networkName,
-        transactProofData.txidIndex,
-        transactProofData.txMerkleroot,
+        transactProofData.txidMerklerootIndex,
+        transactProofData.txidMerkleroot,
       );
     if (!isValidTxMerkleroot) {
       return false;
@@ -94,7 +94,7 @@ export class TransactProofMempool {
     const orderedEventsDB = new POIOrderedEventsDatabase(networkName);
     const orderedEventExists = await orderedEventsDB.eventExists(
       listKey,
-      transactProofData.blindedCommitmentInputs[0],
+      transactProofData.blindedCommitmentOutputs[0],
     );
     if (orderedEventExists) {
       return false;
@@ -151,9 +151,9 @@ export class TransactProofMempool {
 
     const filteredProofs: TransactProofData[] = transactProofDatas.filter(
       (transactProofData) => {
-        const firstBlindedCommitmentInput =
-          transactProofData.blindedCommitmentInputs[0];
-        return !bloomFilter.has(firstBlindedCommitmentInput);
+        const firstBlindedCommitment =
+          transactProofData.blindedCommitmentOutputs[0];
+        return !bloomFilter.has(firstBlindedCommitment);
       },
     );
     return filteredProofs.slice(0, QueryLimits.PROOF_MEMPOOL_SYNCED_ITEMS);

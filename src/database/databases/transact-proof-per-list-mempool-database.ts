@@ -13,7 +13,7 @@ export class TransactProofPerListMempoolDatabase extends AbstractDatabase<Transa
   }
 
   async createCollectionIndices() {
-    await this.createIndex(['listKey', 'firstBlindedCommitmentInput'], {
+    await this.createIndex(['listKey', 'firstBlindedCommitment'], {
       unique: true,
     });
   }
@@ -23,31 +23,35 @@ export class TransactProofPerListMempoolDatabase extends AbstractDatabase<Transa
     transactProofData: TransactProofData,
   ): Promise<void> {
     const item: TransactProofMempoolDBItem = {
-      ...transactProofData,
       listKey,
-      firstBlindedCommitmentInput: transactProofData.blindedCommitmentInputs[0],
+      snarkProof: transactProofData.snarkProof,
+      poiMerkleroots: transactProofData.poiMerkleroots,
+      txidMerkleroot: transactProofData.txidMerkleroot,
+      txidMerklerootIndex: transactProofData.txidMerklerootIndex,
+      blindedCommitmentOutputs: transactProofData.blindedCommitmentOutputs,
+      firstBlindedCommitment: transactProofData.blindedCommitmentOutputs[0],
     };
     return this.insertOne(item);
   }
 
   async proofExists(
     listKey: string,
-    firstBlindedCommitmentInput: string,
+    firstBlindedCommitment: string,
   ): Promise<boolean> {
     const filter: DBFilter<TransactProofMempoolDBItem> = {
       listKey,
-      firstBlindedCommitmentInput,
+      firstBlindedCommitment,
     };
     return this.exists(filter);
   }
 
   async deleteProof(
     listKey: string,
-    firstBlindedCommitmentInput: string,
+    firstBlindedCommitment: string,
   ): Promise<void> {
     const filter: DBFilter<TransactProofMempoolDBItem> = {
       listKey,
-      firstBlindedCommitmentInput,
+      firstBlindedCommitment,
     };
     return this.deleteOne(filter);
   }
@@ -65,10 +69,9 @@ export class TransactProofPerListMempoolDatabase extends AbstractDatabase<Transa
       transactProofData: {
         snarkProof: transactProofDBData.snarkProof,
         poiMerkleroots: transactProofDBData.poiMerkleroots,
-        txidIndex: transactProofDBData.txidIndex,
-        txMerkleroot: transactProofDBData.txMerkleroot,
-        blindedCommitmentInputs: transactProofDBData.blindedCommitmentInputs,
-        blindedCommitmentOutputs: transactProofDBData.blindedCommitmentInputs,
+        txidMerkleroot: transactProofDBData.txidMerkleroot,
+        txidMerklerootIndex: transactProofDBData.txidMerklerootIndex,
+        blindedCommitmentOutputs: transactProofDBData.blindedCommitmentOutputs,
       },
       listKey: transactProofDBData.listKey,
     }));

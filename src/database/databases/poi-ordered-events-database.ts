@@ -18,7 +18,7 @@ export class POIOrderedEventsDatabase extends AbstractDatabase<POIOrderedEventDB
     await this.createIndex(['index', 'listKey'], { unique: true });
     await this.createIndex(['index']);
     await this.createIndex(['listKey']);
-    await this.createIndex(['firstBlindedCommitmentInput']);
+    await this.createIndex(['firstBlindedCommitment']);
   }
 
   async insertValidSignedPOIEvent(
@@ -37,7 +37,7 @@ export class POIOrderedEventsDatabase extends AbstractDatabase<POIOrderedEventDB
       index,
       blindedCommitmentStartingIndex,
       blindedCommitments,
-      firstBlindedCommitmentInput: blindedCommitments[0],
+      firstBlindedCommitment: blindedCommitments[0],
       proof,
       signature,
     };
@@ -91,11 +91,11 @@ export class POIOrderedEventsDatabase extends AbstractDatabase<POIOrderedEventDB
 
   async eventExists(
     listKey: string,
-    firstBlindedCommitmentInput: string,
+    firstBlindedCommitment: string,
   ): Promise<boolean> {
     const filter: DBFilter<POIOrderedEventDBItem> = {
       listKey,
-      firstBlindedCommitmentInput,
+      firstBlindedCommitment,
     };
     return this.exists(filter);
   }

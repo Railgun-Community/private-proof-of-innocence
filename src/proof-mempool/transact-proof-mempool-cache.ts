@@ -1,15 +1,18 @@
 import { NetworkName } from '@railgun-community/shared-models';
 import { TransactProofData } from '../models/proof-types';
 import { ProofMempoolCountingBloomFilter } from './proof-mempool-bloom-filters';
+import { CountingBloomFilter } from 'bloom-filters';
 
 export class TransactProofMempoolCache {
-  // { listKey: {networkName: {firstBlindedCommitmentInput: TransactProofData} } }
+  // { listKey: {networkName: {firstBlindedCommitment: TransactProofData} } }
   private static transactProofMempoolCache: Record<
     string,
     Partial<Record<NetworkName, Map<string, TransactProofData>>>
   > = {};
 
-  private static bloomFilter = ProofMempoolCountingBloomFilter.create();
+  private static bloomFilters: Partial<
+    Record<NetworkName, CountingBloomFilter>
+  > = {};
 
   static getTransactProofs(
     listKey: string,
@@ -44,45 +47,67 @@ export class TransactProofMempoolCache {
       networkName,
     );
 
-    const firstBlindedCommitmentInput =
-      transactProofData.blindedCommitmentInputs[0];
-    cache.set(firstBlindedCommitmentInput, transactProofData);
+    const firstBlindedCommitment =
+      transactProofData.blindedCommitmentOutputs[0];
+    cache.set(firstBlindedCommitment, transactProofData);
 
-    TransactProofMempoolCache.addToBloomFilter(firstBlindedCommitmentInput);
+    TransactProofMempoolCache.addToBloomFilter(
+      networkName,
+      firstBlindedCommitment,
+    );
   }
 
   static removeFromCache(
     listKey: string,
     networkName: NetworkName,
-    firstBlindedCommitmentInput: string,
+    firstBlindedCommitment: string,
   ) {
     const cache = TransactProofMempoolCache.getCacheForNetworkAndList(
       listKey,
       networkName,
     );
-    cache.delete(firstBlindedCommitmentInput);
+    cache.delete(firstBlindedCommitment);
 
     TransactProofMempoolCache.removeFromBloomFilter(
-      firstBlindedCommitmentInput,
+      networkName,
+      firstBlindedCommitment,
     );
   }
 
-  private static addToBloomFilter(firstBlindedCommitmentInput: string) {
-    TransactProofMempoolCache.bloomFilter.add(firstBlindedCommitmentInput);
+  private static getBloomFilter(networkName: NetworkName): CountingBloomFilter {
+    TransactProofMempoolCache.bloomFilters[networkName] ??=
+      ProofMempoolCountingBloomFilter.create();
+    return TransactProofMempoolCache.bloomFilters[
+      networkName
+    ] as CountingBloomFilter;
   }
 
-  private static removeFromBloomFilter(firstBlindedCommitmentInput: string) {
-    TransactProofMempoolCache.bloomFilter.remove(firstBlindedCommitmentInput);
+  private static addToBloomFilter(
+    networkName: NetworkName,
+    firstBlindedCommitment: string,
+  ) {
+    TransactProofMempoolCache.getBloomFilter(networkName).add(
+      firstBlindedCommitment,
+    );
   }
 
-  static serializeBloomFilter(): string {
+  private static removeFromBloomFilter(
+    networkName: NetworkName,
+    firstBlindedCommitment: string,
+  ) {
+    TransactProofMempoolCache.getBloomFilter(networkName).remove(
+      firstBlindedCommitment,
+    );
+  }
+
+  static serializeBloomFilter(networkName: NetworkName): string {
     return ProofMempoolCountingBloomFilter.serialize(
-      TransactProofMempoolCache.bloomFilter,
+      TransactProofMempoolCache.getBloomFilter(networkName),
     );
   }
 
   static clearCache_FOR_TEST_ONLY() {
-    this.transactProofMempoolCache = {};
-    this.bloomFilter = ProofMempoolCountingBloomFilter.create();
+    TransactProofMempoolCache.transactProofMempoolCache = {};
+    TransactProofMempoolCache.bloomFilters = {};
   }
 }

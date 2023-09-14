@@ -28,7 +28,9 @@ describe('proof-of-innocence-node', () => {
     );
     await nodeOnlyAggregator.start();
 
-    const testListProvider = new TestMockListProviderExcludeSingleAddress();
+    const testListProvider = new TestMockListProviderExcludeSingleAddress(
+      'test-key',
+    );
     nodeWithListProvider = new ProofOfInnocenceNode(
       '0.0.0.0',
       PORT_1,

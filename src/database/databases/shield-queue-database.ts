@@ -4,6 +4,7 @@ import {
   DBFilter,
   DBMaxMin,
   DBSort,
+  DBStream,
   ShieldQueueDBItem,
   ShieldStatus,
 } from '../../models/database-types';
@@ -46,7 +47,7 @@ export class ShieldQueueDatabase extends AbstractDatabase<ShieldQueueDBItem> {
 
   async updateShieldStatus(
     shieldQueueDBItem: ShieldQueueDBItem,
-    shouldAllow: boolean,
+    status: ShieldStatus,
   ): Promise<void> {
     const filter: DBFilter<ShieldQueueDBItem> = {
       txid: shieldQueueDBItem.txid,
@@ -54,7 +55,7 @@ export class ShieldQueueDatabase extends AbstractDatabase<ShieldQueueDBItem> {
     };
     const replacement: ShieldQueueDBItem = {
       ...shieldQueueDBItem,
-      status: shouldAllow ? ShieldStatus.Allowed : ShieldStatus.Blocked,
+      status,
       lastValidatedTimestamp: Date.now(),
     };
     return this.upsertOne(filter, replacement);
@@ -76,11 +77,28 @@ export class ShieldQueueDatabase extends AbstractDatabase<ShieldQueueDBItem> {
     return this.findAll(filter, sort, max, undefined, limit);
   }
 
+  async getAllowedShieldByHash(
+    hash: string,
+  ): Promise<Optional<ShieldQueueDBItem>> {
+    const filter: DBFilter<ShieldQueueDBItem> = {
+      status: ShieldStatus.Allowed,
+      hash,
+    };
+    return this.findOne(filter);
+  }
+
   async getAllowedShields(): Promise<ShieldQueueDBItem[]> {
     const filter: DBFilter<ShieldQueueDBItem> = {
       status: ShieldStatus.Allowed,
     };
     return this.findAll(filter);
+  }
+
+  async streamAllowedShields(): Promise<DBStream<ShieldQueueDBItem>> {
+    const filter: DBFilter<ShieldQueueDBItem> = {
+      status: ShieldStatus.Allowed,
+    };
+    return this.stream(filter);
   }
 
   async getLatestPendingShield(): Promise<Optional<ShieldQueueDBItem>> {

@@ -3,6 +3,8 @@ import { POIOrderedEventsDatabase } from '../database/databases/poi-ordered-even
 import { POIEventListStatus } from '../models/api-types';
 import { SignedPOIEvent } from '../models/poi-types';
 import { verifyPOIEvent } from '../util/ed25519';
+import { TransactProofMempool } from '../proof-mempool/transact-proof-mempool';
+import { POIMerkletreeManager } from './poi-merkletree-manager';
 
 export class POIEventList {
   static async getEventListStatus(
@@ -49,14 +51,37 @@ export class POIEventList {
     listKey: string,
     signedPOIEvents: SignedPOIEvent[],
   ): Promise<void> {
-    const db = new POIOrderedEventsDatabase(networkName);
-
     for (const signedPOIEvent of signedPOIEvents) {
       const verified = await verifyPOIEvent(signedPOIEvent, listKey);
       if (!verified) {
         throw new Error(`POI event failed verification`);
       }
-      await db.insertValidSignedPOIEvent(listKey, signedPOIEvent);
+      await POIEventList.addValidSignedPOIEvent(
+        networkName,
+        listKey,
+        signedPOIEvent,
+      );
     }
+  }
+
+  static async addValidSignedPOIEvent(
+    networkName: NetworkName,
+    listKey: string,
+    signedPOIEvent: SignedPOIEvent,
+  ) {
+    const db = new POIOrderedEventsDatabase(networkName);
+    await db.insertValidSignedPOIEvent(listKey, signedPOIEvent);
+
+    await POIMerkletreeManager.addPOIEvent(
+      listKey,
+      networkName,
+      signedPOIEvent,
+    );
+
+    await TransactProofMempool.removeProof(
+      listKey,
+      networkName,
+      signedPOIEvent.blindedCommitments[0],
+    );
   }
 }

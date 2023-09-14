@@ -19,6 +19,7 @@ import {
   DBFilter,
   DBIndexSpec,
   DBMaxMin,
+  DBStream,
 } from '../models/database-types';
 import { networkForName } from '../config/general';
 
@@ -121,6 +122,14 @@ export abstract class AbstractDatabase<T extends Document> {
       cursor = cursor.limit(limit);
     }
     return cursor.project({ _id: 0 }).toArray() as Promise<T[]>;
+  }
+
+  protected async stream(filter?: DBFilter<T>): Promise<DBStream<T>> {
+    let cursor = this.collection.find();
+    if (isDefined(filter)) {
+      cursor = cursor.filter(filter);
+    }
+    return cursor.project({ _id: 0 }).stream();
   }
 
   protected async count(filter?: Filter<T>) {
