@@ -32,7 +32,7 @@ export class API {
 
   constructor() {
     this.app = express();
-    this.app.use(express.json({ limit: '10mb' }));
+    this.app.use(express.json({ limit: '5mb' }));
     this.app.use(
       cors({
         methods: ['GET', 'POST'],
@@ -64,6 +64,7 @@ export class API {
       try {
         await handler(req, res);
       } catch (err) {
+        // TODO: Remove err message
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
         res.status(500).json(err.message);
       }
@@ -78,6 +79,7 @@ export class API {
       try {
         await handler(req, res);
       } catch (err) {
+        // TODO: Remove err message
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
         res.status(500).json(err.message);
       }

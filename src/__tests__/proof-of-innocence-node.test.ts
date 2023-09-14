@@ -37,7 +37,7 @@ describe('proof-of-innocence-node', () => {
     );
   });
 
-  it.only('Should start up a node with list provider', async () => {
+  it('Should start up a node with list provider', async () => {
     await nodeWithListProvider.start();
 
     // Check that the node is an instance of ProofOfInnocenceNode
