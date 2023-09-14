@@ -27,7 +27,8 @@
     "test-coverage": "npm run compile-test && c8 mocha",
     "prod-db": "./run-mongodb-prod",
     "test-db": "./run-mongodb-test",
-    "test": "npm run compile-test && NODE_ENV=test mocha"
+    "test": "npm run compile-test && env DEBUG=poi:* NODE_ENV=test mocha",
+    "test-debug": "env DEBUG=poi:* npm run test"
   },
   "dependencies": {
     "@noble/ed25519": "^1.7.1",

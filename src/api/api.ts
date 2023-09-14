@@ -32,7 +32,7 @@ export class API {
 
   constructor() {
     this.app = express();
-    this.app.use(express.json());
+    this.app.use(express.json({ limit: '10mb' }));
     this.app.use(
       cors({
         methods: ['GET', 'POST'],
@@ -65,7 +65,7 @@ export class API {
         await handler(req, res);
       } catch (err) {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-        res.status(500).json({ error: err.message });
+        res.status(500).json(err.message);
       }
     });
   }
@@ -74,12 +74,12 @@ export class API {
     route: string,
     handler: (req: Request, res: Response) => Promise<void>,
   ) {
-    this.app.get(route, async (req: Request, res: Response) => {
+    this.app.post(route, async (req: Request, res: Response) => {
       try {
         await handler(req, res);
       } catch (err) {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-        res.status(500).json({ error: err.message });
+        res.status(500).json(err.message);
       }
     });
   }
@@ -166,7 +166,7 @@ export class API {
       },
     );
 
-    this.safeGet(
+    this.safePost(
       '/shield-proofs/:chainType/:chainID',
       async (req: Request, res: Response) => {
         const { chainType, chainID } = req.params;
@@ -182,12 +182,11 @@ export class API {
       },
     );
 
-    this.safeGet(
-      '/transact-proofs/:chainType/:chainID',
+    this.safePost(
+      '/transact-proofs/:chainType/:chainID/:listKey',
       async (req: Request, res: Response) => {
-        const { chainType, chainID } = req.params;
-        const { listKey, bloomFilterSerialized } =
-          req.body as GetTransactProofsParams;
+        const { chainType, chainID, listKey } = req.params;
+        const { bloomFilterSerialized } = req.body as GetTransactProofsParams;
 
         const networkName = networkNameForSerializedChain(chainType, chainID);
 
@@ -233,7 +232,7 @@ export class API {
       },
     );
 
-    this.safeGet(
+    this.safePost(
       '/pois-per-list/:chainType/:chainID',
       async (req: Request, res: Response) => {
         const { chainType, chainID } = req.params;
@@ -261,7 +260,7 @@ export class API {
       },
     );
 
-    this.safeGet(
+    this.safePost(
       '/merkle-proofs/:chainType/:chainID',
       async (req: Request, res: Response) => {
         const { chainType, chainID } = req.params;
@@ -303,7 +302,7 @@ export class API {
       },
     );
 
-    this.safeGet(
+    this.safePost(
       '/validate-txid-merkleroot/:chainType/:chainID',
       async (req: Request, res: Response) => {
         const { chainType, chainID } = req.params;

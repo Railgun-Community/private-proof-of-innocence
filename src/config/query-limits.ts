@@ -5,4 +5,6 @@ export class QueryLimits {
   static readonly GET_POI_EXISTENCE_MAX_BLINDED_COMMITMENTS = 30;
 
   static readonly MAX_EVENT_QUERY_RANGE_LENGTH = 100;
+
+  static readonly PROOF_MEMPOOL_SYNCED_ITEMS = 100;
 }

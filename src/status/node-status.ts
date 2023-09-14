@@ -1,7 +1,7 @@
 import { NetworkName } from '@railgun-community/shared-models';
 import { RailgunTxidMerkletreeManager } from '../railgun-txids/railgun-txid-merkletree-manager';
 import {
-  NodeOverallStatus,
+  NodeStatusForNetwork,
   NodeStatusAllNetworks,
   POIEventListStatus,
 } from '../models/api-types';
@@ -10,19 +10,24 @@ import { POIEventList } from '../poi/poi-event-list';
 
 export class NodeStatus {
   static async getNodeStatusAllNetworks(): Promise<NodeStatusAllNetworks> {
-    const allStatuses: Partial<Record<NetworkName, NodeOverallStatus>> = {};
+    const statusForNetwork: Partial<Record<NetworkName, NodeStatusForNetwork>> =
+      {};
     const allNetworks: NetworkName[] = Object.values(Config.NETWORK_NAMES);
     await Promise.all(
       allNetworks.map(async (networkName) => {
-        allStatuses[networkName] = await NodeStatus.getNodeStatus(networkName);
+        statusForNetwork[networkName] =
+          await NodeStatus.getNodeStatus(networkName);
       }),
     );
-    return allStatuses;
+    return {
+      forNetwork: statusForNetwork,
+      listKeys: Config.LIST_KEYS,
+    };
   }
 
   private static async getNodeStatus(
     networkName: NetworkName,
-  ): Promise<NodeOverallStatus> {
+  ): Promise<NodeStatusForNetwork> {
     return {
       txidStatus:
         await RailgunTxidMerkletreeManager.getRailgunTxidStatus(networkName),

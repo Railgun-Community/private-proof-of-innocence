@@ -7,11 +7,10 @@ import { DatabaseClient } from '../database/database-client-init';
 import { ShieldProofMempool } from '../proof-mempool/shield-proof-mempool';
 import { TransactProofMempool } from '../proof-mempool/transact-proof-mempool';
 import { POIMerkletreeManager } from '../poi/poi-merkletree-manager';
-import { SyncRoundRobin } from '../sync/sync-round-robin';
 
 const dbg = debug('poi:init');
 
-export const initModules = async (connectedNodeURLs: string[]) => {
+export const initModules = async () => {
   // Init engine and RPCs
   dbg('Initializing Engine and RPCs...');
   startEngine();
@@ -30,12 +29,6 @@ export const initModules = async (connectedNodeURLs: string[]) => {
 
   dbg('Generating POI Merkletrees for each list and network...');
   POIMerkletreeManager.initListMerkletrees();
-
-  dbg('Starting round robin node sync...');
-  connectedNodeURLs.forEach((nodeURL) => {
-    SyncRoundRobin.addNodeURL(nodeURL);
-  });
-  SyncRoundRobin.startPolling();
 
   dbg('Node init successful.');
 };

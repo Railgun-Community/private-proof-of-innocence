@@ -15,7 +15,7 @@ describe('init', () => {
       .stub(activeProvidersModule, 'initNetworkProviders')
       .resolves();
 
-    await initModules(['http://localhost:3010']);
+    await initModules();
 
     expect(stubInitNetworkProviders.calledOnce).to.be.true;
 
