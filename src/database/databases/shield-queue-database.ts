@@ -38,9 +38,13 @@ export class ShieldQueueDatabase extends AbstractDatabase<ShieldQueueDBItem> {
     return this.insertOne(storedData);
   }
 
-  async commitmentHashExists(hash: string): Promise<boolean> {
+  async commitmentHashExists(
+    hash: string,
+    status?: ShieldStatus,
+  ): Promise<boolean> {
     const filter: DBFilter<ShieldQueueDBItem> = {
       hash,
+      status,
     };
     return this.exists(filter);
   }

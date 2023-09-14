@@ -5,6 +5,7 @@ import { NetworkName } from '@railgun-community/shared-models';
 import { DatabaseClient } from '../../database-client-init';
 import { SignedPOIEvent } from '../../../models/poi-types';
 import { POIEventList } from '../../../poi/poi-event-list';
+import { MOCK_LIST_KEYS } from '../../../tests/mocks.test';
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
@@ -12,6 +13,8 @@ const { expect } = chai;
 const networkName = NetworkName.Ethereum;
 
 let db: POIOrderedEventsDatabase;
+
+const listKey = MOCK_LIST_KEYS[0];
 
 describe('POIOrderedEventsDatabase', () => {
   before(async () => {
@@ -52,7 +55,6 @@ describe('POIOrderedEventsDatabase', () => {
   });
 
   it('Should insert and get a valid POI signed event', async () => {
-    const listKey = 'someListKey';
     const signedPOIEvent: SignedPOIEvent = {
       index: 0,
       blindedCommitmentStartingIndex: 0,
@@ -85,14 +87,12 @@ describe('POIOrderedEventsDatabase', () => {
   });
 
   it('Should fetch POI events with a given listKey and startingIndex', async () => {
-    const listKey = 'someListKey';
     const events = await db.getPOIEvents(listKey, 0);
 
     expect(events.length).to.equal(0);
   });
 
   it('Should fetch POI events with a given listKey, startingIndex and endIndex', async () => {
-    const listKey = 'someListKey';
     const startIndex = 0;
     const endIndex = 3; // NOTE: endIndex is exclusive
 
@@ -161,7 +161,6 @@ describe('POIOrderedEventsDatabase', () => {
   });
 
   it('Should correctly fetch the last added item', async () => {
-    const listKey = 'someListKey';
     const signedPOIEvent1: SignedPOIEvent = {
       index: 0,
       blindedCommitmentStartingIndex: 0,

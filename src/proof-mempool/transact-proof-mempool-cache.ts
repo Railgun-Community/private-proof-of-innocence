@@ -10,8 +10,9 @@ export class TransactProofMempoolCache {
     Partial<Record<NetworkName, Map<string, TransactProofData>>>
   > = {};
 
-  private static bloomFilters: Partial<
-    Record<NetworkName, CountingBloomFilter>
+  private static bloomFilters: Record<
+    string,
+    Partial<Record<NetworkName, CountingBloomFilter>>
   > = {};
 
   static getTransactProofs(
@@ -30,9 +31,11 @@ export class TransactProofMempoolCache {
     networkName: NetworkName,
   ) {
     TransactProofMempoolCache.transactProofMempoolCache[listKey] ??= {};
+
     const cacheForList = TransactProofMempoolCache.transactProofMempoolCache[
       listKey
     ] as Record<string, Map<string, TransactProofData>>;
+
     cacheForList[networkName] ??= new Map();
     return cacheForList[networkName];
   }
@@ -52,6 +55,7 @@ export class TransactProofMempoolCache {
     cache.set(firstBlindedCommitment, transactProofData);
 
     TransactProofMempoolCache.addToBloomFilter(
+      listKey,
       networkName,
       firstBlindedCommitment,
     );
@@ -69,40 +73,50 @@ export class TransactProofMempoolCache {
     cache.delete(firstBlindedCommitment);
 
     TransactProofMempoolCache.removeFromBloomFilter(
+      listKey,
       networkName,
       firstBlindedCommitment,
     );
   }
 
-  private static getBloomFilter(networkName: NetworkName): CountingBloomFilter {
-    TransactProofMempoolCache.bloomFilters[networkName] ??=
+  private static getBloomFilter(
+    listKey: string,
+    networkName: NetworkName,
+  ): CountingBloomFilter {
+    TransactProofMempoolCache.bloomFilters[listKey] ??= {};
+    TransactProofMempoolCache.bloomFilters[listKey][networkName] ??=
       ProofMempoolCountingBloomFilter.create();
-    return TransactProofMempoolCache.bloomFilters[
+    return TransactProofMempoolCache.bloomFilters[listKey][
       networkName
     ] as CountingBloomFilter;
   }
 
   private static addToBloomFilter(
+    listKey: string,
     networkName: NetworkName,
     firstBlindedCommitment: string,
   ) {
-    TransactProofMempoolCache.getBloomFilter(networkName).add(
+    TransactProofMempoolCache.getBloomFilter(listKey, networkName).add(
       firstBlindedCommitment,
     );
   }
 
   private static removeFromBloomFilter(
+    listKey: string,
     networkName: NetworkName,
     firstBlindedCommitment: string,
   ) {
-    TransactProofMempoolCache.getBloomFilter(networkName).remove(
+    TransactProofMempoolCache.getBloomFilter(listKey, networkName).remove(
       firstBlindedCommitment,
     );
   }
 
-  static serializeBloomFilter(networkName: NetworkName): string {
+  static serializeBloomFilter(
+    listKey: string,
+    networkName: NetworkName,
+  ): string {
     return ProofMempoolCountingBloomFilter.serialize(
-      TransactProofMempoolCache.getBloomFilter(networkName),
+      TransactProofMempoolCache.getBloomFilter(listKey, networkName),
     );
   }
 

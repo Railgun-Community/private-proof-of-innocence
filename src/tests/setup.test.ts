@@ -3,6 +3,7 @@ import fs from 'fs';
 import { MONGOOSE_DB_URL, setUpMongoose } from './mongoose.test';
 import { Config } from '../config/config';
 import { promiseTimeout } from '@railgun-community/shared-models';
+import { MOCK_LIST_KEYS } from './mocks.test';
 
 const TEST_DB_DIR = 'test.db';
 const TEST_MONGO_DB_DIR = 'mongo.test.db';
@@ -13,6 +14,8 @@ before(async function run() {
     '0x0012345678901234567890123456789000123456789012345678901234567890';
 
   Config.ENGINE_DB_DIR = TEST_DB_DIR;
+
+  Config.LIST_KEYS = MOCK_LIST_KEYS;
 
   await promiseTimeout(
     setUpMongoose(),

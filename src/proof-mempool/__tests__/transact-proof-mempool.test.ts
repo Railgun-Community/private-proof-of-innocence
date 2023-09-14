@@ -6,21 +6,24 @@ import { RailgunTxidMerkletreeManager } from '../../railgun-txids/railgun-txid-m
 import Sinon, { SinonStub } from 'sinon';
 import { NetworkName } from '@railgun-community/shared-models';
 import { TransactProofData } from '../../models/proof-types';
-import { MOCK_SNARK_PROOF } from '../../tests/mocks.test';
+import { MOCK_LIST_KEYS, MOCK_SNARK_PROOF } from '../../tests/mocks.test';
 import { TransactProofPerListMempoolDatabase } from '../../database/databases/transact-proof-per-list-mempool-database';
 import { DatabaseClient } from '../../database/database-client-init';
 import { TransactProofMempoolCache } from '../transact-proof-mempool-cache';
 import { ProofMempoolBloomFilter } from '../proof-mempool-bloom-filters';
 import { POIHistoricalMerklerootDatabase } from '../../database/databases/poi-historical-merkleroot-database';
+import { ListProviderPOIEventQueue } from '../../list-provider/list-provider-poi-event-queue';
+import { POIOrderedEventsDatabase } from '../../database/databases/poi-ordered-events-database';
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
 
 const networkName = NetworkName.Ethereum;
-const listKey = 'abc';
+const listKey = MOCK_LIST_KEYS[0];
 
 let transactProofMempoolDB: TransactProofPerListMempoolDatabase;
-let poiHistoricalMerklerootDatabase: POIHistoricalMerklerootDatabase;
+let poiHistoricalMerklerootDB: POIHistoricalMerklerootDatabase;
+let orderedEventDB: POIOrderedEventsDatabase;
 
 let snarkVerifyStub: SinonStub;
 let txidMerklerootExistsStub: SinonStub;
@@ -31,9 +34,10 @@ describe('transact-proof-mempool', () => {
     transactProofMempoolDB = new TransactProofPerListMempoolDatabase(
       networkName,
     );
-    poiHistoricalMerklerootDatabase = new POIHistoricalMerklerootDatabase(
+    poiHistoricalMerklerootDB = new POIHistoricalMerklerootDatabase(
       networkName,
     );
+    orderedEventDB = new POIOrderedEventsDatabase(networkName);
     snarkVerifyStub = Sinon.stub(SnarkProofVerifyModule, 'verifySnarkProof');
     txidMerklerootExistsStub = Sinon.stub(
       RailgunTxidMerkletreeManager,
@@ -41,13 +45,17 @@ describe('transact-proof-mempool', () => {
     );
   });
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    await transactProofMempoolDB.deleteAllItems_DANGEROUS();
+    await poiHistoricalMerklerootDB.deleteAllItems_DANGEROUS();
+    await orderedEventDB.deleteAllItems_DANGEROUS();
     TransactProofMempoolCache.clearCache_FOR_TEST_ONLY();
   });
 
   afterEach(async () => {
     await transactProofMempoolDB.deleteAllItems_DANGEROUS();
-    await poiHistoricalMerklerootDatabase.deleteAllItems_DANGEROUS();
+    await poiHistoricalMerklerootDB.deleteAllItems_DANGEROUS();
+    await orderedEventDB.deleteAllItems_DANGEROUS();
     TransactProofMempoolCache.clearCache_FOR_TEST_ONLY();
   });
 
@@ -65,58 +73,31 @@ describe('transact-proof-mempool', () => {
       blindedCommitmentOutputs: ['0x3333', '0x4444'],
     };
 
-    // 1. FAIL: Snark verifies, but only one merkleroot is in POI Historical Merkleroots.
-    snarkVerifyStub.resolves(true);
-    txidMerklerootExistsStub.resolves(false);
-    await poiHistoricalMerklerootDatabase.insertMerkleroot(
-      listKey,
-      transactProofData.poiMerkleroots[0],
-    );
-    await TransactProofMempool.submitProof(
-      listKey,
-      networkName,
-      transactProofData,
-    );
-    await expect(
-      transactProofMempoolDB.proofExists(
-        listKey,
-        transactProofData.blindedCommitmentOutputs[0],
-      ),
-    ).to.eventually.equal(false);
-
-    // 2. THROW: commitmentHash is in TransactQueue, but snark fails verification.
+    // 1. THROW: Snark fails verification.
     snarkVerifyStub.resolves(false);
     txidMerklerootExistsStub.resolves(true);
-    await poiHistoricalMerklerootDatabase.insertMerkleroot(
-      listKey,
-      transactProofData.poiMerkleroots[0],
-    );
-    await poiHistoricalMerklerootDatabase.insertMerkleroot(
-      listKey,
-      transactProofData.poiMerkleroots[1],
-    );
     await expect(
       TransactProofMempool.submitProof(listKey, networkName, transactProofData),
     ).to.be.rejectedWith('Invalid proof');
 
-    // 3. FAIL: Historical txid merkleroot is not found.
-    snarkVerifyStub.resolves(true);
-    txidMerklerootExistsStub.resolves(false);
-    await TransactProofMempool.submitProof(
-      listKey,
-      networkName,
-      transactProofData,
-    );
-    await expect(
-      transactProofMempoolDB.proofExists(
-        listKey,
-        transactProofData.blindedCommitmentOutputs[0],
-      ),
-    ).to.eventually.equal(false);
+    ListProviderPOIEventQueue.listKey = listKey;
 
-    // 4. SUCCESS: snark verifies and commitmentHash recognized.
+    const listProviderEventQueueSpy = Sinon.spy(
+      ListProviderPOIEventQueue,
+      'queueUnsignedPOITransactEvent',
+    );
+
+    // 2. SUCCESS: snark verifies and commitmentHash recognized.
     snarkVerifyStub.resolves(true);
     txidMerklerootExistsStub.resolves(true);
+    await poiHistoricalMerklerootDB.insertMerkleroot(
+      listKey,
+      transactProofData.poiMerkleroots[0],
+    );
+    await poiHistoricalMerklerootDB.insertMerkleroot(
+      listKey,
+      transactProofData.poiMerkleroots[1],
+    );
     await TransactProofMempool.submitProof(
       listKey,
       networkName,
@@ -128,6 +109,9 @@ describe('transact-proof-mempool', () => {
         transactProofData.blindedCommitmentOutputs[0],
       ),
     ).to.eventually.equal(true);
+
+    expect(listProviderEventQueueSpy.calledOnce).to.equal(true);
+    listProviderEventQueueSpy.restore();
   });
 
   it('Should add to cache and get bloom-filtered transact proofs', async () => {
@@ -149,19 +133,19 @@ describe('transact-proof-mempool', () => {
     snarkVerifyStub.resolves(true);
     txidMerklerootExistsStub.resolves(true);
 
-    await poiHistoricalMerklerootDatabase.insertMerkleroot(
+    await poiHistoricalMerklerootDB.insertMerkleroot(
       listKey,
       transactProofData1.poiMerkleroots[0],
     );
-    await poiHistoricalMerklerootDatabase.insertMerkleroot(
+    await poiHistoricalMerklerootDB.insertMerkleroot(
       listKey,
       transactProofData1.poiMerkleroots[1],
     );
-    await poiHistoricalMerklerootDatabase.insertMerkleroot(
+    await poiHistoricalMerklerootDB.insertMerkleroot(
       listKey,
       transactProofData2.poiMerkleroots[0],
     );
-    await poiHistoricalMerklerootDatabase.insertMerkleroot(
+    await poiHistoricalMerklerootDB.insertMerkleroot(
       listKey,
       transactProofData2.poiMerkleroots[1],
     );
@@ -223,19 +207,19 @@ describe('transact-proof-mempool', () => {
     snarkVerifyStub.resolves(true);
     txidMerklerootExistsStub.resolves(true);
 
-    await poiHistoricalMerklerootDatabase.insertMerkleroot(
+    await poiHistoricalMerklerootDB.insertMerkleroot(
       listKey,
       transactProofData1.poiMerkleroots[0],
     );
-    await poiHistoricalMerklerootDatabase.insertMerkleroot(
+    await poiHistoricalMerklerootDB.insertMerkleroot(
       listKey,
       transactProofData1.poiMerkleroots[1],
     );
-    await poiHistoricalMerklerootDatabase.insertMerkleroot(
+    await poiHistoricalMerklerootDB.insertMerkleroot(
       listKey,
       transactProofData2.poiMerkleroots[0],
     );
-    await poiHistoricalMerklerootDatabase.insertMerkleroot(
+    await poiHistoricalMerklerootDB.insertMerkleroot(
       listKey,
       transactProofData2.poiMerkleroots[1],
     );

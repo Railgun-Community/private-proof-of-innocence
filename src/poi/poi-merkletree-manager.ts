@@ -9,12 +9,13 @@ import { SignedPOIEvent } from '../models/poi-types';
 export class POIMerkletreeManager {
   private static merkletrees: Record<
     string, // listKey
-    Record<NetworkName, POIMerkletree>
+    Partial<Record<NetworkName, POIMerkletree>>
   > = {};
 
   static initListMerkletrees() {
     Config.NETWORK_NAMES.forEach((networkName) => {
       Config.LIST_KEYS.forEach((listKey) => {
+        this.merkletrees[listKey] ??= {};
         this.merkletrees[listKey][networkName] = new POIMerkletree(
           networkName,
           listKey,
@@ -27,7 +28,7 @@ export class POIMerkletreeManager {
     listKey: string,
     networkName: NetworkName,
   ) {
-    const merkletree = this.merkletrees[listKey][networkName];
+    const merkletree = this.merkletrees[listKey]?.[networkName];
     if (!isDefined(merkletree)) {
       throw new Error('No merkletree for list/network');
     }

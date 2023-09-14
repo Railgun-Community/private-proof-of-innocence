@@ -4,6 +4,7 @@ import { TransactProofPerListMempoolDatabase } from '../transact-proof-per-list-
 import { NetworkName } from '@railgun-community/shared-models';
 import { DatabaseClient } from '../../database-client-init';
 import { TransactProofMempoolDBItem } from '../../../models/database-types';
+import { MOCK_LIST_KEYS } from '../../../tests/mocks.test';
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
@@ -11,6 +12,8 @@ const { expect } = chai;
 const networkName = NetworkName.Ethereum;
 
 let db: TransactProofPerListMempoolDatabase;
+
+const listKey = MOCK_LIST_KEYS[0];
 
 describe('TransactProofPerListMempoolDatabase', () => {
   before(async () => {
@@ -65,7 +68,6 @@ describe('TransactProofPerListMempoolDatabase', () => {
   });
 
   it('Should insert and get a valid transact proof', async () => {
-    const listKey = 'someListKey';
     const transactProofItem: TransactProofMempoolDBItem = {
       listKey: listKey,
       snarkProof: {
@@ -87,7 +89,7 @@ describe('TransactProofPerListMempoolDatabase', () => {
     };
 
     // Insert the item
-    await db.insertValidTransactProof(listKey, transactProofItem);
+    await db.insertTransactProof(listKey, transactProofItem);
 
     // Check that the proof exists and is in getAllTransactProofsAndLists
     expect(
@@ -97,7 +99,6 @@ describe('TransactProofPerListMempoolDatabase', () => {
 
   it('Should delete a transact proof', async () => {
     // Insert a proof into the database
-    const listKey = 'someListKey';
     const transactProofItem: TransactProofMempoolDBItem = {
       listKey: listKey,
       snarkProof: {
@@ -119,7 +120,7 @@ describe('TransactProofPerListMempoolDatabase', () => {
     };
 
     // Insert the item
-    await db.insertValidTransactProof(listKey, transactProofItem);
+    await db.insertTransactProof(listKey, transactProofItem);
 
     // Check that the proof exists
     expect(

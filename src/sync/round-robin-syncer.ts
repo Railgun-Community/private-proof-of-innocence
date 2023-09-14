@@ -203,10 +203,12 @@ export class RoundRobinSyncer {
     nodeURL: string,
     networkName: NetworkName,
   ) {
+    const serializedBloomFilter =
+      ShieldProofMempoolCache.serializeBloomFilter(networkName);
     const shieldProofs = await POINodeRequest.getFilteredShieldProofs(
       nodeURL,
       networkName,
-      ShieldProofMempoolCache.serializeBloomFilter(networkName),
+      serializedBloomFilter,
     );
     for (const shieldProof of shieldProofs) {
       await ShieldProofMempool.submitProof(networkName, shieldProof);
@@ -240,11 +242,13 @@ export class RoundRobinSyncer {
     networkName: NetworkName,
     listKey: string,
   ) {
+    const serializedBloomFilter =
+      TransactProofMempoolCache.serializeBloomFilter(listKey, networkName);
     const transactProofs = await POINodeRequest.getFilteredTransactProofs(
       nodeURL,
       networkName,
       listKey,
-      TransactProofMempoolCache.serializeBloomFilter(networkName),
+      serializedBloomFilter,
     );
     for (const transactProof of transactProofs) {
       await TransactProofMempool.submitProof(

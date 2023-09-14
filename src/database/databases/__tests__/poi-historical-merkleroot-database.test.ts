@@ -3,6 +3,7 @@ import chaiAsPromised from 'chai-as-promised';
 import { POIHistoricalMerklerootDatabase } from '../poi-historical-merkleroot-database';
 import { NetworkName } from '@railgun-community/shared-models';
 import { DatabaseClient } from '../../database-client-init';
+import { MOCK_LIST_KEYS } from '../../../tests/mocks.test';
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
@@ -11,7 +12,7 @@ const networkName = NetworkName.Ethereum;
 
 let db: POIHistoricalMerklerootDatabase;
 
-const listKey = 'abcdef';
+const listKey = MOCK_LIST_KEYS[0];
 
 describe('poi-historical-merkleroot-database', () => {
   before(async () => {
@@ -29,7 +30,7 @@ describe('poi-historical-merkleroot-database', () => {
     const indexes = await db.listCollectionIndexes();
 
     // Check that an index on 'listKey' and 'rootHash' exists
-    const indexExists = indexes.some(index => {
+    const indexExists = indexes.some((index) => {
       return (
         'key' in index &&
         'listKey' in index.key &&
@@ -110,9 +111,9 @@ describe('poi-historical-merkleroot-database', () => {
     ).to.eventually.equal(false);
 
     // Check that the merkle root does not exist for a different merkle root
-    await expect(
-      db.merklerootExists(listKey, '0x5678'),
-    ).to.eventually.equal(false);
+    await expect(db.merklerootExists(listKey, '0x5678')).to.eventually.equal(
+      false,
+    );
 
     // Insert another merkle root
     const merkleroot2 = '0x5678';

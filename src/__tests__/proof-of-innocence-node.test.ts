@@ -5,6 +5,7 @@ import { ProofOfInnocenceNode } from '../proof-of-innocence-node';
 import { TestMockListProviderExcludeSingleAddress } from '../tests/list-providers/test-mock-list-provider-exclude-single-address.test';
 import { PollStatus } from '../models/general-types';
 import { poll } from '@railgun-community/shared-models';
+import { MOCK_LIST_KEYS } from '../tests/mocks.test';
 
 chai.use(chaiAsPromised);
 // const { expect } = chai;
@@ -29,7 +30,7 @@ describe('proof-of-innocence-node', () => {
     await nodeOnlyAggregator.start();
 
     const testListProvider = new TestMockListProviderExcludeSingleAddress(
-      'test-key',
+      MOCK_LIST_KEYS[0],
     );
     nodeWithListProvider = new ProofOfInnocenceNode(
       '0.0.0.0',

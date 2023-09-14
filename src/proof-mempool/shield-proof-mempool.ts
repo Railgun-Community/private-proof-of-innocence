@@ -1,4 +1,4 @@
-import { NetworkName } from '@railgun-community/shared-models';
+import { NetworkName, isDefined } from '@railgun-community/shared-models';
 import { ShieldProofData } from '../models/proof-types';
 import ShieldProofVkey from './json/shield-proof-vkey.json';
 import { ShieldQueueDatabase } from '../database/databases/shield-queue-database';
@@ -7,6 +7,8 @@ import { ShieldProofMempoolCache } from './shield-proof-mempool-cache';
 import { verifySnarkProof } from './snark-proof-verify';
 import { ProofMempoolBloomFilter } from './proof-mempool-bloom-filters';
 import { QueryLimits } from '../config/query-limits';
+import { ListProviderPOIEventQueue } from '../list-provider/list-provider-poi-event-queue';
+import { ShieldStatus } from '../models/database-types';
 
 export class ShieldProofMempool {
   static async submitProof(
@@ -19,9 +21,33 @@ export class ShieldProofMempool {
     }
 
     const shieldProofMempoolDB = new ShieldProofMempoolDatabase(networkName);
-    await shieldProofMempoolDB.insertValidShieldProof(shieldProofData);
+    await shieldProofMempoolDB.insertShieldProof(shieldProofData);
 
     ShieldProofMempoolCache.addToCache(networkName, shieldProofData);
+
+    await ShieldProofMempool.tryAddToActiveList(networkName, shieldProofData);
+  }
+
+  private static async tryAddToActiveList(
+    networkName: NetworkName,
+    shieldProofData: ShieldProofData,
+  ) {
+    if (!isDefined(ListProviderPOIEventQueue.listKey)) {
+      return;
+    }
+    const shieldQueueDB = new ShieldQueueDatabase(networkName);
+    const allowedShieldExists = await shieldQueueDB.commitmentHashExists(
+      shieldProofData.commitmentHash,
+      ShieldStatus.Allowed,
+    );
+    if (!allowedShieldExists) {
+      return;
+    }
+
+    ListProviderPOIEventQueue.queueUnsignedPOIShieldEvent(
+      networkName,
+      shieldProofData,
+    );
   }
 
   private static async shouldAdd(
@@ -37,16 +63,7 @@ export class ShieldProofMempool {
       return false;
     }
 
-    // 2. Verify if shield commitmentHash is in historical list of Shields
-    const shieldQueueDB = new ShieldQueueDatabase(networkName);
-    const shieldExists = await shieldQueueDB.commitmentHashExists(
-      shieldProofData.commitmentHash,
-    );
-    if (!shieldExists) {
-      return false;
-    }
-
-    // 3. Verify snark proof
+    // 2. Verify snark proof
     const verifiedProof = await this.verifyProof(shieldProofData);
     if (!verifiedProof) {
       throw new Error('Invalid proof');
@@ -72,10 +89,17 @@ export class ShieldProofMempool {
     const networkNames = Object.values(NetworkName);
     for (const networkName of networkNames) {
       const db = new ShieldProofMempoolDatabase(networkName);
-      const shieldProofDatas: ShieldProofData[] = await db.getAllShieldProofs();
-      shieldProofDatas.forEach((shieldProofData) => {
+
+      const shieldProofStream = await db.streamShieldProofs();
+
+      for await (const shieldProofDBItem of shieldProofStream) {
+        const shieldProofData: ShieldProofData = {
+          snarkProof: shieldProofDBItem.snarkProof,
+          commitmentHash: shieldProofDBItem.commitmentHash,
+          blindedCommitment: shieldProofDBItem.blindedCommitment,
+        };
         ShieldProofMempoolCache.addToCache(networkName, shieldProofData);
-      });
+      }
     }
   }
 
@@ -99,6 +123,7 @@ export class ShieldProofMempool {
     networkName: NetworkName,
     bloomFilterSerialized: string,
   ): ShieldProofData[] {
+    // TODO: FIX. THIS WILL BE HUGE AT SCALE.
     const shieldProofDatas: ShieldProofData[] =
       ShieldProofMempoolCache.getShieldProofs(networkName);
 

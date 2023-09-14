@@ -9,6 +9,8 @@ import { ProofMempoolCountingBloomFilter } from './proof-mempool-bloom-filters';
 import { POIOrderedEventsDatabase } from '../database/databases/poi-ordered-events-database';
 import { RailgunTxidMerkletreeManager } from '../railgun-txids/railgun-txid-merkletree-manager';
 import { QueryLimits } from '../config/query-limits';
+import { ListProviderPOIEventQueue } from '../list-provider/list-provider-poi-event-queue';
+import { Config } from '../config/config';
 
 export class TransactProofMempool {
   static async submitProof(
@@ -30,10 +32,52 @@ export class TransactProofMempool {
     }
 
     const db = new TransactProofPerListMempoolDatabase(networkName);
-    await db.insertValidTransactProof(listKey, transactProofData);
+    await db.insertTransactProof(listKey, transactProofData);
 
     TransactProofMempoolCache.addToCache(
       listKey,
+      networkName,
+      transactProofData,
+    );
+
+    await TransactProofMempool.tryAddToActiveList(
+      listKey,
+      networkName,
+      transactProofData,
+    );
+  }
+
+  static async tryAddToActiveList(
+    listKey: string,
+    networkName: NetworkName,
+    transactProofData: TransactProofData,
+  ) {
+    if (ListProviderPOIEventQueue.listKey !== listKey) {
+      return;
+    }
+
+    // Verify all POI Merkleroots exist
+    const poiMerklerootDb = new POIHistoricalMerklerootDatabase(networkName);
+    const allMerklerootsExist = await poiMerklerootDb.allMerklerootsExist(
+      listKey,
+      transactProofData.poiMerkleroots,
+    );
+    if (!allMerklerootsExist) {
+      return;
+    }
+
+    // Verify Railgun TX Merkleroot exists against Railgun TX Merkletree (Engine)
+    const isValidTxMerkleroot =
+      await RailgunTxidMerkletreeManager.checkIfMerklerootExistsByTxidIndex(
+        networkName,
+        transactProofData.txidMerklerootIndex,
+        transactProofData.txidMerkleroot,
+      );
+    if (!isValidTxMerkleroot) {
+      return;
+    }
+
+    ListProviderPOIEventQueue.queueUnsignedPOITransactEvent(
       networkName,
       transactProofData,
     );
@@ -69,28 +113,7 @@ export class TransactProofMempool {
       return false;
     }
 
-    // 2. Verify all POI Merkleroots exist
-    const poiMerklerootDb = new POIHistoricalMerklerootDatabase(networkName);
-    const allMerklerootsExist = await poiMerklerootDb.allMerklerootsExist(
-      listKey,
-      transactProofData.poiMerkleroots,
-    );
-    if (!allMerklerootsExist) {
-      return false;
-    }
-
-    // 3. Verify Railgun TX Merkleroot exists against Railgun TX Merkletree (Engine)
-    const isValidTxMerkleroot =
-      await RailgunTxidMerkletreeManager.checkIfMerklerootExistsByTxidIndex(
-        networkName,
-        transactProofData.txidMerklerootIndex,
-        transactProofData.txidMerkleroot,
-      );
-    if (!isValidTxMerkleroot) {
-      return false;
-    }
-
-    // 4. Verify that OrderedEvent for this list doesn't exist.
+    // 2. Verify that OrderedEvent for this list doesn't exist.
     const orderedEventsDB = new POIOrderedEventsDatabase(networkName);
     const orderedEventExists = await orderedEventsDB.eventExists(
       listKey,
@@ -100,7 +123,7 @@ export class TransactProofMempool {
       return false;
     }
 
-    // 5. Verify snark proof
+    // 3. Verify snark proof
     const verifiedProof = await this.verifyProof(transactProofData);
     if (!verifiedProof) {
       throw new Error('Invalid proof');
@@ -123,17 +146,28 @@ export class TransactProofMempool {
   }
 
   static async inflateCacheFromDatabase() {
-    const networkNames = Object.values(NetworkName);
-    for (const networkName of networkNames) {
+    for (const networkName of Config.NETWORK_NAMES) {
       const db = new TransactProofPerListMempoolDatabase(networkName);
-      const transactProofsAndLists = await db.getAllTransactProofsAndLists();
-      transactProofsAndLists.forEach(({ transactProofData, listKey }) => {
-        TransactProofMempoolCache.addToCache(
-          listKey,
-          networkName,
-          transactProofData,
-        );
-      });
+
+      for (const listKey of Config.LIST_KEYS) {
+        const transactProofsStream = await db.streamTransactProofs(listKey);
+
+        for await (const transactProofDBItem of transactProofsStream) {
+          const transactProofData: TransactProofData = {
+            snarkProof: transactProofDBItem.snarkProof,
+            poiMerkleroots: transactProofDBItem.poiMerkleroots,
+            txidMerkleroot: transactProofDBItem.txidMerkleroot,
+            txidMerklerootIndex: transactProofDBItem.txidMerklerootIndex,
+            blindedCommitmentOutputs:
+              transactProofDBItem.blindedCommitmentOutputs,
+          };
+          TransactProofMempoolCache.addToCache(
+            listKey,
+            networkName,
+            transactProofData,
+          );
+        }
+      }
     }
   }
 

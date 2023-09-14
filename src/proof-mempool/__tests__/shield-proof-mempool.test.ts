@@ -30,7 +30,9 @@ describe('shield-proof-mempool', () => {
     snarkVerifyStub = Sinon.stub(SnarkProofVerifyModule, 'verifySnarkProof');
   });
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    await shieldProofMempoolDB.deleteAllItems_DANGEROUS();
+    await shieldQueueDB.deleteAllItems_DANGEROUS();
     ShieldProofMempoolCache.clearCache_FOR_TEST_ONLY();
   });
 
@@ -51,14 +53,7 @@ describe('shield-proof-mempool', () => {
       blindedCommitment: '0x5678',
     };
 
-    // 1. FAIL: Snark verifies, but commitmentHash is not in ShieldQueue.
-    snarkVerifyStub.resolves(true);
-    await ShieldProofMempool.submitProof(networkName, shieldProofData);
-    await expect(
-      shieldProofMempoolDB.proofExists(shieldProofData.commitmentHash),
-    ).to.eventually.equal(false);
-
-    // 2. THROW: commitmentHash is in ShieldQueue, but snark fails verification.
+    // 1. THROW: commitmentHash is in ShieldQueue, but snark fails verification.
     snarkVerifyStub.resolves(false);
     await shieldQueueDB.insertPendingShield({
       txid: '0x0000',
@@ -70,7 +65,7 @@ describe('shield-proof-mempool', () => {
       ShieldProofMempool.submitProof(networkName, shieldProofData),
     ).to.be.rejectedWith('Invalid proof');
 
-    // 3. SUCCESS: snark verifies and commitmentHash recognized.
+    // 2. SUCCESS: snark verifies and commitmentHash recognized.
     snarkVerifyStub.resolves(true);
     await ShieldProofMempool.submitProof(networkName, shieldProofData);
     await expect(

@@ -6,6 +6,7 @@ import { POIMerkletree } from '../poi-merkletree';
 import { POIMerkletreeDatabase } from '../../database/databases/poi-merkletree-database';
 import Sinon from 'sinon';
 import { POIHistoricalMerklerootDatabase } from '../../database/databases/poi-historical-merkleroot-database';
+import { MOCK_LIST_KEYS } from '../../tests/mocks.test';
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
@@ -16,7 +17,7 @@ let merkletreeDB: POIMerkletreeDatabase;
 let merklerootDB: POIHistoricalMerklerootDatabase;
 let merkletree: POIMerkletree;
 
-const listKey = 'test-key';
+const listKey = MOCK_LIST_KEYS[0];
 
 describe('poi-merkletree', () => {
   before(async () => {

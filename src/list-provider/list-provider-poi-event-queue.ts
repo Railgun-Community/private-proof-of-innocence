@@ -12,61 +12,61 @@ import {
   UnsignedPOIEvent,
 } from '../models/poi-types';
 import { POIOrderedEventsDatabase } from '../database/databases/poi-ordered-events-database';
-import debug from 'debug';
 import { signPOIEvent } from '../util/ed25519';
-import {
-  ShieldProofData,
-  SnarkProof,
-  TransactProofData,
-} from '../models/proof-types';
+import { ShieldProofData, TransactProofData } from '../models/proof-types';
 import { POIEventList } from '../poi/poi-event-list';
 import { Config } from '../config/config';
 import { ShieldQueueDatabase } from '../database/databases/shield-queue-database';
 import { ShieldStatus } from '../models/database-types';
 
-const dbg = debug('poi:event-queue');
+// const dbg = debug('poi:event-queue');
 
 export class ListProviderPOIEventQueue {
-  private isAddingPOIEventForNetwork: Partial<Record<NetworkName, boolean>> =
-    {};
+  private static isAddingPOIEventForNetwork: Partial<
+    Record<NetworkName, boolean>
+  > = {};
 
-  private poiEventQueue: Partial<Record<NetworkName, POIEvent[]>> = {};
+  private static poiEventQueue: Partial<Record<NetworkName, POIEvent[]>> = {};
 
-  private shouldPoll = false;
+  private static shouldPoll = false;
 
-  private listKey: string;
+  static listKey: string;
 
-  constructor(listKey: string) {
-    this.listKey = listKey;
+  static init(listKey: string) {
+    ListProviderPOIEventQueue.listKey = listKey;
   }
 
-  startPolling() {
-    this.shouldPoll = true;
+  static startPolling() {
+    if (!ListProviderPOIEventQueue.listKey) {
+      throw new Error('Must call ListProviderPOIEventQueue.init');
+    }
+
+    ListProviderPOIEventQueue.shouldPoll = true;
 
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    this.poll();
+    ListProviderPOIEventQueue.poll();
   }
 
-  stopPolling() {
-    this.shouldPoll = false;
+  static stopPolling() {
+    ListProviderPOIEventQueue.shouldPoll = false;
   }
 
-  async poll() {
-    if (!this.shouldPoll) {
+  private static async poll() {
+    if (!ListProviderPOIEventQueue.shouldPoll) {
       return;
     }
 
     for (const networkName of Config.NETWORK_NAMES) {
-      await this.addPOIEventsFromQueue(networkName);
+      await ListProviderPOIEventQueue.addPOIEventsFromQueue(networkName);
     }
 
     await delay(30000);
 
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    this.poll();
+    ListProviderPOIEventQueue.poll();
   }
 
-  queueUnsignedPOIShieldEvent(
+  static queueUnsignedPOIShieldEvent(
     networkName: NetworkName,
     shieldProofData: ShieldProofData,
   ) {
@@ -76,13 +76,11 @@ export class ListProviderPOIEventQueue {
       proof: shieldProofData.snarkProof,
       commitmentHash: shieldProofData.commitmentHash,
     };
-    return this.queuePOIEvent(networkName, poiEvent);
+    return ListProviderPOIEventQueue.queuePOIEvent(networkName, poiEvent);
   }
 
-  queueUnsignedPOITransactEvent(
+  static queueUnsignedPOITransactEvent(
     networkName: NetworkName,
-    blindedCommitments: string[],
-    proof: SnarkProof,
     transactProofData: TransactProofData,
   ) {
     const poiEvent: POIEventTransact = {
@@ -91,35 +89,40 @@ export class ListProviderPOIEventQueue {
       firstBlindedCommitment: transactProofData.blindedCommitmentOutputs[0],
       proof: transactProofData.snarkProof,
     };
-    return this.queuePOIEvent(networkName, poiEvent);
+    return ListProviderPOIEventQueue.queuePOIEvent(networkName, poiEvent);
   }
 
-  private queuePOIEvent(networkName: NetworkName, poiEvent: POIEvent) {
-    this.poiEventQueue[networkName] ??= [];
+  private static queuePOIEvent(networkName: NetworkName, poiEvent: POIEvent) {
+    ListProviderPOIEventQueue.poiEventQueue[networkName] ??= [];
 
-    const existingEvent = this.poiEventQueue[networkName]?.find(
-      (e) => e.blindedCommitments[0] === poiEvent.blindedCommitments[0],
-    );
+    const existingEvent = ListProviderPOIEventQueue.poiEventQueue[
+      networkName
+    ]?.find((e) => e.blindedCommitments[0] === poiEvent.blindedCommitments[0]);
     if (isDefined(existingEvent)) {
       return;
     }
 
-    this.poiEventQueue[networkName]?.push(poiEvent);
+    ListProviderPOIEventQueue.poiEventQueue[networkName]?.push(poiEvent);
 
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    this.addPOIEventsFromQueue(networkName);
+    ListProviderPOIEventQueue.addPOIEventsFromQueue(networkName);
   }
 
-  async addPOIEventsFromQueue(networkName: NetworkName): Promise<void> {
+  private static async addPOIEventsFromQueue(
+    networkName: NetworkName,
+  ): Promise<void> {
     // TODO-HIGH-PRI: Get sync status - make sure not currently syncing List from other nodes.
     // if () {
     //   dbg('WARNING: Tried to add POI event while adding another one - risk of duplicate indices. Skipping.');
     //   return;
     // }
-    if (this.isAddingPOIEventForNetwork[networkName] === true) {
+    if (
+      ListProviderPOIEventQueue.isAddingPOIEventForNetwork[networkName] === true
+    ) {
       return;
     }
-    const queueForNetwork = this.poiEventQueue[networkName];
+    const queueForNetwork =
+      ListProviderPOIEventQueue.poiEventQueue[networkName];
     if (!queueForNetwork || queueForNetwork.length === 0) {
       return;
     }
@@ -129,10 +132,21 @@ export class ListProviderPOIEventQueue {
       return;
     }
 
-    this.isAddingPOIEventForNetwork[networkName] = true;
-
     const orderedEventsDB = new POIOrderedEventsDatabase(networkName);
-    const lastAddedItem = await orderedEventsDB.getLastAddedItem(this.listKey);
+    if (
+      await orderedEventsDB.eventExists(
+        ListProviderPOIEventQueue.listKey,
+        poiEvent.blindedCommitments[0],
+      )
+    ) {
+      return;
+    }
+
+    ListProviderPOIEventQueue.isAddingPOIEventForNetwork[networkName] = true;
+
+    const lastAddedItem = await orderedEventsDB.getLastAddedItem(
+      ListProviderPOIEventQueue.listKey,
+    );
 
     const nextIndex = lastAddedItem ? lastAddedItem.index + 1 : 0;
     const blindedCommitmentStartingIndex = lastAddedItem
@@ -154,7 +168,7 @@ export class ListProviderPOIEventQueue {
 
     await POIEventList.addValidSignedPOIEvent(
       networkName,
-      this.listKey,
+      ListProviderPOIEventQueue.listKey,
       signedPOIEvent,
     );
 
@@ -171,10 +185,10 @@ export class ListProviderPOIEventQueue {
       }
     }
 
-    this.isAddingPOIEventForNetwork[networkName] = false;
+    ListProviderPOIEventQueue.isAddingPOIEventForNetwork[networkName] = false;
 
     if (queueForNetwork.length > 0) {
-      return this.addPOIEventsFromQueue(networkName);
+      return ListProviderPOIEventQueue.addPOIEventsFromQueue(networkName);
     }
   }
 }

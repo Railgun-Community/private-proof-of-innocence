@@ -18,3 +18,5 @@ export const MOCK_SNARK_PROOF: SnarkProof = {
   ],
   pi_c: ['0x1234', '0x567890'],
 };
+
+export const MOCK_LIST_KEYS = ['test-key-1', 'test-key-2'];

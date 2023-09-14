@@ -2,6 +2,7 @@ import { NetworkName } from '@railgun-community/shared-models';
 import {
   CollectionName,
   DBFilter,
+  DBStream,
   TransactProofMempoolDBItem,
 } from '../../models/database-types';
 import { AbstractDatabase } from '../abstract-database';
@@ -18,7 +19,7 @@ export class TransactProofPerListMempoolDatabase extends AbstractDatabase<Transa
     });
   }
 
-  async insertValidTransactProof(
+  async insertTransactProof(
     listKey: string,
     transactProofData: TransactProofData,
   ): Promise<void> {
@@ -56,24 +57,12 @@ export class TransactProofPerListMempoolDatabase extends AbstractDatabase<Transa
     return this.deleteOne(filter);
   }
 
-  async getAllTransactProofsAndLists(): Promise<
-    {
-      transactProofData: TransactProofData;
-      listKey: string;
-    }[]
-  > {
-    // TODO: Add a filter based on createdAt?
-    const transactProofDBDatas = await this.findAll();
-
-    return transactProofDBDatas.map((transactProofDBData) => ({
-      transactProofData: {
-        snarkProof: transactProofDBData.snarkProof,
-        poiMerkleroots: transactProofDBData.poiMerkleroots,
-        txidMerkleroot: transactProofDBData.txidMerkleroot,
-        txidMerklerootIndex: transactProofDBData.txidMerklerootIndex,
-        blindedCommitmentOutputs: transactProofDBData.blindedCommitmentOutputs,
-      },
-      listKey: transactProofDBData.listKey,
-    }));
+  async streamTransactProofs(
+    listKey: string,
+  ): Promise<DBStream<TransactProofMempoolDBItem>> {
+    const filter: DBFilter<TransactProofMempoolDBItem> = {
+      listKey,
+    };
+    return this.stream(filter);
   }
 }

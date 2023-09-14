@@ -41,20 +41,13 @@ export abstract class ListProvider {
 
   private shouldPoll = false;
 
-  private listProviderPOIEventUpdater: ListProviderPOIEventUpdater;
-
-  private listProviderPOIEventQueue: ListProviderPOIEventQueue;
-
   constructor(listKey: string) {
     dbg(`LIST KEY: ${listKey}`);
 
     this.listKey = listKey;
 
-    this.listProviderPOIEventQueue = new ListProviderPOIEventQueue(listKey);
-    this.listProviderPOIEventUpdater = new ListProviderPOIEventUpdater(
-      listKey,
-      this.listProviderPOIEventQueue,
-    );
+    ListProviderPOIEventQueue.init(listKey);
+    ListProviderPOIEventUpdater.init(listKey);
   }
 
   protected abstract shouldAllowShield(
@@ -78,8 +71,8 @@ export abstract class ListProvider {
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.runValidateQueuedShieldsPoller();
 
-    this.listProviderPOIEventQueue.startPolling();
-    this.listProviderPOIEventUpdater.startPolling();
+    ListProviderPOIEventQueue.startPolling();
+    ListProviderPOIEventUpdater.startPolling();
   }
 
   stopPolling() {
@@ -87,8 +80,8 @@ export abstract class ListProvider {
 
     this.shouldPoll = false;
 
-    this.listProviderPOIEventQueue.stopPolling();
-    this.listProviderPOIEventUpdater.stopPolling();
+    ListProviderPOIEventQueue.stopPolling();
+    ListProviderPOIEventUpdater.stopPolling();
   }
 
   private async runQueueShieldsPoller() {
