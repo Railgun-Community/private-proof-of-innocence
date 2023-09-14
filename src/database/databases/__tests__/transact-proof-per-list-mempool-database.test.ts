@@ -2,8 +2,10 @@ import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { TransactProofPerListMempoolDatabase } from '../transact-proof-per-list-mempool-database';
 import { NetworkName } from '@railgun-community/shared-models';
-import { DatabaseClient } from '../../database-client';
-import { TransactProofMempoolDBItem } from '../../../models/database-types';
+import { DatabaseClient } from '../../database-client-init';
+import {
+  TransactProofMempoolDBItem,
+} from '../../../models/database-types';
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
@@ -26,7 +28,7 @@ describe('TransactProofPerListMempoolDatabase', () => {
 
   it('Should create collection indeces', async () => {
     // Fetch all indexes for the collection
-    const indexes = await db.getCollectionIndexes();
+    const indexes = await db.listCollectionIndexes();
 
     // Check if a unique index exists for the combination of 'listKey' and 'firstBlindedCommitmentInput' fields
     const uniqueCombinedIndexExists = indexes.some((index) => {
@@ -44,6 +46,24 @@ describe('TransactProofPerListMempoolDatabase', () => {
 
   it('Should correctly initialize TransactProofPerListMempoolDatabase', () => {
     expect(db).to.be.instanceOf(TransactProofPerListMempoolDatabase);
+  });
+
+  it('Should create collection indeces', async () => {
+    // Fetch all indexes for the collection
+    const indexes = await db.listCollectionIndexes();
+
+    // Check if a unique index exists for the combination of 'listKey' and 'firstBlindedCommitmentInput' fields
+    const uniqueCombinedIndexExists = indexes.some((index) => {
+      return (
+        'key' in index &&
+        'listKey' in index.key &&
+        'firstBlindedCommitmentInput' in index.key &&
+        index.unique === true
+      );
+    });
+
+    // Assert that the unique index exists
+    expect(uniqueCombinedIndexExists).to.equal(true);
   });
 
   it('Should insert and get a valid transact proof', async () => {

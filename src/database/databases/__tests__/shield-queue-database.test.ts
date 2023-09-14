@@ -1,7 +1,7 @@
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { NetworkName } from '@railgun-community/shared-models';
-import { DatabaseClient } from '../../database-client';
+import { DatabaseClient } from '../../database-client-init';
 import { ShieldQueueDatabase } from '../shield-queue-database';
 import { ShieldData } from '@railgun-community/wallet';
 import {
@@ -30,7 +30,7 @@ describe('shield-queue-database', () => {
 
   it('Should create collection indices', async () => {
     // Fetch all indexes for the collection
-    const indexes = await db.getCollectionIndexes();
+    const indexes = await db.listCollectionIndexes();
 
     // Check if an index exists for the 'txid' field
     const txidIndexExists = indexes.some(index => {

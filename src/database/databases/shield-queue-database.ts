@@ -9,7 +9,6 @@ import {
 } from '../../models/database-types';
 import { AbstractDatabase } from '../abstract-database';
 import { ShieldData } from '@railgun-community/wallet';
-import { IndexDescription } from 'mongodb';
 
 export class ShieldQueueDatabase extends AbstractDatabase<ShieldQueueDBItem> {
   constructor(networkName: NetworkName) {
@@ -21,10 +20,6 @@ export class ShieldQueueDatabase extends AbstractDatabase<ShieldQueueDBItem> {
     await this.createIndex(['hash'], { unique: true });
     await this.createIndex(['timestamp']);
     await this.createIndex(['status']);
-  }
-
-  async getCollectionIndexes(): Promise<IndexDescription[]> {
-    return this.listCollectionIndexes();
   }
 
   async insertPendingShield(shieldData: ShieldData): Promise<void> {

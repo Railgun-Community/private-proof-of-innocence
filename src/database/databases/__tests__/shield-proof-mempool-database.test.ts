@@ -2,7 +2,7 @@ import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { ShieldProofMempoolDatabase } from '../shield-proof-mempool-database';
 import { NetworkName } from '@railgun-community/shared-models';
-import { DatabaseClient } from '../../database-client';
+import { DatabaseClient } from '../../database-client-init';
 import { ShieldProofMempoolDBItem } from '../../../models/database-types';
 
 chai.use(chaiAsPromised);
@@ -29,7 +29,7 @@ describe('ShieldProofMempoolDatabase', () => {
     });
 
     it('Should create collection indices', async () => {
-        const indices = await db.getCollectionIndexes();
+        const indices = await db.listCollectionIndexes();
 
         const indexFieldExists = indices.some(index => {
             return 'key' in index && 'commitmentHash' in index.key && index.unique === true;

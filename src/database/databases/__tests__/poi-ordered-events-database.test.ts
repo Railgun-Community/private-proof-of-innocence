@@ -2,7 +2,7 @@ import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { POIOrderedEventsDatabase } from '../poi-ordered-events-database';
 import { NetworkName } from '@railgun-community/shared-models';
-import { DatabaseClient } from '../../database-client';
+import { DatabaseClient } from '../../database-client-init';
 import { SignedPOIEvent } from '../../../models/poi-types';
 
 chai.use(chaiAsPromised);
@@ -29,7 +29,7 @@ describe('POIOrderedEventsDatabase', () => {
 
   it('Should create collection indices', async () => {
     // Fetch all indexes for the collection
-    const indexes = await db.getCollectionIndexes();
+    const indexes = await db.listCollectionIndexes();
 
     // Check if an index exists for the 'index' field
     const indexFieldExists = indexes.some((index) => {
@@ -88,5 +88,116 @@ describe('POIOrderedEventsDatabase', () => {
     const events = await db.getPOIEvents(listKey, 0);
 
     expect(events.length).to.equal(0);
+  });
+
+  it('Should fetch POI events with a given listKey, startingIndex and endIndex', async () => {
+    const listKey = 'someListKey';
+    const startIndex = 0;
+    const endIndex = 3; // NOTE: endIndex is exclusive
+
+    const signedPOIEvent1: SignedPOIEvent = {
+      index: 0,
+      blindedCommitmentStartingIndex: 0,
+      blindedCommitments: ['commitment1', 'commitment2'],
+      proof: {
+        pi_a: ['somePi_a1', 'somePi_a2'],
+        pi_b: [
+          ['somePi_b11', 'somePi_b12'],
+          ['somePi_b21', 'somePi_b22'],
+        ],
+        pi_c: ['somePi_c1', 'somePi_c2'],
+      },
+      signature: 'someSignature',
+    };
+    const signedPOIEvent2: SignedPOIEvent = {
+      index: 1,
+      blindedCommitmentStartingIndex: 0,
+      blindedCommitments: ['commitment1', 'commitment2'],
+      proof: {
+        pi_a: ['somePi_a1', 'somePi_a2'],
+        pi_b: [
+          ['somePi_b11', 'somePi_b12'],
+          ['somePi_b21', 'somePi_b22'],
+        ],
+        pi_c: ['somePi_c1', 'somePi_c2'],
+      },
+      signature: 'someSignature',
+    };
+    const signedPOIEvent3: SignedPOIEvent = {
+      index: 2,
+      blindedCommitmentStartingIndex: 0,
+      blindedCommitments: ['commitment1', 'commitment2'],
+      proof: {
+        pi_a: ['somePi_a1', 'somePi_a2'],
+        pi_b: [
+          ['somePi_b11', 'somePi_b12'],
+          ['somePi_b21', 'somePi_b22'],
+        ],
+        pi_c: ['somePi_c1', 'somePi_c2'],
+      },
+      signature: 'someSignature',
+    };
+
+    // Insert three events into the database
+    await db.insertValidSignedPOIEvent(listKey, signedPOIEvent1);
+    await db.insertValidSignedPOIEvent(listKey, signedPOIEvent2);
+    await db.insertValidSignedPOIEvent(listKey, signedPOIEvent3);
+
+    // Fetch POI events with endIndex
+    const events = await db.getPOIEvents(listKey, startIndex, endIndex);
+
+    // Check that the length of the events is as expected
+    expect(events.length).to.equal(3);
+  });
+
+  it('Should correctly fetch the last added item', async () => {
+    const listKey = 'someListKey';
+    const signedPOIEvent1: SignedPOIEvent = {
+      index: 0,
+      blindedCommitmentStartingIndex: 0,
+      blindedCommitments: ['commitment1', 'commitment2'],
+      proof: {
+        pi_a: ['somePi_a1', 'somePi_a2'],
+        pi_b: [
+          ['somePi_b11', 'somePi_b12'],
+          ['somePi_b21', 'somePi_b22'],
+        ],
+        pi_c: ['somePi_c1', 'somePi_c2'],
+      },
+      signature: 'someSignature',
+    };
+    const signedPOIEvent2: SignedPOIEvent = {
+      index: 1,
+      blindedCommitmentStartingIndex: 0,
+      blindedCommitments: ['commitment1', 'commitment2'],
+      proof: {
+        pi_a: ['somePi_a1', 'somePi_a2'],
+        pi_b: [
+          ['somePi_b11', 'somePi_b12'],
+          ['somePi_b21', 'somePi_b22'],
+        ],
+        pi_c: ['somePi_c1', 'somePi_c2'],
+      },
+      signature: 'someSignature',
+    };
+
+    // Insert two events into the database
+    await db.insertValidSignedPOIEvent(listKey, signedPOIEvent1);
+    await db.insertValidSignedPOIEvent(listKey, signedPOIEvent2);
+
+    // Fetch the last added item
+    const lastAddedItem = await db.getLastAddedItem(listKey);
+
+    // Check that the last added item is as expected
+    expect(lastAddedItem).to.not.be.null;
+    expect(lastAddedItem).to.not.be.undefined;
+    if (lastAddedItem !== null && lastAddedItem !== undefined) {
+      expect(lastAddedItem.index).to.equal(signedPOIEvent2.index);
+      expect(lastAddedItem.blindedCommitments).to.deep.equal(
+        signedPOIEvent2.blindedCommitments,
+      );
+      expect(lastAddedItem.proof).to.deep.equal(signedPOIEvent2.proof);
+      expect(lastAddedItem.signature).to.equal(signedPOIEvent2.signature);
+    }
   });
 });

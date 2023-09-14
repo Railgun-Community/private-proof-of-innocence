@@ -5,7 +5,6 @@ import {
   RailgunTxidMerkletreeStatusDBItem,
 } from '../../models/database-types';
 import { AbstractDatabase } from '../abstract-database';
-import { IndexDescription } from 'mongodb';
 
 export class RailgunTxidMerkletreeStatusDatabase extends AbstractDatabase<RailgunTxidMerkletreeStatusDBItem> {
   constructor(networkName: NetworkName) {
@@ -15,10 +14,6 @@ export class RailgunTxidMerkletreeStatusDatabase extends AbstractDatabase<Railgu
   async createCollectionIndices() {
     // No index
     await this.createIndex([], {});
-  }
-
-  async getCollectionIndexes(): Promise<IndexDescription[]> {
-    return this.listCollectionIndexes();
   }
 
   async getStatus(): Promise<Optional<RailgunTxidMerkletreeStatusDBItem>> {

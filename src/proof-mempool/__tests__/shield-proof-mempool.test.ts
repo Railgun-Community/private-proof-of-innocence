@@ -7,7 +7,7 @@ import { NetworkName } from '@railgun-community/shared-models';
 import { ShieldProofData } from '../../models/proof-types';
 import { MOCK_SNARK_PROOF } from '../../tests/mocks.test';
 import { ShieldProofMempoolDatabase } from '../../database/databases/shield-proof-mempool-database';
-import { DatabaseClient } from '../../database/database-client';
+import { DatabaseClient } from '../../database/database-client-init';
 import { ShieldQueueDatabase } from '../../database/databases/shield-queue-database';
 import { ShieldProofMempoolCache } from '../shield-proof-mempool-cache';
 import { ProofMempoolBloomFilter } from '../proof-mempool-bloom-filters';

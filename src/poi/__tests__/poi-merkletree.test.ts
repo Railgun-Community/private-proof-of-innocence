@@ -1,7 +1,7 @@
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { NetworkName } from '@railgun-community/shared-models';
-import { DatabaseClient } from '../../database/database-client';
+import { DatabaseClient } from '../../database/database-client-init';
 import { POIMerkletree } from '../poi-merkletree';
 import { POIMerkletreeDatabase } from '../../database/databases/poi-merkletree-database';
 import Sinon from 'sinon';

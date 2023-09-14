@@ -5,7 +5,6 @@ import {
   POIMerkletreeDBItem,
 } from '../../models/database-types';
 import { AbstractDatabase } from '../abstract-database';
-import { IndexDescription } from 'mongodb';
 
 export class POIMerkletreeDatabase extends AbstractDatabase<POIMerkletreeDBItem> {
   constructor(networkName: NetworkName) {
@@ -16,10 +15,6 @@ export class POIMerkletreeDatabase extends AbstractDatabase<POIMerkletreeDBItem>
     await this.createIndex(['listKey', 'tree', 'level', 'index'], {
       unique: true,
     });
-  }
-
-  async getCollectionIndexes(): Promise<IndexDescription[]> {
-    return this.listCollectionIndexes();
   }
 
   async updatePOIMerkletreeNodes(items: POIMerkletreeDBItem[]): Promise<void> {

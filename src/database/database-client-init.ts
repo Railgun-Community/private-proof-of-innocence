@@ -15,14 +15,13 @@ import { POIOrderedEventsDatabase } from './databases/poi-ordered-events-databas
 import { POIMerkletreeDatabase } from './databases/poi-merkletree-database';
 import { POIHistoricalMerklerootDatabase } from './databases/poi-historical-merkleroot-database';
 import { TestDatabase } from './databases/test-database';
+import { DatabaseClientStorage } from './database-client-storage';
 import { RailgunTxidMerkletreeStatusDatabase } from './databases/railgun-txid-merkletree-status-database';
 
 export class DatabaseClient {
-  static client?: MongoClient;
-
   static async init() {
-    if (DatabaseClient.client) {
-      return DatabaseClient.client;
+    if (DatabaseClientStorage.client) {
+      return DatabaseClientStorage.client;
     }
 
     await promiseTimeout(
@@ -31,7 +30,7 @@ export class DatabaseClient {
       new Error('Could not connect to MongoDB'),
     );
 
-    return DatabaseClient.client;
+    return DatabaseClientStorage.client;
   }
 
   private static async createClient() {
@@ -39,7 +38,7 @@ export class DatabaseClient {
       throw new Error('Set MONGODB_URL as mongodb:// string');
     }
     const client = await new MongoClient(Config.MONGODB_URL).connect();
-    DatabaseClient.client = client;
+    DatabaseClientStorage.client = client;
   }
 
   static async ensureDBIndicesAllChains(): Promise<void> {
@@ -53,9 +52,6 @@ export class DatabaseClient {
               case CollectionName.Status:
                 db = new StatusDatabase(networkName);
                 break;
-              case CollectionName.RailgunTxidMerkletreeStatus:
-                db = new RailgunTxidMerkletreeStatusDatabase(networkName);
-                break;
               case CollectionName.ShieldQueue:
                 db = new ShieldQueueDatabase(networkName);
                 break;
@@ -64,6 +60,9 @@ export class DatabaseClient {
                 break;
               case CollectionName.TransactProofPerListMempool:
                 db = new TransactProofPerListMempoolDatabase(networkName);
+                break;
+              case CollectionName.RailgunTxidMerkletreeStatus:
+                db = new RailgunTxidMerkletreeStatusDatabase(networkName);
                 break;
               case CollectionName.POIOrderedEvents:
                 db = new POIOrderedEventsDatabase(networkName);
@@ -77,6 +76,8 @@ export class DatabaseClient {
               case CollectionName.Test:
                 db = new TestDatabase(networkName);
                 break;
+              default:
+                throw new Error(`Unsupported collection name: ${collectionName}`);
             }
 
             await db.createCollectionIndices();

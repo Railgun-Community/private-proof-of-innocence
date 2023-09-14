@@ -2,7 +2,7 @@ import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { POIMerkletreeDatabase } from '../poi-merkletree-database';
 import { NetworkName } from '@railgun-community/shared-models';
-import { DatabaseClient } from '../../database-client';
+import { DatabaseClient } from '../../database-client-init';
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
@@ -28,7 +28,7 @@ describe('poi-merkletree-database', () => {
 
     it('Should create collection indices', async () => {
         // List all indexes for the collection
-        const indexes = await db.getCollectionIndexes(); // have to access through the wrapper
+        const indexes = await db.listCollectionIndexes();
 
         // Check that an index on 'listKey' and 'rootHash' exists
         const indexExists = indexes.some(index => {
