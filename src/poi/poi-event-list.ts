@@ -3,8 +3,8 @@ import { POIOrderedEventsDatabase } from '../database/databases/poi-ordered-even
 import { POIEventListStatus } from '../models/api-types';
 import { SignedPOIEvent } from '../models/poi-types';
 import { verifyPOIEvent } from '../util/ed25519';
-import { TransactProofMempool } from '../proof-mempool/transact-proof-mempool';
 import { POIMerkletreeManager } from './poi-merkletree-manager';
+import { TransactProofMempoolPruner } from '../proof-mempool/transact-proof-mempool-pruner';
 
 export class POIEventList {
   static async getEventListStatus(
@@ -78,7 +78,7 @@ export class POIEventList {
       signedPOIEvent,
     );
 
-    await TransactProofMempool.removeProof(
+    await TransactProofMempoolPruner.removeProof(
       listKey,
       networkName,
       signedPOIEvent.blindedCommitments[0],

@@ -21,7 +21,7 @@
     "prepare": "npm run build",
     "check-circular-deps": "madge --circular .",
     "eslint": "eslint src --ext .ts,.tsx --fix",
-    "lint": "npm run check-circular-deps && npm run eslint && tsc --noEmit && tsc --noEmit -p tsconfig.test.json",
+    "lint": "npm run eslint && tsc --noEmit && npm run check-circular-deps && tsc --noEmit -p tsconfig.test.json",
     "tsc-test": "tsc -p tsconfig.test.json && tsc-alias -p tsconfig.test.json",
     "compile-test": "npm run clean && npm run tsc-test",
     "test-coverage": "npm run compile-test && c8 mocha",

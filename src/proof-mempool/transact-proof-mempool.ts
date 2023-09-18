@@ -83,21 +83,6 @@ export class TransactProofMempool {
     );
   }
 
-  static async removeProof(
-    listKey: string,
-    networkName: NetworkName,
-    firstBlindedCommitment: string,
-  ) {
-    const db = new TransactProofPerListMempoolDatabase(networkName);
-    await db.deleteProof(listKey, firstBlindedCommitment);
-
-    TransactProofMempoolCache.removeFromCache(
-      listKey,
-      networkName,
-      firstBlindedCommitment,
-    );
-  }
-
   private static async shouldAdd(
     listKey: string,
     networkName: NetworkName,
