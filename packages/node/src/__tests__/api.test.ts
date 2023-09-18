@@ -71,21 +71,21 @@ describe('api', function () {
     ]);
 
     if (body.forNetwork.Ethereum) {
-      expect(body.forNetwork.Ethereum.txidStatus).to.have.keys([
+      expect(body.forNetwork.Ethereum.txidStatus).to.haveOwnProperty(
         'currentTxidIndex',
+      );
+      expect(body.forNetwork.Ethereum.txidStatus).to.haveOwnProperty(
         'currentMerkleroot',
-        // 'validatedTxidIndex', - not necessarily available yet
-        // 'validatedMerkleroot', - not necessarily available yet
-      ]);
+      );
     }
 
     if (body.forNetwork.Ethereum_Goerli) {
-      expect(body.forNetwork.Ethereum_Goerli.txidStatus).to.have.keys([
+      expect(body.forNetwork.Ethereum_Goerli.txidStatus).to.haveOwnProperty(
         'currentTxidIndex',
+      );
+      expect(body.forNetwork.Ethereum_Goerli.txidStatus).to.haveOwnProperty(
         'currentMerkleroot',
-        // 'validatedTxidIndex', - not necessarily available yet
-        // 'validatedMerkleroot', - not necessarily available yet
-      ]);
+      );
     }
   });
 });
