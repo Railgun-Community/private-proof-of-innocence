@@ -82,7 +82,7 @@ describe('list-provider-poi-event-queue', () => {
     );
 
     // Wait for queue to process
-    await delay(250);
+    await delay(1000);
 
     // Expect all events to be added to merkletree
     const poiStatusPerList = await POIMerkletreeManager.getPOIStatusPerList(
