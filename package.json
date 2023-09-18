@@ -27,6 +27,7 @@
     "test-coverage": "npm run compile-test && c8 mocha",
     "prod-db": "./run-mongodb-prod",
     "test-db": "./run-mongodb-test",
+    "generate-keys": "node ./src/config/keyGenerator.js",
     "test": "npm run compile-test && NODE_ENV=test mocha",
     "test-debug": "env DEBUG=poi:* npm run test"
   },
