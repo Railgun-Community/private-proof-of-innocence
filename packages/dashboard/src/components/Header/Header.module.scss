@@ -1,8 +1,11 @@
+@import '@scss/styleguide';
+
 .headerContainer {
   display: flex;
+  position: relative;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid #eaeaea;
+  border-bottom: 1px solid $borderWhite;
   padding: 20px;
 }
 
@@ -10,7 +13,19 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  border: 1px solid #eaeaea;
+  border: 1px solid $borderWhite;
   border-radius: 25px;
-  padding: 5px;
+  padding: 5px 10px;
+}
+
+.greenDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: $onlineGreen;
+  margin-right: 5px;
+}
+
+.poiDashboardTitle {
+  @include forceToCenter;
 }

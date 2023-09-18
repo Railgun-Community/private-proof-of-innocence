@@ -16,7 +16,14 @@ $z-index-alerts: 60;
   zIndexAlerts: 60;
 }
 
-// [------------------------------ GLOBAL CLASSES ------------------------------]
+// [------------------------------ GLOBAL CLASSES & MIXINS ------------------------------]
+
+@mixin forceToCenter {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
 
 .selectable-text {
   -webkit-user-select: inherit; /* Safari */
@@ -35,21 +42,6 @@ $z-index-alerts: 60;
 .hide-scroll::-webkit-scrollbar {
   display: none; /* for Chrome, Safari, and Opera */
 }
-
-// .overlay-container {
-//   position: fixed;
-//   height: 100%;
-//   width: 100%;
-//   background-image: linear-gradient(
-//       to top,
-//       rgba(19, 21, 25, 0.5),
-//       rgba(19, 21, 25, 0.5)
-//     ),
-//     url('../../public/img/overlay.png');
-//   background-size: auto, 200px 75px;
-//   background-position: center, center;
-//   background-repeat: no-repeat, repeat;
-// }
 
 @keyframes fade {
   0% {
