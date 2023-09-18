@@ -207,7 +207,7 @@ export class RoundRobinSyncer {
     }
   }
 
-  private async updateTransactProofMempoolsAllNetworks(
+  async updateTransactProofMempoolsAllNetworks(
     nodeURL: string,
     nodeStatusAllNetworks: NodeStatusAllNetworks,
   ) {
@@ -217,11 +217,8 @@ export class RoundRobinSyncer {
         continue;
       }
 
-      const nodeListKeys = nodeStatusAllNetworks.listKeys;
-      const listKeys = Config.LIST_KEYS;
-
-      for (const listKey of listKeys) {
-        if (!nodeListKeys.includes(listKey)) {
+      for (const listKey of this.listKeys) {
+        if (!nodeStatusAllNetworks.listKeys.includes(listKey)) {
           continue;
         }
         await this.updateTransactProofMempool(nodeURL, networkName, listKey);

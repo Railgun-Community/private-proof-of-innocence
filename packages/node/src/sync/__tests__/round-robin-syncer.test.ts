@@ -14,7 +14,7 @@ import { SignedPOIEvent } from '../../models/poi-types';
 import { ListProviderPOIEventQueue } from '../../list-provider/list-provider-poi-event-queue';
 import { getListPublicKey } from '../../util/ed25519';
 import { POIMerkletreeManager } from '../../poi/poi-merkletree-manager';
-import { ShieldProofData } from '../../models/proof-types';
+import { ShieldProofData, TransactProofData } from '../../models/proof-types';
 import { ShieldProofMempoolDatabase } from '../../database/databases/shield-proof-mempool-database';
 import { TransactProofPerListMempoolDatabase } from '../../database/databases/transact-proof-per-list-mempool-database';
 import * as SnarkProofVerifyModule from '../../proof-mempool/snark-proof-verify';
@@ -169,5 +169,47 @@ describe('round-robin-syncer', () => {
     ).to.equal(true);
 
     getFilteredShieldProofsStub.restore();
+  });
+
+  it('Should update transact proof mempools', async () => {
+    const transactProofData1: TransactProofData = {
+      snarkProof: MOCK_SNARK_PROOF,
+      poiMerkleroots: ['0x1111', '0x2222'],
+      txidMerklerootIndex: 58,
+      txidMerkleroot: '0x1234567890',
+      blindedCommitmentOutputs: ['0x3333', '0x4444'],
+    };
+    const transactProofData2: TransactProofData = {
+      snarkProof: MOCK_SNARK_PROOF,
+      poiMerkleroots: ['0x9999', '0x8888'],
+      txidMerklerootIndex: 59,
+      txidMerkleroot: '0x0987654321',
+      blindedCommitmentOutputs: ['0x7777', '0x6666'],
+    };
+
+    const getFilteredTransactProofsStub = sinon
+      .stub(POINodeRequest, 'getFilteredTransactProofs')
+      .resolves([transactProofData1, transactProofData2]);
+
+    await roundRobinSyncer.updateTransactProofMempoolsAllNetworks(
+      nodeURL,
+      getNodeStatus(),
+    );
+
+    // Make sure all transact proofs sync
+    expect(
+      await transactProofMempoolDB.proofExists(
+        listKey,
+        transactProofData1.blindedCommitmentOutputs[0],
+      ),
+    ).to.equal(true);
+    expect(
+      await transactProofMempoolDB.proofExists(
+        listKey,
+        transactProofData2.blindedCommitmentOutputs[0],
+      ),
+    ).to.equal(true);
+
+    getFilteredTransactProofsStub.restore();
   });
 });
