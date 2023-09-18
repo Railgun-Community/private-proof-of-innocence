@@ -11,9 +11,10 @@ export const Landing = () => {
   useEffect(() => {
     const getAndSetData = async () => {
       const data = await POINodeRequest.getNodeStatusAllNetworks(
-        'localhost:3010',
+        'http://localhost:3010',
       );
       setData(data);
+      console.log('DATA:', data); // This line Jake
     };
     if (!isDefined(data)) {
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
