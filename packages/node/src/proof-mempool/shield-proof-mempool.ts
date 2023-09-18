@@ -1,5 +1,4 @@
-import { NetworkName, isDefined } from '@railgun-community/shared-models';
-import { ShieldProofData } from '../models/proof-types';
+import { NetworkName, isDefined , ShieldProofData } from '@railgun-community/shared-models';
 import ShieldProofVkey from './json/shield-proof-vkey.json';
 import { ShieldQueueDatabase } from '../database/databases/shield-queue-database';
 import { ShieldProofMempoolDatabase } from '../database/databases/shield-proof-mempool-database';

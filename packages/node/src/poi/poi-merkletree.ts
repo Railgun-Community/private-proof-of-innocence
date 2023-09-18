@@ -1,4 +1,4 @@
-import { NetworkName, isDefined } from '@railgun-community/shared-models';
+import { NetworkName, isDefined , MerkleProof } from '@railgun-community/shared-models';
 import {
   nToHex,
   hexToBigInt,
@@ -8,7 +8,6 @@ import {
 } from '@railgun-community/wallet';
 import { POIMerkletreeDatabase } from '../database/databases/poi-merkletree-database';
 import { poseidon } from 'circomlibjs';
-import { MerkleProof } from '../models/proof-types';
 import { POIMerkletreeDBItem } from '../models/database-types';
 import { POIHistoricalMerklerootDatabase } from '../database/databases/poi-historical-merkleroot-database';
 

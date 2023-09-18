@@ -75,6 +75,7 @@ describe('abstract-database', () => {
       // Call the onInsertError method directly with the duplicate key error
       db['onInsertError'](duplicateKeyError);
     } catch (err) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       thrownError = err;
     }
 

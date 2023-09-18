@@ -1,6 +1,9 @@
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import { NetworkName, delay } from '@railgun-community/shared-models';
+import { NetworkName, delay ,
+  ShieldProofData,
+  TransactProofData,
+} from '@railgun-community/shared-models';
 import { DatabaseClient } from '../../database/database-client-init';
 import { ListProviderPOIEventQueue } from '../list-provider-poi-event-queue';
 import { POIMerkletreeManager } from '../../poi/poi-merkletree-manager';
@@ -8,7 +11,6 @@ import { TransactProofPerListMempoolDatabase } from '../../database/databases/tr
 import { POIOrderedEventsDatabase } from '../../database/databases/poi-ordered-events-database';
 import { POIMerkletreeDatabase } from '../../database/databases/poi-merkletree-database';
 import { MOCK_LIST_KEYS, MOCK_SNARK_PROOF } from '../../tests/mocks.test';
-import { ShieldProofData, TransactProofData } from '../../models/proof-types';
 import { Config } from '../../config/config';
 import { POIStatus } from '../../models/api-types';
 

@@ -1,5 +1,5 @@
+import { SnarkProof } from '@railgun-community/shared-models';
 import { SortDirection } from 'mongodb';
-import { SnarkProof } from './proof-types';
 import { Readable } from 'stream';
 
 export type DBMaxMin<T> = Partial<T>;

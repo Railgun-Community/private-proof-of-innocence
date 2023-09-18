@@ -1,4 +1,4 @@
-import { SnarkProof } from './proof-types';
+import { SnarkProof } from '@railgun-community/shared-models';
 
 export enum POIEventType {
   Shield = 'Shield',

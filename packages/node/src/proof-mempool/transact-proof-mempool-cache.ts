@@ -1,5 +1,4 @@
-import { NetworkName } from '@railgun-community/shared-models';
-import { TransactProofData } from '../models/proof-types';
+import { NetworkName , TransactProofData } from '@railgun-community/shared-models';
 import { ProofMempoolCountingBloomFilter } from './proof-mempool-bloom-filters';
 import { CountingBloomFilter } from 'bloom-filters';
 

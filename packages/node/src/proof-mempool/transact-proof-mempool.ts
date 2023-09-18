@@ -1,6 +1,5 @@
-import { NetworkName } from '@railgun-community/shared-models';
+import { NetworkName , TransactProofData } from '@railgun-community/shared-models';
 import { TransactProofPerListMempoolDatabase } from '../database/databases/transact-proof-per-list-mempool-database';
-import { TransactProofData } from '../models/proof-types';
 import TransactProofVkey from './json/transact-proof-vkey.json';
 import { POIHistoricalMerklerootDatabase } from '../database/databases/poi-historical-merkleroot-database';
 import { TransactProofMempoolCache } from './transact-proof-mempool-cache';

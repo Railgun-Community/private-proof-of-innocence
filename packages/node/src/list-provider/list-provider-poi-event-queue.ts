@@ -2,7 +2,10 @@ import {
   NetworkName,
   delay,
   isDefined,
-} from '@railgun-community/shared-models';
+
+  ShieldProofData,
+  SnarkProof,
+  TransactProofData} from '@railgun-community/shared-models';
 import {
   POIEvent,
   POIEventShield,
@@ -13,11 +16,6 @@ import {
 } from '../models/poi-types';
 import { POIOrderedEventsDatabase } from '../database/databases/poi-ordered-events-database';
 import { signPOIEvent } from '../util/ed25519';
-import {
-  ShieldProofData,
-  SnarkProof,
-  TransactProofData,
-} from '../models/proof-types';
 import { POIEventList } from '../poi/poi-event-list';
 import { Config } from '../config/config';
 import { ShieldQueueDatabase } from '../database/databases/shield-queue-database';
@@ -141,11 +139,17 @@ export class ListProviderPOIEventQueue {
   }
 
   static async addPOIEventsFromQueue(networkName: NetworkName): Promise<void> {
+    const queueForNetwork =
+      ListProviderPOIEventQueue.poiEventQueue[networkName];
+    if (!queueForNetwork || queueForNetwork.length === 0) {
+      return;
+    }
     if (
       ListProviderPOIEventQueue.isAddingPOIEventForNetwork[networkName] === true
     ) {
       return;
     }
+
     ListProviderPOIEventQueue.isAddingPOIEventForNetwork[networkName] = true;
 
     try {
@@ -162,12 +166,6 @@ export class ListProviderPOIEventQueue {
         throw new Error(
           'Tried to add POI event while unsynced - risk of duplicate indices. Skipping until synced.',
         );
-      }
-
-      const queueForNetwork =
-        ListProviderPOIEventQueue.poiEventQueue[networkName];
-      if (!queueForNetwork || queueForNetwork.length === 0) {
-        throw new Error('No events in queue');
       }
 
       const poiEvent = queueForNetwork[0];

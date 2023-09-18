@@ -1,5 +1,4 @@
-import { NetworkName } from '@railgun-community/shared-models';
-import { ShieldProofData } from '../models/proof-types';
+import { NetworkName , ShieldProofData } from '@railgun-community/shared-models';
 import { ProofMempoolBloomFilter } from './proof-mempool-bloom-filters';
 import { BloomFilter } from 'bloom-filters';
 

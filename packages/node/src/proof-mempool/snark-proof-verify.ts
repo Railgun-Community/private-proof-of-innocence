@@ -1,4 +1,4 @@
-import { SnarkProof } from '../models/proof-types';
+import { SnarkProof } from '@railgun-community/shared-models';
 import { groth16 } from 'snarkjs';
 
 export const verifySnarkProof = async (

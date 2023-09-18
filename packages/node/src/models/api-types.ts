@@ -1,5 +1,8 @@
-import { NetworkName } from '@railgun-community/shared-models';
-import { ShieldProofData, TransactProofData } from './proof-types';
+import {
+  NetworkName,
+  ShieldProofData,
+  TransactProofData,
+} from '@railgun-community/shared-models';
 
 export type POIEventListStatus = {
   length: number;

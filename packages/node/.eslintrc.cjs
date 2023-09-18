@@ -1,6 +1,6 @@
 module.exports = {
   root: true,
-  plugins: ['flowtype'],
+  plugins: ['flowtype', 'import'],
   extends: [
     'eslint:recommended',
     'plugin:import/typescript',
@@ -51,5 +51,6 @@ module.exports = {
     '@typescript-eslint/no-non-null-assertion': 2,
     'no-warning-comments': 1,
     '@typescript-eslint/strict-boolean-expressions': 2,
+    'import/no-duplicates': 1,
   },
 };

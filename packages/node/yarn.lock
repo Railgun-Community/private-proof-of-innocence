@@ -871,20 +871,15 @@
     levelup "^5.1.1"
     msgpack-lite "^0.1.26"
 
-"@railgun-community/shared-models@5.3.6":
-  version "5.3.6"
-  resolved "https://registry.yarnpkg.com/@railgun-community/shared-models/-/shared-models-5.3.6.tgz#bd46cefd009018573304a578c58a66a71ad96425"
-  integrity sha512-X3i2mSsopjNmJGXe7wFRwXTeBv+HvBAXiE2tx4maxPDVSEiU6QfWwKCiwD6YwtheY+Su9qOSgOv5+5BNAdKwHg==
+"@railgun-community/shared-models@5.5.0":
+  version "5.5.0"
+  resolved "https://registry.yarnpkg.com/@railgun-community/shared-models/-/shared-models-5.5.0.tgz#ce8076eecd802ed7690df05ef679f91658c084d1"
+  integrity sha512-AHgLkgCj1hDoU5La9EtJt9QdVn5W8XMKYkNPFaoca8iPOFIw6MMOnLBrtAGqVFeJnLsdKHAmkq5kSXY54wT4QQ==
 
-"@railgun-community/shared-models@5.4.0":
-  version "5.4.0"
-  resolved "https://registry.yarnpkg.com/@railgun-community/shared-models/-/shared-models-5.4.0.tgz#ceaab8f1c4e237a16ac7a94747f12b5a6f88a2df"
-  integrity sha512-BoAPnDHEzhA7VG2jft60RbBjujtcy+V6xVCUKpC9UA32I4kB3W+Pd7Q/YU3jyyH8PoCi6CpmOv7+VK+oZn9gHg==
-
-"@railgun-community/wallet@5.6.10":
-  version "5.6.10"
-  resolved "https://registry.yarnpkg.com/@railgun-community/wallet/-/wallet-5.6.10.tgz#d8a66335a0c9fc3b18cd5fdb106c8209a26aebfd"
-  integrity sha512-0xH/N3wHofUu7PqfGbNwmBmbTJeaHiL1pkxjs7UGQOx7GCF9JAhxbf2xY/S6rih36UNhm5owc9R3ROZfY+XqOQ==
+"@railgun-community/wallet@5.7.0":
+  version "5.7.0"
+  resolved "https://registry.yarnpkg.com/@railgun-community/wallet/-/wallet-5.7.0.tgz#72d3c4b5753f89dc6c6689c5b46ed022cf27515f"
+  integrity sha512-EuvS+gFYVifhh7WTlG1f9dI0gGGNPXr1UEIjjBSZZjDpWu/GwlkNwnznPrFwhEzJde8CsnDBC8n3yXhLXrWkNw==
   dependencies:
     "@graphql-mesh/cache-localforage" "^0.7.20"
     "@graphql-mesh/cross-helpers" "^0.3.4"
@@ -897,7 +892,7 @@
     "@graphql-mesh/utils" "^0.43.22"
     "@noble/ed25519" "^1.7.1"
     "@railgun-community/engine" "5.3.6"
-    "@railgun-community/shared-models" "5.4.0"
+    "@railgun-community/shared-models" "5.5.0"
     "@whatwg-node/fetch" "^0.8.4"
     assert "2.0.0"
     axios "0.27.2"

@@ -1,4 +1,4 @@
-import { NetworkName, isDefined } from '@railgun-community/shared-models';
+import { NetworkName, ShieldProofData } from '@railgun-community/shared-models';
 import {
   CollectionName,
   DBFilter,
@@ -6,7 +6,6 @@ import {
   ShieldProofMempoolDBItem,
 } from '../../models/database-types';
 import { AbstractDatabase } from '../abstract-database';
-import { ShieldProofData } from '../../models/proof-types';
 
 export class ShieldProofMempoolDatabase extends AbstractDatabase<ShieldProofMempoolDBItem> {
   constructor(networkName: NetworkName) {

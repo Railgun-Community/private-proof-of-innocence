@@ -1,6 +1,6 @@
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import { NetworkName } from '@railgun-community/shared-models';
+import { NetworkName, ShieldProofData } from '@railgun-community/shared-models';
 import * as WalletModule from '../../engine/wallet';
 import * as TxReceiptModule from '../../rpc-providers/tx-receipt';
 import { ShieldData } from '@railgun-community/wallet';
@@ -17,9 +17,7 @@ import {
   MOCK_LIST_KEYS,
   MOCK_SNARK_PROOF,
 } from '../../tests/mocks.test';
-import Sinon from 'sinon';
 import { ListProviderPOIEventQueue } from '../list-provider-poi-event-queue';
-import { ShieldProofData } from '../../models/proof-types';
 import { ShieldProofMempoolDatabase } from '../../database/databases/shield-proof-mempool-database';
 
 chai.use(chaiAsPromised);
@@ -136,7 +134,7 @@ describe('list-provider', () => {
       .stub(TxReceiptModule, 'getTimestampFromTransactionReceipt')
       .resolves(1662421336);
 
-    const listProviderEventQueueSpy = Sinon.spy(
+    const listProviderEventQueueSpy = sinon.spy(
       ListProviderPOIEventQueue,
       'queueUnsignedPOIShieldEvent',
     );

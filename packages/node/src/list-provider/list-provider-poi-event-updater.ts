@@ -1,11 +1,10 @@
-import { NetworkName, delay } from '@railgun-community/shared-models';
+import { NetworkName, delay , TransactProofData } from '@railgun-community/shared-models';
 import { Config } from '../config/config';
 import { ListProviderPOIEventQueue } from './list-provider-poi-event-queue';
 import { ShieldProofMempool } from '../proof-mempool/shield-proof-mempool';
 import { ShieldQueueDatabase } from '../database/databases/shield-queue-database';
 import { TransactProofMempool } from '../proof-mempool/transact-proof-mempool';
 import { TransactProofPerListMempoolDatabase } from '../database/databases/transact-proof-per-list-mempool-database';
-import { TransactProofData } from '../models/proof-types';
 
 // const dbg = debug('poi:event-updater');
 

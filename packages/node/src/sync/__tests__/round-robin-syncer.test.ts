@@ -1,6 +1,9 @@
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import { NetworkName } from '@railgun-community/shared-models';
+import { NetworkName ,
+  ShieldProofData,
+  TransactProofData,
+} from '@railgun-community/shared-models';
 import { DatabaseClient } from '../../database/database-client-init';
 import { RoundRobinSyncer } from '../round-robin-syncer';
 import { POIMerkletreeDatabase } from '../../database/databases/poi-merkletree-database';
@@ -14,7 +17,6 @@ import { SignedPOIEvent } from '../../models/poi-types';
 import { ListProviderPOIEventQueue } from '../../list-provider/list-provider-poi-event-queue';
 import { getListPublicKey } from '../../util/ed25519';
 import { POIMerkletreeManager } from '../../poi/poi-merkletree-manager';
-import { ShieldProofData, TransactProofData } from '../../models/proof-types';
 import { ShieldProofMempoolDatabase } from '../../database/databases/shield-proof-mempool-database';
 import { TransactProofPerListMempoolDatabase } from '../../database/databases/transact-proof-per-list-mempool-database';
 import * as SnarkProofVerifyModule from '../../proof-mempool/snark-proof-verify';

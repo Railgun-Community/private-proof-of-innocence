@@ -1,5 +1,10 @@
-import { NETWORK_CONFIG, NetworkName } from '@railgun-community/shared-models';
-import axios from 'axios';
+import {
+  NETWORK_CONFIG,
+  NetworkName,
+  ShieldProofData,
+  TransactProofData,
+} from '@railgun-community/shared-models';
+import axios, { AxiosError } from 'axios';
 import {
   GetShieldProofsParams,
   GetTransactProofsParams,
@@ -7,7 +12,6 @@ import {
   ValidateTxidMerklerootParams,
 } from '../models/api-types';
 import { SignedPOIEvent } from '../models/poi-types';
-import { ShieldProofData, TransactProofData } from '../models/proof-types';
 import debug from 'debug';
 
 const dbg = debug('poi:request');
@@ -24,6 +28,9 @@ export class POINodeRequest {
       const { data }: { data: ResponseData } = await axios.get(url);
       return data;
     } catch (err) {
+      if (!(err instanceof AxiosError)) {
+        throw err;
+      }
       const errMessage = err.message;
       dbg(`ERROR ${url} - ${errMessage}`);
       throw new Error(errMessage);
@@ -38,6 +45,9 @@ export class POINodeRequest {
       const { data }: { data: ResponseData } = await axios.post(url, params);
       return data;
     } catch (err) {
+      if (!(err instanceof AxiosError)) {
+        throw err;
+      }
       const errMessage = `${err.message}: ${err.response?.data}`;
       dbg(`ERROR ${url} - ${errMessage}`);
       throw new Error(errMessage);
