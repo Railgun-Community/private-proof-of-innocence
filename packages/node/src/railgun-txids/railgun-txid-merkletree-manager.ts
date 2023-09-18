@@ -87,6 +87,31 @@ export class RailgunTxidMerkletreeManager {
     };
   }
 
+  static async getHistoricalTxidMerkleroot(
+    networkName: NetworkName,
+    tree: number,
+    index: number,
+  ) {
+    return getRailgunTxidMerkleroot(networkName, tree, index);
+  }
+
+  static async updateValidatedRailgunTxidStatusSafe(
+    nodeURL: string,
+    networkName: NetworkName,
+    txidStatusOtherNode: RailgunTxidStatus,
+  ): Promise<void> {
+    try {
+      return await RailgunTxidMerkletreeManager.updateValidatedRailgunTxidStatus(
+        nodeURL,
+        networkName,
+        txidStatusOtherNode,
+      );
+    } catch (err) {
+      // no op
+      return;
+    }
+  }
+
   static async updateValidatedRailgunTxidStatus(
     nodeURL: string,
     networkName: NetworkName,
@@ -99,18 +124,16 @@ export class RailgunTxidMerkletreeManager {
     const { currentTxidIndex: currentTxidIndexB } = txidStatusOtherNode;
 
     if (!isDefined(currentTxidIndexA)) {
-      return;
+      throw new Error('Requires node current index');
     }
-    if (!isDefined(currentTxidIndexB)) {
-      return;
+    if (!isDefined(currentTxidIndexB) || !isDefined(validatedTxidIndexA)) {
+      throw new Error('Requires other node current/validated indices');
     }
 
     // Update validated txid if the other node has a current value > this node's validated value.
-    const shouldUpdateValidatedTxid =
-      !isDefined(validatedTxidIndexA) ||
-      currentTxidIndexB > validatedTxidIndexA;
+    const shouldUpdateValidatedTxid = currentTxidIndexB > validatedTxidIndexA;
     if (!shouldUpdateValidatedTxid) {
-      return;
+      throw new Error('Current node is already up to date');
     }
 
     // Validate the smaller of the current indices on the two nodes
@@ -119,14 +142,14 @@ export class RailgunTxidMerkletreeManager {
     const { tree, index } =
       this.getTreeAndIndexFromTxidIndex(txidIndexToValidate);
 
-    const historicalMerkleroot = await getRailgunTxidMerkleroot(
-      networkName,
-      tree,
-      index,
-    );
+    const historicalMerkleroot =
+      await RailgunTxidMerkletreeManager.getHistoricalTxidMerkleroot(
+        networkName,
+        tree,
+        index,
+      );
     if (!isDefined(historicalMerkleroot)) {
-      dbg('Historical merkleroot does not exist');
-      return;
+      throw new Error('Historical merkleroot does not exist');
     }
 
     const isValid = await POINodeRequest.validateRailgunTxidMerkleroot(
@@ -145,6 +168,10 @@ export class RailgunTxidMerkletreeManager {
       );
       return;
     }
+
+    dbg(
+      `Merkleroot invalid: ${historicalMerkleroot} (txidIndex ${txidIndexToValidate}) with node ${nodeURL} - re-syncing txid tree from txidIndex ${validatedTxidIndexA}`,
+    );
 
     // Invalid. Clear the merkletree after validatedTxidIndexA, and re-sync.
     const clearFromTxidIndex = validatedTxidIndexA ?? -1;

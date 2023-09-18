@@ -101,7 +101,7 @@ export class RoundRobinSyncer {
           dbg(`Node ${nodeURL} does not support network ${networkName}`);
           return;
         }
-        await RailgunTxidMerkletreeManager.updateValidatedRailgunTxidStatus(
+        await RailgunTxidMerkletreeManager.updateValidatedRailgunTxidStatusSafe(
           nodeURL,
           networkName,
           nodeStatus.txidStatus,
