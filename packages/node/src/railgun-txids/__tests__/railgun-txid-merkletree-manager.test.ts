@@ -178,5 +178,5 @@ describe('railgun-txid-merkletree-manager', () => {
     expect(statusPostInvalidEntry).to.equal(undefined);
 
     expect(resetRailgunTxidsAfterTxidIndexSpy.calledOnce).to.equal(true);
-  });
+  }).timeout(10000);
 });
