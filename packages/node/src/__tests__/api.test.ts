@@ -4,7 +4,6 @@ import supertest, { Response } from 'supertest';
 import { expect } from 'chai';
 import { NodeStatusAllNetworks } from '../models/api-types';
 import { MOCK_LIST_KEYS } from '../tests/mocks.test';
-import axios from 'axios';
 
 const listKey = MOCK_LIST_KEYS[0];
 
