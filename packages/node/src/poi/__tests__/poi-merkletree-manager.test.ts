@@ -1,13 +1,16 @@
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import { NetworkName, ShieldProofData } from '@railgun-community/shared-models';
+import {
+  NetworkName,
+  ShieldProofData,
+  POIStatus,
+} from '@railgun-community/shared-models';
 import { DatabaseClient } from '../../database/database-client-init';
 import { POIMerkletreeManager } from '../poi-merkletree-manager';
 import { POIMerkletreeDatabase } from '../../database/databases/poi-merkletree-database';
 import { MOCK_LIST_KEYS } from '../../tests/mocks.test';
 import { SignedPOIEvent } from '../../models/poi-types';
 import { Config } from '../../config/config';
-import { POIStatus } from '../../models/api-types';
 import { ShieldProofMempoolDatabase } from '../../database/databases/shield-proof-mempool-database';
 
 chai.use(chaiAsPromised);

@@ -7,22 +7,22 @@ import { POIEventList } from '../poi/poi-event-list';
 import { networkNameForSerializedChain } from '../config/general';
 import { ShieldProofMempool } from '../proof-mempool/shield-proof-mempool';
 import { TransactProofMempool } from '../proof-mempool/transact-proof-mempool';
-import {
-  GetMerkleProofsParams,
-  GetPOIsPerListParams,
-  GetShieldProofsParams,
-  GetTransactProofsParams,
-  NodeStatusAllNetworks,
-  SubmitShieldProofParams,
-  SubmitTransactProofParams,
-  ValidateTxidMerklerootParams,
-} from '../models/api-types';
 import { POIMerkletreeManager } from '../poi/poi-merkletree-manager';
 import { getShieldQueueStatus } from '../shield-queue/shield-queue';
 import { RailgunTxidMerkletreeManager } from '../railgun-txids/railgun-txid-merkletree-manager';
 import { QueryLimits } from '../config/query-limits';
 import { NodeStatus } from '../status/node-status';
 import { Config } from '../config/config';
+import {
+  NodeStatusAllNetworks,
+  GetShieldProofsParams,
+  GetTransactProofsParams,
+  SubmitShieldProofParams,
+  SubmitTransactProofParams,
+  GetPOIsPerListParams,
+  GetMerkleProofsParams,
+  ValidateTxidMerklerootParams,
+} from '@railgun-community/shared-models';
 
 const dbg = debug('poi:api');
 

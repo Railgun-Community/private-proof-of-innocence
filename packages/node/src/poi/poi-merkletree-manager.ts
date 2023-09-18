@@ -1,7 +1,12 @@
-import { NetworkName, isDefined , MerkleProof } from '@railgun-community/shared-models';
+import {
+  NetworkName,
+  isDefined,
+  MerkleProof,
+  POIStatus,
+  POIStatusListMap,
+} from '@railgun-community/shared-models';
 import { Config } from '../config/config';
 import { POIMerkletree } from './poi-merkletree';
-import { POIStatus, POIStatusListMap } from '../models/api-types';
 import { SignedPOIEvent } from '../models/poi-types';
 import { ShieldProofMempoolDatabase } from '../database/databases/shield-proof-mempool-database';
 

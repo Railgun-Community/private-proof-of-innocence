@@ -2,12 +2,12 @@ import {
   NetworkName,
   delay,
   isDefined,
+  NodeStatusAllNetworks,
 } from '@railgun-community/shared-models';
 import debug from 'debug';
 import { Config } from '../config/config';
 import { POINodeRequest } from '../api/poi-node-request';
 import { RailgunTxidMerkletreeManager } from '../railgun-txids/railgun-txid-merkletree-manager';
-import { NodeStatusAllNetworks } from '../models/api-types';
 import { POIEventList } from '../poi/poi-event-list';
 import { QueryLimits } from '../config/query-limits';
 import { ShieldProofMempool } from '../proof-mempool/shield-proof-mempool';

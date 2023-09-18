@@ -1,6 +1,8 @@
-import { NetworkName } from '@railgun-community/shared-models';
+import {
+  NetworkName,
+  POIEventListStatus,
+} from '@railgun-community/shared-models';
 import { POIOrderedEventsDatabase } from '../database/databases/poi-ordered-events-database';
-import { POIEventListStatus } from '../models/api-types';
 import { SignedPOIEvent } from '../models/poi-types';
 import { verifyPOIEvent } from '../util/ed25519';
 import { POIMerkletreeManager } from './poi-merkletree-manager';

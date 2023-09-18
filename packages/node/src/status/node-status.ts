@@ -1,10 +1,10 @@
-import { NetworkName } from '@railgun-community/shared-models';
-import { RailgunTxidMerkletreeManager } from '../railgun-txids/railgun-txid-merkletree-manager';
 import {
+  NetworkName,
   NodeStatusForNetwork,
   NodeStatusAllNetworks,
   POIEventListStatus,
-} from '../models/api-types';
+} from '@railgun-community/shared-models';
+import { RailgunTxidMerkletreeManager } from '../railgun-txids/railgun-txid-merkletree-manager';
 import { Config } from '../config/config';
 import { POIEventList } from '../poi/poi-event-list';
 

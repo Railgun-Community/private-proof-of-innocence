@@ -1,8 +1,10 @@
-import { isDefined } from '@railgun-community/shared-models';
+import {
+  isDefined,
+  NodeStatusAllNetworks,
+} from '@railgun-community/shared-models';
 import { useEffect, useState } from 'react';
 import { Header } from '@components/Header/Header';
 import { Text } from '@components/Text/Text';
-import { NodeStatusAllNetworks } from '@models/api-types';
 import { POINodeRequest } from '@services/poi-node-request';
 
 export const Landing = () => {

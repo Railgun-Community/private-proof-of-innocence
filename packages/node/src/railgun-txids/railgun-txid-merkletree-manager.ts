@@ -1,4 +1,9 @@
-import { NetworkName, isDefined } from '@railgun-community/shared-models';
+import {
+  NetworkName,
+  isDefined,
+  RailgunTxidStatus,
+  ValidatedRailgunTxidStatus,
+} from '@railgun-community/shared-models';
 import {
   fullResetRailgunTxidMerkletrees,
   resetRailgunTxidsAfterTxidIndex,
@@ -6,10 +11,6 @@ import {
   getLatestRailgunTxidData,
   getRailgunTxidMerkleroot,
 } from '@railgun-community/wallet';
-import {
-  RailgunTxidStatus,
-  ValidatedRailgunTxidStatus,
-} from '../models/api-types';
 import { RailgunTxidMerkletreeStatusDatabase } from '../database/databases/railgun-txid-merkletree-status-database';
 import { POINodeRequest } from '../api/poi-node-request';
 import debug from 'debug';

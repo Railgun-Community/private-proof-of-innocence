@@ -3,14 +3,12 @@ import {
   NetworkName,
   ShieldProofData,
   TransactProofData,
-} from '@railgun-community/shared-models';
-import axios, { AxiosError } from 'axios';
-import {
   GetShieldProofsParams,
   GetTransactProofsParams,
   NodeStatusAllNetworks,
   ValidateTxidMerklerootParams,
-} from '../models/api-types';
+} from '@railgun-community/shared-models';
+import axios, { AxiosError } from 'axios';
 import { SignedPOIEvent } from '../models/poi-types';
 import debug from 'debug';
 

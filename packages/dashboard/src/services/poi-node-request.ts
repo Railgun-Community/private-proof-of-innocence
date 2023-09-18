@@ -1,6 +1,6 @@
+import { NodeStatusAllNetworks } from '@railgun-community/shared-models';
 import axios from 'axios';
 import debug from 'debug';
-import { NodeStatusAllNetworks } from 'models/api-types';
 
 const dbg = debug('poi:request');
 

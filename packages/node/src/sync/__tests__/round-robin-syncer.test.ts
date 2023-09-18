@@ -1,15 +1,16 @@
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import { NetworkName ,
+import {
+  NetworkName,
   ShieldProofData,
   TransactProofData,
+  NodeStatusAllNetworks,
 } from '@railgun-community/shared-models';
 import { DatabaseClient } from '../../database/database-client-init';
 import { RoundRobinSyncer } from '../round-robin-syncer';
 import { POIMerkletreeDatabase } from '../../database/databases/poi-merkletree-database';
 import { POIHistoricalMerklerootDatabase } from '../../database/databases/poi-historical-merkleroot-database';
 import { MOCK_SNARK_PROOF } from '../../tests/mocks.test';
-import { NodeStatusAllNetworks } from '../../models/api-types';
 import { POIOrderedEventsDatabase } from '../../database/databases/poi-ordered-events-database';
 import sinon, { SinonStub } from 'sinon';
 import { POINodeRequest } from '../../api/poi-node-request';
@@ -20,7 +21,6 @@ import { POIMerkletreeManager } from '../../poi/poi-merkletree-manager';
 import { ShieldProofMempoolDatabase } from '../../database/databases/shield-proof-mempool-database';
 import { TransactProofPerListMempoolDatabase } from '../../database/databases/transact-proof-per-list-mempool-database';
 import * as SnarkProofVerifyModule from '../../proof-mempool/snark-proof-verify';
-import Sinon from 'sinon';
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
@@ -76,10 +76,9 @@ describe('round-robin-syncer', () => {
 
     roundRobinSyncer = new RoundRobinSyncer([nodeURL], [listKey]);
 
-    snarkVerifyStub = Sinon.stub(
-      SnarkProofVerifyModule,
-      'verifySnarkProof',
-    ).resolves(true);
+    snarkVerifyStub = sinon
+      .stub(SnarkProofVerifyModule, 'verifySnarkProof')
+      .resolves(true);
   });
 
   after(() => {
