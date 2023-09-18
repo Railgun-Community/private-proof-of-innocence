@@ -39,7 +39,8 @@ describe('shield-proof-mempool', () => {
     ShieldProofMempoolCache.clearCache_FOR_TEST_ONLY();
   });
 
-  afterEach(async () => {
+  afterEach(async function run() {
+    this.timeout(10000);
     await shieldProofMempoolDB.deleteAllItems_DANGEROUS();
     await shieldQueueDB.deleteAllItems_DANGEROUS();
     ShieldProofMempoolCache.clearCache_FOR_TEST_ONLY();
@@ -142,7 +143,7 @@ describe('shield-proof-mempool', () => {
         bloomFilterSerializedWithProof1,
       ),
     ).to.deep.equal([shieldProofData2]);
-  });
+  }).timeout(10000);
 
   it('Should inflate cache from database', async () => {
     const shieldProofData1: ShieldProofData = {

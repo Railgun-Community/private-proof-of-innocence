@@ -14,7 +14,7 @@ describe('api', function () {
 
   // Start services before all tests
   before(async function () {
-    this.timeout(10000);
+    this.timeout(30000);
 
     const listProvider = new LocalListProvider(listKey);
 

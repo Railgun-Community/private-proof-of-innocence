@@ -25,5 +25,5 @@ describe('active-network-providers', () => {
     const provider = getProviderForNetwork(NetworkName.Ethereum);
     const block = await provider.getBlockNumber();
     expect(block).to.be.greaterThan(14000000);
-  }).timeout(20000);
+  });
 }).timeout(20000);

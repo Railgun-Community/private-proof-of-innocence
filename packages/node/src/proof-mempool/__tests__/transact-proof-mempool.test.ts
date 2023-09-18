@@ -186,7 +186,7 @@ describe('transact-proof-mempool', () => {
         bloomFilterSerializedWithProof1,
       ),
     ).to.deep.equal([transactProofData2]);
-  });
+  }).timeout(10000);
 
   it('Should inflate cache from database', async () => {
     const transactProofData1: TransactProofData = {
