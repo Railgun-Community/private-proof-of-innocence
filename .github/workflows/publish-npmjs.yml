@@ -1,7 +1,6 @@
-name: Publish Package to npmjs
+name: Publish Node package to npmjs
 on:
   push:
-    # Sequence of patterns matched against refs/heads
     branches:
       - release
 jobs:
@@ -9,7 +8,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      # Setup .npmrc file to publish to npm
       - uses: actions/setup-node@v3
         with:
           node-version: '16.x'

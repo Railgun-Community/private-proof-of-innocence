@@ -1,5 +1,5 @@
 import debug from 'debug';
-import { initModules, uninitModules } from './init/init';
+import { initModules } from './init/init';
 import { ListProvider } from './list-provider/list-provider';
 import { API } from './api/api';
 import { RoundRobinSyncer } from './sync/round-robin-syncer';

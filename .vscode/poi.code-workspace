@@ -1,0 +1,39 @@
+{
+  "folders": [
+    {
+      "name": "poi",
+      "path": ".."
+    },
+    {
+      "name": "dashboard",
+      "path": "../packages/dashboard"
+    },
+    {
+      "name": "node",
+      "path": "../packages/node"
+    }
+  ],
+  "settings": {
+    "jest.disabledWorkspaceFolders": ["poi", "node"],
+    "files.exclude": {
+      "**/.git": true,
+      "**/.svn": true,
+      "**/.hg": true,
+      "**/CVS": true,
+      "**/.DS_Store": true,
+      "**/Thumbs.db": true
+    }
+  },
+  "extensions": {
+    "recommendations": [
+      "clinyong.vscode-css-modules",
+      "dbaeumer.vscode-eslint",
+      "esbenp.prettier-vscode",
+      "qcz.restart-ts-server-button",
+      "yoavbls.pretty-ts-errors",
+      "graphql.vscode-graphql-syntax",
+      "graphql.vscode-graphql",
+      "github.vscode-github-actions"
+    ]
+  }
+}

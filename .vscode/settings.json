@@ -1,0 +1,10 @@
+{
+  "search.exclude": {
+    "**/yarn.lock": true,
+    "**/node_modules": true,
+    "**/*.code-search": true
+  },
+  "eslint.workingDirectories": ["./packages/dashboard", "./packages/node"],
+  "jest.jestCommandLine": "poi.code-workspace",
+  "jest.rootPath": "poi.code-workspace"
+}

@@ -4,7 +4,6 @@ import {
   FallbackProviderJsonConfig,
   getAvailableProviderJSONs,
   isDefined,
-  NETWORK_CONFIG,
   NetworkName,
 } from '@railgun-community/shared-models';
 import debug from 'debug';

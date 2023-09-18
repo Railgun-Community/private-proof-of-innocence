@@ -1,0 +1,12 @@
+#!/bin/bash
+set +e;
+
+# Node
+pushd packages/node
+yarn
+popd
+
+# Dashboard
+pushd packages/dashboard
+yarn
+popd

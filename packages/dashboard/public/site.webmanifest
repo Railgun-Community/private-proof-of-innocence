@@ -1,0 +1,8 @@
+{
+  "name": "Proof of Innocence Dashboard",
+  "short_name": "POI Dashboard",
+  "icons": [],
+  "theme_color": "#ffffff",
+  "background_color": "#ffffff",
+  "display": "standalone"
+}
