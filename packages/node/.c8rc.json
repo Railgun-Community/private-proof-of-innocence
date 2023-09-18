@@ -3,6 +3,7 @@
   "include": ["src/**/*.ts"],
   "exclude": [
     "src/run-local.ts",
+    "src/models/**",
     "src/local-list-provider.ts",
     "src/**/__tests__/**",
     "dist/**",
