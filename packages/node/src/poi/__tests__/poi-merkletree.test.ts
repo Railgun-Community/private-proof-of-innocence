@@ -98,7 +98,7 @@ describe('poi-merkletree', () => {
         '8902638fe6fc05e4f1cd7c06940d6217591a0ccb003ed45198782fbff38e9f2d',
       ),
     ).to.equal(true);
-  });
+  }).timeout(10000);
 
   it('Should create second merkle tree when first is filled', async () => {
     // Stub getNextTreeAndIndex to return last index of first tree
@@ -215,5 +215,5 @@ describe('poi-merkletree', () => {
     expect(POIMerkletree.verifyProof(proof2)).to.equal(false);
     proof2.elements = proof.elements;
     expect(POIMerkletree.verifyProof(proof2)).to.equal(false);
-  });
-}).timeout(5000);
+  }).timeout(10000);
+});

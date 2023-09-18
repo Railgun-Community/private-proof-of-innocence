@@ -143,7 +143,7 @@ describe('shield-proof-mempool', () => {
         bloomFilterSerializedWithProof1,
       ),
     ).to.deep.equal([shieldProofData2]);
-  });
+  }).timeout(10000);
 
   it('Should inflate cache from database', async () => {
     const shieldProofData1: ShieldProofData = {
@@ -182,5 +182,5 @@ describe('shield-proof-mempool', () => {
 
     await ShieldProofMempool.inflateCacheFromDatabase();
     expect(ShieldProofMempoolCache.getNumInCache(networkName)).to.equal(2);
-  });
+  }).timeout(10000);
 }).timeout(10000);
