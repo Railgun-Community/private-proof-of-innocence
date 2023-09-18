@@ -1,0 +1,77 @@
+@font-face {
+  font-family: 'Inconsolata';
+  src: local('Inconsolata'),
+    url(../assets/fonts/inconsolata.woff2) format('woff2');
+}
+
+html {
+  background-color: #000;
+}
+
+body {
+  margin: 0;
+}
+
+body,
+input,
+textarea,
+code,
+tt,
+pre {
+  font-family: 'Inconsolata', 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu',
+    'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+input:focus,
+select:focus,
+textarea:focus,
+button:focus {
+  outline: none;
+}
+
+// Hides auto-fill on safari inputs.
+input::-webkit-contacts-auto-fill-button,
+input::-webkit-credentials-auto-fill-button {
+  visibility: hidden;
+  display: none !important;
+  pointer-events: none;
+  position: absolute;
+  right: 0;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/* Chrome, Safari, Edge, Opera */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input[type='number'] {
+  -moz-appearance: textfield;
+}
+
+// Make text and images unselectable
+p,
+img,
+.no-text-select {
+  -webkit-user-select: none; /* Safari */
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* IE10+/Edge */
+  user-select: none; /* Standard */
+  -khtml-user-select: none; /* Konqueror HTML */
+  -webkit-touch-callout: none;
+}
+
+p {
+  pointer-events: none;
+}
+
+@import './styleguide.scss';

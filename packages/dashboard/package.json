@@ -18,7 +18,9 @@
     "postinstall": "yarn lint"
   },
   "dependencies": {
+    "@railgun-community/shared-models": "5.3.6",
     "axios": "0.27.2",
+    "classnames": "^2.3.2",
     "crypto-browserify": "^3.12.0",
     "https-browserify": "^1.0.0",
     "os-browserify": "^0.3.0",
@@ -36,8 +38,10 @@
     "react-textarea-autosize": "^8.4.0",
     "react-tiny-popover": "^7.2.4",
     "react-tooltip": "5.13.0",
+    "sass": "^1.67.0",
     "stream-browserify": "^3.0.0",
-    "stream-http": "^3.2.0"
+    "stream-http": "^3.2.0",
+    "ethers": "github:Railgun-Community/ethers.js#v6.7.6"
   },
   "devDependencies": {
     "@babel/core": "7.21.8",
@@ -48,6 +52,7 @@
     "@types/debug": "^4.1.7",
     "@types/mocha": "^10.0.1",
     "@types/node": "^20.6.2",
+    "@types/node-sass": "^4.11.4",
     "@types/psl": "^1.1.0",
     "@types/qrcode.react": "^1.0.2",
     "@types/react": "18.2.6",
@@ -71,7 +76,11 @@
     "eslint-plugin-simple-import-sort": "^10.0.0",
     "eslint-plugin-testing-library": "5.11.0",
     "madge": "6.0.0",
+<<<<<<< HEAD
     "mocha": "^10.2.0",
+=======
+    "node-sass": "^9.0.0",
+>>>>>>> 497f197 (Frontend Dashboard basic setup)
     "prettier": "2.8.8",
     "punycode": "^2.1.1",
     "react-app-rewired": "^2.2.1",

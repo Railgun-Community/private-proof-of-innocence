@@ -1,0 +1,16 @@
+.headerContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #eaeaea;
+  padding: 20px;
+}
+
+.ipContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid #eaeaea;
+  border-radius: 25px;
+  padding: 5px;
+}

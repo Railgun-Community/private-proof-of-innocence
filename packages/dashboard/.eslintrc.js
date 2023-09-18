@@ -84,17 +84,12 @@ module.exports = {
         map: [
           // Core aliases
           ['@assets', './src/assets'],
-          ['@hooks', './src/hooks/'],
           ['@models', './src/models/'],
           ['@root', './src/root/'],
           ['@services', './src/services/'],
-          ['@utils', './src/utils/'],
-          ['@views', './src/views/'],
           ['@scss', './src/scss/'],
-          ['@react-shared', './react-shared/src'],
-          // Useful aliases:
-          ['@components', './src/views/components/'],
-          ['@screens', './src/views/screens/'],
+          ['@components', './src/components/'],
+          ['@screens', './src/screens/'],
         ],
         extensions: ['.js', '.ts', '.tsx', '.json', '.scss'],
       },
