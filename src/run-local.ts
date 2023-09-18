@@ -14,11 +14,13 @@ import { getListPublicKey } from './util/ed25519';
 
   const host = process.env.HOST ?? '0.0.0.0';
   const port = process.env.PORT ?? '3010';
-  const connectedNodeURLs: string[] = (
-    process.env.CONNECTED_NODE_URLS ?? ''
-  ).split(',');
-  const listKeys: string[] = (process.env.LIST_KEYS ?? '').split(',');
 
+  const envConnectedNodesString = process.env
+    .CONNECTED_NODE_URLS as Optional<string>;
+  const connectedNodeURLs: string[] = envConnectedNodesString?.split(',') ?? [];
+
+  const envListKeysString = process.env.LIST_KEYS as Optional<string>;
+  const listKeys: string[] = envListKeysString?.split(',') ?? [];
   Config.LIST_KEYS = listKeys;
 
   const node = new ProofOfInnocenceNode(

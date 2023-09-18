@@ -127,8 +127,8 @@ export class ListProviderPOIEventQueue {
       ListProviderPOIEventQueue.listKey,
     );
     const nextIndex = lastAddedItem ? lastAddedItem.index + 1 : 0;
-
     if (
+      nextIndex > 0 &&
       nextIndex <= ListProviderPOIEventQueue.getMinimumNextAddIndex(networkName)
     ) {
       dbg(

@@ -24,7 +24,7 @@ export class POINodeRequest {
       const { data }: { data: ResponseData } = await axios.get(url);
       return data;
     } catch (err) {
-      const errMessage = `${err.message}: ${err.response.data}`;
+      const errMessage = err.message;
       dbg(`ERROR ${url} - ${errMessage}`);
       throw new Error(errMessage);
     }
@@ -38,7 +38,7 @@ export class POINodeRequest {
       const { data }: { data: ResponseData } = await axios.post(url, params);
       return data;
     } catch (err) {
-      const errMessage = `${err.message}: ${err.response.data}`;
+      const errMessage = `${err.message}: ${err.response?.data}`;
       dbg(`ERROR ${url} - ${errMessage}`);
       throw new Error(errMessage);
     }
