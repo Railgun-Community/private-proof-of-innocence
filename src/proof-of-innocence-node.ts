@@ -7,6 +7,7 @@ import { ConnectedNodeStartup } from './sync/connected-node-startup';
 
 const dbg = debug('poi:node');
 
+// Entry point for the Proof of Innocence node
 export class ProofOfInnocenceNode {
   private running = false;
 

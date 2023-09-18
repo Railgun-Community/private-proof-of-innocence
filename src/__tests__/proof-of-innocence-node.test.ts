@@ -61,4 +61,9 @@ describe('proof-of-innocence-node', () => {
       );
     }
   }).timeout(200000);
+
+  it('Should start up a node with only aggregator', async () => {
+    await nodeOnlyAggregator.start();
+    await nodeOnlyAggregator.stop();
+  }).timeout(10000);
 });
