@@ -31,8 +31,8 @@
     "noEmit": true,
     "jsx": "react-jsx",
     "typeRoots": ["src/global.d.ts", "node_modules/@types"],
-    "types": ["jest", "node"]
+    "types": ["node", "mocha"]
   },
   "include": ["src", ".eslintrc.js"],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "src/**/__tests__", "src/tests", "dist"]
 }

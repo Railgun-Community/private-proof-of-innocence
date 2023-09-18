@@ -14,7 +14,6 @@
     }
   ],
   "settings": {
-    "jest.disabledWorkspaceFolders": ["poi", "node"],
     "files.exclude": {
       "**/.git": true,
       "**/.svn": true,
@@ -22,7 +21,8 @@
       "**/CVS": true,
       "**/.DS_Store": true,
       "**/Thumbs.db": true
-    }
+    },
+    "jest.disabledWorkspaceFolders": ["dashboard", "node", "poi"]
   },
   "extensions": {
     "recommendations": [

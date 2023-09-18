@@ -1,0 +1,5 @@
+{
+  "file": ["src/tests/setup.test.tsx"],
+  "spec": ["src/**/__tests__/*.test.tsx"],
+  "exit": true
+}

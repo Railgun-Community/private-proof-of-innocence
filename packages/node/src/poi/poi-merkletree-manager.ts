@@ -5,8 +5,6 @@ import { MerkleProof } from '../models/proof-types';
 import { POIStatus, POIStatusListMap } from '../models/api-types';
 import { SignedPOIEvent } from '../models/poi-types';
 import { ShieldProofMempoolDatabase } from '../database/databases/shield-proof-mempool-database';
-import { ShieldQueueDatabase } from '../database/databases/shield-queue-database';
-import { ShieldStatus } from '../models/database-types';
 
 export class POIMerkletreeManager {
   private static merkletrees: Record<

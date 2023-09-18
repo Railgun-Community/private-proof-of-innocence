@@ -1,11 +1,8 @@
-const path = require('path');
-
 module.exports = {
   root: true,
   plugins: ['flowtype', 'simple-import-sort'],
   extends: [
     'react-app',
-    'react-app/jest',
     'eslint:recommended',
     'plugin:import/typescript',
     'prettier',
@@ -71,8 +68,7 @@ module.exports = {
   },
   parser: '@typescript-eslint/parser',
   parserOptions: {
-    warnOnUnsupportedTypeScriptVersion: false,
-    project: path.join(__dirname, 'tsconfig.json'),
+    project: ['./tsconfig.json', './tsconfig.test.json'],
   },
   overrides: [
     {
