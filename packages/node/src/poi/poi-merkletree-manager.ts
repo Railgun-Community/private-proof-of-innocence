@@ -109,7 +109,7 @@ export class POIMerkletreeManager {
 
     const shieldProofDB = new ShieldProofMempoolDatabase(networkName);
     const pendingShieldProofExists =
-      await shieldProofDB.proofExistsForBlindedCommitment(blindedCommitment);
+      await shieldProofDB.getShieldProofForBlindedCommitment(blindedCommitment);
     if (pendingShieldProofExists) {
       return POIStatus.Pending;
     }

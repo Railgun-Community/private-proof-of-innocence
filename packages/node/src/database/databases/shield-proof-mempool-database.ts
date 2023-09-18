@@ -1,4 +1,4 @@
-import { NetworkName } from '@railgun-community/shared-models';
+import { NetworkName, isDefined } from '@railgun-community/shared-models';
 import {
   CollectionName,
   DBFilter,
@@ -43,7 +43,7 @@ export class ShieldProofMempoolDatabase extends AbstractDatabase<ShieldProofMemp
   async proofExistsForBlindedCommitment(
     blindedCommitment: string,
   ): Promise<boolean> {
-    return this.getShieldProofForBlindedCommitment(blindedCommitment) != null;
+    return this.exists({ blindedCommitment });
   }
 
   async streamShieldProofs(): Promise<DBStream<ShieldProofMempoolDBItem>> {
