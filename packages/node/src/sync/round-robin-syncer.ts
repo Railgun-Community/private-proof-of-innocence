@@ -178,7 +178,7 @@ export class RoundRobinSyncer {
     );
   }
 
-  private async updateShieldProofMempoolsAllNetworks(
+  async updateShieldProofMempoolsAllNetworks(
     nodeURL: string,
     nodeStatusAllNetworks: NodeStatusAllNetworks,
   ) {
