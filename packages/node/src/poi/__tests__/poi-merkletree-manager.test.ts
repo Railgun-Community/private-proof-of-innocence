@@ -29,7 +29,7 @@ describe('poi-merkletree-manager', () => {
     merkletreeDB = new POIMerkletreeDatabase(networkName);
     shieldProofDB = new ShieldProofMempoolDatabase(networkName);
 
-    POIMerkletreeManager.initListMerkletrees();
+    POIMerkletreeManager.initListMerkletrees(MOCK_LIST_KEYS);
   });
 
   beforeEach(async () => {

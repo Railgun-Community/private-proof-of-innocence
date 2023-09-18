@@ -13,7 +13,11 @@ import {
 } from '../models/poi-types';
 import { POIOrderedEventsDatabase } from '../database/databases/poi-ordered-events-database';
 import { signPOIEvent } from '../util/ed25519';
-import { ShieldProofData, TransactProofData } from '../models/proof-types';
+import {
+  ShieldProofData,
+  SnarkProof,
+  TransactProofData,
+} from '../models/proof-types';
 import { POIEventList } from '../poi/poi-event-list';
 import { Config } from '../config/config';
 import { ShieldQueueDatabase } from '../database/databases/shield-queue-database';
@@ -117,6 +121,25 @@ export class ListProviderPOIEventQueue {
     );
   }
 
+  static async createSignedPOIEvent(
+    index: number,
+    blindedCommitmentStartingIndex: number,
+    blindedCommitments: string[],
+    proof: SnarkProof,
+  ): Promise<SignedPOIEvent> {
+    const unsignedPOIEvent: UnsignedPOIEvent = {
+      index,
+      blindedCommitmentStartingIndex,
+      blindedCommitments,
+      proof,
+    };
+    const signature = await signPOIEvent(unsignedPOIEvent);
+    return {
+      ...unsignedPOIEvent,
+      signature,
+    };
+  }
+
   static async addPOIEventsFromQueue(networkName: NetworkName): Promise<void> {
     if (
       ListProviderPOIEventQueue.isAddingPOIEventForNetwork[networkName] === true
@@ -163,18 +186,12 @@ export class ListProviderPOIEventQueue {
         ? lastAddedItem.blindedCommitmentStartingIndex +
           lastAddedItem.blindedCommitments.length
         : 0;
-
-      const unsignedPOIEvent: UnsignedPOIEvent = {
-        index: nextIndex,
+      const signedPOIEvent: SignedPOIEvent = await this.createSignedPOIEvent(
+        nextIndex,
         blindedCommitmentStartingIndex,
-        blindedCommitments: poiEvent.blindedCommitments,
-        proof: poiEvent.proof,
-      };
-      const signature = await signPOIEvent(unsignedPOIEvent);
-      const signedPOIEvent: SignedPOIEvent = {
-        ...unsignedPOIEvent,
-        signature,
-      };
+        poiEvent.blindedCommitments,
+        poiEvent.proof,
+      );
 
       await POIEventList.addValidSignedPOIEvent(
         networkName,
@@ -201,7 +218,9 @@ export class ListProviderPOIEventQueue {
       ListProviderPOIEventQueue.isAddingPOIEventForNetwork[networkName] = false;
 
       if (queueForNetwork.length > 0) {
-        return ListProviderPOIEventQueue.addPOIEventsFromQueue(networkName);
+        return await ListProviderPOIEventQueue.addPOIEventsFromQueue(
+          networkName,
+        );
       }
     } catch (err) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access

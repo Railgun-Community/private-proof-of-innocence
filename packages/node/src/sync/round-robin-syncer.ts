@@ -25,8 +25,11 @@ export class RoundRobinSyncer {
 
   private pollStatus = PollStatus.IDLE;
 
-  constructor(connectedNodeURLs: string[]) {
+  private listKeys: string[];
+
+  constructor(connectedNodeURLs: string[], listKeys: string[]) {
     this.connectedNodeURLs = connectedNodeURLs;
+    this.listKeys = listKeys;
   }
 
   getPollStatus(): PollStatus {
@@ -110,7 +113,7 @@ export class RoundRobinSyncer {
     );
   }
 
-  private async updatePOIEventListAllNetworks(
+  async updatePOIEventListAllNetworks(
     nodeURL: string,
     nodeStatusAllNetworks: NodeStatusAllNetworks,
   ) {
@@ -121,7 +124,7 @@ export class RoundRobinSyncer {
       }
       const { eventListStatuses } = nodeStatus;
 
-      for (const listKey of Config.LIST_KEYS) {
+      for (const listKey of this.listKeys) {
         if (!isDefined(eventListStatuses[listKey])) {
           continue;
         }

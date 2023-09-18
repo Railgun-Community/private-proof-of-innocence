@@ -4,6 +4,7 @@ import { ListProvider } from './list-provider/list-provider';
 import { API } from './api/api';
 import { RoundRobinSyncer } from './sync/round-robin-syncer';
 import { ConnectedNodeStartup } from './sync/connected-node-startup';
+import { Config } from './config/config';
 
 const dbg = debug('poi:node');
 
@@ -33,7 +34,10 @@ export class ProofOfInnocenceNode {
     this.port = port;
     this.listProvider = listProvider;
     this.connectedNodeStartup = new ConnectedNodeStartup(connectedNodeURLs);
-    this.roundRobinSyncer = new RoundRobinSyncer(connectedNodeURLs);
+    this.roundRobinSyncer = new RoundRobinSyncer(
+      connectedNodeURLs,
+      Config.LIST_KEYS,
+    );
     this.api = new API();
   }
 

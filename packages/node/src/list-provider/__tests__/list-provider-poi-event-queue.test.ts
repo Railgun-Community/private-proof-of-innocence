@@ -28,7 +28,7 @@ describe('list-provider-poi-event-queue', () => {
     await DatabaseClient.init();
 
     ListProviderPOIEventQueue.init(listKey);
-    POIMerkletreeManager.initListMerkletrees();
+    POIMerkletreeManager.initListMerkletrees(MOCK_LIST_KEYS);
 
     orderedEventsDB = new POIOrderedEventsDatabase(networkName);
     transactProofMempoolDB = new TransactProofPerListMempoolDatabase(

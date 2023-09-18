@@ -7,6 +7,7 @@ import { DatabaseClient } from '../database/database-client-init';
 import { ShieldProofMempool } from '../proof-mempool/shield-proof-mempool';
 import { TransactProofMempool } from '../proof-mempool/transact-proof-mempool';
 import { POIMerkletreeManager } from '../poi/poi-merkletree-manager';
+import { Config } from '../config/config';
 
 const dbg = debug('poi:init');
 
@@ -28,7 +29,7 @@ export const initModules = async () => {
   await TransactProofMempool.inflateCacheFromDatabase();
 
   dbg('Generating POI Merkletrees for each list and network...');
-  POIMerkletreeManager.initListMerkletrees();
+  POIMerkletreeManager.initListMerkletrees(Config.LIST_KEYS);
 
   dbg('Node init successful.');
 };

@@ -12,9 +12,9 @@ export class POIMerkletreeManager {
     Partial<Record<NetworkName, POIMerkletree>>
   > = {};
 
-  static initListMerkletrees() {
+  static initListMerkletrees(listKeys: string[]) {
     Config.NETWORK_NAMES.forEach((networkName) => {
-      Config.LIST_KEYS.forEach((listKey) => {
+      listKeys.forEach((listKey) => {
         this.merkletrees[listKey] ??= {};
         this.merkletrees[listKey][networkName] = new POIMerkletree(
           networkName,
