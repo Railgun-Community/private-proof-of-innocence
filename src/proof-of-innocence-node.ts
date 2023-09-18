@@ -49,13 +49,17 @@ export class ProofOfInnocenceNode {
 
     await initModules();
 
-    await this.listProvider?.startPolling();
+    this.listProvider?.startPolling();
 
     this.api.serve(this.host, this.port);
 
     this.roundRobinSyncer.startPolling();
 
     dbg(`Proof of Innocence node running...`);
+  }
+
+  async stop() {
+    this.api.stop();
   }
 
   getPollStatus() {

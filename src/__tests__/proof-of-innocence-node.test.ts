@@ -60,6 +60,8 @@ describe('proof-of-innocence-node', () => {
         `Should be polling, got ${nodeWithListProvider.getPollStatus()}`,
       );
     }
+
+    await nodeWithListProvider.stop();
   }).timeout(200000);
 
   it('Should start up a node with only aggregator', async () => {
