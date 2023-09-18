@@ -190,11 +190,6 @@ export class POIMerkletree {
   }
 
   async insertLeaf(blindedCommitmentStartingIndex: number, nodeHash: string) {
-    if (this.isUpdating) {
-      return;
-    }
-    this.isUpdating = true;
-
     const { tree, index } = await this.getNextTreeAndIndex();
     const isValidIndex = POIMerkletree.validateBlindedCommitmentIndex(
       blindedCommitmentStartingIndex,
@@ -209,8 +204,6 @@ export class POIMerkletree {
     }
 
     await this.insertLeavesInTree(tree, index, [nodeHash]);
-
-    this.isUpdating = false;
   }
 
   async insertMultipleLeaves_TEST_ONLY(

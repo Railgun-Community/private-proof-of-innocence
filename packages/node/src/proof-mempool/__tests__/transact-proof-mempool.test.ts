@@ -14,6 +14,7 @@ import { ProofMempoolBloomFilter } from '../proof-mempool-bloom-filters';
 import { POIHistoricalMerklerootDatabase } from '../../database/databases/poi-historical-merkleroot-database';
 import { ListProviderPOIEventQueue } from '../../list-provider/list-provider-poi-event-queue';
 import { POIOrderedEventsDatabase } from '../../database/databases/poi-ordered-events-database';
+import { TransactProofMempoolPruner } from '../transact-proof-mempool-pruner';
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
@@ -248,5 +249,15 @@ describe('transact-proof-mempool', () => {
     expect(
       TransactProofMempoolCache.getTransactProofs(listKey, networkName).length,
     ).to.equal(2);
+
+    // Remove a proof and check cache
+    await TransactProofMempoolPruner.removeProof(
+      listKey,
+      networkName,
+      '0x3333',
+    );
+    expect(
+      TransactProofMempoolCache.getTransactProofs(listKey, networkName).length,
+    ).to.equal(1);
   }).timeout(10000);
 });

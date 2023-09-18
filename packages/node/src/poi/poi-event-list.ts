@@ -69,14 +69,14 @@ export class POIEventList {
     listKey: string,
     signedPOIEvent: SignedPOIEvent,
   ) {
-    const db = new POIOrderedEventsDatabase(networkName);
-    await db.insertValidSignedPOIEvent(listKey, signedPOIEvent);
-
     await POIMerkletreeManager.addPOIEvent(
       listKey,
       networkName,
       signedPOIEvent,
     );
+
+    const db = new POIOrderedEventsDatabase(networkName);
+    await db.insertValidSignedPOIEvent(listKey, signedPOIEvent);
 
     await TransactProofMempoolPruner.removeProof(
       listKey,

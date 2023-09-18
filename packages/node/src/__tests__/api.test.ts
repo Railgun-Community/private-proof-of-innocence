@@ -71,7 +71,7 @@ describe('api', function () {
     ]);
 
     if (body.forNetwork.Ethereum) {
-      expect(body.forNetwork.Ethereum.txidStatus).to.have.all.keys([
+      expect(body.forNetwork.Ethereum.txidStatus).to.have.keys([
         'currentTxidIndex',
         'currentMerkleroot',
         // 'validatedTxidIndex', - not necessarily available yet
@@ -80,7 +80,7 @@ describe('api', function () {
     }
 
     if (body.forNetwork.Ethereum_Goerli) {
-      expect(body.forNetwork.Ethereum_Goerli.txidStatus).to.have.all.keys([
+      expect(body.forNetwork.Ethereum_Goerli.txidStatus).to.have.keys([
         'currentTxidIndex',
         'currentMerkleroot',
         // 'validatedTxidIndex', - not necessarily available yet

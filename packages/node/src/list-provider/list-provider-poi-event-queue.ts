@@ -57,6 +57,10 @@ export class ListProviderPOIEventQueue {
     ListProviderPOIEventQueue.poll();
   }
 
+  static getPOIEventQueueLength(networkName: NetworkName): Optional<number> {
+    return this.poiEventQueue[networkName]?.length;
+  }
+
   static queueUnsignedPOIShieldEvent(
     networkName: NetworkName,
     shieldProofData: ShieldProofData,
@@ -113,92 +117,96 @@ export class ListProviderPOIEventQueue {
     );
   }
 
-  private static async addPOIEventsFromQueue(
-    networkName: NetworkName,
-  ): Promise<void> {
+  static async addPOIEventsFromQueue(networkName: NetworkName): Promise<void> {
     if (
       ListProviderPOIEventQueue.isAddingPOIEventForNetwork[networkName] === true
     ) {
       return;
     }
-
-    const orderedEventsDB = new POIOrderedEventsDatabase(networkName);
-    const lastAddedItem = await orderedEventsDB.getLastAddedItem(
-      ListProviderPOIEventQueue.listKey,
-    );
-    const nextIndex = lastAddedItem ? lastAddedItem.index + 1 : 0;
-    if (
-      nextIndex > 0 &&
-      nextIndex <= ListProviderPOIEventQueue.getMinimumNextAddIndex(networkName)
-    ) {
-      dbg(
-        'WARNING: Tried to add POI event while unsynced - risk of duplicate indices. Skipping until synced.',
-      );
-      return;
-    }
-
-    const queueForNetwork =
-      ListProviderPOIEventQueue.poiEventQueue[networkName];
-    if (!queueForNetwork || queueForNetwork.length === 0) {
-      return;
-    }
-
-    const poiEvent = queueForNetwork.shift();
-    if (!poiEvent) {
-      return;
-    }
-
-    if (
-      await orderedEventsDB.eventExists(
-        ListProviderPOIEventQueue.listKey,
-        poiEvent.blindedCommitments[0],
-      )
-    ) {
-      return;
-    }
-
     ListProviderPOIEventQueue.isAddingPOIEventForNetwork[networkName] = true;
 
-    const blindedCommitmentStartingIndex = lastAddedItem
-      ? lastAddedItem.blindedCommitmentStartingIndex +
-        lastAddedItem.blindedCommitments.length
-      : 0;
-
-    const unsignedPOIEvent: UnsignedPOIEvent = {
-      index: nextIndex,
-      blindedCommitmentStartingIndex,
-      blindedCommitments: poiEvent.blindedCommitments,
-      proof: poiEvent.proof,
-    };
-    const signature = await signPOIEvent(unsignedPOIEvent);
-    const signedPOIEvent: SignedPOIEvent = {
-      ...unsignedPOIEvent,
-      signature,
-    };
-
-    await POIEventList.addValidSignedPOIEvent(
-      networkName,
-      ListProviderPOIEventQueue.listKey,
-      signedPOIEvent,
-    );
-
-    if (poiEvent.type === POIEventType.Shield) {
-      const shieldQueueDB = new ShieldQueueDatabase(networkName);
-      const shieldQueueDBItem = await shieldQueueDB.getAllowedShieldByHash(
-        poiEvent.commitmentHash,
+    try {
+      const orderedEventsDB = new POIOrderedEventsDatabase(networkName);
+      const lastAddedItem = await orderedEventsDB.getLastAddedItem(
+        ListProviderPOIEventQueue.listKey,
       );
-      if (shieldQueueDBItem) {
-        await shieldQueueDB.updateShieldStatus(
-          shieldQueueDBItem,
-          ShieldStatus.AddedPOI,
+      const nextIndex = lastAddedItem ? lastAddedItem.index + 1 : 0;
+      if (
+        nextIndex > 0 &&
+        nextIndex <=
+          ListProviderPOIEventQueue.getMinimumNextAddIndex(networkName)
+      ) {
+        throw new Error(
+          'Tried to add POI event while unsynced - risk of duplicate indices. Skipping until synced.',
         );
       }
-    }
 
-    ListProviderPOIEventQueue.isAddingPOIEventForNetwork[networkName] = false;
+      const queueForNetwork =
+        ListProviderPOIEventQueue.poiEventQueue[networkName];
+      if (!queueForNetwork || queueForNetwork.length === 0) {
+        throw new Error('No events in queue');
+      }
 
-    if (queueForNetwork.length > 0) {
-      return ListProviderPOIEventQueue.addPOIEventsFromQueue(networkName);
+      const poiEvent = queueForNetwork[0];
+
+      if (
+        await orderedEventsDB.eventExists(
+          ListProviderPOIEventQueue.listKey,
+          poiEvent.blindedCommitments[0],
+        )
+      ) {
+        queueForNetwork.splice(0, 1);
+        throw new Error('Event already exists in database');
+      }
+
+      const blindedCommitmentStartingIndex = lastAddedItem
+        ? lastAddedItem.blindedCommitmentStartingIndex +
+          lastAddedItem.blindedCommitments.length
+        : 0;
+
+      const unsignedPOIEvent: UnsignedPOIEvent = {
+        index: nextIndex,
+        blindedCommitmentStartingIndex,
+        blindedCommitments: poiEvent.blindedCommitments,
+        proof: poiEvent.proof,
+      };
+      const signature = await signPOIEvent(unsignedPOIEvent);
+      const signedPOIEvent: SignedPOIEvent = {
+        ...unsignedPOIEvent,
+        signature,
+      };
+
+      await POIEventList.addValidSignedPOIEvent(
+        networkName,
+        ListProviderPOIEventQueue.listKey,
+        signedPOIEvent,
+      );
+
+      // Remove item
+      queueForNetwork.splice(0, 1);
+
+      if (poiEvent.type === POIEventType.Shield) {
+        const shieldQueueDB = new ShieldQueueDatabase(networkName);
+        const shieldQueueDBItem = await shieldQueueDB.getAllowedShieldByHash(
+          poiEvent.commitmentHash,
+        );
+        if (shieldQueueDBItem) {
+          await shieldQueueDB.updateShieldStatus(
+            shieldQueueDBItem,
+            ShieldStatus.AddedPOI,
+          );
+        }
+      }
+
+      ListProviderPOIEventQueue.isAddingPOIEventForNetwork[networkName] = false;
+
+      if (queueForNetwork.length > 0) {
+        return ListProviderPOIEventQueue.addPOIEventsFromQueue(networkName);
+      }
+    } catch (err) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      dbg('Error adding POI event from queue', err.message);
+      ListProviderPOIEventQueue.isAddingPOIEventForNetwork[networkName] = false;
     }
   }
 }
