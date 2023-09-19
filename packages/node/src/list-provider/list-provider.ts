@@ -18,7 +18,7 @@ import {
 import { Constants } from '../config/constants';
 import { ListProviderPOIEventQueue } from './list-provider-poi-event-queue';
 import { ListProviderPOIEventUpdater } from './list-provider-poi-event-updater';
-import { ShieldProofMempoolDatabase } from '../database/databases/shield-proof-mempool-database';
+import { POIEventShield, POIEventType } from '../models/poi-types';
 
 export type ListProviderConfig = {
   name: string;
@@ -133,12 +133,6 @@ export abstract class ListProvider {
     }
   }
 
-  // private static textForShieldData(shieldData: ShieldData): string {
-  //   return `${shieldData.txid} (${new Date(
-  //     shieldData.timestamp ?? 0,
-  //   ).toLocaleDateString()}`;
-  // }
-
   private async queueShieldSafe(
     networkName: NetworkName,
     shieldData: ShieldData,
@@ -191,10 +185,10 @@ export abstract class ListProvider {
 
   private async validateShield(
     networkName: NetworkName,
-    shieldData: ShieldQueueDBItem,
+    shieldDBItem: ShieldQueueDBItem,
     endTimestamp: number,
   ) {
-    const { txid } = shieldData;
+    const { txid } = shieldDBItem;
     try {
       const txReceipt = await getTransactionReceipt(networkName, txid);
       const timestamp = await getTimestampFromTransactionReceipt(
@@ -213,32 +207,30 @@ export abstract class ListProvider {
         timestamp,
       );
 
+      if (shouldAllow) {
+        // Add to the active POI list.
+
+        const poiEventShield: POIEventShield = {
+          type: POIEventType.Shield,
+          commitmentHash: shieldDBItem.commitmentHash,
+          blindedCommitment: shieldDBItem.blindedCommitment,
+        };
+        ListProviderPOIEventQueue.queueUnsignedPOIShieldEvent(
+          networkName,
+          poiEventShield,
+        );
+      }
+
       // Update status in DB
       const shieldQueueDB = new ShieldQueueDatabase(networkName);
       await shieldQueueDB.updateShieldStatus(
-        shieldData,
+        shieldDBItem,
         shouldAllow ? ShieldStatus.Allowed : ShieldStatus.Blocked,
       );
-
-      if (shouldAllow) {
-        // Try to add to the active POI list.
-        const shieldProofMempoolDB = new ShieldProofMempoolDatabase(
-          networkName,
-        );
-        const shieldProofData = await shieldProofMempoolDB.getShieldProof(
-          shieldData.hash,
-        );
-        if (shieldProofData) {
-          ListProviderPOIEventQueue.queueUnsignedPOIShieldEvent(
-            networkName,
-            shieldProofData,
-          );
-        }
-      }
     } catch (err) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       dbg(`Error validating queued shield on ${networkName}: ${err.message}`);
-      dbg(shieldData);
+      dbg(shieldDBItem);
     }
   }
 }

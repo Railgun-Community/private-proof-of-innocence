@@ -4,7 +4,6 @@ import { initNetworkProviders } from '../rpc-providers/active-network-providers'
 import { setOnMerkletreeScanCallback } from '@railgun-community/wallet';
 import { onMerkletreeScanCallback } from '../status/merkletree-scan-callback';
 import { DatabaseClient } from '../database/database-client-init';
-import { ShieldProofMempool } from '../proof-mempool/shield-proof-mempool';
 import { TransactProofMempool } from '../proof-mempool/transact-proof-mempool';
 import { POIMerkletreeManager } from '../poi/poi-merkletree-manager';
 import { Config } from '../config/config';
@@ -21,9 +20,6 @@ export const initModules = async () => {
   dbg('Setting up databases...');
   await DatabaseClient.init();
   await DatabaseClient.ensureDBIndicesAllChains();
-
-  dbg('Inflating Shield Proof mempool cache...');
-  await ShieldProofMempool.inflateCacheFromDatabase();
 
   dbg('Inflating Transact Proof mempool cache...');
   await TransactProofMempool.inflateCacheFromDatabase();

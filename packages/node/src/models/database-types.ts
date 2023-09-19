@@ -23,13 +23,15 @@ export enum CollectionName {
   ShieldQueue = 'ShieldQueue',
 
   // Proof mempools
-  ShieldProofMempool = 'ShieldProofMempool',
   TransactProofPerListMempool = 'TransactProofPerListMempool',
 
   // POI databases
   POIOrderedEvents = 'POIOrderedEvents',
   POIMerkletree = 'POIMerkletree',
   POIHistoricalMerkleroots = 'POIHistoricalMerkleroots',
+
+  // Blocked shields
+  // BlockedShieldsPerList = 'BlockedShieldsPerList',
 
   // Test
   Test = 'Test',
@@ -50,11 +52,15 @@ export enum ShieldStatus {
 // DO NOT CHANGE FIELDS WITHOUT CLEARING OR MIGRATING THE DB.
 export type ShieldQueueDBItem = {
   txid: string;
-  hash: string;
+  commitmentHash: string;
+  blindedCommitment: string;
+  npk: string;
   timestamp: number;
   status: ShieldStatus;
   lastValidatedTimestamp: DBOptional<number>;
   blockNumber: number;
+  utxoTree: number;
+  utxoIndex: number;
 };
 
 export type StatusDBItem = {
@@ -91,7 +97,7 @@ export type POIOrderedEventDBItem = {
   blindedCommitmentStartingIndex: number;
   blindedCommitments: string[];
   firstBlindedCommitment: string;
-  proof: SnarkProof;
+  proof: DBOptional<SnarkProof>;
   signature: string;
 };
 

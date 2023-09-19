@@ -5,34 +5,26 @@ export enum POIEventType {
   Transact = 'Transact',
 }
 
-type POIEventShared = {
-  blindedCommitments: string[];
-  proof: SnarkProof;
-};
-
-export type POIEventShield = POIEventShared & {
+export type POIEventShield = {
   type: POIEventType.Shield;
+  blindedCommitment: string;
   commitmentHash: string;
 };
 
-export type POIEventTransact = POIEventShared & {
+export type POIEventTransact = {
   type: POIEventType.Transact;
-  firstBlindedCommitment: string;
+  blindedCommitments: string[];
+  proof: SnarkProof;
 };
 
 export type POIEvent = POIEventShield | POIEventTransact;
 
-export type UnsignedPOIEvent = {
+export type SignedPOIEvent = {
   index: number;
   blindedCommitmentStartingIndex: number;
   blindedCommitments: string[];
-  proof: SnarkProof;
-};
-
-export type SignedPOIEvent = UnsignedPOIEvent & {
-  index: number;
-  blindedCommitmentStartingIndex: number;
-  blindedCommitments: string[];
-  proof: SnarkProof;
   signature: string;
+
+  // Only for Transact events
+  proof: Optional<SnarkProof>;
 };

@@ -10,10 +10,8 @@ import { POINodeRequest } from '../api/poi-node-request';
 import { RailgunTxidMerkletreeManager } from '../railgun-txids/railgun-txid-merkletree-manager';
 import { POIEventList } from '../poi/poi-event-list';
 import { QueryLimits } from '../config/query-limits';
-import { ShieldProofMempool } from '../proof-mempool/shield-proof-mempool';
 import { TransactProofMempool } from '../proof-mempool/transact-proof-mempool';
 import { PollStatus } from '../models/general-types';
-import { ShieldProofMempoolCache } from '../proof-mempool/shield-proof-mempool-cache';
 import { TransactProofMempoolCache } from '../proof-mempool/transact-proof-mempool-cache';
 
 const dbg = debug('poi:sync');
@@ -55,12 +53,6 @@ export class RoundRobinSyncer {
 
       await this.updatePOIEventListAllNetworks(nodeURL, nodeStatusAllNetworks);
       dbg('Synced: POI Event Lists');
-
-      await this.updateShieldProofMempoolsAllNetworks(
-        nodeURL,
-        nodeStatusAllNetworks,
-      );
-      dbg('Synced: Shield Proof Mempools');
 
       await this.updateTransactProofMempoolsAllNetworks(
         nodeURL,
@@ -176,35 +168,6 @@ export class RoundRobinSyncer {
     dbg(
       `Synced ${signedPOIEvents.length} POI events to list ${listKey} for network ${networkName}`,
     );
-  }
-
-  async updateShieldProofMempoolsAllNetworks(
-    nodeURL: string,
-    nodeStatusAllNetworks: NodeStatusAllNetworks,
-  ) {
-    for (const networkName of Config.NETWORK_NAMES) {
-      const nodeStatus = nodeStatusAllNetworks.forNetwork[networkName];
-      if (!nodeStatus) {
-        continue;
-      }
-      await this.updateShieldProofMempool(nodeURL, networkName);
-    }
-  }
-
-  private async updateShieldProofMempool(
-    nodeURL: string,
-    networkName: NetworkName,
-  ) {
-    const serializedBloomFilter =
-      ShieldProofMempoolCache.serializeBloomFilter(networkName);
-    const shieldProofs = await POINodeRequest.getFilteredShieldProofs(
-      nodeURL,
-      networkName,
-      serializedBloomFilter,
-    );
-    for (const shieldProof of shieldProofs) {
-      await ShieldProofMempool.submitProof(networkName, shieldProof);
-    }
   }
 
   async updateTransactProofMempoolsAllNetworks(

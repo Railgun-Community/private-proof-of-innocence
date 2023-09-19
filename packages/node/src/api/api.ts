@@ -5,7 +5,6 @@ import debug from 'debug';
 import { Server } from 'http';
 import { POIEventList } from '../poi/poi-event-list';
 import { networkNameForSerializedChain } from '../config/general';
-import { ShieldProofMempool } from '../proof-mempool/shield-proof-mempool';
 import { TransactProofMempool } from '../proof-mempool/transact-proof-mempool';
 import { POIMerkletreeManager } from '../poi/poi-merkletree-manager';
 import { getShieldQueueStatus } from '../shield-queue/shield-queue';
@@ -15,9 +14,7 @@ import { NodeStatus } from '../status/node-status';
 import { Config } from '../config/config';
 import {
   NodeStatusAllNetworks,
-  GetShieldProofsParams,
   GetTransactProofsParams,
-  SubmitShieldProofParams,
   SubmitTransactProofParams,
   GetPOIsPerListParams,
   GetMerkleProofsParams,
@@ -178,22 +175,6 @@ export class API {
     );
 
     this.safePost(
-      '/shield-proofs/:chainType/:chainID',
-      async (req: Request, res: Response) => {
-        const { chainType, chainID } = req.params;
-        const { bloomFilterSerialized } = req.body as GetShieldProofsParams;
-
-        const networkName = networkNameForSerializedChain(chainType, chainID);
-
-        const proofs = await ShieldProofMempool.getFilteredProofs(
-          networkName,
-          bloomFilterSerialized,
-        );
-        res.json(proofs);
-      },
-    );
-
-    this.safePost(
       '/transact-proofs/:chainType/:chainID/:listKey',
       async (req: Request, res: Response) => {
         const { chainType, chainID, listKey } = req.params;
@@ -213,19 +194,6 @@ export class API {
   }
 
   private addClientRoutes() {
-    this.safePost(
-      '/submit-shield-proof/:chainType/:chainID',
-      async (req: Request, res: Response) => {
-        const { chainType, chainID } = req.params;
-        const { shieldProofData } = req.body as SubmitShieldProofParams;
-
-        const networkName = networkNameForSerializedChain(chainType, chainID);
-
-        await ShieldProofMempool.submitProof(networkName, shieldProofData);
-        res.status(200);
-      },
-    );
-
     this.safePost(
       '/submit-transact-proof/:chainType/:chainID',
       async (req: Request, res: Response) => {

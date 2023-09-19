@@ -9,7 +9,6 @@ import { ShieldQueueDatabase } from './databases/shield-queue-database';
 import { StatusDatabase } from './databases/status-database';
 import { CollectionName } from '../models/database-types';
 import { AbstractDatabase } from './abstract-database';
-import { ShieldProofMempoolDatabase } from './databases/shield-proof-mempool-database';
 import { TransactProofPerListMempoolDatabase } from './databases/transact-proof-per-list-mempool-database';
 import { POIOrderedEventsDatabase } from './databases/poi-ordered-events-database';
 import { POIMerkletreeDatabase } from './databases/poi-merkletree-database';
@@ -55,9 +54,6 @@ export class DatabaseClient {
               case CollectionName.ShieldQueue:
                 db = new ShieldQueueDatabase(networkName);
                 break;
-              case CollectionName.ShieldProofMempool:
-                db = new ShieldProofMempoolDatabase(networkName);
-                break;
               case CollectionName.TransactProofPerListMempool:
                 db = new TransactProofPerListMempoolDatabase(networkName);
                 break;
@@ -77,7 +73,9 @@ export class DatabaseClient {
                 db = new TestDatabase(networkName);
                 break;
               default:
-                throw new Error(`Unsupported collection name: ${collectionName}`);
+                throw new Error(
+                  `Unsupported collection name: ${collectionName}`,
+                );
             }
 
             await db.createCollectionIndices();

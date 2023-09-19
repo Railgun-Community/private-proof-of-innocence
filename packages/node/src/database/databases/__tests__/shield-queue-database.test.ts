@@ -1,3 +1,4 @@
+/// <reference types="../../../types/index" />
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { NetworkName } from '@railgun-community/shared-models';
@@ -10,6 +11,7 @@ import {
 } from '../../../models/database-types';
 import { daysAgo } from '../../../tests/util.test';
 import { getShieldQueueStatus } from '../../../shield-queue/shield-queue';
+import { calculateShieldBlindedCommitment } from '../../../util/shield-blinded-commitment';
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
@@ -38,9 +40,19 @@ describe('shield-queue-database', () => {
       return 'key' in index && 'txid' in index.key;
     });
 
-    // Check if an index exists for the 'hash' field with a unique constraint
-    const hashIndexExists = indexes.some((index) => {
-      return 'key' in index && 'hash' in index.key && index.unique === true;
+    // Check if an index exists for the 'commitmentHash' field with a unique constraint
+    const commitmentHashIndexExists = indexes.some((index) => {
+      return 'key' in index && 'commitmentHash' in index.key;
+    });
+
+    // Check if an index exists for the 'utxoTree' and 'utxoIndex' field with a unique constraint
+    const utxoTreeAndIndexIndexExists = indexes.some((index) => {
+      return (
+        'key' in index &&
+        'utxoTree' in index.key &&
+        'utxoIndex' in index.key &&
+        index.unique === true
+      );
     });
 
     // Check if an index exists for the 'timestamp' field
@@ -55,7 +67,8 @@ describe('shield-queue-database', () => {
 
     // Assert that each index exists
     expect(txidIndexExists).to.equal(true);
-    expect(hashIndexExists).to.equal(true);
+    expect(commitmentHashIndexExists).to.equal(true);
+    expect(utxoTreeAndIndexIndexExists).to.equal(true);
     expect(timestampIndexExists).to.equal(true);
     expect(statusIndexExists).to.equal(true);
   });
@@ -68,32 +81,42 @@ describe('shield-queue-database', () => {
 
     const pendingShield1: ShieldData = {
       txid: '0x1234',
-      hash: '0x5678',
+      commitmentHash: '0x5678',
+      npk: '0x0000',
       timestamp: now,
       blockNumber: 123456,
+      utxoTree: 0,
+      utxoIndex: 5,
     };
     await db.insertPendingShield(pendingShield1);
 
     const tenDaysAgo = daysAgo(10);
     const pendingShield2: ShieldData = {
       txid: '0x9876',
-      hash: '0x5432',
+      commitmentHash: '0x5432',
+      npk: '0x0000',
       timestamp: tenDaysAgo,
       blockNumber: 123456,
+      utxoTree: 0,
+      utxoIndex: 6,
     };
     await db.insertPendingShield(pendingShield2);
 
     // Will skip insert because timestamp is undefined
     const pendingShield3: ShieldData = {
       txid: '0x123456',
-      hash: '0x567890',
+      commitmentHash: '0x567890',
+      npk: '0x0000',
       timestamp: undefined,
       blockNumber: 123436,
+      utxoTree: 0,
+      utxoIndex: 7,
     };
     await db.insertPendingShield(pendingShield3);
 
     const shieldQueueItem2: ShieldQueueDBItem = {
       ...pendingShield2,
+      blindedCommitment: calculateShieldBlindedCommitment(pendingShield2),
       timestamp: tenDaysAgo,
       status: ShieldStatus.Pending,
       lastValidatedTimestamp: null,
@@ -131,7 +154,10 @@ describe('shield-queue-database', () => {
     const tenDaysAgo = Date.now() - 10 * 24 * 60 * 60 * 1000;
     const pendingShieldExpired: ShieldData = {
       txid: '0x9876',
-      hash: '0x5432',
+      commitmentHash: '0x5432',
+      npk: '0x0000',
+      utxoTree: 0,
+      utxoIndex: 5,
       timestamp: tenDaysAgo,
       blockNumber: 123436,
     };
@@ -139,11 +165,15 @@ describe('shield-queue-database', () => {
 
     const shieldQueueItemExpired: ShieldQueueDBItem = {
       txid: '0x9876',
-      hash: '0x5432',
+      commitmentHash: '0x5432',
+      blindedCommitment: calculateShieldBlindedCommitment(pendingShieldExpired),
+      npk: '0x0000',
       timestamp: tenDaysAgo,
       status: ShieldStatus.Pending,
       lastValidatedTimestamp: null,
       blockNumber: 123436,
+      utxoTree: 0,
+      utxoIndex: 5,
     };
     await expect(db.getPendingShields(daysAgo(7))).to.eventually.deep.equal([
       shieldQueueItemExpired,
@@ -184,7 +214,10 @@ describe('shield-queue-database', () => {
     // Insert pending shields with different timestamps
     const pendingShield1: ShieldData = {
       txid: '0x1234',
-      hash: '0x5678',
+      commitmentHash: '0x5678',
+      npk: '0x0000',
+      utxoTree: 0,
+      utxoIndex: 5,
       timestamp: Date.now() - 2000, // 2 seconds ago
       blockNumber: 123456,
     };
@@ -192,18 +225,24 @@ describe('shield-queue-database', () => {
 
     const pendingShield2: ShieldData = {
       txid: '0x9876',
-      hash: '0x5432',
+      commitmentHash: '0x5432',
+      npk: '0x0000',
+      utxoTree: 0,
+      utxoIndex: 6,
       timestamp: Date.now() - 1000, // 1 second ago
       blockNumber: 123456,
     };
     await db.insertPendingShield(pendingShield2);
 
     // Get the latest pending shield
-    const latestPendingShield = await db.getLatestPendingShield();
+    const latestPendingShield: Optional<ShieldQueueDBItem> =
+      await db.getLatestPendingShield();
 
     // Validate returned shield is latest one based on timestamp
     expect(latestPendingShield?.txid).to.equal(pendingShield2.txid);
-    expect(latestPendingShield?.hash).to.equal(pendingShield2.hash);
+    expect(latestPendingShield?.commitmentHash).to.equal(
+      pendingShield2.commitmentHash,
+    );
     expect(latestPendingShield?.timestamp).to.equal(pendingShield2.timestamp);
 
     // Delete all pending shields

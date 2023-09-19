@@ -1,8 +1,9 @@
-import { NetworkName, delay , TransactProofData } from '@railgun-community/shared-models';
+import {
+  NetworkName,
+  delay,
+  TransactProofData,
+} from '@railgun-community/shared-models';
 import { Config } from '../config/config';
-import { ListProviderPOIEventQueue } from './list-provider-poi-event-queue';
-import { ShieldProofMempool } from '../proof-mempool/shield-proof-mempool';
-import { ShieldQueueDatabase } from '../database/databases/shield-queue-database';
 import { TransactProofMempool } from '../proof-mempool/transact-proof-mempool';
 import { TransactProofPerListMempoolDatabase } from '../database/databases/transact-proof-per-list-mempool-database';
 
@@ -22,34 +23,14 @@ export class ListProviderPOIEventUpdater {
 
   private static async poll() {
     for (const networkName of Config.NETWORK_NAMES) {
-      await this.addPOIEventsForShields(networkName);
       await this.addPOIEventsForTransacts(networkName);
     }
 
-    // Run every 30 minutes
-    await delay(30 * 60 * 1000);
+    // Run every 10 minutes
+    await delay(10 * 60 * 1000);
 
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.poll();
-  }
-
-  private static async addPOIEventsForShields(networkName: NetworkName) {
-    const shieldQueueDB = new ShieldQueueDatabase(networkName);
-    const allowedShieldsStream = await shieldQueueDB.streamAllowedShields();
-
-    for await (const { hash } of allowedShieldsStream) {
-      const shieldProofData =
-        await ShieldProofMempool.getShieldProofDataForCommitmentHash(
-          networkName,
-          hash,
-        );
-      if (shieldProofData) {
-        ListProviderPOIEventQueue.queueUnsignedPOIShieldEvent(
-          networkName,
-          shieldProofData,
-        );
-      }
-    }
   }
 
   private static async addPOIEventsForTransacts(networkName: NetworkName) {

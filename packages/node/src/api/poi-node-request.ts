@@ -1,9 +1,7 @@
 import {
   NETWORK_CONFIG,
   NetworkName,
-  ShieldProofData,
   TransactProofData,
-  GetShieldProofsParams,
   GetTransactProofsParams,
   NodeStatusAllNetworks,
   ValidateTxidMerklerootParams,
@@ -97,24 +95,6 @@ export class POINodeRequest {
 
     const poiEvents = await POINodeRequest.getRequest<SignedPOIEvent[]>(url);
     return poiEvents;
-  };
-
-  static getFilteredShieldProofs = async (
-    nodeURL: string,
-    networkName: NetworkName,
-    bloomFilterSerialized: string,
-  ) => {
-    const chain = NETWORK_CONFIG[networkName].chain;
-    const route = `shield-proofs/${chain.type}/${chain.id}`;
-    const url = POINodeRequest.getNodeRouteURL(nodeURL, route);
-
-    const shieldProofs = await POINodeRequest.postRequest<
-      GetShieldProofsParams,
-      ShieldProofData[]
-    >(url, {
-      bloomFilterSerialized,
-    });
-    return shieldProofs;
   };
 
   static getFilteredTransactProofs = async (

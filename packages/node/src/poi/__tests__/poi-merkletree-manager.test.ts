@@ -1,17 +1,12 @@
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import {
-  NetworkName,
-  ShieldProofData,
-  POIStatus,
-} from '@railgun-community/shared-models';
+import { NetworkName, POIStatus } from '@railgun-community/shared-models';
 import { DatabaseClient } from '../../database/database-client-init';
 import { POIMerkletreeManager } from '../poi-merkletree-manager';
 import { POIMerkletreeDatabase } from '../../database/databases/poi-merkletree-database';
 import { MOCK_LIST_KEYS } from '../../tests/mocks.test';
 import { SignedPOIEvent } from '../../models/poi-types';
 import { Config } from '../../config/config';
-import { ShieldProofMempoolDatabase } from '../../database/databases/shield-proof-mempool-database';
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
@@ -19,7 +14,6 @@ const { expect } = chai;
 const networkName = NetworkName.Ethereum;
 
 let merkletreeDB: POIMerkletreeDatabase;
-let shieldProofDB: ShieldProofMempoolDatabase;
 
 const listKey = MOCK_LIST_KEYS[0];
 
@@ -28,19 +22,16 @@ describe('poi-merkletree-manager', () => {
     await DatabaseClient.init();
 
     merkletreeDB = new POIMerkletreeDatabase(networkName);
-    shieldProofDB = new ShieldProofMempoolDatabase(networkName);
 
     POIMerkletreeManager.initListMerkletrees(MOCK_LIST_KEYS);
   });
 
   beforeEach(async () => {
     await merkletreeDB.deleteAllItems_DANGEROUS();
-    await shieldProofDB.deleteAllItems_DANGEROUS();
   });
 
   afterEach(async () => {
     await merkletreeDB.deleteAllItems_DANGEROUS();
-    await shieldProofDB.deleteAllItems_DANGEROUS();
   });
 
   it('Should add event to POI merkletree and get updated merkle proofs', async () => {
@@ -89,11 +80,6 @@ describe('poi-merkletree-manager', () => {
       },
     ]);
 
-    // Should be "Pending" rather than "Missing"
-    await shieldProofDB.insertShieldProof({
-      blindedCommitment: '0x1111111',
-    } as ShieldProofData);
-
     const poiStatusPerList = await POIMerkletreeManager.getPOIStatusPerList(
       Config.LIST_KEYS,
       networkName,
@@ -103,12 +89,12 @@ describe('poi-merkletree-manager', () => {
       [MOCK_LIST_KEYS[0]]: [
         POIStatus.Valid,
         POIStatus.Valid,
-        POIStatus.Pending,
+        POIStatus.Missing,
       ],
       [MOCK_LIST_KEYS[1]]: [
         POIStatus.Missing,
         POIStatus.Missing,
-        POIStatus.Pending,
+        POIStatus.Missing,
       ],
     });
   });

@@ -1,6 +1,6 @@
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import { NetworkName, ShieldProofData } from '@railgun-community/shared-models';
+import { NetworkName } from '@railgun-community/shared-models';
 import * as WalletModule from '../../engine/wallet';
 import * as TxReceiptModule from '../../rpc-providers/tx-receipt';
 import { ShieldData } from '@railgun-community/wallet';
@@ -15,10 +15,9 @@ import { TransactionReceipt } from 'ethers';
 import {
   MOCK_EXCLUDED_ADDRESS_1,
   MOCK_LIST_KEYS,
-  MOCK_SNARK_PROOF,
 } from '../../tests/mocks.test';
 import { ListProviderPOIEventQueue } from '../list-provider-poi-event-queue';
-import { ShieldProofMempoolDatabase } from '../../database/databases/shield-proof-mempool-database';
+import { calculateShieldBlindedCommitment } from '../../util/shield-blinded-commitment';
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
@@ -58,15 +57,21 @@ describe('list-provider', () => {
     const shieldDatas: ShieldData[] = [
       {
         txid: '0x1234',
-        hash: '0x2345',
+        commitmentHash: '0x2345',
+        npk: '0x3456',
         timestamp: 1662421336, // Sept 5, 2022
         blockNumber: 123436,
+        utxoTree: 0,
+        utxoIndex: 3,
       },
       {
         txid: '0x5678',
-        hash: '0x6789',
+        commitmentHash: '0x6789',
+        npk: '0x7890',
         timestamp: Date.now(),
         blockNumber: 123436,
+        utxoTree: 0,
+        utxoIndex: 4,
       },
     ];
     createStubGetAllShields(shieldDatas);
@@ -75,11 +80,15 @@ describe('list-provider', () => {
 
     const pendingShield: ShieldQueueDBItem = {
       txid: '0x1234',
-      hash: '0x2345',
+      commitmentHash: '0x2345',
+      blindedCommitment: calculateShieldBlindedCommitment(shieldDatas[0]),
+      npk: '0x3456',
       timestamp: 1662421336, // Sept 5, 2022
       status: ShieldStatus.Pending,
       lastValidatedTimestamp: null,
       blockNumber: 123436,
+      utxoTree: 0,
+      utxoIndex: 3,
     };
     await expect(db.getPendingShields(daysAgo(7))).to.eventually.deep.equal([
       pendingShield,
@@ -91,16 +100,22 @@ describe('list-provider', () => {
       // will be Allowed
       {
         txid: '0x1234',
-        hash: '0x2345',
+        commitmentHash: '0x2345',
+        npk: '0x3456',
         timestamp: 1662421336, // Sept 5, 2022
         blockNumber: 123436,
+        utxoTree: 0,
+        utxoIndex: 3,
       },
       // will be Blocked
       {
         txid: '0x5678',
-        hash: '0x6789',
+        commitmentHash: '0x6789',
+        npk: '0x7890',
         timestamp: 1662421336, // Sept 5, 2022
         blockNumber: 123436,
+        utxoTree: 0,
+        utxoIndex: 4,
       },
     ];
     createStubGetAllShields(shieldDatas);
@@ -139,14 +154,6 @@ describe('list-provider', () => {
       'queueUnsignedPOIShieldEvent',
     );
 
-    const shieldProofData: ShieldProofData = {
-      snarkProof: MOCK_SNARK_PROOF,
-      commitmentHash: '0x2345',
-      blindedCommitment: '0x6789',
-    };
-    const shieldProofMempoolDB = new ShieldProofMempoolDatabase(networkName);
-    await shieldProofMempoolDB.insertShieldProof(shieldProofData);
-
     await listProvider.validateNextQueuedShieldBatch(networkName);
 
     const allowedShields = await db.getAllowedShields();
@@ -162,12 +169,17 @@ describe('list-provider', () => {
 
     expect(allowedShields).to.deep.equal([
       {
+        blindedCommitment:
+          '0x0d6e051528e88dc8b83719af8a7dd08583bf56222adc215d8c70c6b9f430034c',
+        commitmentHash: '0x2345',
         txid: '0x1234',
-        hash: '0x2345',
+        npk: '0x3456',
         timestamp: 1662421336,
         status: ShieldStatus.Allowed,
         lastValidatedTimestamp: null,
         blockNumber: 123436,
+        utxoTree: 0,
+        utxoIndex: 3,
       },
     ]);
 
@@ -176,6 +188,5 @@ describe('list-provider', () => {
 
     expect(listProviderEventQueueSpy.calledOnce).to.equal(true);
     listProviderEventQueueSpy.restore();
-    await shieldProofMempoolDB.deleteAllItems_DANGEROUS();
   });
 });

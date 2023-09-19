@@ -10,6 +10,7 @@ import {
 } from '../../models/database-types';
 import { AbstractDatabase } from '../abstract-database';
 import { ShieldData } from '@railgun-community/wallet';
+import { calculateShieldBlindedCommitment } from '../../util/shield-blinded-commitment';
 
 export class ShieldQueueDatabase extends AbstractDatabase<ShieldQueueDBItem> {
   constructor(networkName: NetworkName) {
@@ -18,7 +19,9 @@ export class ShieldQueueDatabase extends AbstractDatabase<ShieldQueueDBItem> {
 
   async createCollectionIndices() {
     await this.createIndex(['txid']);
-    await this.createIndex(['hash'], { unique: true });
+    await this.createIndex(['commitmentHash']);
+    await this.createIndex(['blindedCommitment'], { unique: true });
+    await this.createIndex(['utxoTree', 'utxoIndex'], { unique: true });
     await this.createIndex(['timestamp']);
     await this.createIndex(['status']);
   }
@@ -27,9 +30,14 @@ export class ShieldQueueDatabase extends AbstractDatabase<ShieldQueueDBItem> {
     if (!isDefined(shieldData.timestamp)) {
       return;
     }
+    const blindedCommitment = calculateShieldBlindedCommitment(shieldData);
     const storedData: ShieldQueueDBItem = {
       txid: shieldData.txid.toLowerCase(),
-      hash: shieldData.hash.toLowerCase(),
+      commitmentHash: shieldData.commitmentHash.toLowerCase(),
+      blindedCommitment,
+      npk: shieldData.npk,
+      utxoTree: shieldData.utxoTree,
+      utxoIndex: shieldData.utxoIndex,
       timestamp: shieldData.timestamp,
       status: ShieldStatus.Pending,
       lastValidatedTimestamp: undefined,
@@ -39,11 +47,11 @@ export class ShieldQueueDatabase extends AbstractDatabase<ShieldQueueDBItem> {
   }
 
   async commitmentHashExists(
-    hash: string,
+    commitmentHash: string,
     status?: ShieldStatus,
   ): Promise<boolean> {
     const filter: DBFilter<ShieldQueueDBItem> = {
-      hash,
+      commitmentHash,
       status,
     };
     return this.exists(filter);
@@ -55,7 +63,7 @@ export class ShieldQueueDatabase extends AbstractDatabase<ShieldQueueDBItem> {
   ): Promise<void> {
     const filter: DBFilter<ShieldQueueDBItem> = {
       txid: shieldQueueDBItem.txid,
-      hash: shieldQueueDBItem.hash,
+      commitmentHash: shieldQueueDBItem.commitmentHash,
     };
     const replacement: ShieldQueueDBItem = {
       ...shieldQueueDBItem,
@@ -81,12 +89,12 @@ export class ShieldQueueDatabase extends AbstractDatabase<ShieldQueueDBItem> {
     return this.findAll(filter, sort, max, undefined, limit);
   }
 
-  async getAllowedShieldByHash(
-    hash: string,
+  async getAllowedShieldByCommitmentHash(
+    commitmentHash: string,
   ): Promise<Optional<ShieldQueueDBItem>> {
     const filter: DBFilter<ShieldQueueDBItem> = {
       status: ShieldStatus.Allowed,
-      hash,
+      commitmentHash,
     };
     return this.findOne(filter);
   }

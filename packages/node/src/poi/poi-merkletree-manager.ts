@@ -8,7 +8,6 @@ import {
 import { Config } from '../config/config';
 import { POIMerkletree } from './poi-merkletree';
 import { SignedPOIEvent } from '../models/poi-types';
-import { ShieldProofMempoolDatabase } from '../database/databases/shield-proof-mempool-database';
 
 export class POIMerkletreeManager {
   private static merkletrees: Record<
@@ -111,16 +110,17 @@ export class POIMerkletreeManager {
       return POIStatus.Valid;
     }
 
-    const shieldProofDB = new ShieldProofMempoolDatabase(networkName);
-    const pendingShieldProofExists =
-      await shieldProofDB.getShieldProofForBlindedCommitment(blindedCommitment);
-    if (pendingShieldProofExists) {
-      return POIStatus.Pending;
-    }
+    // TODO: Check if shield exists.
+    // POIStatus.ShieldPending
 
-    // TODO: How do we check if pending transact proof exists?
+    // TODO: How do we check if transact proof exists?
+    // POIStatus.TransactProofSubmitted
 
-    // TODO: We should have status for transaction blocked.
+    // TODO: Blocked DB
+    // const isBlocked = await blockedDB.shieldBlockedByList(listKey);
+    // if (isBlocked) {
+    //   return POIStatus.Blocked;
+    // }
 
     return POIStatus.Missing;
   }

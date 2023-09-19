@@ -42,7 +42,7 @@ export class POIEventList {
         index,
         blindedCommitmentStartingIndex,
         blindedCommitments,
-        proof,
+        proof: proof ?? undefined,
         signature,
       };
     });

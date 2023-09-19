@@ -1,8 +1,12 @@
 import { getPublicKey, sign, verify } from '@noble/ed25519';
-import { utf8ToBytes } from '@noble/hashes/utils';
-import { isDefined } from '@railgun-community/shared-models';
+import { SnarkProof, isDefined } from '@railgun-community/shared-models';
 import { bytesToHex, hexStringToBytes } from '@railgun-community/wallet';
-import { SignedPOIEvent, UnsignedPOIEvent } from '../models/poi-types';
+import {
+  POIEventShield,
+  POIEventTransact,
+  SignedPOIEvent,
+} from '../models/poi-types';
+import { utf8ToBytes } from '@noble/hashes/utils';
 
 const getPKey = (): Uint8Array => {
   const pkey = process.env.pkey;
@@ -14,25 +18,53 @@ const getPKey = (): Uint8Array => {
   return hexStringToBytes(pkey);
 };
 
-const getPOIEventMessage = (unsignedPOIEvent: UnsignedPOIEvent) => {
-  return utf8ToBytes(
-    JSON.stringify({
-      index: unsignedPOIEvent.index,
-      blindedCommitmentStartingIndex:
-        unsignedPOIEvent.blindedCommitmentStartingIndex,
-      blindedCommitments: unsignedPOIEvent.blindedCommitments,
-      proof: unsignedPOIEvent.proof,
-    }),
-  );
-};
-
-export const signPOIEvent = async (
-  unsignedPOIEvent: UnsignedPOIEvent,
-): Promise<string> => {
+export const signMessage = async (message: Uint8Array): Promise<string> => {
   const pkey = getPKey();
-  const message = getPOIEventMessage(unsignedPOIEvent);
   const signatureUint8Array = await sign(message, pkey);
   return bytesToHex(signatureUint8Array);
+};
+
+export const signPOIEventTransact = async (
+  index: number,
+  blindedCommitmentStartingIndex: number,
+  poiEventTransact: POIEventTransact,
+): Promise<string> => {
+  const message = getPOIEventMessage(
+    index,
+    blindedCommitmentStartingIndex,
+    poiEventTransact.blindedCommitments,
+    poiEventTransact.proof,
+  );
+  return signMessage(message);
+};
+
+export const signPOIEventShield = async (
+  index: number,
+  blindedCommitmentStartingIndex: number,
+  poiEventShield: POIEventShield,
+): Promise<string> => {
+  const message = getPOIEventMessage(index, blindedCommitmentStartingIndex, [
+    poiEventShield.blindedCommitment,
+  ]);
+  return signMessage(message);
+};
+
+const getPOIEventMessage = (
+  index: number,
+  blindedCommitmentStartingIndex: number,
+  blindedCommitments: string[],
+  proof?: SnarkProof,
+): Uint8Array => {
+  const data = {
+    index,
+    blindedCommitmentStartingIndex,
+    blindedCommitments,
+  };
+  if (proof) {
+    // @ts-expect-error
+    data.proof = proof;
+  }
+  return utf8ToBytes(JSON.stringify(data));
 };
 
 export const verifyPOIEvent = async (
@@ -40,7 +72,12 @@ export const verifyPOIEvent = async (
   publicKey: string,
 ): Promise<boolean> => {
   try {
-    const message = getPOIEventMessage(signedPOIEvent);
+    const message = getPOIEventMessage(
+      signedPOIEvent.index,
+      signedPOIEvent.blindedCommitmentStartingIndex,
+      signedPOIEvent.blindedCommitments,
+      signedPOIEvent.proof,
+    );
     return await verify(signedPOIEvent.signature, message, publicKey);
   } catch (err) {
     return false;

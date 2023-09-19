@@ -2,20 +2,17 @@ import {
   NetworkName,
   delay,
   isDefined,
-
-  ShieldProofData,
-  SnarkProof,
-  TransactProofData} from '@railgun-community/shared-models';
+  TransactProofData,
+} from '@railgun-community/shared-models';
 import {
   POIEvent,
   POIEventShield,
   POIEventTransact,
   POIEventType,
   SignedPOIEvent,
-  UnsignedPOIEvent,
 } from '../models/poi-types';
 import { POIOrderedEventsDatabase } from '../database/databases/poi-ordered-events-database';
-import { signPOIEvent } from '../util/ed25519';
+import { signPOIEventShield, signPOIEventTransact } from '../util/ed25519';
 import { POIEventList } from '../poi/poi-event-list';
 import { Config } from '../config/config';
 import { ShieldQueueDatabase } from '../database/databases/shield-queue-database';
@@ -65,15 +62,9 @@ export class ListProviderPOIEventQueue {
 
   static queueUnsignedPOIShieldEvent(
     networkName: NetworkName,
-    shieldProofData: ShieldProofData,
+    poiEventShield: POIEventShield,
   ) {
-    const poiEvent: POIEventShield = {
-      type: POIEventType.Shield,
-      blindedCommitments: [shieldProofData.blindedCommitment],
-      proof: shieldProofData.snarkProof,
-      commitmentHash: shieldProofData.commitmentHash,
-    };
-    return ListProviderPOIEventQueue.queuePOIEvent(networkName, poiEvent);
+    return ListProviderPOIEventQueue.queuePOIEvent(networkName, poiEventShield);
   }
 
   static queueUnsignedPOITransactEvent(
@@ -83,10 +74,18 @@ export class ListProviderPOIEventQueue {
     const poiEvent: POIEventTransact = {
       type: POIEventType.Transact,
       blindedCommitments: transactProofData.blindedCommitmentOutputs,
-      firstBlindedCommitment: transactProofData.blindedCommitmentOutputs[0],
       proof: transactProofData.snarkProof,
     };
     return ListProviderPOIEventQueue.queuePOIEvent(networkName, poiEvent);
+  }
+
+  private static getPOIEventFirstBlindedCommitment(poiEvent: POIEvent) {
+    switch (poiEvent.type) {
+      case POIEventType.Shield:
+        return poiEvent.blindedCommitment;
+      case POIEventType.Transact:
+        return poiEvent.blindedCommitments[0];
+    }
   }
 
   private static queuePOIEvent(networkName: NetworkName, poiEvent: POIEvent) {
@@ -94,7 +93,12 @@ export class ListProviderPOIEventQueue {
 
     const existingEvent = ListProviderPOIEventQueue.poiEventQueue[
       networkName
-    ]?.find((e) => e.blindedCommitments[0] === poiEvent.blindedCommitments[0]);
+    ]?.find((e) => {
+      return (
+        ListProviderPOIEventQueue.getPOIEventFirstBlindedCommitment(e) ===
+        ListProviderPOIEventQueue.getPOIEventFirstBlindedCommitment(poiEvent)
+      );
+    });
     if (isDefined(existingEvent)) {
       return;
     }
@@ -122,18 +126,58 @@ export class ListProviderPOIEventQueue {
   static async createSignedPOIEvent(
     index: number,
     blindedCommitmentStartingIndex: number,
-    blindedCommitments: string[],
-    proof: SnarkProof,
+    poiEvent: POIEvent,
+  ) {
+    switch (poiEvent.type) {
+      case POIEventType.Shield:
+        return ListProviderPOIEventQueue.createSignedPOIShieldEvent(
+          index,
+          blindedCommitmentStartingIndex,
+          poiEvent,
+        );
+      case POIEventType.Transact:
+        return ListProviderPOIEventQueue.createSignedPOITransactEvent(
+          index,
+          blindedCommitmentStartingIndex,
+          poiEvent,
+        );
+    }
+  }
+
+  private static async createSignedPOIShieldEvent(
+    index: number,
+    blindedCommitmentStartingIndex: number,
+    poiEventShield: POIEventShield,
   ): Promise<SignedPOIEvent> {
-    const unsignedPOIEvent: UnsignedPOIEvent = {
+    const signature = await signPOIEventShield(
       index,
       blindedCommitmentStartingIndex,
-      blindedCommitments,
-      proof,
-    };
-    const signature = await signPOIEvent(unsignedPOIEvent);
+      poiEventShield,
+    );
     return {
-      ...unsignedPOIEvent,
+      index,
+      blindedCommitmentStartingIndex,
+      blindedCommitments: [poiEventShield.blindedCommitment],
+      proof: undefined,
+      signature,
+    };
+  }
+
+  static async createSignedPOITransactEvent(
+    index: number,
+    blindedCommitmentStartingIndex: number,
+    poiEventTransact: POIEventTransact,
+  ): Promise<SignedPOIEvent> {
+    const signature = await signPOIEventTransact(
+      index,
+      blindedCommitmentStartingIndex,
+      poiEventTransact,
+    );
+    return {
+      index,
+      blindedCommitmentStartingIndex,
+      blindedCommitments: poiEventTransact.blindedCommitments,
+      proof: poiEventTransact.proof,
       signature,
     };
   }
@@ -173,7 +217,7 @@ export class ListProviderPOIEventQueue {
       if (
         await orderedEventsDB.eventExists(
           ListProviderPOIEventQueue.listKey,
-          poiEvent.blindedCommitments[0],
+          ListProviderPOIEventQueue.getPOIEventFirstBlindedCommitment(poiEvent),
         )
       ) {
         queueForNetwork.splice(0, 1);
@@ -187,8 +231,7 @@ export class ListProviderPOIEventQueue {
       const signedPOIEvent: SignedPOIEvent = await this.createSignedPOIEvent(
         nextIndex,
         blindedCommitmentStartingIndex,
-        poiEvent.blindedCommitments,
-        poiEvent.proof,
+        poiEvent,
       );
 
       await POIEventList.addValidSignedPOIEvent(
@@ -202,9 +245,10 @@ export class ListProviderPOIEventQueue {
 
       if (poiEvent.type === POIEventType.Shield) {
         const shieldQueueDB = new ShieldQueueDatabase(networkName);
-        const shieldQueueDBItem = await shieldQueueDB.getAllowedShieldByHash(
-          poiEvent.commitmentHash,
-        );
+        const shieldQueueDBItem =
+          await shieldQueueDB.getAllowedShieldByCommitmentHash(
+            poiEvent.commitmentHash,
+          );
         if (shieldQueueDBItem) {
           await shieldQueueDB.updateShieldStatus(
             shieldQueueDBItem,

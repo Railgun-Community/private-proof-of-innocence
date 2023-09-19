@@ -3,7 +3,6 @@ import chaiAsPromised from 'chai-as-promised';
 import {
   NetworkName,
   delay,
-  ShieldProofData,
   TransactProofData,
   POIStatus,
 } from '@railgun-community/shared-models';
@@ -15,6 +14,7 @@ import { POIOrderedEventsDatabase } from '../../database/databases/poi-ordered-e
 import { POIMerkletreeDatabase } from '../../database/databases/poi-merkletree-database';
 import { MOCK_LIST_KEYS, MOCK_SNARK_PROOF } from '../../tests/mocks.test';
 import { Config } from '../../config/config';
+import { POIEventShield, POIEventType } from '../../models/poi-types';
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
@@ -54,8 +54,8 @@ describe('list-provider-poi-event-queue', () => {
   });
 
   it('Should add shield and transact events to queue', async () => {
-    const shieldProofData: ShieldProofData = {
-      snarkProof: MOCK_SNARK_PROOF,
+    const poiEventShield: POIEventShield = {
+      type: POIEventType.Shield,
       commitmentHash: '0x1234',
       blindedCommitment: '0x5678',
     };
@@ -78,7 +78,7 @@ describe('list-provider-poi-event-queue', () => {
     // Queue proofs serially - they should process in order
     ListProviderPOIEventQueue.queueUnsignedPOIShieldEvent(
       networkName,
-      shieldProofData,
+      poiEventShield,
     );
     ListProviderPOIEventQueue.queueUnsignedPOITransactEvent(
       networkName,
