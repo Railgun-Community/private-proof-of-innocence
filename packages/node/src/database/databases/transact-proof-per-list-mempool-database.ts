@@ -55,7 +55,7 @@ export class TransactProofPerListMempoolDatabase extends AbstractDatabase<Transa
   ): Promise<boolean> {
     const filter: Filter<TransactProofMempoolDBItem> = {
       listKey,
-      blindedCommitments: blindedCommitment,
+      blindedCommitmentOutputs: blindedCommitment,
     };
     return this.exists(filter);
   }

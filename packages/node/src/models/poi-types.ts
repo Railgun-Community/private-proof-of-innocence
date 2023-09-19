@@ -28,3 +28,10 @@ export type SignedPOIEvent = {
   // Only for Transact events
   proof: Optional<SnarkProof>;
 };
+
+export type SignedBlockedShield = {
+  commitmentHash: string;
+  blindedCommitment: string;
+  blockReason: Optional<string>;
+  signature: string;
+};

@@ -19,6 +19,7 @@ import { Constants } from '../config/constants';
 import { ListProviderPOIEventQueue } from './list-provider-poi-event-queue';
 import { ListProviderPOIEventUpdater } from './list-provider-poi-event-updater';
 import { POIEventShield, POIEventType } from '../models/poi-types';
+import { ListProviderBlocklist } from './list-provider-blocklist';
 
 export type ListProviderConfig = {
   name: string;
@@ -47,6 +48,7 @@ export abstract class ListProvider {
 
     ListProviderPOIEventQueue.init(listKey);
     ListProviderPOIEventUpdater.init(listKey);
+    ListProviderBlocklist.init(listKey);
   }
 
   protected abstract shouldAllowShield(
@@ -54,7 +56,7 @@ export abstract class ListProvider {
     txid: string,
     fromAddressLowercase: string,
     timestamp: number,
-  ): Promise<boolean>;
+  ): Promise<{ shouldAllow: boolean; blockReason?: string }>;
 
   startPolling() {
     if (!isDefined(this.listKey)) {
@@ -200,7 +202,7 @@ export abstract class ListProvider {
         throw new Error('Invalid timestamp');
       }
 
-      const shouldAllow = await this.shouldAllowShield(
+      const { shouldAllow, blockReason } = await this.shouldAllowShield(
         networkName,
         txid,
         txReceipt.from.toLowerCase(),
@@ -208,8 +210,7 @@ export abstract class ListProvider {
       );
 
       if (shouldAllow) {
-        // Add to the active POI list.
-
+        // Allow - add POIEvent
         const poiEventShield: POIEventShield = {
           type: POIEventType.Shield,
           commitmentHash: shieldDBItem.commitmentHash,
@@ -218,6 +219,13 @@ export abstract class ListProvider {
         ListProviderPOIEventQueue.queueUnsignedPOIShieldEvent(
           networkName,
           poiEventShield,
+        );
+      } else {
+        // Block - add BlockedShield
+        await ListProviderBlocklist.addBlockedShield(
+          networkName,
+          shieldDBItem,
+          blockReason,
         );
       }
 

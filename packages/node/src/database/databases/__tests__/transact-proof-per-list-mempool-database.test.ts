@@ -94,13 +94,13 @@ describe('TransactProofPerListMempoolDatabase', () => {
     // Check that the proof exists and is in getAllTransactProofsAndLists
     expect(
       await db.proofExists(listKey, 'blindedCommitmentOutputs_0'),
-    ).to.equal(true); // Changed this to match the first item in blindedCommitmentOutputs
+    ).to.equal(true);
     expect(
       await db.proofExistsContainingBlindedCommitment(
         listKey,
         'blindedCommitmentOutputs_1',
       ),
-    ).to.equal(true); // Changed this to match the first item in blindedCommitmentOutputs
+    ).to.equal(true);
   });
 
   it('Should delete a transact proof', async () => {

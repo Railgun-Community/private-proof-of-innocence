@@ -127,7 +127,7 @@ export class POIMerkletreeManager {
 
         // TODO: ShieldBlocked status with db
         // const shieldBlockedDB = new ShieldBlockedDatabase(networkName);
-        // const shieldBlocked = await shieldBlockedDB.shieldBlockedByList(
+        // const shieldBlocked = await shieldBlockedDB.isShieldBlockedByList(
         //   listKey,
         //   blindedCommitment,
         // );

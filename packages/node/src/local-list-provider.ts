@@ -17,17 +17,21 @@ export class LocalListProvider extends ListProvider {
     txid: string,
     fromAddressLowercase: string,
     timestamp: number,
-  ): Promise<boolean> {
+  ): Promise<
+    | { shouldAllow: true }
+    | { shouldAllow: false; blockReason: Optional<string> }
+  > {
     //
     // Add custom logic to block certain addresses or transactions.
     // If excluding, return false.
     //
-    // Ex.
+    // For example:
+    //
     // if (BAD_ADDRESS_LIST.includes(fromAddressLowercase)) {
-    //   return false;
+    //   return { shouldAllow: false, blockReason: 'Bad address' };
     // }
     //
 
-    return true;
+    return { shouldAllow: true };
   }
 }
