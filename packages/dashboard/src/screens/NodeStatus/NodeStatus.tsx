@@ -6,12 +6,12 @@ import { useEffect, useMemo, useState } from 'react';
 import { POINodeRequest } from '@services/poi-node-request';
 import { List } from './components/List/List';
 import { OverallStatus } from './components/OverallStatus/OverallStatus';
-import styles from './Landing.module.scss';
+import styles from './NodeStatus.module.scss';
 
 const currentNetwork = 'Ethereum_Goerli'; //TODO: Change this.
 
 //TODO: Rename this for the correct name
-export const Landing = () => {
+export const NodeStatus = () => {
   const [nodeStatusAllNetworks, setNodeStatusAllNetworks] =
     useState<NodeStatusAllNetworks>();
 
@@ -42,7 +42,7 @@ export const Landing = () => {
 
   return (
     <>
-      <div className={styles.landingContainer}>
+      <div className={styles.nodeStatusContainer}>
         <OverallStatus nodeStatus={nodeStatusForCurrentNetwork} />
         {isDefined(listKeys) && listKeys.map(renderListKey)}
       </div>

@@ -1,7 +1,7 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { Drawer, SlideDirection } from '@components/Drawer/Drawer';
 import { Header } from '@components/Header/Header';
-import { Landing } from '@screens/Landing/Landing';
+import { NodeStatus } from '@screens/NodeStatus/NodeStatus';
 import styles from './AppNavigator.module.scss';
 
 export const AppNavigator = () => {
@@ -18,7 +18,7 @@ export const AppNavigator = () => {
       />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Landing />} />
+          <Route path="/" element={<NodeStatus />} />
         </Routes>
       </BrowserRouter>
     </div>
