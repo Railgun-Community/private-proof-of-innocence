@@ -1,0 +1,36 @@
+@import '@scss/styleguide';
+
+.rightIcon {
+  width: 20px;
+  height: 20px;
+  margin-left: 5px;
+}
+
+.itemContainer {
+  background-color: white(0.2);
+  border-radius: 6px;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid transparent;
+
+  &:not(.disabled):hover {
+    border: 1px solid $white;
+  }
+}
+
+.itemContainerDisabled {
+  opacity: 0.5;
+  background-color: white(0.4);
+  cursor: not-allowed;
+}
+
+.itemContainerClickable {
+  cursor: pointer;
+  pointer-events: all;
+}
+
+.title {
+  @include label;
+}

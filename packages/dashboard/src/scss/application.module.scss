@@ -16,7 +16,9 @@ $z-index-alerts: 60;
   zIndexAlerts: 60;
 }
 
-// [------------------------------ GLOBAL CLASSES & MIXINS ------------------------------]
+// [------------------------------ GLOBAL CLASSES, MIXINS & VARIABLES ------------------------------]
+
+$headerHeight: 70px;
 
 @mixin forceToCenter {
   position: absolute;

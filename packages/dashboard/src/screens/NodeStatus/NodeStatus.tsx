@@ -1,44 +1,42 @@
-import {
-  isDefined,
-  NodeStatusAllNetworks,
-} from '@railgun-community/shared-models';
-import { useEffect, useMemo, useState } from 'react';
-import { POINodeRequest } from '@services/poi-node-request';
+import { isDefined } from '@railgun-community/shared-models';
+import { useEffect, useMemo } from 'react';
+import { FullScreenSpinner } from '@components/FullScreenSpinner/FullScreenSpinner';
+import { useNodeStore } from '@state/stores';
 import { List } from './components/List/List';
 import { OverallStatus } from './components/OverallStatus/OverallStatus';
 import styles from './NodeStatus.module.scss';
 
 const currentNetwork = 'Ethereum_Goerli'; //TODO: Change this.
 
-//TODO: Rename this for the correct name
 export const NodeStatus = () => {
-  const [nodeStatusAllNetworks, setNodeStatusAllNetworks] =
-    useState<NodeStatusAllNetworks>();
+  const {
+    getNodeStatusForAllNetworks,
+    nodeStatusForAllNetworks,
+    loadingNodeStatusForAllNetworks,
+  } = useNodeStore();
 
   const nodeStatusForCurrentNetwork = useMemo(
-    () => nodeStatusAllNetworks?.forNetwork[currentNetwork],
-    [nodeStatusAllNetworks],
+    () => nodeStatusForAllNetworks?.forNetwork[currentNetwork],
+    [nodeStatusForAllNetworks],
   );
   const listKeys = useMemo(
-    () => nodeStatusAllNetworks?.listKeys,
-    [nodeStatusAllNetworks],
+    () => nodeStatusForAllNetworks?.listKeys,
+    [nodeStatusForAllNetworks],
   );
 
   useEffect(() => {
-    const getAndSetNodeStatusData = async () => {
-      const data = await POINodeRequest.getNodeStatusAllNetworks(
-        'http://localhost:3010',
-      );
-      setNodeStatusAllNetworks(data);
-      console.log('DATA:', data);
-    };
-    if (!isDefined(nodeStatusAllNetworks)) {
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      getAndSetNodeStatusData();
+    if (!isDefined(nodeStatusForAllNetworks)) {
+      getNodeStatusForAllNetworks();
     }
-  }, [nodeStatusAllNetworks]);
+  }, [getNodeStatusForAllNetworks, nodeStatusForAllNetworks]);
 
-  const renderListKey = (listKey: string) => <List listKey={listKey} />;
+  const renderListKey = (listKey: string, index: number) => (
+    <List key={index} listKey={listKey} />
+  );
+
+  if (loadingNodeStatusForAllNetworks) {
+    return <FullScreenSpinner />;
+  }
 
   return (
     <>

@@ -1,6 +1,7 @@
 import cn from 'classnames';
-import { Text } from '@components/Text/Text';
+import { Item } from '@components/Item/Item';
 import { useDrawerStore } from '@state/stores';
+import { IconType } from '@utils/icon-service';
 import styles from './Drawer.module.scss';
 
 export enum SlideDirection {
@@ -13,12 +14,14 @@ type Props = {
   className?: string;
 };
 
+type DrawerOption = {
+  title: string;
+  rightIcon?: IconType;
+  onClick?: () => void;
+};
+
 export const Drawer = ({ variant, className }: Props) => {
   const { isOpen: showDrawer, closeDrawer } = useDrawerStore();
-
-  if (!showDrawer) {
-    return null;
-  }
 
   const getNavStyles = () => {
     if (showDrawer) {
@@ -35,19 +38,36 @@ export const Drawer = ({ variant, className }: Props) => {
 
   const navClassName = getNavStyles();
 
+  const OPTIONS: DrawerOption[] = [
+    {
+      title: 'Option 1',
+      rightIcon: IconType.ChevronRight,
+      onClick: () => {},
+    },
+    {
+      title: 'Option 2',
+      rightIcon: IconType.ChevronRight,
+      onClick: () => {},
+    },
+    {
+      title: 'Option 3',
+      rightIcon: IconType.ChevronRight,
+      onClick: () => {},
+    },
+  ];
+
+  const renderOption = (option: DrawerOption, index: number) => {
+    return <Item key={index} {...option} />;
+  };
+
   return (
     <>
       <nav className={navClassName}>
         <div className={styles.drawerContentContainer}>
-          <Text style={{ color: 'white' }}>Hola man</Text>
-          <Text style={{ color: 'white' }}>Hola man</Text>
-          <Text style={{ color: 'white' }}>Hola man</Text>
-          <Text style={{ color: 'white' }}>Hola man</Text>
-          <Text style={{ color: 'white' }}>Hola man</Text>
-          <Text style={{ color: 'white' }}>Hola man</Text>
+          {OPTIONS.map(renderOption)}
         </div>
       </nav>
-      <div className={styles.backdrop} onClick={closeDrawer} />
+      {showDrawer && <div className={styles.backdrop} onClick={closeDrawer} />}
     </>
   );
 };

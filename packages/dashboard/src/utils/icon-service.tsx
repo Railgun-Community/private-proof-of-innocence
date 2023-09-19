@@ -1,6 +1,7 @@
 import { ReactElement } from 'react';
 import {
   MdCheck as CheckIcon,
+  MdChevronRight as ChevronRight,
   MdContentCopy as CopyIcon,
   MdRefresh as Refresh,
 } from 'react-icons/md';
@@ -11,18 +12,21 @@ export enum IconType {
   Copy = 'Copy',
   Refresh = 'Refresh',
   HamburgerMenu = 'HamburgerMenu',
+  ChevronRight = 'ChevronRight',
 }
 
 export const renderIcon = (
   iconTypeOrSrc: IconType | string,
   size: number = 20,
-  color: string = '#FAFAFA', //TODO: change for styleguide
+  color: string = '#FAFAFA', // TODO: change for styleguide
 ): ReactElement => {
   const props = { size, color };
 
   switch (iconTypeOrSrc) {
     case IconType.Check:
       return <CheckIcon {...props} />;
+    case IconType.ChevronRight:
+      return <ChevronRight {...props} />;
     case IconType.Refresh:
       return <Refresh {...props} />;
     case IconType.Copy:

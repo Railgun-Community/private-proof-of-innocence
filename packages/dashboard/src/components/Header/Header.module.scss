@@ -6,7 +6,9 @@
   justify-content: space-between;
   align-items: center;
   border-bottom: 1px solid $borderWhite;
-  padding: 20px;
+  padding: 0 24px;
+  height: $headerHeight;
+  z-index: calc($z-index-drawers - 1);
 }
 
 .ipContainer {
@@ -26,10 +28,8 @@
   margin-right: 5px;
 }
 
-.poiDashboardTitle {
-  @include forceToCenter;
-}
-
 .hamburgerMenu {
+  display: flex;
   cursor: pointer;
+  gap: 10px;
 }
