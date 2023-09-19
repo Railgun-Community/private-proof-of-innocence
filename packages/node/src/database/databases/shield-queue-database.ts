@@ -57,6 +57,13 @@ export class ShieldQueueDatabase extends AbstractDatabase<ShieldQueueDBItem> {
     return this.exists(filter);
   }
 
+  async blindedCommitmentExists(blindedCommitment: string): Promise<boolean> {
+    const filter: DBFilter<ShieldQueueDBItem> = {
+      blindedCommitment,
+    };
+    return this.exists(filter);
+  }
+
   async updateShieldStatus(
     shieldQueueDBItem: ShieldQueueDBItem,
     status: ShieldStatus,

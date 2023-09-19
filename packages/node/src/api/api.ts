@@ -217,7 +217,7 @@ export class API {
       '/pois-per-list/:chainType/:chainID',
       async (req: Request, res: Response) => {
         const { chainType, chainID } = req.params;
-        const { listKeys, blindedCommitments } =
+        const { listKeys, blindedCommitmentDatas } =
           req.body as GetPOIsPerListParams;
         listKeys.forEach((listKey) => {
           this.assertHasListKey(listKey);
@@ -227,7 +227,7 @@ export class API {
 
         if (
           QueryLimits.GET_POI_EXISTENCE_MAX_BLINDED_COMMITMENTS >
-          blindedCommitments.length
+          blindedCommitmentDatas.length
         ) {
           throw new Error(
             `Too many blinded commitments: max ${QueryLimits.GET_POI_EXISTENCE_MAX_BLINDED_COMMITMENTS}`,
@@ -237,7 +237,7 @@ export class API {
         const poiStatusMap = await POIMerkletreeManager.getPOIStatusPerList(
           listKeys,
           networkName,
-          blindedCommitments,
+          blindedCommitmentDatas,
         );
         res.json(poiStatusMap);
       },

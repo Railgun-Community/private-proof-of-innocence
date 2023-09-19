@@ -5,6 +5,7 @@ import {
   delay,
   TransactProofData,
   POIStatus,
+  BlindedCommitmentType,
 } from '@railgun-community/shared-models';
 import { DatabaseClient } from '../../database/database-client-init';
 import { ListProviderPOIEventQueue } from '../list-provider-poi-event-queue';
@@ -92,7 +93,12 @@ describe('list-provider-poi-event-queue', () => {
     const poiStatusPerList = await POIMerkletreeManager.getPOIStatusPerList(
       Config.LIST_KEYS,
       networkName,
-      ['0x5678', '0x1111', '0x2222', '0x3333'],
+      [
+        { blindedCommitment: '0x5678', type: BlindedCommitmentType.Shield },
+        { blindedCommitment: '0x1111', type: BlindedCommitmentType.Shield },
+        { blindedCommitment: '0x2222', type: BlindedCommitmentType.Shield },
+        { blindedCommitment: '0x3333', type: BlindedCommitmentType.Shield },
+      ],
     );
     expect(poiStatusPerList).to.deep.equal({
       [MOCK_LIST_KEYS[0]]: [

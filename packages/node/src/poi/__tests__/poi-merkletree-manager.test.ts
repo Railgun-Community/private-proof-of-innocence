@@ -1,6 +1,10 @@
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import { NetworkName, POIStatus } from '@railgun-community/shared-models';
+import {
+  BlindedCommitmentType,
+  NetworkName,
+  POIStatus,
+} from '@railgun-community/shared-models';
 import { DatabaseClient } from '../../database/database-client-init';
 import { POIMerkletreeManager } from '../poi-merkletree-manager';
 import { POIMerkletreeDatabase } from '../../database/databases/poi-merkletree-database';
@@ -83,7 +87,12 @@ describe('poi-merkletree-manager', () => {
     const poiStatusPerList = await POIMerkletreeManager.getPOIStatusPerList(
       Config.LIST_KEYS,
       networkName,
-      ['0x1234', '0x5678', '0x1111111'],
+
+      [
+        { blindedCommitment: '0x1234', type: BlindedCommitmentType.Transact },
+        { blindedCommitment: '0x5678', type: BlindedCommitmentType.Transact },
+        { blindedCommitment: '0x1111111', type: BlindedCommitmentType.Shield },
+      ],
     );
     expect(poiStatusPerList).to.deep.equal({
       [MOCK_LIST_KEYS[0]]: [

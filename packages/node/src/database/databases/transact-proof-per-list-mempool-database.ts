@@ -1,4 +1,7 @@
-import { NetworkName , TransactProofData } from '@railgun-community/shared-models';
+import {
+  NetworkName,
+  TransactProofData,
+} from '@railgun-community/shared-models';
 import {
   CollectionName,
   DBFilter,
@@ -6,6 +9,7 @@ import {
   TransactProofMempoolDBItem,
 } from '../../models/database-types';
 import { AbstractDatabase } from '../abstract-database';
+import { Filter } from 'mongodb';
 
 export class TransactProofPerListMempoolDatabase extends AbstractDatabase<TransactProofMempoolDBItem> {
   constructor(networkName: NetworkName) {
@@ -41,6 +45,17 @@ export class TransactProofPerListMempoolDatabase extends AbstractDatabase<Transa
     const filter: DBFilter<TransactProofMempoolDBItem> = {
       listKey,
       firstBlindedCommitment,
+    };
+    return this.exists(filter);
+  }
+
+  async proofExistsContainingBlindedCommitment(
+    listKey: string,
+    blindedCommitment: string,
+  ): Promise<boolean> {
+    const filter: Filter<TransactProofMempoolDBItem> = {
+      listKey,
+      blindedCommitments: blindedCommitment,
     };
     return this.exists(filter);
   }

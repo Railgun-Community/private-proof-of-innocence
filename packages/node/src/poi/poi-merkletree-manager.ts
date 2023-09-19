@@ -4,10 +4,14 @@ import {
   MerkleProof,
   POIStatus,
   POIStatusListMap,
+  BlindedCommitmentData,
+  BlindedCommitmentType,
 } from '@railgun-community/shared-models';
 import { Config } from '../config/config';
 import { POIMerkletree } from './poi-merkletree';
 import { SignedPOIEvent } from '../models/poi-types';
+import { ShieldQueueDatabase } from '../database/databases/shield-queue-database';
+import { TransactProofPerListMempoolDatabase } from '../database/databases/transact-proof-per-list-mempool-database';
 
 export class POIMerkletreeManager {
   private static merkletrees: Record<
@@ -76,17 +80,17 @@ export class POIMerkletreeManager {
   static async getPOIStatusPerList(
     listKeys: string[],
     networkName: NetworkName,
-    blindedCommitments: string[],
+    blindedCommitmentDatas: BlindedCommitmentData[],
   ): Promise<POIStatusListMap> {
     const statusListMap: POIStatusListMap = {};
     await Promise.all(
       listKeys.map(async (listKey) => {
         statusListMap[listKey] = await Promise.all(
-          blindedCommitments.map((blindedCommitment) =>
+          blindedCommitmentDatas.map((blindedCommitmentData) =>
             POIMerkletreeManager.getPOIStatus(
               listKey,
               networkName,
-              blindedCommitment,
+              blindedCommitmentData,
             ),
           ),
         );
@@ -98,29 +102,56 @@ export class POIMerkletreeManager {
   private static async getPOIStatus(
     listKey: string,
     networkName: NetworkName,
-    blindedCommitment: string,
+    blindedCommitmentData: BlindedCommitmentData,
   ): Promise<POIStatus> {
     const merkletree = POIMerkletreeManager.getMerkletreeForListAndNetwork(
       listKey,
       networkName,
     );
 
+    const { blindedCommitment, type } = blindedCommitmentData;
+
     const hasValidPOI = await merkletree.nodeHashExists(blindedCommitment);
     if (hasValidPOI) {
       return POIStatus.Valid;
     }
 
-    // TODO: Check if shield exists.
-    // POIStatus.ShieldPending
+    switch (type) {
+      case BlindedCommitmentType.Shield: {
+        const shieldQueueDB = new ShieldQueueDatabase(networkName);
+        const shieldExists =
+          await shieldQueueDB.blindedCommitmentExists(blindedCommitment);
+        if (shieldExists) {
+          return POIStatus.ShieldPending;
+        }
 
-    // TODO: How do we check if transact proof exists?
-    // POIStatus.TransactProofSubmitted
+        // TODO: ShieldBlocked status with db
+        // const shieldBlockedDB = new ShieldBlockedDatabase(networkName);
+        // const shieldBlocked = await shieldBlockedDB.shieldBlockedByList(
+        //   listKey,
+        //   blindedCommitment,
+        // );
+        // if (shieldBlocked) {
+        //   return POIStatus.ShieldBlocked;
+        // }
+        break;
+      }
 
-    // TODO: Blocked DB
-    // const isBlocked = await blockedDB.shieldBlockedByList(listKey);
-    // if (isBlocked) {
-    //   return POIStatus.Blocked;
-    // }
+      case BlindedCommitmentType.Transact: {
+        const transactProofMempoolDB = new TransactProofPerListMempoolDatabase(
+          networkName,
+        );
+        const transactProofExists =
+          await transactProofMempoolDB.proofExistsContainingBlindedCommitment(
+            listKey,
+            blindedCommitment,
+          );
+        if (transactProofExists) {
+          return POIStatus.TransactProofSubmitted;
+        }
+        break;
+      }
+    }
 
     return POIStatus.Missing;
   }

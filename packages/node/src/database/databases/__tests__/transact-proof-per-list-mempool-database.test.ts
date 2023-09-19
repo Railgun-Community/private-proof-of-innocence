@@ -85,7 +85,7 @@ describe('TransactProofPerListMempoolDatabase', () => {
         'blindedCommitmentOutputs_0',
         'blindedCommitmentOutputs_1',
       ],
-      firstBlindedCommitment: 'firstBlindedCommitment', // This will be ignored
+      firstBlindedCommitment: 'blindedCommitmentOutputs_0', // This will be ignored
     };
 
     // Insert the item
@@ -94,6 +94,12 @@ describe('TransactProofPerListMempoolDatabase', () => {
     // Check that the proof exists and is in getAllTransactProofsAndLists
     expect(
       await db.proofExists(listKey, 'blindedCommitmentOutputs_0'),
+    ).to.equal(true); // Changed this to match the first item in blindedCommitmentOutputs
+    expect(
+      await db.proofExistsContainingBlindedCommitment(
+        listKey,
+        'blindedCommitmentOutputs_1',
+      ),
     ).to.equal(true); // Changed this to match the first item in blindedCommitmentOutputs
   });
 
