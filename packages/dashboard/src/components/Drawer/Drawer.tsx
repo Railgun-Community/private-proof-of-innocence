@@ -1,5 +1,6 @@
 import cn from 'classnames';
 import { Text } from '@components/Text/Text';
+import { useDrawerStore } from '@state/stores';
 import styles from './Drawer.module.scss';
 
 export enum SlideDirection {
@@ -10,11 +11,10 @@ export enum SlideDirection {
 type Props = {
   variant: SlideDirection;
   className?: string;
-  onRequestClose: () => void;
 };
 
-export const Drawer = ({ variant, className, onRequestClose }: Props) => {
-  const showDrawer = false;
+export const Drawer = ({ variant, className }: Props) => {
+  const { isOpen: showDrawer, closeDrawer } = useDrawerStore();
 
   if (!showDrawer) {
     return null;
@@ -47,7 +47,7 @@ export const Drawer = ({ variant, className, onRequestClose }: Props) => {
           <Text style={{ color: 'white' }}>Hola man</Text>
         </div>
       </nav>
-      <div className={styles.backdrop} onClick={onRequestClose} />;
+      <div className={styles.backdrop} onClick={closeDrawer} />;
     </>
   );
 };

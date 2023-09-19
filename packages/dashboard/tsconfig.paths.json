@@ -10,7 +10,8 @@
       "@scss/*": ["./scss/*"],
       "@services/*": ["./services/*"],
       "@utils/*": ["./utils/*"],
-      "@constants/*": ["./constants/*"]
+      "@constants/*": ["./constants/*"],
+      "@state/*": ["./state/*"]
     }
   }
 }

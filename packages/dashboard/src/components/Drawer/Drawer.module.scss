@@ -1,6 +1,6 @@
 @import '@scss/styleguide';
 
-$drawerWidth: 712px;
+$drawerWidth: 510px;
 
 @mixin defaultDrawerStyles {
   position: fixed;
@@ -12,6 +12,7 @@ $drawerWidth: 712px;
   border-width: 0px;
   border-style: solid;
   border-color: $white;
+  background-color: $black;
 }
 
 .slideFromRight {
@@ -30,8 +31,8 @@ $drawerWidth: 712px;
 
 .backdrop {
   position: fixed;
-  width: 100%;
-  height: 100%;
+  width: 100vw;
+  height: 100vh;
   top: 0;
   left: 0;
   background-color: gray(0.72);

@@ -29,3 +29,7 @@
 .poiDashboardTitle {
   @include forceToCenter;
 }
+
+.hamburgerMenu {
+  cursor: pointer;
+}

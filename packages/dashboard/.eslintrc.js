@@ -92,6 +92,7 @@ module.exports = {
           ['@constants', './src/constants/'],
           ['@utils', './src/utils/'],
           ['@screens', './src/screens/'],
+          ['@state', './src/state/'],
         ],
         extensions: ['.js', '.ts', '.tsx', '.json', '.scss'],
       },

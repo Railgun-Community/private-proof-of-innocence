@@ -5,17 +5,10 @@ import { NodeStatus } from '@screens/NodeStatus/NodeStatus';
 import styles from './AppNavigator.module.scss';
 
 export const AppNavigator = () => {
-  const onRequestClose = () => {
-    console.log('onRequestClose');
-  };
-
   return (
     <div className={styles.appNavigatorContainer}>
       <Header />
-      <Drawer
-        variant={SlideDirection.SLIDE_FROM_LEFT}
-        onRequestClose={onRequestClose}
-      />
+      <Drawer variant={SlideDirection.SLIDE_FROM_LEFT} />
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<NodeStatus />} />

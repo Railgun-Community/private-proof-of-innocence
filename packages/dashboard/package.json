@@ -22,6 +22,7 @@
     "axios": "0.27.2",
     "classnames": "^2.3.2",
     "crypto-browserify": "^3.12.0",
+    "ethers": "github:Railgun-Community/ethers.js#v6.7.6",
     "https-browserify": "^1.0.0",
     "os-browserify": "^0.3.0",
     "path": "^0.12.7",
@@ -41,7 +42,7 @@
     "sass": "^1.67.0",
     "stream-browserify": "^3.0.0",
     "stream-http": "^3.2.0",
-    "ethers": "github:Railgun-Community/ethers.js#v6.7.6"
+    "zustand": "^4.4.1"
   },
   "devDependencies": {
     "@babel/core": "7.21.8",
@@ -77,12 +78,12 @@
     "eslint-plugin-testing-library": "5.11.0",
     "madge": "6.0.0",
     "mocha": "^10.2.0",
-    "sass": "1.62.1",
     "prettier": "2.8.8",
     "punycode": "^2.1.1",
     "react-app-rewired": "^2.2.1",
     "react-scripts": "^5.0.1",
     "react-test-renderer": "^18.2.0",
+    "sass": "1.62.1",
     "tsc-alias": "1.8.6",
     "typescript": "5.0.4"
   },
