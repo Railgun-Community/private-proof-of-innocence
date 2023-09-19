@@ -62,7 +62,7 @@ export const OverallStatus = ({ nodeStatus }: Props) => {
         {arrayOfEventListStatuses.map(eventListStatus => (
           <Text key={eventListStatus.id}>
             {`${shortenWalletAddress(eventListStatus.id)}: ${
-              eventListStatus.value?.length
+              eventListStatus.value
             }`}
           </Text>
         ))}

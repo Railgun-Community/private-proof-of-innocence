@@ -33,7 +33,7 @@ export const Drawer = ({ variant, className }: Props) => {
       }
     }
 
-    return cn(styles.hideDrawer, className);
+    return cn(styles.slideFromLeft, styles.hideDrawer, className);
   };
 
   const navClassName = getNavStyles();

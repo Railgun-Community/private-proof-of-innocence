@@ -42,7 +42,7 @@ $drawerWidth: 350px;
 .hideDrawer {
   transform: translateX(0);
   transition: transform 0.2s ease-in-out;
-  display: none;
+  border-width: 0px;
 }
 
 .drawerContentContainer {
