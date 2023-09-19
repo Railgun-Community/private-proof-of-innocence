@@ -2,52 +2,49 @@ import {
   isDefined,
   NodeStatusAllNetworks,
 } from '@railgun-community/shared-models';
-import { useEffect, useState } from 'react';
-import { Text } from '@components/Text/Text';
+import { useEffect, useMemo, useState } from 'react';
 import { POINodeRequest } from '@services/poi-node-request';
+import { List } from './components/List/List';
 import { OverallStatus } from './components/OverallStatus/OverallStatus';
 import styles from './Landing.module.scss';
 
-export const Landing = () => {
-  // const [data, setData] = useState<NodeStatusAllNetworks>();
+const currentNetwork = 'Ethereum_Goerli'; //TODO: Change this.
 
-<<<<<<< HEAD
+//TODO: Rename this for the correct name
+export const Landing = () => {
+  const [nodeStatusAllNetworks, setNodeStatusAllNetworks] =
+    useState<NodeStatusAllNetworks>();
+
+  const nodeStatusForCurrentNetwork = useMemo(
+    () => nodeStatusAllNetworks?.forNetwork[currentNetwork],
+    [nodeStatusAllNetworks],
+  );
+  const listKeys = useMemo(
+    () => nodeStatusAllNetworks?.listKeys,
+    [nodeStatusAllNetworks],
+  );
+
   useEffect(() => {
-    const getAndSetData = async () => {
+    const getAndSetNodeStatusData = async () => {
       const data = await POINodeRequest.getNodeStatusAllNetworks(
         'http://localhost:3010',
       );
-      setData(data);
-      console.log('DATA:', data); // This line Jake
+      setNodeStatusAllNetworks(data);
+      console.log('DATA:', data);
     };
-    if (!isDefined(data)) {
+    if (!isDefined(nodeStatusAllNetworks)) {
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      getAndSetData();
+      getAndSetNodeStatusData();
     }
-  }, [data]);
-=======
-  // useEffect(() => {
-  //   const getAndSetData = async () => {
-  //     const data = await POINodeRequest.getNodeStatusAllNetworks(
-  //       'localhost:3010',
-  //     );
-  //     setData(data);
-  //   };
-  //   if (!isDefined(data)) {
-  //     // eslint-disable-next-line @typescript-eslint/no-floating-promises
-  //     getAndSetData();
-  //   }
-  // }, [data]);
->>>>>>> 0eef1d5 (WIP)
+  }, [nodeStatusAllNetworks]);
+
+  const renderListKey = (listKey: string) => <List listKey={listKey} />;
 
   return (
     <>
       <div className={styles.landingContainer}>
-        <OverallStatus />
-        {/* {data &&
-          data.listKeys.map((key: string) => {
-            return <Text style={{ color: 'green' }}>{key}</Text>;
-          })} */}
+        <OverallStatus nodeStatus={nodeStatusForCurrentNetwork} />
+        {isDefined(listKeys) && listKeys.map(renderListKey)}
       </div>
     </>
   );

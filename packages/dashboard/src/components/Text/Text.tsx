@@ -24,7 +24,7 @@ export const Text = ({
     <div
       className={cn(
         styles.text,
-        'text-item no-text-select',
+        // 'text-item no-text-select', //TODO: Do we want this?
         { [styles.clickable]: isDefined(onClick) },
         className,
       )}

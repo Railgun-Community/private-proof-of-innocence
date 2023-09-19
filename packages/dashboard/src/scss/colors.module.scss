@@ -17,3 +17,6 @@ $borderWhite: #eaeaea;
 @function black($decimalOpacity: 1) {
   @return rgba(0, 0, 0, $decimalOpacity);
 }
+@function gray($decimalOpacity: 1) {
+  @return rgba(23, 23, 23, $decimalOpacity);
+}

@@ -2,12 +2,14 @@ import { ReactElement } from 'react';
 import {
   MdCheck as CheckIcon,
   MdContentCopy as CopyIcon,
+  MdRefresh as Refresh,
 } from 'react-icons/md';
 import { RxHamburgerMenu as HamburgerMenu } from 'react-icons/rx';
 
 export enum IconType {
   Check = 'Check',
   Copy = 'Copy',
+  Refresh = 'Refresh',
   HamburgerMenu = 'HamburgerMenu',
 }
 
@@ -21,6 +23,8 @@ export const renderIcon = (
   switch (iconTypeOrSrc) {
     case IconType.Check:
       return <CheckIcon {...props} />;
+    case IconType.Refresh:
+      return <Refresh {...props} />;
     case IconType.Copy:
       return <CopyIcon {...props} />;
     case IconType.HamburgerMenu:

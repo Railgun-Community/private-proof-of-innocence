@@ -3,7 +3,7 @@ import { IconType, renderIcon } from '@utils/icon-service';
 import styles from './Header.module.scss';
 
 export const Header = () => {
-  const nodeIp = 'localhost:3010'; //TODO: Change this later
+  const nodeIp = 'http://localhost:3010'; //TODO: Change this later
 
   return (
     <div className={styles.headerContainer}>

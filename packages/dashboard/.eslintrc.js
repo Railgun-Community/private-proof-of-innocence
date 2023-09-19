@@ -89,6 +89,8 @@ module.exports = {
           ['@services', './src/services/'],
           ['@scss', './src/scss/'],
           ['@components', './src/components/'],
+          ['@constants', './src/constants/'],
+          ['@utils', './src/utils/'],
           ['@screens', './src/screens/'],
         ],
         extensions: ['.js', '.ts', '.tsx', '.json', '.scss'],

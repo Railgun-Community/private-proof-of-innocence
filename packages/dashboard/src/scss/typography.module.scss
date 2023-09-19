@@ -35,3 +35,11 @@ $medium: 500;
   letter-spacing: 0px;
   line-height: 40px;
 }
+
+@mixin heading3 {
+  font-family: $inconsolataBold;
+  font-weight: $medium;
+  font-size: 22px;
+  letter-spacing: 0px;
+  line-height: 24px;
+}
