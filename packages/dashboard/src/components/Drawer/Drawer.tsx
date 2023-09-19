@@ -47,7 +47,7 @@ export const Drawer = ({ variant, className }: Props) => {
           <Text style={{ color: 'white' }}>Hola man</Text>
         </div>
       </nav>
-      <div className={styles.backdrop} onClick={closeDrawer} />;
+      <div className={styles.backdrop} onClick={closeDrawer} />
     </>
   );
 };
