@@ -6,6 +6,7 @@ import {
   DBStream,
   DBFilter,
 } from '../../models/database-types';
+import { SignedBlockedShield } from '../../models/poi-types';
 
 export class BlockedShieldsPerListDatabase extends AbstractDatabase<BlockedShieldsPerListDBItem> {
   constructor(networkName: NetworkName) {
@@ -16,19 +17,16 @@ export class BlockedShieldsPerListDatabase extends AbstractDatabase<BlockedShiel
     await this.createIndex(['listKey', 'blindedCommitment'], { unique: true });
   }
 
-  async insertBlockedShield(
+  async insertSignedBlockedShield(
     listKey: string,
-    commitmentHash: string,
-    blindedCommitment: string,
-    blockReason: Optional<string>,
-    signature: string,
+    signedBlockedShield: SignedBlockedShield,
   ): Promise<void> {
     const item: BlockedShieldsPerListDBItem = {
       listKey,
-      commitmentHash,
-      blindedCommitment,
-      blockReason,
-      signature,
+      commitmentHash: signedBlockedShield.commitmentHash,
+      blindedCommitment: signedBlockedShield.blindedCommitment,
+      blockReason: signedBlockedShield.blockReason,
+      signature: signedBlockedShield.signature,
     };
     await this.insertOne(item);
   }

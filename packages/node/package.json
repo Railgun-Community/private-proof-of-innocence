@@ -44,12 +44,12 @@
     "snarkjs": "^0.7.0"
   },
   "peerDependencies": {
-    "@railgun-community/shared-models": "5.5.1",
+    "@railgun-community/shared-models": "5.5.3",
     "@railgun-community/wallet": "5.7.2",
     "ethers": "github:Railgun-Community/ethers.js#v6.7.6"
   },
   "devDependencies": {
-    "@railgun-community/shared-models": "5.5.1",
+    "@railgun-community/shared-models": "5.5.3",
     "@railgun-community/wallet": "5.7.2",
     "@types/chai": "^4.3.5",
     "@types/chai-as-promised": "^7.1.5",

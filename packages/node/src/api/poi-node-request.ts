@@ -3,11 +3,12 @@ import {
   NetworkName,
   TransactProofData,
   GetTransactProofsParams,
+  GetBlockedShieldsParams,
   NodeStatusAllNetworks,
   ValidateTxidMerklerootParams,
 } from '@railgun-community/shared-models';
 import axios, { AxiosError } from 'axios';
-import { SignedPOIEvent } from '../models/poi-types';
+import { SignedBlockedShield, SignedPOIEvent } from '../models/poi-types';
 import debug from 'debug';
 
 const dbg = debug('poi:request');
@@ -114,5 +115,24 @@ export class POINodeRequest {
       bloomFilterSerialized,
     });
     return transactProofs;
+  };
+
+  static getFilteredBlockedShields = async (
+    nodeURL: string,
+    networkName: NetworkName,
+    listKey: string,
+    bloomFilterSerialized: string,
+  ) => {
+    const chain = NETWORK_CONFIG[networkName].chain;
+    const route = `blocked-shields/${chain.type}/${chain.id}/${listKey}`;
+    const url = POINodeRequest.getNodeRouteURL(nodeURL, route);
+
+    const signedBlockedShields = await POINodeRequest.postRequest<
+      GetBlockedShieldsParams,
+      SignedBlockedShield[]
+    >(url, {
+      bloomFilterSerialized,
+    });
+    return signedBlockedShields;
   };
 }

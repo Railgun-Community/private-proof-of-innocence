@@ -4,7 +4,7 @@ import { POIOrderedEventsDatabase } from '../poi-ordered-events-database';
 import { NetworkName } from '@railgun-community/shared-models';
 import { DatabaseClient } from '../../database-client-init';
 import { SignedPOIEvent } from '../../../models/poi-types';
-import { POIEventList } from '../../../poi/poi-event-list';
+import { POIEventList } from '../../../poi-events/poi-event-list';
 import { MOCK_LIST_KEYS } from '../../../tests/mocks.test';
 
 chai.use(chaiAsPromised);
@@ -16,7 +16,7 @@ let db: POIOrderedEventsDatabase;
 
 const listKey = MOCK_LIST_KEYS[0];
 
-describe('POIOrderedEventsDatabase', () => {
+describe('poi-ordered-events-database', () => {
   before(async () => {
     await DatabaseClient.init();
     db = new POIOrderedEventsDatabase(networkName);

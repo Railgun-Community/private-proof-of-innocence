@@ -9,7 +9,7 @@ import {
 } from '@railgun-community/shared-models';
 import { DatabaseClient } from '../../database/database-client-init';
 import { ListProviderPOIEventQueue } from '../list-provider-poi-event-queue';
-import { POIMerkletreeManager } from '../../poi/poi-merkletree-manager';
+import { POIMerkletreeManager } from '../../poi-events/poi-merkletree-manager';
 import { TransactProofPerListMempoolDatabase } from '../../database/databases/transact-proof-per-list-mempool-database';
 import { POIOrderedEventsDatabase } from '../../database/databases/poi-ordered-events-database';
 import { POIMerkletreeDatabase } from '../../database/databases/poi-merkletree-database';

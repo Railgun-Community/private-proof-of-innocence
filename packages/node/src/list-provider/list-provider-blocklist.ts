@@ -2,6 +2,7 @@ import { NetworkName } from '@railgun-community/shared-models';
 import { BlockedShieldsPerListDatabase } from '../database/databases/blocked-shields-per-list-database';
 import { ShieldQueueDBItem } from '../models/database-types';
 import { signBlockedShield } from '../util/ed25519';
+import { SignedBlockedShield } from '../models/poi-types';
 
 export class ListProviderBlocklist {
   private static listKey: string;
@@ -22,13 +23,13 @@ export class ListProviderBlocklist {
       shieldDBItem.blindedCommitment,
       blockReason,
     );
-
-    await db.insertBlockedShield(
-      this.listKey,
-      shieldDBItem.commitmentHash,
-      shieldDBItem.blindedCommitment,
+    const signedBlockedShield: SignedBlockedShield = {
+      commitmentHash: shieldDBItem.commitmentHash,
+      blindedCommitment: shieldDBItem.blindedCommitment,
       blockReason,
       signature,
-    );
+    };
+
+    await db.insertSignedBlockedShield(this.listKey, signedBlockedShield);
   }
 }

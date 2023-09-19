@@ -13,7 +13,7 @@ import {
 } from '../models/poi-types';
 import { POIOrderedEventsDatabase } from '../database/databases/poi-ordered-events-database';
 import { signPOIEventShield, signPOIEventTransact } from '../util/ed25519';
-import { POIEventList } from '../poi/poi-event-list';
+import { POIEventList } from '../poi-events/poi-event-list';
 import { Config } from '../config/config';
 import { ShieldQueueDatabase } from '../database/databases/shield-queue-database';
 import { ShieldStatus } from '../models/database-types';

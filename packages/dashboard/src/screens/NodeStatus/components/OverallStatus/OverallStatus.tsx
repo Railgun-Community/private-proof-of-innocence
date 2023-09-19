@@ -14,10 +14,10 @@ type Props = {
 };
 
 export const OverallStatus = ({ nodeStatus }: Props) => {
-  const eventListStatuses = nodeStatus?.eventListStatuses ?? undefined;
+  const listStatuses = nodeStatus?.listStatuses ?? undefined;
 
-  const arrayOfEventListStatuses = isDefined(eventListStatuses)
-    ? Object.entries(eventListStatuses).map(([key, value]) => ({
+  const arrayOfEventListStatuses = isDefined(listStatuses)
+    ? Object.entries(listStatuses).map(([key, value]) => ({
         id: key,
         value,
       }))

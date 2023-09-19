@@ -1,15 +1,18 @@
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { TransactProofMempool } from '../transact-proof-mempool';
-import * as SnarkProofVerifyModule from '../snark-proof-verify';
+import * as SnarkProofVerifyModule from '../../util/snark-proof-verify';
 import { RailgunTxidMerkletreeManager } from '../../railgun-txids/railgun-txid-merkletree-manager';
 import Sinon, { SinonStub } from 'sinon';
-import { NetworkName , TransactProofData } from '@railgun-community/shared-models';
+import {
+  NetworkName,
+  TransactProofData,
+} from '@railgun-community/shared-models';
 import { MOCK_LIST_KEYS, MOCK_SNARK_PROOF } from '../../tests/mocks.test';
 import { TransactProofPerListMempoolDatabase } from '../../database/databases/transact-proof-per-list-mempool-database';
 import { DatabaseClient } from '../../database/database-client-init';
 import { TransactProofMempoolCache } from '../transact-proof-mempool-cache';
-import { ProofMempoolBloomFilter } from '../proof-mempool-bloom-filters';
+import { POINodeBloomFilter } from '../../util/poi-node-bloom-filters';
 import { POIHistoricalMerklerootDatabase } from '../../database/databases/poi-historical-merkleroot-database';
 import { ListProviderPOIEventQueue } from '../../list-provider/list-provider-poi-event-queue';
 import { POIOrderedEventsDatabase } from '../../database/databases/poi-ordered-events-database';
@@ -162,12 +165,12 @@ describe('transact-proof-mempool', () => {
     );
 
     expect(
-      TransactProofMempoolCache.getTransactProofs(listKey, networkName).length,
+      TransactProofMempoolCache.getCacheSize(listKey, networkName),
     ).to.equal(2);
 
-    const bloomFilter = ProofMempoolBloomFilter.create();
+    const bloomFilter = POINodeBloomFilter.create();
     const bloomFilterSerializedNoData =
-      ProofMempoolBloomFilter.serialize(bloomFilter);
+      POINodeBloomFilter.serialize(bloomFilter);
     expect(
       TransactProofMempool.getFilteredProofs(
         listKey,
@@ -178,7 +181,7 @@ describe('transact-proof-mempool', () => {
 
     bloomFilter.add(transactProofData1.blindedCommitmentOutputs[0]);
     const bloomFilterSerializedWithProof1 =
-      ProofMempoolBloomFilter.serialize(bloomFilter);
+      POINodeBloomFilter.serialize(bloomFilter);
     expect(
       TransactProofMempool.getFilteredProofs(
         listKey,
@@ -236,17 +239,17 @@ describe('transact-proof-mempool', () => {
     );
 
     expect(
-      TransactProofMempoolCache.getTransactProofs(listKey, networkName).length,
+      TransactProofMempoolCache.getCacheSize(listKey, networkName),
     ).to.equal(2);
 
     TransactProofMempoolCache.clearCache_FOR_TEST_ONLY();
     expect(
-      TransactProofMempoolCache.getTransactProofs(listKey, networkName).length,
+      TransactProofMempoolCache.getCacheSize(listKey, networkName),
     ).to.equal(0);
 
-    await TransactProofMempool.inflateCacheFromDatabase();
+    await TransactProofMempool.inflateCacheFromDatabase(MOCK_LIST_KEYS);
     expect(
-      TransactProofMempoolCache.getTransactProofs(listKey, networkName).length,
+      TransactProofMempoolCache.getCacheSize(listKey, networkName),
     ).to.equal(2);
 
     // Remove a proof and check cache
@@ -256,7 +259,7 @@ describe('transact-proof-mempool', () => {
       '0x3333',
     );
     expect(
-      TransactProofMempoolCache.getTransactProofs(listKey, networkName).length,
+      TransactProofMempoolCache.getCacheSize(listKey, networkName),
     ).to.equal(1);
   }).timeout(10000);
 });

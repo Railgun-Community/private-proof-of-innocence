@@ -1,10 +1,13 @@
-import { NetworkName , TransactProofData } from '@railgun-community/shared-models';
+import {
+  NetworkName,
+  TransactProofData,
+} from '@railgun-community/shared-models';
 import { TransactProofPerListMempoolDatabase } from '../database/databases/transact-proof-per-list-mempool-database';
 import TransactProofVkey from './json/transact-proof-vkey.json';
 import { POIHistoricalMerklerootDatabase } from '../database/databases/poi-historical-merkleroot-database';
 import { TransactProofMempoolCache } from './transact-proof-mempool-cache';
-import { verifySnarkProof } from './snark-proof-verify';
-import { ProofMempoolCountingBloomFilter } from './proof-mempool-bloom-filters';
+import { verifySnarkProof } from '../util/snark-proof-verify';
+import { POINodeCountingBloomFilter } from '../util/poi-node-bloom-filters';
 import { POIOrderedEventsDatabase } from '../database/databases/poi-ordered-events-database';
 import { RailgunTxidMerkletreeManager } from '../railgun-txids/railgun-txid-merkletree-manager';
 import { QueryLimits } from '../config/query-limits';
@@ -129,11 +132,11 @@ export class TransactProofMempool {
     );
   }
 
-  static async inflateCacheFromDatabase() {
+  static async inflateCacheFromDatabase(listKeys: string[]) {
     for (const networkName of Config.NETWORK_NAMES) {
       const db = new TransactProofPerListMempoolDatabase(networkName);
 
-      for (const listKey of Config.LIST_KEYS) {
+      for (const listKey of listKeys) {
         const transactProofsStream = await db.streamTransactProofs(listKey);
 
         for await (const transactProofDBItem of transactProofsStream) {
@@ -163,7 +166,7 @@ export class TransactProofMempool {
     const transactProofDatas: TransactProofData[] =
       TransactProofMempoolCache.getTransactProofs(listKey, networkName);
 
-    const bloomFilter = ProofMempoolCountingBloomFilter.deserialize(
+    const bloomFilter = POINodeCountingBloomFilter.deserialize(
       countingBloomFilterSerialized,
     );
 

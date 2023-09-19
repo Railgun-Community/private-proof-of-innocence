@@ -10,7 +10,7 @@ import {
   ShieldStatus,
 } from '../../../models/database-types';
 import { daysAgo } from '../../../tests/util.test';
-import { getShieldQueueStatus } from '../../../shield-queue/shield-queue';
+import { getShieldQueueStatus } from '../../../shields/shield-queue';
 import { calculateShieldBlindedCommitment } from '../../../util/shield-blinded-commitment';
 
 chai.use(chaiAsPromised);
