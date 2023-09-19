@@ -1,6 +1,8 @@
-import { isDefined } from '@railgun-community/shared-models';
+import {
+  isDefined,
+  NodeStatusForNetwork,
+} from '@railgun-community/shared-models';
 import { Text } from '@components/Text/Text';
-import { NodeStatusForNetwork } from '@models/api-types';
 import { shortenWalletAddress } from '@utils/address';
 import { IconType, renderIcon } from '@utils/icon-service';
 import styles from './OverallStatus.module.scss';
@@ -45,7 +47,7 @@ export const OverallStatus = ({ nodeStatus }: Props) => {
         {arrayOfEventListStatuses.map(eventListStatus => (
           <Text key={eventListStatus.id}>
             {`${shortenWalletAddress(eventListStatus.id)}: ${
-              eventListStatus.value.length
+              eventListStatus.value?.length
             }`}
           </Text>
         ))}
