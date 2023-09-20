@@ -20,6 +20,7 @@ import { ListProviderPOIEventQueue } from './list-provider-poi-event-queue';
 import { ListProviderPOIEventUpdater } from './list-provider-poi-event-updater';
 import { POIEventShield, POIEventType } from '../models/poi-types';
 import { ListProviderBlocklist } from './list-provider-blocklist';
+import { hoursAgo } from '../util/time-ago';
 
 export type ListProviderConfig = {
   name: string;
@@ -152,7 +153,7 @@ export abstract class ListProvider {
   }
 
   private getMaxTimestampForValidation() {
-    return Date.now() - Constants.DAYS_WAITING_PERIOD * 24 * 60 * 60 * 1000;
+    return hoursAgo(Constants.HOURS_SHIELD_PENDING_PERIOD);
   }
 
   async validateNextQueuedShieldBatch(networkName: NetworkName): Promise<void> {

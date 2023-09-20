@@ -1,3 +1,4 @@
 export class Constants {
-  static readonly DAYS_WAITING_PERIOD = 7;
+  // 3 days - wait for pending shield to clear after mining.
+  static readonly HOURS_SHIELD_PENDING_PERIOD = 72;
 }
