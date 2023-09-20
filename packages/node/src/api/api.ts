@@ -40,6 +40,7 @@ import {
   GetBlockedShieldsBodySchema,
   GetBlockedShieldsParamsSchema,
 } from "./schemas";
+import "dotenv/config";
 
 const dbg = debug("poi:api");
 
@@ -92,6 +93,32 @@ export class API {
     }
   }
 
+  private basicAuth(req: Request, res: Response, next: NextFunction): void {
+    const authorization = req.headers.authorization;
+
+    // If no authorization header is present, return 401
+    if (authorization == null || authorization == undefined) {
+      res.status(401).json({ message: "Unauthorized" });
+      return;
+    }
+
+    // Check if the authorization header is valid
+    const base64Credentials = authorization.split(" ")[1] || "";
+    const credentials = Buffer.from(base64Credentials, "base64").toString(
+      "utf-8"
+    );
+    const [username, password] = credentials.split(":");
+
+    if (
+      username === process.env.BASIC_AUTH_USERNAME &&
+      password === process.env.BASIC_AUTH_PASSWORD
+    ) {
+      return next();
+    }
+
+    res.status(401).json({ message: "Unauthorized" });
+  }
+
   private safeGet(
     route: string,
     handler: (req: Request, res: Response) => Promise<void>
@@ -112,7 +139,8 @@ export class API {
    *
    * @param route - Route to handle POST requests for
    * @param handler - Request handler function that returns a Promise
-   * @param schema - JSON schema for the request body
+   * @param paramsSchema - JSON schema for request.params
+   * @param bodySchema - JSON schema for request.body
    */
   private safePost(
     route: string,
@@ -127,7 +155,8 @@ export class API {
 
     this.app.post(
       route,
-      validate,
+      this.basicAuth, // Require basic auth for POST requests
+      validate, // Validate request.params and request.body
       async (req: Request, res: Response, next: NextFunction) => {
         try {
           await handler(req, res);

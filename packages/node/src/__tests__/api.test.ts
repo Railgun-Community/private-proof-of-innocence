@@ -9,10 +9,18 @@ import {
   NodeStatusAllNetworks,
   TransactProofData,
 } from "@railgun-community/shared-models";
+import "dotenv/config";
 
 const listKey = MOCK_LIST_KEYS[0];
 
-describe("api", function () {
+// Import admin and password from .env file
+const username = process.env.BASIC_AUTH_USERNAME;
+const password = process.env.BASIC_AUTH_PASSWORD;
+const base64Credentials = Buffer.from(`${username}:${password}`).toString(
+  "base64"
+);
+
+describe.only("api", function () {
   let node3010: ProofOfInnocenceNode;
   let node3011: ProofOfInnocenceNode;
   let request: supertest.SuperTest<supertest.Test>;
@@ -95,16 +103,34 @@ describe("api", function () {
     }
   }).timeout(5000); // Test seems to always take > 2000ms
 
-  it("Should return 200 for POST /transact-proofs", async () => {
+  it("Should return 200 for POST /transact-proofs with valid auth", async () => {
     const chainType = "0";
     const chainID = "5";
     const validBloomFilterSerialized = "someValidSerializedData";
 
     const response: Response = await request
       .post(`/transact-proofs/${chainType}/${chainID}/${listKey}`)
+      .set("Authorization", `Basic ${base64Credentials}`)
       .send({ bloomFilterSerialized: validBloomFilterSerialized });
 
     expect(response.status).to.equal(200);
+  });
+
+  it("Should return 401 for POST /transact-proofs with invalid auth", async () => {
+    const chainType = "0";
+    const chainID = "5";
+    const validBloomFilterSerialized = "someValidSerializedData";
+
+    const badCredentials = Buffer.from("admin:wrongpassword").toString(
+      "base64"
+    );
+
+    const response: Response = await request
+      .post(`/transact-proofs/${chainType}/${chainID}/${listKey}`)
+      .set("Authorization", `Basic ${badCredentials}`)
+      .send({ bloomFilterSerialized: validBloomFilterSerialized });
+
+    expect(response.status).to.equal(401);
   });
 
   it("Should return 400 for POST /transact-proofs with invalid body", async () => {
@@ -113,6 +139,7 @@ describe("api", function () {
 
     const response: Response = await request
       .post(`/transact-proofs/${chainType}/${chainID}/${listKey}`)
+      .set("Authorization", `Basic ${base64Credentials}`)
       .send({ bloomFilterSerialized: 0 });
 
     expect(response.status).to.equal(400);
@@ -125,6 +152,7 @@ describe("api", function () {
 
     const response: Response = await request
       .post(`/blocked-shields/${chainType}/${chainID}/${listKey}`)
+      .set("Authorization", `Basic ${base64Credentials}`)
       .send({ bloomFilterSerialized });
 
     expect(response.status).to.equal(200);
@@ -136,6 +164,7 @@ describe("api", function () {
 
     const response: Response = await request
       .post(`/blocked-shields/${chainType}/${chainID}/${listKey}`)
+      .set("Authorization", `Basic ${base64Credentials}`)
       .send({ bloomFilterSerialized: 0 });
 
     expect(response.status).to.equal(400);
@@ -163,6 +192,7 @@ describe("api", function () {
 
     const response: Response = await request
       .post(`/submit-transact-proof/${chainType}/${chainID}`)
+      .set("Authorization", `Basic ${base64Credentials}`)
       .send({ listKey, transactProofData });
 
     expect(response.status).to.equal(200);
@@ -174,6 +204,7 @@ describe("api", function () {
 
     const response: Response = await request
       .post(`/submit-transact-proof/${chainType}/${chainID}`)
+      .set("Authorization", `Basic ${base64Credentials}`)
       .send({ listKey, transactProofData: 0 });
 
     expect(response.status).to.equal(400);
@@ -197,6 +228,7 @@ describe("api", function () {
 
     const response: Response = await request
       .post(`/pois-per-list/${chainType}/${chainID}`)
+      .set("Authorization", `Basic ${base64Credentials}`)
       .send({ listKeys, blindedCommitmentDatas });
 
     expect(response.status).to.equal(200);
@@ -208,6 +240,7 @@ describe("api", function () {
 
     const response: Response = await request
       .post(`/pois-per-list/${chainType}/${chainID}`)
+      .set("Authorization", `Basic ${base64Credentials}`)
       .send({ listKeys: 0, blindedCommitmentDatas: 0 });
 
     expect(response.status).to.equal(400);
@@ -220,6 +253,7 @@ describe("api", function () {
 
     const response: Response = await request
       .post(`/merkle-proofs/${chainType}/${chainID}`)
+      .set("Authorization", `Basic ${base64Credentials}`)
       .send({ listKey, blindedCommitments });
 
     expect(response.status).to.equal(200);
@@ -231,6 +265,7 @@ describe("api", function () {
 
     const response: Response = await request
       .post(`/merkle-proofs/${chainType}/${chainID}`)
+      .set("Authorization", `Basic ${base64Credentials}`)
       .send({ listKey, blindedCommitments: 0 });
 
     expect(response.status).to.equal(400);
@@ -245,6 +280,7 @@ describe("api", function () {
 
     const response: Response = await request
       .post(`/validate-txid-merkleroot/${chainType}/${chainID}`)
+      .set("Authorization", `Basic ${base64Credentials}`)
       .send({ tree, index, merkleroot });
 
     expect(response.status).to.equal(200);
@@ -256,6 +292,7 @@ describe("api", function () {
 
     const response: Response = await request
       .post(`/validate-txid-merkleroot/${chainType}/${chainID}`)
+      .set("Authorization", `Basic ${base64Credentials}`)
       .send({ tree: 0, index: 0, merkleroot: 0 });
 
     expect(response.status).to.equal(400);
