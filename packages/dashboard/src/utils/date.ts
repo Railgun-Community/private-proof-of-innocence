@@ -1,8 +1,11 @@
-export const getLastRefreshedTimeText = (date: Date) => {
-  const currentDate = new Date();
+export const getLastRefreshedTimeText = (date: Date, currentDate: Date) => {
   const timeDifferenceInSeconds = Math.floor(
     (currentDate.getTime() - date.getTime()) / 1000,
   );
+
+  if (timeDifferenceInSeconds < 60) {
+    return 'Last refreshed less than a minute ago';
+  }
 
   const minutes = Math.floor(timeDifferenceInSeconds / 60);
   if (minutes < 60) {

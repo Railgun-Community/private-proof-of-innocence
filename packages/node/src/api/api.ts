@@ -8,11 +8,11 @@ import {
   ValidationError,
   AllowedSchema,
 } from "express-json-validator-middleware";
-import { POIEventList } from "../poi/poi-event-list";
+import { POIEventList } from "../poi-events/poi-event-list";
 import { networkNameForSerializedChain } from "../config/general";
 import { TransactProofMempool } from "../proof-mempool/transact-proof-mempool";
-import { POIMerkletreeManager } from "../poi/poi-merkletree-manager";
-import { getShieldQueueStatus } from "../shield-queue/shield-queue";
+import { POIMerkletreeManager } from "../poi-events/poi-merkletree-manager";
+import { getShieldQueueStatus } from "../shields/shield-queue";
 import { RailgunTxidMerkletreeManager } from "../railgun-txids/railgun-txid-merkletree-manager";
 import { QueryLimits } from "../config/query-limits";
 import { NodeStatus } from "../status/node-status";
@@ -20,6 +20,7 @@ import { Config } from "../config/config";
 import {
   NodeStatusAllNetworks,
   GetTransactProofsParams,
+  GetBlockedShieldsParams,
   SubmitTransactProofParams,
   GetPOIsPerListParams,
   GetMerkleProofsParams,
@@ -36,6 +37,8 @@ import {
   GetMerkleProofsBodySchema,
   ValidateTxidMerklerootBodySchema,
   ValidateTxidMerklerootParamsSchema,
+  GetBlockedShieldsBodySchema,
+  GetBlockedShieldsParamsSchema,
 } from "./schemas";
 
 const dbg = debug("poi:api");
@@ -188,7 +191,7 @@ export class API {
         this.assertHasListKey(listKey);
         const networkName = networkNameForSerializedChain(chainType, chainID);
 
-        const status = await POIEventList.getEventListStatus(
+        const status = await POIEventList.getPOIEventsLength(
           networkName,
           listKey
         );
@@ -244,6 +247,26 @@ export class API {
       },
       GetTransactProofsParamsSchema,
       GetTransactProofsBodySchema
+    );
+
+    this.safePost(
+      '/blocked-shields/:chainType/:chainID/:listKey',
+      async (req: Request, res: Response) => {
+        const { chainType, chainID, listKey } = req.params;
+        const { bloomFilterSerialized } = req.body as GetBlockedShieldsParams;
+        this.assertHasListKey(listKey);
+
+        const networkName = networkNameForSerializedChain(chainType, chainID);
+
+        const proofs = TransactProofMempool.getFilteredProofs(
+          listKey,
+          networkName,
+          bloomFilterSerialized,
+        );
+        res.json(proofs);
+      },
+      GetBlockedShieldsParamsSchema,
+      GetBlockedShieldsBodySchema
     );
   }
 

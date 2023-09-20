@@ -1,12 +1,12 @@
 @import '@scss/styleguide';
 
-$drawerWidth: 510px;
+$drawerWidth: 350px;
 
 @mixin defaultDrawerStyles {
   position: fixed;
   height: 100%;
   width: $drawerWidth;
-  top: 0px;
+  top: calc($headerHeight - 8px);
   z-index: $z-index-drawers;
   transition: transform 0.2s ease-in-out;
   border-width: 0px;
@@ -32,24 +32,25 @@ $drawerWidth: 510px;
 .backdrop {
   position: fixed;
   width: 100vw;
-  height: 100vh;
-  top: 0;
+  height: calc(100vh - calc($headerHeight - 8px));
+  bottom: 0;
   left: 0;
   background-color: gray(0.72);
-  z-index: calc($z-index-drawers - 1);
+  z-index: calc($z-index-drawers - 2);
 }
 
 .hideDrawer {
   transform: translateX(0);
   transition: transform 0.2s ease-in-out;
+  border-width: 0px;
 }
 
 .drawerContentContainer {
   height: 100%;
-  width: 100%;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 0px 24px;
+  padding: 24px;
   display: flex;
   flex-direction: column;
+  gap: 20px;
 }

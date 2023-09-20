@@ -71,8 +71,9 @@ describe.only("api", function () {
     expect(body).to.have.keys(["listKeys", "forNetwork"]);
     expect(body.forNetwork).to.have.keys(["Ethereum", "Ethereum_Goerli"]);
     expect(body.forNetwork.Ethereum).to.have.keys([
-      "txidStatus",
-      "eventListStatuses",
+      'txidStatus',
+      'listStatuses',
+      'shieldQueueStatus',
     ]);
 
     if (body.forNetwork.Ethereum) {

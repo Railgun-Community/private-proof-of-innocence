@@ -1,3 +1,4 @@
+/// <reference types="../../types/index" />
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
 import { NetworkName } from '@railgun-community/shared-models';
@@ -20,10 +21,13 @@ export class TestMockListProviderExcludeSingleAddress extends ListProvider {
     txid: string,
     fromAddressLowercase: string,
     timestamp: number,
-  ): Promise<boolean> {
+  ): Promise<
+    | { shouldAllow: true }
+    | { shouldAllow: false; blockReason: Optional<string> }
+  > {
     if (EXCLUDED_ADDRESSES_LOWERCASE.includes(fromAddressLowercase)) {
-      return false;
+      return { shouldAllow: false, blockReason: 'Address not allowed' };
     }
-    return true;
+    return { shouldAllow: true };
   }
 }

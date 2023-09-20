@@ -12,67 +12,74 @@ const networkName = NetworkName.Ethereum;
 
 let db: RailgunTxidMerkletreeStatusDatabase;
 
-describe('RailgunTxidMerkletreeStatusDatabase', () => {
-    before(async () => {
-        await DatabaseClient.init();
-        db = new RailgunTxidMerkletreeStatusDatabase(networkName);
+describe('railgun-txid-merkletree-status-database', () => {
+  before(async () => {
+    await DatabaseClient.init();
+    db = new RailgunTxidMerkletreeStatusDatabase(networkName);
 
-        // Insert dummy document, ensures DB gets a namespace since is empty 
-        await db.saveValidatedTxidStatus(0, 'someRoot');
+    // Insert dummy document, ensures DB gets a namespace since is empty
+    await db.saveValidatedTxidStatus(0, 'someRoot');
 
-        await db.createCollectionIndices();
+    await db.createCollectionIndices();
+  });
+
+  beforeEach(async () => {
+    await db.deleteAllItems_DANGEROUS();
+  });
+
+  it('Should not create additional collection indices', async () => {
+    // Fetch all indexes for the collection
+    const indexes = await db.listCollectionIndexes();
+
+    // Filter out the default MongoDB index on the `_id` field
+    const additionalIndexes = indexes.filter((index) => {
+      return !('key' in index && '_id' in index.key);
     });
 
-    beforeEach(async () => {
-        await db.deleteAllItems_DANGEROUS();
-    });
+    expect(additionalIndexes.length).to.equal(0);
+  });
 
-    it('Should not create additional collection indices', async () => {
-        // Fetch all indexes for the collection
-        const indexes = await db.listCollectionIndexes();
+  it('Should correctly initialize RailgunTxidMerkletreeStatusDatabase', () => {
+    expect(db).to.be.instanceOf(RailgunTxidMerkletreeStatusDatabase);
+  });
 
-        // Filter out the default MongoDB index on the `_id` field
-        const additionalIndexes = indexes.filter(index => {
-            return !('key' in index && '_id' in index.key);
-        });
+  it('Should insert, get, and update a valid RailgunTxidMerkletreeStatusDBItem', async () => {
+    const statusItem: RailgunTxidMerkletreeStatusDBItem = {
+      validatedTxidIndex: 10,
+      validatedTxidMerkleroot: 'someRoot',
+    };
 
-        expect(additionalIndexes.length).to.equal(0);
-    });
+    // Save the status
+    await db.saveValidatedTxidStatus(
+      statusItem.validatedTxidIndex,
+      statusItem.validatedTxidMerkleroot,
+    );
 
-    it('Should correctly initialize RailgunTxidMerkletreeStatusDatabase', () => {
-        expect(db).to.be.instanceOf(RailgunTxidMerkletreeStatusDatabase);
-    });
+    // Fetch the status
+    const fetchedItem = await db.getStatus();
+    expect(fetchedItem).to.not.be.null;
+    expect(fetchedItem).to.not.be.undefined;
 
-    it('Should insert, get, and update a valid RailgunTxidMerkletreeStatusDBItem', async () => {
-        const statusItem: RailgunTxidMerkletreeStatusDBItem = {
-            validatedTxidIndex: 10,
-            validatedTxidMerkleroot: 'someRoot',
-        };
+    if (fetchedItem !== null && fetchedItem !== undefined) {
+      expect(fetchedItem.validatedTxidIndex).to.equal(
+        statusItem.validatedTxidIndex,
+      );
+      expect(fetchedItem.validatedTxidMerkleroot).to.equal(
+        statusItem.validatedTxidMerkleroot,
+      );
+    }
 
-        // Save the status
-        await db.saveValidatedTxidStatus(statusItem.validatedTxidIndex, statusItem.validatedTxidMerkleroot);
+    // Update the status
+    await db.saveValidatedTxidStatus(20, 'newRoot');
 
-        // Fetch the status
-        const fetchedItem = await db.getStatus();
-        expect(fetchedItem).to.not.be.null;
-        expect(fetchedItem).to.not.be.undefined;
+    // Fetch the updated status
+    const updatedItem = await db.getStatus();
+    expect(updatedItem).to.not.be.null;
+    expect(updatedItem).to.not.be.undefined;
 
-        if (fetchedItem !== null && fetchedItem !== undefined) {
-            expect(fetchedItem.validatedTxidIndex).to.equal(statusItem.validatedTxidIndex);
-            expect(fetchedItem.validatedTxidMerkleroot).to.equal(statusItem.validatedTxidMerkleroot);
-        }
-
-        // Update the status
-        await db.saveValidatedTxidStatus(20, 'newRoot');
-
-        // Fetch the updated status
-        const updatedItem = await db.getStatus();
-        expect(updatedItem).to.not.be.null;
-        expect(updatedItem).to.not.be.undefined;
-
-        if (updatedItem !== null && updatedItem !== undefined) {
-            expect(updatedItem.validatedTxidIndex).to.equal(20);
-            expect(updatedItem.validatedTxidMerkleroot).to.equal('newRoot');
-        }
-    });
+    if (updatedItem !== null && updatedItem !== undefined) {
+      expect(updatedItem.validatedTxidIndex).to.equal(20);
+      expect(updatedItem.validatedTxidMerkleroot).to.equal('newRoot');
+    }
+  });
 });

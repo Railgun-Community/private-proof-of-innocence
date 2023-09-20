@@ -9,9 +9,9 @@ import {
   ShieldQueueDBItem,
   ShieldStatus,
 } from '../../../models/database-types';
-import { daysAgo } from '../../../tests/util.test';
-import { getShieldQueueStatus } from '../../../shield-queue/shield-queue';
+import { getShieldQueueStatus } from '../../../shields/shield-queue';
 import { calculateShieldBlindedCommitment } from '../../../util/shield-blinded-commitment';
+import { daysAgo } from '../../../util/time-ago';
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
@@ -90,12 +90,12 @@ describe('shield-queue-database', () => {
     };
     await db.insertPendingShield(pendingShield1);
 
-    const tenDaysAgo = daysAgo(10);
+    const fourDaysAgo = daysAgo(4);
     const pendingShield2: ShieldData = {
       txid: '0x9876',
       commitmentHash: '0x5432',
       npk: '0x0000',
-      timestamp: tenDaysAgo,
+      timestamp: fourDaysAgo,
       blockNumber: 123456,
       utxoTree: 0,
       utxoIndex: 6,
@@ -117,11 +117,11 @@ describe('shield-queue-database', () => {
     const shieldQueueItem2: ShieldQueueDBItem = {
       ...pendingShield2,
       blindedCommitment: calculateShieldBlindedCommitment(pendingShield2),
-      timestamp: tenDaysAgo,
+      timestamp: fourDaysAgo,
       status: ShieldStatus.Pending,
       lastValidatedTimestamp: null,
     };
-    await expect(db.getPendingShields(daysAgo(7))).to.eventually.deep.equal([
+    await expect(db.getPendingShields(daysAgo(3))).to.eventually.deep.equal([
       shieldQueueItem2,
     ]);
 
@@ -151,14 +151,14 @@ describe('shield-queue-database', () => {
     // No shields in queue to begin
     await expect(db.getPendingShields(now)).to.eventually.deep.equal([]);
 
-    const tenDaysAgo = Date.now() - 10 * 24 * 60 * 60 * 1000;
+    const fourDaysAgo = daysAgo(4);
     const pendingShieldExpired: ShieldData = {
       txid: '0x9876',
       commitmentHash: '0x5432',
       npk: '0x0000',
       utxoTree: 0,
       utxoIndex: 5,
-      timestamp: tenDaysAgo,
+      timestamp: fourDaysAgo,
       blockNumber: 123436,
     };
     await db.insertPendingShield(pendingShieldExpired);
@@ -168,21 +168,21 @@ describe('shield-queue-database', () => {
       commitmentHash: '0x5432',
       blindedCommitment: calculateShieldBlindedCommitment(pendingShieldExpired),
       npk: '0x0000',
-      timestamp: tenDaysAgo,
+      timestamp: fourDaysAgo,
       status: ShieldStatus.Pending,
       lastValidatedTimestamp: null,
       blockNumber: 123436,
       utxoTree: 0,
       utxoIndex: 5,
     };
-    await expect(db.getPendingShields(daysAgo(7))).to.eventually.deep.equal([
+    await expect(db.getPendingShields(daysAgo(3))).to.eventually.deep.equal([
       shieldQueueItemExpired,
     ]);
 
     // Set to "Allowed"
     await db.updateShieldStatus(shieldQueueItemExpired, ShieldStatus.Allowed);
 
-    await expect(db.getPendingShields(daysAgo(7))).to.eventually.deep.equal([]);
+    await expect(db.getPendingShields(daysAgo(3))).to.eventually.deep.equal([]);
 
     const allowedShields = await db.getAllowedShields();
     expect(allowedShields.length).to.equal(1);

@@ -31,7 +31,7 @@ export enum CollectionName {
   POIHistoricalMerkleroots = 'POIHistoricalMerkleroots',
 
   // Blocked shields
-  // BlockedShieldsPerList = 'BlockedShieldsPerList',
+  BlockedShieldsPerList = 'BlockedShieldsPerList',
 
   // Test
   Test = 'Test',
@@ -114,6 +114,15 @@ export type POIMerkletreeDBItem = {
 export type POIHistoricalMerklerootDBItem = {
   listKey: string;
   rootHash: string;
+};
+
+// DO NOT CHANGE FIELDS WITHOUT CLEARING OR MIGRATING THE DB.
+export type BlockedShieldsPerListDBItem = {
+  listKey: string;
+  commitmentHash: string;
+  blindedCommitment: string;
+  blockReason: DBOptional<string>;
+  signature: string;
 };
 
 export type TestDBItem = {

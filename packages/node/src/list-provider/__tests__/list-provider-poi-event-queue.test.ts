@@ -6,10 +6,11 @@ import {
   TransactProofData,
   POIStatus,
   BlindedCommitmentType,
+  poll,
 } from '@railgun-community/shared-models';
 import { DatabaseClient } from '../../database/database-client-init';
 import { ListProviderPOIEventQueue } from '../list-provider-poi-event-queue';
-import { POIMerkletreeManager } from '../../poi/poi-merkletree-manager';
+import { POIMerkletreeManager } from '../../poi-events/poi-merkletree-manager';
 import { TransactProofPerListMempoolDatabase } from '../../database/databases/transact-proof-per-list-mempool-database';
 import { POIOrderedEventsDatabase } from '../../database/databases/poi-ordered-events-database';
 import { POIMerkletreeDatabase } from '../../database/databases/poi-merkletree-database';
@@ -86,8 +87,16 @@ describe('list-provider-poi-event-queue', () => {
       transactProofData,
     );
 
-    // Wait for queue to process
-    await delay(1000);
+    // Wait until queue is empty
+    const pollQueueLength = await poll(
+      async () => ListProviderPOIEventQueue.getPOIEventQueueLength(networkName),
+      (queueLength) => queueLength === 0,
+      20,
+      5000 / 20, // 5 sec.
+    );
+    if (pollQueueLength !== 0) {
+      throw new Error(`Queue should be empty after processing - timed out`);
+    }
 
     // Expect all events to be added to merkletree
     const poiStatusPerList = await POIMerkletreeManager.getPOIStatusPerList(

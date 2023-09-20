@@ -1,7 +1,4 @@
-import {
-  NetworkName,
-  POIEventListStatus,
-} from '@railgun-community/shared-models';
+import { NetworkName } from '@railgun-community/shared-models';
 import { POIOrderedEventsDatabase } from '../database/databases/poi-ordered-events-database';
 import { SignedPOIEvent } from '../models/poi-types';
 import { verifyPOIEvent } from '../util/ed25519';
@@ -9,16 +6,13 @@ import { POIMerkletreeManager } from './poi-merkletree-manager';
 import { TransactProofMempoolPruner } from '../proof-mempool/transact-proof-mempool-pruner';
 
 export class POIEventList {
-  static async getEventListStatus(
+  static async getPOIEventsLength(
     networkName: NetworkName,
     listKey: string,
-  ): Promise<POIEventListStatus> {
+  ): Promise<number> {
     const db = new POIOrderedEventsDatabase(networkName);
-    const length = await db.getCount(listKey);
-
-    return {
-      length,
-    };
+    const poiEventsLength = await db.getCount(listKey);
+    return poiEventsLength;
   }
 
   static async getPOIListEventRange(

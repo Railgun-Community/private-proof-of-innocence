@@ -15,7 +15,7 @@ let db: TransactProofPerListMempoolDatabase;
 
 const listKey = MOCK_LIST_KEYS[0];
 
-describe('TransactProofPerListMempoolDatabase', () => {
+describe('transact-proof-per-list-mempool-database', () => {
   before(async () => {
     await DatabaseClient.init();
     db = new TransactProofPerListMempoolDatabase(networkName);
@@ -27,7 +27,7 @@ describe('TransactProofPerListMempoolDatabase', () => {
     await db.deleteAllItems_DANGEROUS();
   });
 
-  it('Should create collection indeces', async () => {
+  it('Should create collection indices', async () => {
     // Fetch all indexes for the collection
     const indexes = await db.listCollectionIndexes();
 
@@ -47,24 +47,6 @@ describe('TransactProofPerListMempoolDatabase', () => {
 
   it('Should correctly initialize TransactProofPerListMempoolDatabase', () => {
     expect(db).to.be.instanceOf(TransactProofPerListMempoolDatabase);
-  });
-
-  it('Should create collection indeces', async () => {
-    // Fetch all indexes for the collection
-    const indexes = await db.listCollectionIndexes();
-
-    // Check if a unique index exists for the combination of 'listKey' and 'firstBlindedCommitment' fields
-    const uniqueCombinedIndexExists = indexes.some((index) => {
-      return (
-        'key' in index &&
-        'listKey' in index.key &&
-        'firstBlindedCommitment' in index.key &&
-        index.unique === true
-      );
-    });
-
-    // Assert that the unique index exists
-    expect(uniqueCombinedIndexExists).to.equal(true);
   });
 
   it('Should insert and get a valid transact proof', async () => {
@@ -94,13 +76,13 @@ describe('TransactProofPerListMempoolDatabase', () => {
     // Check that the proof exists and is in getAllTransactProofsAndLists
     expect(
       await db.proofExists(listKey, 'blindedCommitmentOutputs_0'),
-    ).to.equal(true); // Changed this to match the first item in blindedCommitmentOutputs
+    ).to.equal(true);
     expect(
       await db.proofExistsContainingBlindedCommitment(
         listKey,
         'blindedCommitmentOutputs_1',
       ),
-    ).to.equal(true); // Changed this to match the first item in blindedCommitmentOutputs
+    ).to.equal(true);
   });
 
   it('Should delete a transact proof', async () => {

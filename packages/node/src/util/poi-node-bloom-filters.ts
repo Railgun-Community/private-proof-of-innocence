@@ -1,5 +1,5 @@
 import { BloomFilter, CountingBloomFilter } from 'bloom-filters';
-import { fromBase64, toBase64 } from '../util/base64';
+import { fromBase64, toBase64 } from './base64';
 import bits from 'bits-to-bytes';
 
 // For 100,000 elements, approx 1/1_000_000 false positive rate.
@@ -7,7 +7,7 @@ const SIZE_IN_BITS = 2_875_518;
 const NUMBER_OF_HASHES = 20;
 const SEED = 0;
 
-export class ProofMempoolBloomFilter {
+export class POINodeBloomFilter {
   static create(): BloomFilter {
     const filter = new BloomFilter(SIZE_IN_BITS, NUMBER_OF_HASHES);
     filter._seed = SEED;
@@ -19,13 +19,13 @@ export class ProofMempoolBloomFilter {
   }
 
   static deserialize(serialized: string): BloomFilter {
-    const filter = ProofMempoolBloomFilter.create();
+    const filter = POINodeBloomFilter.create();
     filter._filter.array = fromBase64(serialized);
     return filter;
   }
 }
 
-export class ProofMempoolCountingBloomFilter {
+export class POINodeCountingBloomFilter {
   static create(): CountingBloomFilter {
     const filter = new CountingBloomFilter(SIZE_IN_BITS, NUMBER_OF_HASHES);
     filter._seed = SEED;
@@ -39,7 +39,7 @@ export class ProofMempoolCountingBloomFilter {
   }
 
   static deserialize(serialized: string): CountingBloomFilter {
-    const filter = ProofMempoolCountingBloomFilter.create();
+    const filter = POINodeCountingBloomFilter.create();
     filter._filter = [...bits.iterator(fromBase64(serialized))].map(
       (element) => [Number(element), Number(element)],
     );

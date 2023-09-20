@@ -16,6 +16,7 @@ import { POIHistoricalMerklerootDatabase } from './databases/poi-historical-merk
 import { TestDatabase } from './databases/test-database';
 import { DatabaseClientStorage } from './database-client-storage';
 import { RailgunTxidMerkletreeStatusDatabase } from './databases/railgun-txid-merkletree-status-database';
+import { BlockedShieldsPerListDatabase } from './databases/blocked-shields-per-list-database';
 
 export class DatabaseClient {
   static async init() {
@@ -47,6 +48,7 @@ export class DatabaseClient {
           Object.values(CollectionName).map(async (collectionName) => {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             let db: AbstractDatabase<any>;
+
             switch (collectionName) {
               case CollectionName.Status:
                 db = new StatusDatabase(networkName);
@@ -56,6 +58,9 @@ export class DatabaseClient {
                 break;
               case CollectionName.TransactProofPerListMempool:
                 db = new TransactProofPerListMempoolDatabase(networkName);
+                break;
+              case CollectionName.BlockedShieldsPerList:
+                db = new BlockedShieldsPerListDatabase(networkName);
                 break;
               case CollectionName.RailgunTxidMerkletreeStatus:
                 db = new RailgunTxidMerkletreeStatusDatabase(networkName);

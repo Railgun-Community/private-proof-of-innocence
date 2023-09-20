@@ -1,15 +1,10 @@
-import { NetworkName } from '@railgun-community/shared-models';
+import {
+  NetworkName,
+  ShieldQueueStatus,
+} from '@railgun-community/shared-models';
 import { ShieldQueueDatabase } from '../database/databases/shield-queue-database';
 import { ShieldStatus } from '../models/database-types';
 import { getFormattedTimeAgo } from '../util/time-ago';
-
-type ShieldQueueStatus = {
-  pending: number;
-  allowed: number;
-  blocked: number;
-  addedPOI: number;
-  latestPendingShield: Optional<string>;
-};
 
 export const getShieldQueueStatus = async (
   networkName: NetworkName,

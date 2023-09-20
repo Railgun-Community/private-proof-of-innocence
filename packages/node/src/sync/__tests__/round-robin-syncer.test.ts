@@ -4,6 +4,7 @@ import {
   NetworkName,
   TransactProofData,
   NodeStatusAllNetworks,
+  ShieldQueueStatus,
 } from '@railgun-community/shared-models';
 import { DatabaseClient } from '../../database/database-client-init';
 import { RoundRobinSyncer } from '../round-robin-syncer';
@@ -13,12 +14,17 @@ import { MOCK_SNARK_PROOF } from '../../tests/mocks.test';
 import { POIOrderedEventsDatabase } from '../../database/databases/poi-ordered-events-database';
 import sinon, { SinonStub } from 'sinon';
 import { POINodeRequest } from '../../api/poi-node-request';
-import { POIEventType, SignedPOIEvent } from '../../models/poi-types';
+import {
+  POIEventType,
+  SignedBlockedShield,
+  SignedPOIEvent,
+} from '../../models/poi-types';
 import { ListProviderPOIEventQueue } from '../../list-provider/list-provider-poi-event-queue';
-import { getListPublicKey } from '../../util/ed25519';
-import { POIMerkletreeManager } from '../../poi/poi-merkletree-manager';
+import { getListPublicKey, signBlockedShield } from '../../util/ed25519';
+import { POIMerkletreeManager } from '../../poi-events/poi-merkletree-manager';
 import { TransactProofPerListMempoolDatabase } from '../../database/databases/transact-proof-per-list-mempool-database';
-import * as SnarkProofVerifyModule from '../../proof-mempool/snark-proof-verify';
+import * as SnarkProofVerifyModule from '../../util/snark-proof-verify';
+import { BlockedShieldsPerListDatabase } from '../../database/databases/blocked-shields-per-list-database';
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
@@ -29,6 +35,7 @@ let merkletreeDB: POIMerkletreeDatabase;
 let merklerootDB: POIHistoricalMerklerootDatabase;
 let orderedEventsDB: POIOrderedEventsDatabase;
 let transactProofMempoolDB: TransactProofPerListMempoolDatabase;
+let blockedShieldsDB: BlockedShieldsPerListDatabase;
 
 let roundRobinSyncer: RoundRobinSyncer;
 
@@ -48,9 +55,14 @@ const getNodeStatus = (): NodeStatusAllNetworks => ({
         validatedMerkleroot: '50',
         validatedTxidIndex: 50,
       },
-      eventListStatuses: {
-        [listKey]: { length: 2 },
+      listStatuses: {
+        [listKey]: {
+          poiEvents: 2,
+          pendingTransactProofs: 2,
+          blockedShields: 2,
+        },
       },
+      shieldQueueStatus: {} as ShieldQueueStatus,
     },
   },
 });
@@ -67,6 +79,7 @@ describe('round-robin-syncer', () => {
     transactProofMempoolDB = new TransactProofPerListMempoolDatabase(
       networkName,
     );
+    blockedShieldsDB = new BlockedShieldsPerListDatabase(networkName);
 
     POIMerkletreeManager.initListMerkletrees([listKey]);
 
@@ -86,12 +99,14 @@ describe('round-robin-syncer', () => {
     await merklerootDB.deleteAllItems_DANGEROUS();
     await orderedEventsDB.deleteAllItems_DANGEROUS();
     await transactProofMempoolDB.deleteAllItems_DANGEROUS();
+    await blockedShieldsDB.deleteAllItems_DANGEROUS();
   });
   afterEach(async () => {
     await merkletreeDB.deleteAllItems_DANGEROUS();
     await merklerootDB.deleteAllItems_DANGEROUS();
     await orderedEventsDB.deleteAllItems_DANGEROUS();
     await transactProofMempoolDB.deleteAllItems_DANGEROUS();
+    await blockedShieldsDB.deleteAllItems_DANGEROUS();
   });
 
   it('Should update POI event list', async () => {
@@ -181,5 +196,63 @@ describe('round-robin-syncer', () => {
     ).to.equal(true);
 
     getFilteredTransactProofsStub.restore();
+  });
+
+  it('Should update blocked shields', async () => {
+    const blockedShieldData1 = {
+      commitmentHash: '0x0000',
+      blindedCommitment: '0x1111',
+      blockReason: 'test',
+    };
+    const blockedShield1: SignedBlockedShield = {
+      commitmentHash: blockedShieldData1.commitmentHash,
+      blindedCommitment: blockedShieldData1.blindedCommitment,
+      blockReason: blockedShieldData1.blockReason,
+      signature: await signBlockedShield(
+        blockedShieldData1.commitmentHash,
+        blockedShieldData1.blindedCommitment,
+        blockedShieldData1.blockReason,
+      ),
+    };
+    const blockedShieldData2 = {
+      commitmentHash: '0x1234',
+      blindedCommitment: '0x5678',
+      blockReason: 'another',
+    };
+    const blockedShield2: SignedBlockedShield = {
+      commitmentHash: blockedShieldData2.commitmentHash,
+      blindedCommitment: blockedShieldData2.blindedCommitment,
+      blockReason: blockedShieldData2.blockReason,
+      signature: await signBlockedShield(
+        blockedShieldData2.commitmentHash,
+        blockedShieldData2.blindedCommitment,
+        blockedShieldData2.blockReason,
+      ),
+    };
+
+    const getFilteredBlockedShieldsStub = sinon
+      .stub(POINodeRequest, 'getFilteredBlockedShields')
+      .resolves([blockedShield1, blockedShield2]);
+
+    await roundRobinSyncer.updateBlockedShieldsAllNetworks(
+      nodeURL,
+      getNodeStatus(),
+    );
+
+    // Make sure all blocked shields sync
+    expect(
+      await blockedShieldsDB.isShieldBlockedByList(
+        listKey,
+        blockedShield1.blindedCommitment,
+      ),
+    ).to.equal(true);
+    expect(
+      await blockedShieldsDB.isShieldBlockedByList(
+        listKey,
+        blockedShield2.blindedCommitment,
+      ),
+    ).to.equal(true);
+
+    getFilteredBlockedShieldsStub.restore();
   });
 });

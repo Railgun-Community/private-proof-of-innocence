@@ -10,7 +10,6 @@ import { ShieldQueueDatabase } from '../../database/databases/shield-queue-datab
 import { ListProvider } from '../list-provider';
 import sinon, { SinonStub } from 'sinon';
 import { ShieldQueueDBItem, ShieldStatus } from '../../models/database-types';
-import { daysAgo } from '../../tests/util.test';
 import { TransactionReceipt } from 'ethers';
 import {
   MOCK_EXCLUDED_ADDRESS_1,
@@ -18,6 +17,7 @@ import {
 } from '../../tests/mocks.test';
 import { ListProviderPOIEventQueue } from '../list-provider-poi-event-queue';
 import { calculateShieldBlindedCommitment } from '../../util/shield-blinded-commitment';
+import { daysAgo } from '../../util/time-ago';
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
@@ -90,7 +90,7 @@ describe('list-provider', () => {
       utxoTree: 0,
       utxoIndex: 3,
     };
-    await expect(db.getPendingShields(daysAgo(7))).to.eventually.deep.equal([
+    await expect(db.getPendingShields(daysAgo(3))).to.eventually.deep.equal([
       pendingShield,
     ]);
   });
@@ -122,7 +122,7 @@ describe('list-provider', () => {
 
     await listProvider.queueNewShields(networkName);
 
-    const pendingShields = await db.getPendingShields(daysAgo(7));
+    const pendingShields = await db.getPendingShields(daysAgo(3));
     expect(pendingShields.length).to.equal(2);
 
     // Should be Allowed

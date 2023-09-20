@@ -62,8 +62,9 @@ export class ConnectedNodeStartup {
         for (const networkName of Config.NETWORK_NAMES) {
           for (const listKey of Config.LIST_KEYS) {
             const eventListLength =
-              nodeStatusAllNetworks.forNetwork[networkName]
-                ?.eventListStatuses?.[listKey]?.length ?? 0;
+              nodeStatusAllNetworks.forNetwork[networkName]?.listStatuses?.[
+                listKey
+              ]?.poiEvents ?? 0;
             const syncedIndex = eventListLength - 1;
             ListProviderPOIEventQueue.updateMinimumNextAddIndex(
               networkName,

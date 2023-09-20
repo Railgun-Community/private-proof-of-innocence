@@ -8,11 +8,13 @@ import debug from 'debug';
 import { Config } from '../config/config';
 import { POINodeRequest } from '../api/poi-node-request';
 import { RailgunTxidMerkletreeManager } from '../railgun-txids/railgun-txid-merkletree-manager';
-import { POIEventList } from '../poi/poi-event-list';
+import { POIEventList } from '../poi-events/poi-event-list';
 import { QueryLimits } from '../config/query-limits';
 import { TransactProofMempool } from '../proof-mempool/transact-proof-mempool';
 import { PollStatus } from '../models/general-types';
 import { TransactProofMempoolCache } from '../proof-mempool/transact-proof-mempool-cache';
+import { BlockedShieldsCache } from '../shields/blocked-shields-cache';
+import { BlockedShieldsSyncer } from '../shields/blocked-shields-syncer';
 
 const dbg = debug('poi:sync');
 
@@ -66,6 +68,12 @@ export class RoundRobinSyncer {
       );
       dbg('Synced: Railgun Validated TXID Merkletree Roots');
 
+      await this.updateBlockedShieldsAllNetworks(
+        nodeURL,
+        nodeStatusAllNetworks,
+      );
+      dbg('Synced: Blocked Shields');
+
       this.pollStatus = PollStatus.POLLING;
 
       // 30 second delay before next poll
@@ -114,17 +122,17 @@ export class RoundRobinSyncer {
       if (!nodeStatus) {
         continue;
       }
-      const { eventListStatuses } = nodeStatus;
+      const { listStatuses } = nodeStatus;
 
       for (const listKey of this.listKeys) {
-        if (!isDefined(eventListStatuses[listKey])) {
+        if (!isDefined(listStatuses[listKey])) {
           continue;
         }
         await this.updatePOIEventList(
           nodeURL,
           networkName,
           listKey,
-          eventListStatuses[listKey].length,
+          listStatuses[listKey].poiEvents,
         );
       }
     }
@@ -134,13 +142,13 @@ export class RoundRobinSyncer {
     nodeURL: string,
     networkName: NetworkName,
     listKey: string,
-    nodeListLength: number,
+    nodePOIEventsLength: number,
   ) {
-    const { length: currentListLength } = await POIEventList.getEventListStatus(
+    const currentListLength = await POIEventList.getPOIEventsLength(
       networkName,
       listKey,
     );
-    if (nodeListLength <= currentListLength) {
+    if (nodePOIEventsLength <= currentListLength) {
       return;
     }
 
@@ -148,7 +156,7 @@ export class RoundRobinSyncer {
     const startIndex = currentListLength;
     const endIndex = Math.min(
       startIndex + QueryLimits.MAX_EVENT_QUERY_RANGE_LENGTH - 1,
-      nodeListLength - 1,
+      nodePOIEventsLength - 1,
     );
 
     const signedPOIEvents = await POINodeRequest.getPOIListEventRange(
@@ -179,12 +187,18 @@ export class RoundRobinSyncer {
       if (!nodeStatus) {
         continue;
       }
+      const { listStatuses } = nodeStatus;
 
       for (const listKey of this.listKeys) {
-        if (!nodeStatusAllNetworks.listKeys.includes(listKey)) {
+        if (!isDefined(listStatuses[listKey])) {
           continue;
         }
-        await this.updateTransactProofMempool(nodeURL, networkName, listKey);
+        await this.updateTransactProofMempool(
+          nodeURL,
+          networkName,
+          listKey,
+          listStatuses[listKey].pendingTransactProofs,
+        );
       }
     }
   }
@@ -193,7 +207,16 @@ export class RoundRobinSyncer {
     nodeURL: string,
     networkName: NetworkName,
     listKey: string,
+    nodePendingTransactProofsLength: number,
   ) {
+    const currentTransactProofsLength = TransactProofMempoolCache.getCacheSize(
+      listKey,
+      networkName,
+    );
+    if (nodePendingTransactProofsLength <= currentTransactProofsLength) {
+      return;
+    }
+
     const serializedBloomFilter =
       TransactProofMempoolCache.serializeBloomFilter(listKey, networkName);
     const transactProofs = await POINodeRequest.getFilteredTransactProofs(
@@ -203,11 +226,83 @@ export class RoundRobinSyncer {
       serializedBloomFilter,
     );
     for (const transactProof of transactProofs) {
-      await TransactProofMempool.submitProof(
-        listKey,
-        networkName,
-        transactProof,
-      );
+      try {
+        await TransactProofMempool.submitProof(
+          listKey,
+          networkName,
+          transactProof,
+        );
+      } catch (err) {
+        dbg(
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+          `Error submitting transact proof to mempool for list ${listKey} on network ${networkName}: ${err.message}`,
+        );
+      }
+    }
+  }
+
+  async updateBlockedShieldsAllNetworks(
+    nodeURL: string,
+    nodeStatusAllNetworks: NodeStatusAllNetworks,
+  ) {
+    for (const networkName of Config.NETWORK_NAMES) {
+      const nodeStatus = nodeStatusAllNetworks.forNetwork[networkName];
+      if (!nodeStatus) {
+        continue;
+      }
+      const { listStatuses } = nodeStatus;
+
+      for (const listKey of this.listKeys) {
+        if (!isDefined(listStatuses[listKey])) {
+          continue;
+        }
+        await this.updateBlockedShields(
+          nodeURL,
+          networkName,
+          listKey,
+          listStatuses[listKey].blockedShields,
+        );
+      }
+    }
+  }
+
+  private async updateBlockedShields(
+    nodeURL: string,
+    networkName: NetworkName,
+    listKey: string,
+    nodeBlockedShieldsLength: number,
+  ) {
+    const currentBlockedShieldsLength = BlockedShieldsCache.getBlockedShields(
+      listKey,
+      networkName,
+    ).length;
+    if (nodeBlockedShieldsLength <= currentBlockedShieldsLength) {
+      return;
+    }
+
+    const serializedBloomFilter = BlockedShieldsCache.serializeBloomFilter(
+      listKey,
+      networkName,
+    );
+    const signedBlockedShields = await POINodeRequest.getFilteredBlockedShields(
+      nodeURL,
+      networkName,
+      listKey,
+      serializedBloomFilter,
+    );
+    for (const signedBlockedShield of signedBlockedShields) {
+      try {
+        await BlockedShieldsSyncer.addSignedBlockedShield(
+          listKey,
+          networkName,
+          signedBlockedShield,
+        );
+      } catch (err) {
+        dbg(
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+          `Error adding blocked shield for list ${listKey} on network ${networkName}: ${err.message}`,
+        );
+      }
     }
   }
 

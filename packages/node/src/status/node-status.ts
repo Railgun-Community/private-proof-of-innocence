@@ -2,11 +2,14 @@ import {
   NetworkName,
   NodeStatusForNetwork,
   NodeStatusAllNetworks,
-  POIEventListStatus,
+  POIListStatus,
 } from '@railgun-community/shared-models';
 import { RailgunTxidMerkletreeManager } from '../railgun-txids/railgun-txid-merkletree-manager';
 import { Config } from '../config/config';
-import { POIEventList } from '../poi/poi-event-list';
+import { POIEventList } from '../poi-events/poi-event-list';
+import { TransactProofMempoolCache } from '../proof-mempool/transact-proof-mempool-cache';
+import { BlockedShieldsCache } from '../shields/blocked-shields-cache';
+import { getShieldQueueStatus } from '../shields/shield-queue';
 
 export class NodeStatus {
   static async getNodeStatusAllNetworks(): Promise<NodeStatusAllNetworks> {
@@ -31,20 +34,32 @@ export class NodeStatus {
     return {
       txidStatus:
         await RailgunTxidMerkletreeManager.getRailgunTxidStatus(networkName),
-      eventListStatuses: await NodeStatus.getEventListStatuses(networkName),
+      listStatuses: await NodeStatus.getListStatuses(networkName),
+      shieldQueueStatus: await getShieldQueueStatus(networkName),
     };
   }
 
-  private static async getEventListStatuses(
+  private static async getListStatuses(
     networkName: NetworkName,
-  ): Promise<Record<string, POIEventListStatus>> {
-    const allStatuses: Record<string, POIEventListStatus> = {};
+  ): Promise<Record<string, POIListStatus>> {
+    const allStatuses: Record<string, POIListStatus> = {};
     await Promise.all(
       Config.LIST_KEYS.map(async (listKey) => {
-        allStatuses[listKey] = await POIEventList.getEventListStatus(
+        const poiEvents = await POIEventList.getPOIEventsLength(
           networkName,
           listKey,
         );
+        allStatuses[listKey] = {
+          poiEvents,
+          pendingTransactProofs: TransactProofMempoolCache.getCacheSize(
+            listKey,
+            networkName,
+          ),
+          blockedShields: BlockedShieldsCache.getCacheSize(
+            listKey,
+            networkName,
+          ),
+        };
       }),
     );
     return allStatuses;

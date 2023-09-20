@@ -2,11 +2,17 @@ import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import {
   getListPublicKey,
+  signBlockedShield,
   signPOIEventShield,
   signPOIEventTransact,
+  verifyBlockedShield,
   verifyPOIEvent,
 } from '../ed25519';
-import { POIEventType, SignedPOIEvent } from '../../models/poi-types';
+import {
+  POIEventType,
+  SignedBlockedShield,
+  SignedPOIEvent,
+} from '../../models/poi-types';
 import { MOCK_SNARK_PROOF } from '../../tests/mocks.test';
 
 chai.use(chaiAsPromised);
@@ -78,6 +84,28 @@ describe('ed25519', () => {
 
     const badSignatureEvent = { ...signedPOIEvent, signature: '1234' };
     const verifiedBad = await verifyPOIEvent(badSignatureEvent, publicKey);
+    expect(verifiedBad).to.equal(false);
+  });
+
+  it('Should sign and verify Blocked Shield', async () => {
+    const signature = await signBlockedShield('0x1234', '0x7890', 'test');
+    expect(signature).to.equal(
+      'c30432de4a09e04cdc89b8a991e2ba6dc61717cca0df3028c251329846b8d184cc06b84d1b6d384dbfab05a0ec0f272fe79a71be08e903553c639ee53b824004',
+    );
+
+    const publicKey = await getListPublicKey();
+
+    const signedBlockedShield: SignedBlockedShield = {
+      commitmentHash: '0x1234',
+      blindedCommitment: '0x7890',
+      blockReason: 'test',
+      signature,
+    };
+    const verified = await verifyBlockedShield(signedBlockedShield, publicKey);
+    expect(verified).to.equal(true);
+
+    const badSignatureEvent = { ...signedBlockedShield, signature: '1234' };
+    const verifiedBad = await verifyBlockedShield(badSignatureEvent, publicKey);
     expect(verifiedBad).to.equal(false);
   });
 });

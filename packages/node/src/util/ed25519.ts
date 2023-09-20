@@ -4,6 +4,7 @@ import { bytesToHex, hexStringToBytes } from '@railgun-community/wallet';
 import {
   POIEventShield,
   POIEventTransact,
+  SignedBlockedShield,
   SignedPOIEvent,
 } from '../models/poi-types';
 import { utf8ToBytes } from '@noble/hashes/utils';
@@ -79,6 +80,51 @@ export const verifyPOIEvent = async (
       signedPOIEvent.proof,
     );
     return await verify(signedPOIEvent.signature, message, publicKey);
+  } catch (err) {
+    return false;
+  }
+};
+
+export const signBlockedShield = async (
+  commitmentHash: string,
+  blindedCommitment: string,
+  blockReason?: string,
+): Promise<string> => {
+  const message = getBlockedShieldMessage(
+    commitmentHash,
+    blindedCommitment,
+    blockReason,
+  );
+  return signMessage(message);
+};
+
+const getBlockedShieldMessage = (
+  commitmentHash: string,
+  blindedCommitment: string,
+  blockReason?: string,
+): Uint8Array => {
+  const data = {
+    commitmentHash,
+    blindedCommitment,
+  };
+  if (isDefined(blockReason)) {
+    // @ts-expect-error
+    data.blockReason = blockReason;
+  }
+  return utf8ToBytes(JSON.stringify(data));
+};
+
+export const verifyBlockedShield = async (
+  blockedShield: SignedBlockedShield,
+  publicKey: string,
+): Promise<boolean> => {
+  try {
+    const message = getBlockedShieldMessage(
+      blockedShield.commitmentHash,
+      blockedShield.blindedCommitment,
+      blockedShield.blockReason,
+    );
+    return await verify(blockedShield.signature, message, publicKey);
   } catch (err) {
     return false;
   }

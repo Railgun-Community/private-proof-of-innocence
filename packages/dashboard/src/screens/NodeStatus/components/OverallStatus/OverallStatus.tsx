@@ -2,41 +2,56 @@ import {
   isDefined,
   NodeStatusForNetwork,
 } from '@railgun-community/shared-models';
+import { Item } from '@components/Item/Item';
 import { Text } from '@components/Text/Text';
+import { useNodeStore } from '@state/stores';
 import { shortenWalletAddress } from '@utils/address';
-import { IconType, renderIcon } from '@utils/icon-service';
+import { getLastRefreshedTimeText } from '@utils/date';
+import { IconType } from '@utils/icon-service';
 import styles from './OverallStatus.module.scss';
-
-const nodeIp = 'http://localhost:3010'; //TODO: Change this later
 
 type Props = {
   nodeStatus: Optional<NodeStatusForNetwork>;
 };
 
 export const OverallStatus = ({ nodeStatus }: Props) => {
-  const eventListStatuses = nodeStatus?.eventListStatuses ?? undefined;
+  const {
+    getNodeStatusForAllNetworks,
+    lastRefreshedNodeStatusForAllNetworks,
+    loadingNodeStatusForAllNetworks,
+    nodeIp,
+  } = useNodeStore();
+  const listStatuses = nodeStatus?.listStatuses ?? undefined;
 
-  const arrayOfEventListStatuses = isDefined(eventListStatuses)
-    ? Object.entries(eventListStatuses).map(([key, value]) => ({
+  const arrayOfEventListStatuses = isDefined(listStatuses)
+    ? Object.entries(listStatuses).map(([key, value]) => ({
         id: key,
         value,
       }))
     : [];
 
-  const handleRefresh = () => {};
+  const handleRefresh = () => {
+    getNodeStatusForAllNetworks();
+  };
+
+  const currentDate = new Date();
+  const refreshButtonTitle = isDefined(lastRefreshedNodeStatusForAllNetworks)
+    ? getLastRefreshedTimeText(
+        lastRefreshedNodeStatusForAllNetworks,
+        currentDate,
+      )
+    : 'Refresh';
 
   return (
     <div className={styles.overallStatusContainer}>
       <div className={styles.titleContainer}>
         <Text className={styles.overallStatusTitle}>Overall Status</Text>
-        <div className={styles.refreshContainer} onClick={handleRefresh}>
-          <Text className={styles.refreshText}>
-            {'Last refreshed 3 min ago'}
-          </Text>
-          <div className={styles.iconContainer}>
-            {renderIcon(IconType.Refresh)}
-          </div>
-        </div>
+        <Item
+          title={refreshButtonTitle}
+          rightIcon={IconType.Refresh}
+          onClick={handleRefresh}
+          disabled={loadingNodeStatusForAllNetworks}
+        />
       </div>
       <div className={styles.connectionContainer}>
         <div className={styles.greenDot} />
@@ -47,7 +62,7 @@ export const OverallStatus = ({ nodeStatus }: Props) => {
         {arrayOfEventListStatuses.map(eventListStatus => (
           <Text key={eventListStatus.id}>
             {`${shortenWalletAddress(eventListStatus.id)}: ${
-              eventListStatus.value?.length
+              eventListStatus.value
             }`}
           </Text>
         ))}
