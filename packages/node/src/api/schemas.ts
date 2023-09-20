@@ -18,6 +18,24 @@ export const GetTransactProofsBodySchema: AllowedSchema = {
   required: ["bloomFilterSerialized"],
 };
 
+export const GetBlockedShieldsParamsSchema: AllowedSchema = {
+  type: "object",
+  properties: {
+    chainType: { type: "string" },
+    chainID: { type: "string" },
+    listKey: { type: "string" },
+  },
+  required: ["chainType", "chainID", "listKey"],
+};
+
+export const GetBlockedShieldsBodySchema: AllowedSchema = {
+  type: "object",
+  properties: {
+    bloomFilterSerialized: { type: "string" },
+  },
+  required: ["bloomFilterSerialized"],
+};
+
 export const SubmitTransactProofParamsSchema: AllowedSchema = {
   type: "object",
   properties: {
@@ -114,7 +132,6 @@ export const GetPOIsPerListBodySchema: AllowedSchema = {
   required: ["listKeys", "blindedCommitmentDatas"],
 };
 
-// TODO
 export const GetMerkleProofsParamsSchema: AllowedSchema = {
   type: "object",
   properties: {

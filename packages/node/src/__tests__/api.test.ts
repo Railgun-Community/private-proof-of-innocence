@@ -12,7 +12,7 @@ import {
 
 const listKey = MOCK_LIST_KEYS[0];
 
-describe.only("api", function () {
+describe("api", function () {
   let node3010: ProofOfInnocenceNode;
   let node3011: ProofOfInnocenceNode;
   let request: supertest.SuperTest<supertest.Test>;
@@ -71,9 +71,9 @@ describe.only("api", function () {
     expect(body).to.have.keys(["listKeys", "forNetwork"]);
     expect(body.forNetwork).to.have.keys(["Ethereum", "Ethereum_Goerli"]);
     expect(body.forNetwork.Ethereum).to.have.keys([
-      'txidStatus',
-      'listStatuses',
-      'shieldQueueStatus',
+      "txidStatus",
+      "listStatuses",
+      "shieldQueueStatus",
     ]);
 
     if (body.forNetwork.Ethereum) {
@@ -113,6 +113,29 @@ describe.only("api", function () {
 
     const response: Response = await request
       .post(`/transact-proofs/${chainType}/${chainID}/${listKey}`)
+      .send({ bloomFilterSerialized: 0 });
+
+    expect(response.status).to.equal(400);
+  });
+
+  it("Should return 200 for POST /blocked-shields", async () => {
+    const chainType = "0";
+    const chainID = "5";
+    const bloomFilterSerialized = "someValidSerializedData";
+
+    const response: Response = await request
+      .post(`/blocked-shields/${chainType}/${chainID}/${listKey}`)
+      .send({ bloomFilterSerialized });
+
+    expect(response.status).to.equal(200);
+  });
+
+  it("Should return 400 for POST /blocked-shields with invalid body", async () => {
+    const chainType = "0";
+    const chainID = "5";
+
+    const response: Response = await request
+      .post(`/blocked-shields/${chainType}/${chainID}/${listKey}`)
       .send({ bloomFilterSerialized: 0 });
 
     expect(response.status).to.equal(400);

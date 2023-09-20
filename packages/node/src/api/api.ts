@@ -250,7 +250,7 @@ export class API {
     );
 
     this.safePost(
-      '/blocked-shields/:chainType/:chainID/:listKey',
+      "/blocked-shields/:chainType/:chainID/:listKey",
       async (req: Request, res: Response) => {
         const { chainType, chainID, listKey } = req.params;
         const { bloomFilterSerialized } = req.body as GetBlockedShieldsParams;
@@ -261,7 +261,7 @@ export class API {
         const proofs = TransactProofMempool.getFilteredProofs(
           listKey,
           networkName,
-          bloomFilterSerialized,
+          bloomFilterSerialized
         );
         res.json(proofs);
       },
