@@ -51,7 +51,7 @@ describe('proof-of-innocence-node', () => {
     // Poll until PollStatus is POLLING.
     const pollStatusPolling = await poll(
       async () => nodeWithListProvider.getPollStatus(),
-      (status) => status === PollStatus.POLLING,
+      status => status === PollStatus.POLLING,
       20,
       5000 / 20, // 5 sec.
     );

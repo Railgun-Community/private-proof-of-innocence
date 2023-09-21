@@ -24,7 +24,7 @@ export class POIEventList {
     const db = new POIOrderedEventsDatabase(networkName);
     const dbEvents = await db.getPOIEvents(listKey, startIndex, endIndex);
 
-    return dbEvents.map((dbEvent) => {
+    return dbEvents.map(dbEvent => {
       const {
         index,
         blindedCommitmentStartingIndex,

@@ -90,7 +90,7 @@ describe('list-provider-poi-event-queue', () => {
     // Wait until queue is empty
     const pollQueueLength = await poll(
       async () => ListProviderPOIEventQueue.getPOIEventQueueLength(networkName),
-      (queueLength) => queueLength === 0,
+      queueLength => queueLength === 0,
       20,
       5000 / 20, // 5 sec.
     );

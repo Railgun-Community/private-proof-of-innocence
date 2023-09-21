@@ -40,7 +40,7 @@ describe('abstract-database', () => {
     const indexes = await db.listCollectionIndexes();
 
     // Check that an index on 'test' exists
-    const indexExists = indexes.some((index) => {
+    const indexExists = indexes.some(index => {
       return 'key' in index && 'test' in index.key && index.unique === true;
     });
 

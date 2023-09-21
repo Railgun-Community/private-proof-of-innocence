@@ -36,17 +36,17 @@ describe('shield-queue-database', () => {
     const indexes = await db.listCollectionIndexes();
 
     // Check if an index exists for the 'txid' field
-    const txidIndexExists = indexes.some((index) => {
+    const txidIndexExists = indexes.some(index => {
       return 'key' in index && 'txid' in index.key;
     });
 
     // Check if an index exists for the 'commitmentHash' field with a unique constraint
-    const commitmentHashIndexExists = indexes.some((index) => {
+    const commitmentHashIndexExists = indexes.some(index => {
       return 'key' in index && 'commitmentHash' in index.key;
     });
 
     // Check if an index exists for the 'utxoTree' and 'utxoIndex' field with a unique constraint
-    const utxoTreeAndIndexIndexExists = indexes.some((index) => {
+    const utxoTreeAndIndexIndexExists = indexes.some(index => {
       return (
         'key' in index &&
         'utxoTree' in index.key &&
@@ -56,12 +56,12 @@ describe('shield-queue-database', () => {
     });
 
     // Check if an index exists for the 'timestamp' field
-    const timestampIndexExists = indexes.some((index) => {
+    const timestampIndexExists = indexes.some(index => {
       return 'key' in index && 'timestamp' in index.key;
     });
 
     // Check if an index exists for the 'status' field
-    const statusIndexExists = indexes.some((index) => {
+    const statusIndexExists = indexes.some(index => {
       return 'key' in index && 'status' in index.key;
     });
 

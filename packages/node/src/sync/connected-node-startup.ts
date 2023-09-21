@@ -23,17 +23,17 @@ export class ConnectedNodeStartup {
     }
 
     await Promise.all(
-      this.connectedNodeURLs.map(async (nodeURL) => {
+      this.connectedNodeURLs.map(async nodeURL => {
         const nodeStatusAllNetworks =
           await POINodeRequest.getNodeStatusAllNetworks(nodeURL);
 
         // Check all list keys
-        Config.LIST_KEYS.forEach((listKey) => {
+        Config.LIST_KEYS.forEach(listKey => {
           if (!nodeStatusAllNetworks.listKeys.includes(listKey)) {
             dbg(`Local list key ${listKey} not found on node ${nodeURL}`);
           }
         });
-        nodeStatusAllNetworks.listKeys.forEach((listKey) => {
+        nodeStatusAllNetworks.listKeys.forEach(listKey => {
           if (!Config.LIST_KEYS.includes(listKey)) {
             dbg(
               `Foreign list key ${listKey} from node ${nodeURL} not found locally`,
@@ -42,14 +42,14 @@ export class ConnectedNodeStartup {
         });
 
         // Check all networks
-        Config.NETWORK_NAMES.forEach((networkName) => {
+        Config.NETWORK_NAMES.forEach(networkName => {
           if (
             !Object.keys(nodeStatusAllNetworks.forNetwork).includes(networkName)
           ) {
             dbg(`Local network ${networkName} not found on node ${nodeURL}`);
           }
         });
-        Object.keys(nodeStatusAllNetworks.forNetwork).forEach((networkName) => {
+        Object.keys(nodeStatusAllNetworks.forNetwork).forEach(networkName => {
           if (!Config.NETWORK_NAMES.includes(networkName as NetworkName)) {
             dbg(
               `Foreign list key ${networkName} from node ${nodeURL} not found locally`,

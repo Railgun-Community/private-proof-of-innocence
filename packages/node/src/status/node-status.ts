@@ -17,7 +17,7 @@ export class NodeStatus {
       {};
     const allNetworks: NetworkName[] = Object.values(Config.NETWORK_NAMES);
     await Promise.all(
-      allNetworks.map(async (networkName) => {
+      allNetworks.map(async networkName => {
         statusForNetwork[networkName] =
           await NodeStatus.getNodeStatus(networkName);
       }),
@@ -44,7 +44,7 @@ export class NodeStatus {
   ): Promise<Record<string, POIListStatus>> {
     const allStatuses: Record<string, POIListStatus> = {};
     await Promise.all(
-      Config.LIST_KEYS.map(async (listKey) => {
+      Config.LIST_KEYS.map(async listKey => {
         const poiEvents = await POIEventList.getPOIEventsLength(
           networkName,
           listKey,

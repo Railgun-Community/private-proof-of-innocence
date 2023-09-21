@@ -1,22 +1,22 @@
-import express, { NextFunction, Request, Response } from "express";
-import cors from "cors";
-import os from "os";
-import debug from "debug";
-import { Server } from "http";
+import express, { NextFunction, Request, Response } from 'express';
+import cors from 'cors';
+import os from 'os';
+import debug from 'debug';
+import { Server } from 'http';
 import {
   Validator,
   ValidationError,
   AllowedSchema,
-} from "express-json-validator-middleware";
-import { POIEventList } from "../poi-events/poi-event-list";
-import { networkNameForSerializedChain } from "../config/general";
-import { TransactProofMempool } from "../proof-mempool/transact-proof-mempool";
-import { POIMerkletreeManager } from "../poi-events/poi-merkletree-manager";
-import { getShieldQueueStatus } from "../shields/shield-queue";
-import { RailgunTxidMerkletreeManager } from "../railgun-txids/railgun-txid-merkletree-manager";
-import { QueryLimits } from "../config/query-limits";
-import { NodeStatus } from "../status/node-status";
-import { Config } from "../config/config";
+} from 'express-json-validator-middleware';
+import { POIEventList } from '../poi-events/poi-event-list';
+import { networkNameForSerializedChain } from '../config/general';
+import { TransactProofMempool } from '../proof-mempool/transact-proof-mempool';
+import { POIMerkletreeManager } from '../poi-events/poi-merkletree-manager';
+import { getShieldQueueStatus } from '../shields/shield-queue';
+import { RailgunTxidMerkletreeManager } from '../railgun-txids/railgun-txid-merkletree-manager';
+import { QueryLimits } from '../config/query-limits';
+import { NodeStatus } from '../status/node-status';
+import { Config } from '../config/config';
 import {
   NodeStatusAllNetworks,
   GetTransactProofsParams,
@@ -25,7 +25,7 @@ import {
   GetPOIsPerListParams,
   GetMerkleProofsParams,
   ValidateTxidMerklerootParams,
-} from "@railgun-community/shared-models";
+} from '@railgun-community/shared-models';
 import {
   GetTransactProofsParamsSchema,
   GetTransactProofsBodySchema,
@@ -39,10 +39,10 @@ import {
   ValidateTxidMerklerootParamsSchema,
   GetBlockedShieldsBodySchema,
   GetBlockedShieldsParamsSchema,
-} from "./schemas";
-import "dotenv/config";
+} from './schemas';
+import 'dotenv/config';
 
-const dbg = debug("poi:api");
+const dbg = debug('poi:api');
 
 // Initialize the JSON schema validator
 const validator = new Validator({ allErrors: true });
@@ -54,30 +54,30 @@ export class API {
 
   constructor() {
     this.app = express();
-    this.app.use(express.json({ limit: "5mb" }));
+    this.app.use(express.json({ limit: '5mb' }));
     this.app.use(
       cors({
-        methods: ["GET", "POST"],
-        origin: "*",
-      })
+        methods: ['GET', 'POST'],
+        origin: '*',
+      }),
     );
     this.addRoutes();
 
     // Error middleware for JSON validation errors
     this.app.use(
-      (error: any, req: Request, res: Response, next: NextFunction) => {
+      (error: Error | any, req: Request, res: Response, next: NextFunction) => {
         if (error instanceof ValidationError) {
           res.status(400).send(error.validationErrors);
         } else {
           next(error);
         }
-      }
+      },
     );
   }
 
   serve(host: string, port: string) {
     if (this.server) {
-      throw new Error("API already running.");
+      throw new Error('API already running.');
     }
     this.server = this.app.listen(Number(port), host, () => {
       dbg(`Listening at http://${host}:${port}`);
@@ -89,7 +89,7 @@ export class API {
       this.server.close();
       this.server = undefined;
     } else {
-      dbg("Server was not running.");
+      dbg('Server was not running.');
     }
   }
 
@@ -98,16 +98,16 @@ export class API {
 
     // If no authorization header is present, return 401
     if (authorization == null || authorization == undefined) {
-      res.status(401).json({ message: "Unauthorized" });
+      res.status(401).json({ message: 'Unauthorized' });
       return;
     }
 
     // Check if the authorization header is valid
-    const base64Credentials = authorization.split(" ")[1] || "";
-    const credentials = Buffer.from(base64Credentials, "base64").toString(
-      "utf-8"
+    const base64Credentials = authorization.split(' ')[1] || '';
+    const credentials = Buffer.from(base64Credentials, 'base64').toString(
+      'utf-8',
     );
-    const [username, password] = credentials.split(":");
+    const [username, password] = credentials.split(':');
 
     if (
       username === process.env.BASIC_AUTH_USERNAME &&
@@ -116,22 +116,23 @@ export class API {
       return next();
     }
 
-    res.status(401).json({ message: "Unauthorized" });
+    res.status(401).json({ message: 'Unauthorized' });
   }
 
   private safeGet(
     route: string,
-    handler: (req: Request, res: Response) => Promise<void>
+    handler: (req: Request, res: Response) => Promise<void>,
   ) {
-    this.app.get(route, async (req: Request, res: Response) => {
-      try {
-        await handler(req, res);
-      } catch (err) {
-        // TODO: Remove err message
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-        res.status(500).json(err.message);
-      }
-    });
+    this.app.get(
+      route,
+      async (req: Request, res: Response, next: NextFunction) => {
+        try {
+          await handler(req, res);
+        } catch (err) {
+          return next(err);
+        }
+      },
+    );
   }
 
   /**
@@ -146,7 +147,7 @@ export class API {
     route: string,
     handler: (req: Request, res: Response) => Promise<void>,
     paramsSchema: AllowedSchema,
-    bodySchema: AllowedSchema
+    bodySchema: AllowedSchema,
   ) {
     const validate = validator.validate({
       params: paramsSchema,
@@ -164,13 +165,13 @@ export class API {
         } catch (err) {
           return next(err);
         }
-      }
+      },
     );
   }
 
   private assertHasListKey(listKey: string) {
     if (!Config.LIST_KEYS.includes(listKey)) {
-      throw new Error("Missing listKey");
+      throw new Error('Missing listKey');
     }
   }
 
@@ -181,11 +182,11 @@ export class API {
   }
 
   private addStatusRoutes() {
-    this.app.get("/", (_req: Request, res: Response) => {
-      res.json({ status: "ok" });
+    this.app.get('/', (_req: Request, res: Response) => {
+      res.json({ status: 'ok' });
     });
 
-    this.app.get("/perf", (_req: Request, res: Response) => {
+    this.app.get('/perf', (_req: Request, res: Response) => {
       res.json({
         time: new Date(),
         memoryUsage: process.memoryUsage(),
@@ -196,25 +197,25 @@ export class API {
   }
 
   private addAggregatorRoutes() {
-    this.safeGet("/node-status", async (req: Request, res: Response) => {
+    this.safeGet('/node-status', async (req: Request, res: Response) => {
       const nodeStatusAllNetworks: NodeStatusAllNetworks =
         await NodeStatus.getNodeStatusAllNetworks();
       res.json(nodeStatusAllNetworks);
     });
 
     this.safeGet(
-      "/shield-queue-status/:chainType/:chainID",
+      '/shield-queue-status/:chainType/:chainID',
       async (req: Request, res: Response) => {
         const { chainType, chainID } = req.params;
         const networkName = networkNameForSerializedChain(chainType, chainID);
 
         const status = await getShieldQueueStatus(networkName);
         res.json(status);
-      }
+      },
     );
 
     this.safeGet(
-      "/list-status/:chainType/:chainID/:listKey",
+      '/list-status/:chainType/:chainID/:listKey',
       async (req: Request, res: Response) => {
         const { chainType, chainID, listKey } = req.params;
         this.assertHasListKey(listKey);
@@ -222,14 +223,14 @@ export class API {
 
         const status = await POIEventList.getPOIEventsLength(
           networkName,
-          listKey
+          listKey,
         );
         res.json(status);
-      }
+      },
     );
 
     this.safeGet(
-      "/poi-events/:chainType/:chainID/:listKey/:startIndex/:endIndex",
+      '/poi-events/:chainType/:chainID/:listKey/:startIndex/:endIndex',
       async (req: Request, res: Response) => {
         const { chainType, chainID, listKey, startIndex, endIndex } =
           req.params;
@@ -241,7 +242,7 @@ export class API {
         const rangeLength = end - start;
         if (rangeLength > QueryLimits.MAX_EVENT_QUERY_RANGE_LENGTH) {
           throw new Error(
-            `Max event query range length is ${QueryLimits.MAX_EVENT_QUERY_RANGE_LENGTH}`
+            `Max event query range length is ${QueryLimits.MAX_EVENT_QUERY_RANGE_LENGTH}`,
           );
         }
         if (rangeLength < 0) {
@@ -252,14 +253,14 @@ export class API {
           networkName,
           listKey,
           start,
-          end
+          end,
         );
         res.json(events);
-      }
+      },
     );
 
     this.safePost(
-      "/transact-proofs/:chainType/:chainID/:listKey",
+      '/transact-proofs/:chainType/:chainID/:listKey',
       async (req: Request, res: Response) => {
         const { chainType, chainID, listKey } = req.params;
         const { bloomFilterSerialized } = req.body as GetTransactProofsParams;
@@ -270,16 +271,16 @@ export class API {
         const proofs = TransactProofMempool.getFilteredProofs(
           listKey,
           networkName,
-          bloomFilterSerialized
+          bloomFilterSerialized,
         );
         res.json(proofs);
       },
       GetTransactProofsParamsSchema,
-      GetTransactProofsBodySchema
+      GetTransactProofsBodySchema,
     );
 
     this.safePost(
-      "/blocked-shields/:chainType/:chainID/:listKey",
+      '/blocked-shields/:chainType/:chainID/:listKey',
       async (req: Request, res: Response) => {
         const { chainType, chainID, listKey } = req.params;
         const { bloomFilterSerialized } = req.body as GetBlockedShieldsParams;
@@ -290,18 +291,18 @@ export class API {
         const proofs = TransactProofMempool.getFilteredProofs(
           listKey,
           networkName,
-          bloomFilterSerialized
+          bloomFilterSerialized,
         );
         res.json(proofs);
       },
       GetBlockedShieldsParamsSchema,
-      GetBlockedShieldsBodySchema
+      GetBlockedShieldsBodySchema,
     );
   }
 
   private addClientRoutes() {
     this.safePost(
-      "/submit-transact-proof/:chainType/:chainID",
+      '/submit-transact-proof/:chainType/:chainID',
       async (req: Request, res: Response) => {
         const { chainType, chainID } = req.params;
         const { listKey, transactProofData } =
@@ -313,21 +314,21 @@ export class API {
         await TransactProofMempool.submitProof(
           listKey,
           networkName,
-          transactProofData
+          transactProofData,
         );
         res.status(200);
       },
       SubmitTransactProofParamsSchema,
-      SubmitTransactProofBodySchema
+      SubmitTransactProofBodySchema,
     );
 
     this.safePost(
-      "/pois-per-list/:chainType/:chainID",
+      '/pois-per-list/:chainType/:chainID',
       async (req: Request, res: Response) => {
         const { chainType, chainID } = req.params;
         const { listKeys, blindedCommitmentDatas } =
           req.body as GetPOIsPerListParams;
-        listKeys.forEach((listKey) => {
+        listKeys.forEach(listKey => {
           this.assertHasListKey(listKey);
         });
         const networkName = networkNameForSerializedChain(chainType, chainID);
@@ -337,22 +338,22 @@ export class API {
           QueryLimits.GET_POI_EXISTENCE_MAX_BLINDED_COMMITMENTS
         ) {
           throw new Error(
-            `Too many blinded commitments: max ${QueryLimits.GET_POI_EXISTENCE_MAX_BLINDED_COMMITMENTS}`
+            `Too many blinded commitments: max ${QueryLimits.GET_POI_EXISTENCE_MAX_BLINDED_COMMITMENTS}`,
           );
         }
         const poiStatusMap = await POIMerkletreeManager.getPOIStatusPerList(
           listKeys,
           networkName,
-          blindedCommitmentDatas
+          blindedCommitmentDatas,
         );
         res.json(poiStatusMap);
       },
       GetPOIsPerListParamsSchema,
-      GetPOIsPerListBodySchema
+      GetPOIsPerListBodySchema,
     );
 
     this.safePost(
-      "/merkle-proofs/:chainType/:chainID",
+      '/merkle-proofs/:chainType/:chainID',
       async (req: Request, res: Response) => {
         const { chainType, chainID } = req.params;
         const { listKey, blindedCommitments } =
@@ -364,35 +365,35 @@ export class API {
           QueryLimits.GET_MERKLE_PROOFS_MAX_BLINDED_COMMITMENTS
         ) {
           throw new Error(
-            `Too many blinded commitments: max ${QueryLimits.GET_MERKLE_PROOFS_MAX_BLINDED_COMMITMENTS}`
+            `Too many blinded commitments: max ${QueryLimits.GET_MERKLE_PROOFS_MAX_BLINDED_COMMITMENTS}`,
           );
         }
         const merkleProofs = await POIMerkletreeManager.getMerkleProofs(
           listKey,
           networkName,
-          blindedCommitments
+          blindedCommitments,
         );
         res.json(merkleProofs);
       },
       GetMerkleProofsParamsSchema,
-      GetMerkleProofsBodySchema
+      GetMerkleProofsBodySchema,
     );
 
     this.safeGet(
-      "/validated-txid/:chainType/:chainID",
+      '/validated-txid/:chainType/:chainID',
       async (req: Request, res: Response) => {
         const { chainType, chainID } = req.params;
         const networkName = networkNameForSerializedChain(chainType, chainID);
         const validatedRailgunTxidStatus =
           RailgunTxidMerkletreeManager.getValidatedRailgunTxidStatus(
-            networkName
+            networkName,
           );
         res.json(validatedRailgunTxidStatus);
-      }
+      },
     );
 
     this.safePost(
-      "/validate-txid-merkleroot/:chainType/:chainID",
+      '/validate-txid-merkleroot/:chainType/:chainID',
       async (req: Request, res: Response) => {
         const { chainType, chainID } = req.params;
         const { tree, index, merkleroot } =
@@ -403,12 +404,12 @@ export class API {
             networkName,
             tree,
             index,
-            merkleroot
+            merkleroot,
           );
         res.json(isValid);
       },
       ValidateTxidMerklerootParamsSchema,
-      ValidateTxidMerklerootBodySchema
+      ValidateTxidMerklerootBodySchema,
     );
   }
 }

@@ -124,7 +124,7 @@ export abstract class ListProvider {
     );
 
     await Promise.all(
-      newShields.map((shieldData) =>
+      newShields.map(shieldData =>
         this.queueShieldSafe(networkName, shieldData),
       ),
     );
@@ -180,7 +180,7 @@ export abstract class ListProvider {
     );
 
     await Promise.all(
-      pendingShields.map((shieldData) =>
+      pendingShields.map(shieldData =>
         this.validateShield(networkName, shieldData, endTimestamp),
       ),
     );

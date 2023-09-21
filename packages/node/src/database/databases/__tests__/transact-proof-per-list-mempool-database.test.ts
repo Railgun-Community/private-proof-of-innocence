@@ -32,7 +32,7 @@ describe('transact-proof-per-list-mempool-database', () => {
     const indexes = await db.listCollectionIndexes();
 
     // Check if a unique index exists for the combination of 'listKey' and 'firstBlindedCommitment' fields
-    const uniqueCombinedIndexExists = indexes.some((index) => {
+    const uniqueCombinedIndexExists = indexes.some(index => {
       return (
         'key' in index &&
         'listKey' in index.key &&

@@ -171,7 +171,7 @@ export class TransactProofMempool {
     );
 
     const filteredProofs: TransactProofData[] = transactProofDatas.filter(
-      (transactProofData) => {
+      transactProofData => {
         const firstBlindedCommitment =
           transactProofData.blindedCommitmentOutputs[0];
         return !bloomFilter.has(firstBlindedCommitment);

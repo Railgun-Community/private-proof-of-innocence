@@ -1,15 +1,15 @@
-import { ProofOfInnocenceNode } from "../proof-of-innocence-node";
-import { LocalListProvider } from "../local-list-provider";
-import supertest, { Response } from "supertest";
-import { expect } from "chai";
-import { MOCK_LIST_KEYS } from "../tests/mocks.test";
+import { ProofOfInnocenceNode } from '../proof-of-innocence-node';
+import { LocalListProvider } from '../local-list-provider';
+import { expect } from 'chai';
+import { MOCK_LIST_KEYS } from '../tests/mocks.test';
 import {
   BlindedCommitmentData,
   BlindedCommitmentType,
   NodeStatusAllNetworks,
   TransactProofData,
-} from "@railgun-community/shared-models";
-import "dotenv/config";
+} from '@railgun-community/shared-models';
+import axios, { Axios, AxiosError, AxiosResponse } from 'axios';
+import 'dotenv/config';
 
 const listKey = MOCK_LIST_KEYS[0];
 
@@ -17,13 +17,13 @@ const listKey = MOCK_LIST_KEYS[0];
 const username = process.env.BASIC_AUTH_USERNAME;
 const password = process.env.BASIC_AUTH_PASSWORD;
 const base64Credentials = Buffer.from(`${username}:${password}`).toString(
-  "base64"
+  'base64',
 );
 
-describe.only("api", function () {
+describe.only('api', function () {
   let node3010: ProofOfInnocenceNode;
   let node3011: ProofOfInnocenceNode;
-  let request: supertest.SuperTest<supertest.Test>;
+  let apiUrl: string;
 
   // Start services before all tests
   before(async function () {
@@ -31,20 +31,20 @@ describe.only("api", function () {
 
     const listProvider = new LocalListProvider(listKey);
 
-    const host = "0.0.0.0";
+    const host = '0.0.0.0';
 
-    node3011 = new ProofOfInnocenceNode(host, "3011", [], listProvider);
+    node3011 = new ProofOfInnocenceNode(host, '3011', [], listProvider);
     await node3011.start();
 
     node3010 = new ProofOfInnocenceNode(
       host,
-      "3010",
-      ["http://localhost:3011"],
-      listProvider
+      '3010',
+      ['http://localhost:3011'],
+      listProvider,
     );
     await node3010.start();
 
-    request = supertest(`http://${host}:3010`);
+    apiUrl = `http://${host}:3010`;
   });
 
   after(async function () {
@@ -52,249 +52,384 @@ describe.only("api", function () {
     await node3011.stop();
   });
 
-  it("Should return status ok for GET /", async () => {
-    const response: Response = await request.get("/");
+  it('Should return status ok for GET /', async () => {
+    const response = await axios.get(`${apiUrl}/`);
 
     expect(response.status).to.equal(200);
-    expect(response.body).to.deep.equal({ status: "ok" });
+    expect(response.data).to.deep.equal({ status: 'ok' });
   });
 
-  it("Should return performance metrics for GET /perf", async () => {
-    const response = await request.get("/perf");
+  it('Should return performance metrics for GET /perf', async () => {
+    const response = await axios.get(`${apiUrl}/perf`);
 
     expect(response.status).to.equal(200);
-    expect(response.body).to.have.keys([
-      "time",
-      "memoryUsage",
-      "freemem",
-      "loadavg",
+    expect(response.data).to.have.keys([
+      'time',
+      'memoryUsage',
+      'freemem',
+      'loadavg',
     ]);
   });
 
-  it("Should return node status for GET /node-status", async () => {
-    const response: Response = await request.get("/node-status");
-    const body = response.body as NodeStatusAllNetworks;
+  it('Should return node status for GET /node-status', async () => {
+    const response = await axios.get(`${apiUrl}/node-status`);
+    const body = response.data as unknown as NodeStatusAllNetworks;
 
     expect(response.status).to.equal(200);
-    expect(body).to.have.keys(["listKeys", "forNetwork"]);
-    expect(body.forNetwork).to.have.keys(["Ethereum", "Ethereum_Goerli"]);
+    expect(body).to.have.keys(['listKeys', 'forNetwork']);
+    expect(body.forNetwork).to.have.keys(['Ethereum', 'Ethereum_Goerli']);
     expect(body.forNetwork.Ethereum).to.have.keys([
-      "txidStatus",
-      "listStatuses",
-      "shieldQueueStatus",
+      'txidStatus',
+      'listStatuses',
+      'shieldQueueStatus',
     ]);
 
     if (body.forNetwork.Ethereum) {
       expect(body.forNetwork.Ethereum.txidStatus).to.haveOwnProperty(
-        "currentTxidIndex"
+        'currentTxidIndex',
       );
       expect(body.forNetwork.Ethereum.txidStatus).to.haveOwnProperty(
-        "currentMerkleroot"
+        'currentMerkleroot',
       );
     }
 
     if (body.forNetwork.Ethereum_Goerli) {
       expect(body.forNetwork.Ethereum_Goerli.txidStatus).to.haveOwnProperty(
-        "currentTxidIndex"
+        'currentTxidIndex',
       );
       expect(body.forNetwork.Ethereum_Goerli.txidStatus).to.haveOwnProperty(
-        "currentMerkleroot"
+        'currentMerkleroot',
       );
     }
   }).timeout(5000); // Test seems to always take > 2000ms
 
-  it("Should return 200 for POST /transact-proofs with valid auth", async () => {
-    const chainType = "0";
-    const chainID = "5";
-    const validBloomFilterSerialized = "someValidSerializedData";
+  it('Should return 200 for POST /transact-proofs with valid auth', async () => {
+    const chainType = '0';
+    const chainID = '5';
+    const validBloomFilterSerialized = 'someValidSerializedData';
 
-    const response: Response = await request
-      .post(`/transact-proofs/${chainType}/${chainID}/${listKey}`)
-      .set("Authorization", `Basic ${base64Credentials}`)
-      .send({ bloomFilterSerialized: validBloomFilterSerialized });
-
-    expect(response.status).to.equal(200);
-  });
-
-  it("Should return 401 for POST /transact-proofs with invalid auth", async () => {
-    const chainType = "0";
-    const chainID = "5";
-    const validBloomFilterSerialized = "someValidSerializedData";
-
-    const badCredentials = Buffer.from("admin:wrongpassword").toString(
-      "base64"
+    const response = await axios.post(
+      `${apiUrl}/transact-proofs/${chainType}/${chainID}/${listKey}`,
+      { bloomFilterSerialized: validBloomFilterSerialized },
+      {
+        headers: {
+          Authorization: `Basic ${base64Credentials}`,
+        },
+      },
     );
 
-    const response: Response = await request
-      .post(`/transact-proofs/${chainType}/${chainID}/${listKey}`)
-      .set("Authorization", `Basic ${badCredentials}`)
-      .send({ bloomFilterSerialized: validBloomFilterSerialized });
-
-    expect(response.status).to.equal(401);
+    expect(response.status).to.equal(200);
   });
 
-  it("Should return 400 for POST /transact-proofs with invalid body", async () => {
-    const chainType = "0";
-    const chainID = "5";
+  it('Should return 401 for POST /transact-proofs with invalid auth', async () => {
+    let errorResponse: AxiosResponse | undefined;
+    const chainType = '0';
+    const chainID = '5';
+    const validBloomFilterSerialized = 'someValidSerializedData';
 
-    const response: Response = await request
-      .post(`/transact-proofs/${chainType}/${chainID}/${listKey}`)
-      .set("Authorization", `Basic ${base64Credentials}`)
-      .send({ bloomFilterSerialized: 0 });
+    const badCredentials = Buffer.from('admin:wrongpassword').toString(
+      'base64',
+    );
 
-    expect(response.status).to.equal(400);
+    try {
+      await axios.post(
+        `${apiUrl}/transact-proofs/${chainType}/${chainID}/${listKey}`,
+        { bloomFilterSerialized: validBloomFilterSerialized },
+        {
+          headers: {
+            Authorization: `Basic ${badCredentials}`,
+          },
+        },
+      );
+    } catch (err) {
+      const error = err as AxiosError;
+      errorResponse = error.response;
+    }
+
+    if (errorResponse) {
+      expect(errorResponse.status).to.equal(401);
+    } else {
+      throw new Error('Expected errorResponse to be defined');
+    }
   });
 
-  it("Should return 200 for POST /blocked-shields", async () => {
-    const chainType = "0";
-    const chainID = "5";
-    const bloomFilterSerialized = "someValidSerializedData";
+  it('Should return 400 for POST /transact-proofs with invalid body', async () => {
+    const chainType = '0';
+    const chainID = '5';
+    let errorResponse: AxiosResponse | undefined;
 
-    const response: Response = await request
-      .post(`/blocked-shields/${chainType}/${chainID}/${listKey}`)
-      .set("Authorization", `Basic ${base64Credentials}`)
-      .send({ bloomFilterSerialized });
+    try {
+      await axios.post(
+        `${apiUrl}/transact-proofs/${chainType}/${chainID}/${listKey}`,
+        { bloomFilterSerialized: 0 },
+        {
+          headers: {
+            Authorization: `Basic ${base64Credentials}`,
+          },
+        },
+      );
+    } catch (err) {
+      const error = err as AxiosError;
+      errorResponse = error.response;
+    }
+
+    if (errorResponse) {
+      expect(errorResponse.status).to.equal(400);
+    } else {
+      throw new Error('Expected errorResponse to be defined');
+    }
+  });
+
+  it('Should return 200 for POST /blocked-shields', async () => {
+    const chainType = '0';
+    const chainID = '5';
+    const bloomFilterSerialized = 'someValidSerializedData';
+
+    const response = await axios.post(
+      `${apiUrl}/blocked-shields/${chainType}/${chainID}/${listKey}`,
+      { bloomFilterSerialized },
+      {
+        headers: {
+          Authorization: `Basic ${base64Credentials}`,
+        },
+      },
+    );
 
     expect(response.status).to.equal(200);
   });
 
-  it("Should return 400 for POST /blocked-shields with invalid body", async () => {
-    const chainType = "0";
-    const chainID = "5";
+  it('Should return 400 for POST /blocked-shields with invalid body', async () => {
+    const chainType = '0';
+    const chainID = '5';
+    let errorResponse: AxiosResponse | undefined;
 
-    const response: Response = await request
-      .post(`/blocked-shields/${chainType}/${chainID}/${listKey}`)
-      .set("Authorization", `Basic ${base64Credentials}`)
-      .send({ bloomFilterSerialized: 0 });
+    try {
+      await axios.post(
+        `${apiUrl}/blocked-shields/${chainType}/${chainID}/${listKey}`,
+        { bloomFilterSerialized: 0 },
+        {
+          headers: {
+            Authorization: `Basic ${base64Credentials}`,
+          },
+        },
+      );
+    } catch (err) {
+      const error = err as AxiosError;
+      errorResponse = error.response;
+    }
 
-    expect(response.status).to.equal(400);
+    if (errorResponse) {
+      expect(errorResponse.status).to.equal(400);
+    } else {
+      throw new Error('Expected errorResponse to be defined');
+    }
   });
 
-  it("Should return 200 for POST /submit-transact-proof", async () => {
-    const chainType = "0";
-    const chainID = "5";
+  it('Should return 200 for POST /submit-transact-proof', async () => {
+    const chainType = '0';
+    const chainID = '5';
 
     const transactProofData: TransactProofData = {
       // Make sure to have no empty strings in snarkProof
       snarkProof: {
-        pi_a: ["some_string", "some_string"],
+        pi_a: ['some_string', 'some_string'],
         pi_b: [
-          ["some_string", "some_string"],
-          ["some_string", "some_string"],
+          ['some_string', 'some_string'],
+          ['some_string', 'some_string'],
         ],
-        pi_c: ["some_string", "some_string"],
+        pi_c: ['some_string', 'some_string'],
       },
-      poiMerkleroots: ["", ""],
-      txidMerkleroot: "",
+      poiMerkleroots: ['', ''],
+      txidMerkleroot: '',
       txidMerklerootIndex: 0,
-      blindedCommitmentOutputs: ["", ""],
+      blindedCommitmentOutputs: ['', ''],
     };
 
-    const response: Response = await request
-      .post(`/submit-transact-proof/${chainType}/${chainID}`)
-      .set("Authorization", `Basic ${base64Credentials}`)
-      .send({ listKey, transactProofData });
+    const response = await axios.post(
+      `${apiUrl}/submit-transact-proof/${chainType}/${chainID}`,
+      { listKey, transactProofData },
+      {
+        headers: {
+          Authorization: `Basic ${base64Credentials}`,
+        },
+      },
+    );
 
     expect(response.status).to.equal(200);
   });
 
-  it("Should return 400 for POST /submit-transact-proof with invalid body", async () => {
-    const chainType = "0";
-    const chainID = "5";
+  it('Should return 400 for POST /submit-transact-proof with invalid body', async () => {
+    const chainType = '0';
+    const chainID = '5';
+    let errorResponse: AxiosResponse | undefined;
 
-    const response: Response = await request
-      .post(`/submit-transact-proof/${chainType}/${chainID}`)
-      .set("Authorization", `Basic ${base64Credentials}`)
-      .send({ listKey, transactProofData: 0 });
+    try {
+      await axios.post(
+        `${apiUrl}/submit-transact-proof/${chainType}/${chainID}`,
+        { listKey, transactProofData: 0 },
+        {
+          headers: {
+            Authorization: `Basic ${base64Credentials}`,
+          },
+        },
+      );
+    } catch (err) {
+      const error = err as AxiosError;
+      errorResponse = error.response;
+    }
 
-    expect(response.status).to.equal(400);
+    if (errorResponse) {
+      expect(errorResponse.status).to.equal(400);
+    } else {
+      throw new Error('Expected errorResponse to be defined');
+    }
   });
 
-  it("Should return 200 for POST /pois-per-list", async () => {
-    const chainType = "0";
-    const chainID = "5";
+  it('Should return 200 for POST /pois-per-list', async () => {
+    const chainType = '0';
+    const chainID = '5';
     const listKeys = [listKey];
 
     const blindedCommitmentDatas: BlindedCommitmentData[] = [
       {
-        blindedCommitment: "",
+        blindedCommitment: '',
         type: BlindedCommitmentType.Transact,
       },
       {
-        blindedCommitment: "",
+        blindedCommitment: '',
         type: BlindedCommitmentType.Shield,
       },
     ];
 
-    const response: Response = await request
-      .post(`/pois-per-list/${chainType}/${chainID}`)
-      .set("Authorization", `Basic ${base64Credentials}`)
-      .send({ listKeys, blindedCommitmentDatas });
+    const response = await axios.post(
+      `${apiUrl}/pois-per-list/${chainType}/${chainID}`,
+      { listKeys, blindedCommitmentDatas },
+      {
+        headers: {
+          Authorization: `Basic ${base64Credentials}`,
+        },
+      },
+    );
 
     expect(response.status).to.equal(200);
   });
 
-  it("Should return 400 for POST /pois-per-list with invalid body", async () => {
-    const chainType = "0";
-    const chainID = "5";
+  it('Should return 400 for POST /pois-per-list with invalid body', async () => {
+    const chainType = '0';
+    const chainID = '5';
+    let errorResponse: AxiosResponse | undefined;
 
-    const response: Response = await request
-      .post(`/pois-per-list/${chainType}/${chainID}`)
-      .set("Authorization", `Basic ${base64Credentials}`)
-      .send({ listKeys: 0, blindedCommitmentDatas: 0 });
+    try {
+      await axios.post(
+        `${apiUrl}/pois-per-list/${chainType}/${chainID}`,
+        { listKey: 0, blindedCommitmentDatas: 0 },
+        {
+          headers: {
+            Authorization: `Basic ${base64Credentials}`,
+          },
+        },
+      );
+    } catch (err) {
+      const error = err as AxiosError;
+      errorResponse = error.response;
+    }
 
-    expect(response.status).to.equal(400);
+    if (errorResponse) {
+      expect(errorResponse.status).to.equal(400);
+    } else {
+      throw new Error('Expected errorResponse to be defined');
+    }
   });
 
-  it("Should return 200 for POST /merkle-proofs", async () => {
-    const chainType = "0";
-    const chainID = "5";
-    const blindedCommitments = ["", ""];
+  it('Should return 200 for POST /merkle-proofs', async () => {
+    const chainType = '0';
+    const chainID = '5';
+    const blindedCommitments = ['', ''];
 
-    const response: Response = await request
-      .post(`/merkle-proofs/${chainType}/${chainID}`)
-      .set("Authorization", `Basic ${base64Credentials}`)
-      .send({ listKey, blindedCommitments });
+    const response = await axios.post(
+      `${apiUrl}/merkle-proofs/${chainType}/${chainID}`,
+      { listKey, blindedCommitments },
+      {
+        headers: {
+          Authorization: `Basic ${base64Credentials}`,
+        },
+      },
+    );
 
     expect(response.status).to.equal(200);
   });
 
-  it("Should return 400 for POST /merkle-proofs with invalid body", async () => {
-    const chainType = "0";
-    const chainID = "5";
+  it('Should return 400 for POST /merkle-proofs with invalid body', async () => {
+    const chainType = '0';
+    const chainID = '5';
+    let errorResponse: AxiosResponse | undefined;
 
-    const response: Response = await request
-      .post(`/merkle-proofs/${chainType}/${chainID}`)
-      .set("Authorization", `Basic ${base64Credentials}`)
-      .send({ listKey, blindedCommitments: 0 });
+    try {
+      await axios.post(
+        `${apiUrl}/merkle-proofs/${chainType}/${chainID}`,
+        { listKey, blindedCommitments: 0 },
+        {
+          headers: {
+            Authorization: `Basic ${base64Credentials}`,
+          },
+        },
+      );
+    } catch (err) {
+      const error = err as AxiosError;
+      errorResponse = error.response;
+    }
 
-    expect(response.status).to.equal(400);
+    if (errorResponse) {
+      expect(errorResponse.status).to.equal(400);
+    } else {
+      throw new Error('Expected errorResponse to be defined');
+    }
   });
 
-  it("Should return 200 for POST /validate-txid-merkleroot", async () => {
-    const chainType = "0";
-    const chainID = "5";
+  it('Should return 200 for POST /validate-txid-merkleroot', async () => {
+    const chainType = '0';
+    const chainID = '5';
     const tree = 0;
     const index = 0;
-    const merkleroot = "";
+    const merkleroot = '';
 
-    const response: Response = await request
-      .post(`/validate-txid-merkleroot/${chainType}/${chainID}`)
-      .set("Authorization", `Basic ${base64Credentials}`)
-      .send({ tree, index, merkleroot });
+    const response = await axios.post(
+      `${apiUrl}/validate-txid-merkleroot/${chainType}/${chainID}`,
+      { tree, index, merkleroot },
+      {
+        headers: {
+          Authorization: `Basic ${base64Credentials}`,
+        },
+      },
+    );
 
     expect(response.status).to.equal(200);
   });
 
-  it("Should return 400 for POST /validate-txid-merkleroot with invalid body", async () => {
-    const chainType = "0";
-    const chainID = "5";
+  it('Should return 400 for POST /validate-txid-merkleroot with invalid body', async () => {
+    const chainType = '0';
+    const chainID = '5';
+    let errorResponse: AxiosResponse | undefined;
 
-    const response: Response = await request
-      .post(`/validate-txid-merkleroot/${chainType}/${chainID}`)
-      .set("Authorization", `Basic ${base64Credentials}`)
-      .send({ tree: 0, index: 0, merkleroot: 0 });
+    try {
+      await axios.post(
+        `${apiUrl}/validate-txid-merkleroot/${chainType}/${chainID}`,
+        { tree: 0, index: 0, merkleroot: 0 },
+        {
+          headers: {
+            Authorization: `Basic ${base64Credentials}`,
+          },
+        },
+      );
+    } catch (err) {
+      const error = err as AxiosError;
+      errorResponse = error.response;
+    }
 
-    expect(response.status).to.equal(400);
+    if (errorResponse) {
+      expect(errorResponse.status).to.equal(400);
+    } else {
+      throw new Error('Expected errorResponse to be defined');
+    }
   });
 });

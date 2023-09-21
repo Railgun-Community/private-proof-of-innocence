@@ -1,4 +1,8 @@
-import { NetworkName, isDefined , MerkleProof } from '@railgun-community/shared-models';
+import {
+  NetworkName,
+  isDefined,
+  MerkleProof,
+} from '@railgun-community/shared-models';
 import {
   nToHex,
   hexToBigInt,

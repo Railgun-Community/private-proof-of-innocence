@@ -20,7 +20,7 @@ const dbgError = debug('poi:engine:error');
 let engineStarted = false;
 
 const fileExists = (path: string): Promise<boolean> => {
-  return new Promise((resolve) => {
+  return new Promise(resolve => {
     fs.promises
       .access(path)
       .then(() => resolve(true))

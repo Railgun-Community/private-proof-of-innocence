@@ -93,7 +93,7 @@ export class ListProviderPOIEventQueue {
 
     const existingEvent = ListProviderPOIEventQueue.poiEventQueue[
       networkName
-    ]?.find((e) => {
+    ]?.find(e => {
       return (
         ListProviderPOIEventQueue.getPOIEventFirstBlindedCommitment(e) ===
         ListProviderPOIEventQueue.getPOIEventFirstBlindedCommitment(poiEvent)

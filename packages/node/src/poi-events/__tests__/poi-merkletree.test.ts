@@ -174,7 +174,7 @@ describe('poi-merkletree', () => {
 
     // Insert 600 leaves
     const nums = Array.from(Array(600).keys());
-    const nodeHashes: string[] = nums.map((num) => {
+    const nodeHashes: string[] = nums.map(num => {
       return BigInt(num).toString(16);
     });
     await merkletree.insertMultipleLeaves_TEST_ONLY(0, nodeHashes);

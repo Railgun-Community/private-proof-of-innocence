@@ -92,7 +92,7 @@ export class BlockedShieldsSyncer {
     );
 
     const filteredProofs: SignedBlockedShield[] = blockedShieldDatas.filter(
-      (blockedShieldData) => {
+      blockedShieldData => {
         return !bloomFilter.has(blockedShieldData.blindedCommitment);
       },
     );

@@ -1,71 +1,71 @@
-import { AllowedSchema } from "express-json-validator-middleware";
+import { AllowedSchema } from 'express-json-validator-middleware';
 
 export const GetTransactProofsParamsSchema: AllowedSchema = {
-  type: "object",
+  type: 'object',
   properties: {
-    chainType: { type: "string" },
-    chainID: { type: "string" },
-    listKey: { type: "string" },
+    chainType: { type: 'string' },
+    chainID: { type: 'string' },
+    listKey: { type: 'string' },
   },
-  required: ["chainType", "chainID", "listKey"],
+  required: ['chainType', 'chainID', 'listKey'],
 };
 
 export const GetTransactProofsBodySchema: AllowedSchema = {
-  type: "object",
+  type: 'object',
   properties: {
-    bloomFilterSerialized: { type: "string" },
+    bloomFilterSerialized: { type: 'string' },
   },
-  required: ["bloomFilterSerialized"],
+  required: ['bloomFilterSerialized'],
 };
 
 export const GetBlockedShieldsParamsSchema: AllowedSchema = {
-  type: "object",
+  type: 'object',
   properties: {
-    chainType: { type: "string" },
-    chainID: { type: "string" },
-    listKey: { type: "string" },
+    chainType: { type: 'string' },
+    chainID: { type: 'string' },
+    listKey: { type: 'string' },
   },
-  required: ["chainType", "chainID", "listKey"],
+  required: ['chainType', 'chainID', 'listKey'],
 };
 
 export const GetBlockedShieldsBodySchema: AllowedSchema = {
-  type: "object",
+  type: 'object',
   properties: {
-    bloomFilterSerialized: { type: "string" },
+    bloomFilterSerialized: { type: 'string' },
   },
-  required: ["bloomFilterSerialized"],
+  required: ['bloomFilterSerialized'],
 };
 
 export const SubmitTransactProofParamsSchema: AllowedSchema = {
-  type: "object",
+  type: 'object',
   properties: {
-    chainType: { type: "string" },
-    chainID: { type: "string" },
+    chainType: { type: 'string' },
+    chainID: { type: 'string' },
   },
-  required: ["chainType", "chainID"],
+  required: ['chainType', 'chainID'],
 };
 
 export const SubmitTransactProofBodySchema: AllowedSchema = {
-  type: "object",
+  type: 'object',
   properties: {
-    listKey: { type: "string" },
+    listKey: { type: 'string' },
     transactProofData: {
-      type: "object",
+      type: 'object',
       properties: {
         snarkProof: {
-          type: "object",
+          type: 'object',
           properties: {
             pi_a: {
-              type: "array",
-              items: [{ type: "string" }, { type: "string" }],
+              type: 'array',
+              items: [{ type: 'string' }, { type: 'string' }],
               minItems: 2,
               maxItems: 2,
             },
             pi_b: {
-              type: "array",
+              type: 'array',
               items: {
-                type: "array",
-                items: { type: "string" },
+                type: 'array',
+                items: { type: 'string' },
                 minItems: 2,
                 maxItems: 2,
               },
@@ -73,98 +73,98 @@ export const SubmitTransactProofBodySchema: AllowedSchema = {
               maxItems: 2,
             },
             pi_c: {
-              type: "array",
-              items: [{ type: "string" }, { type: "string" }],
+              type: 'array',
+              items: [{ type: 'string' }, { type: 'string' }],
               minItems: 2,
               maxItems: 2,
             },
           },
-          required: ["pi_a", "pi_b", "pi_c"],
+          required: ['pi_a', 'pi_b', 'pi_c'],
         },
-        poiMerkleroots: { type: "array", items: { type: "string" } },
-        txidMerkleroot: { type: "string" },
-        txidMerklerootIndex: { type: "number" },
-        blindedCommitmentOutputs: { type: "array", items: { type: "string" } },
+        poiMerkleroots: { type: 'array', items: { type: 'string' } },
+        txidMerkleroot: { type: 'string' },
+        txidMerklerootIndex: { type: 'number' },
+        blindedCommitmentOutputs: { type: 'array', items: { type: 'string' } },
       },
       required: [
-        "snarkProof",
-        "poiMerkleroots",
-        "txidMerkleroot",
-        "txidMerklerootIndex",
-        "blindedCommitmentOutputs",
+        'snarkProof',
+        'poiMerkleroots',
+        'txidMerkleroot',
+        'txidMerklerootIndex',
+        'blindedCommitmentOutputs',
       ],
     },
   },
-  required: ["listKey", "transactProofData"],
+  required: ['listKey', 'transactProofData'],
 };
 
 export const GetPOIsPerListParamsSchema: AllowedSchema = {
-  type: "object",
+  type: 'object',
   properties: {
-    chainType: { type: "string" },
-    chainID: { type: "string" },
+    chainType: { type: 'string' },
+    chainID: { type: 'string' },
   },
-  required: ["chainType", "chainID"],
+  required: ['chainType', 'chainID'],
 };
 
 export const GetPOIsPerListBodySchema: AllowedSchema = {
-  type: "object",
+  type: 'object',
   properties: {
     listKeys: {
-      type: "array",
-      items: { type: "string" },
+      type: 'array',
+      items: { type: 'string' },
     },
     blindedCommitmentDatas: {
-      type: "array",
+      type: 'array',
       items: {
-        type: "object",
+        type: 'object',
         properties: {
-          blindedCommitment: { type: "string" },
+          blindedCommitment: { type: 'string' },
           type: {
-            type: "string",
-            enum: ["Shield", "Transact"],
+            type: 'string',
+            enum: ['Shield', 'Transact'],
           },
         },
-        required: ["blindedCommitment", "type"],
+        required: ['blindedCommitment', 'type'],
       },
     },
   },
-  required: ["listKeys", "blindedCommitmentDatas"],
+  required: ['listKeys', 'blindedCommitmentDatas'],
 };
 
 export const GetMerkleProofsParamsSchema: AllowedSchema = {
-  type: "object",
+  type: 'object',
   properties: {
-    chainType: { type: "string" },
-    chainID: { type: "string" },
+    chainType: { type: 'string' },
+    chainID: { type: 'string' },
   },
-  required: ["chainType", "chainID"],
+  required: ['chainType', 'chainID'],
 };
 
 export const GetMerkleProofsBodySchema: AllowedSchema = {
-  type: "object",
+  type: 'object',
   properties: {
-    listKey: { type: "string" },
-    blindedCommitments: { type: "array", items: { type: "string" } },
+    listKey: { type: 'string' },
+    blindedCommitments: { type: 'array', items: { type: 'string' } },
   },
-  required: ["listKey", "blindedCommitments"],
+  required: ['listKey', 'blindedCommitments'],
 };
 
 export const ValidateTxidMerklerootParamsSchema: AllowedSchema = {
-  type: "object",
+  type: 'object',
   properties: {
-    chainType: { type: "string" },
-    chainID: { type: "string" },
+    chainType: { type: 'string' },
+    chainID: { type: 'string' },
   },
-  required: ["chainType", "chainID"],
+  required: ['chainType', 'chainID'],
 };
 
 export const ValidateTxidMerklerootBodySchema: AllowedSchema = {
-  type: "object",
+  type: 'object',
   properties: {
-    tree: { type: "number" },
-    index: { type: "number" },
-    merkleroot: { type: "string" },
+    tree: { type: 'number' },
+    index: { type: 'number' },
+    merkleroot: { type: 'string' },
   },
-  required: ["tree", "index", "merkleroot"],
+  required: ['tree', 'index', 'merkleroot'],
 };

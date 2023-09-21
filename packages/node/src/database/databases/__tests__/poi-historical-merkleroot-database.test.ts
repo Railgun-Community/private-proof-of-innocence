@@ -30,7 +30,7 @@ describe('poi-historical-merkleroot-database', () => {
     const indexes = await db.listCollectionIndexes();
 
     // Check that an index on 'listKey' and 'rootHash' exists
-    const indexExists = indexes.some((index) => {
+    const indexExists = indexes.some(index => {
       return (
         'key' in index &&
         'listKey' in index.key &&

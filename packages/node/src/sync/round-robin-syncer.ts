@@ -98,7 +98,7 @@ export class RoundRobinSyncer {
     nodeStatusAllNetworks: NodeStatusAllNetworks,
   ) {
     await Promise.all(
-      Config.NETWORK_NAMES.map(async (networkName) => {
+      Config.NETWORK_NAMES.map(async networkName => {
         const nodeStatus = nodeStatusAllNetworks.forNetwork[networkName];
         if (!nodeStatus) {
           dbg(`Node ${nodeURL} does not support network ${networkName}`);

@@ -12,36 +12,36 @@ const networkName = NetworkName.Ethereum;
 let db: POIMerkletreeDatabase;
 
 describe('poi-merkletree-database', () => {
-    before(async () => {
-        await DatabaseClient.init();
-        db = new POIMerkletreeDatabase(networkName);
-        await db.createCollectionIndices();
+  before(async () => {
+    await DatabaseClient.init();
+    db = new POIMerkletreeDatabase(networkName);
+    await db.createCollectionIndices();
+  });
+
+  beforeEach(async () => {
+    await db.deleteAllItems_DANGEROUS();
+  });
+
+  it('Should correctly initialize POIMerkletreeDatabase', () => {
+    expect(db).to.be.instanceOf(POIMerkletreeDatabase);
+  });
+
+  it('Should create collection indices', async () => {
+    // List all indexes for the collection
+    const indexes = await db.listCollectionIndexes();
+
+    // Check that an index on 'listKey' and 'rootHash' exists
+    const indexExists = indexes.some(index => {
+      return (
+        'key' in index &&
+        'tree' in index.key &&
+        'level' in index.key &&
+        'index' in index.key &&
+        'listKey' in index.key &&
+        index.unique === true
+      );
     });
 
-    beforeEach(async () => {
-        await db.deleteAllItems_DANGEROUS();
-    });
-
-    it('Should correctly initialize POIMerkletreeDatabase', () => {
-        expect(db).to.be.instanceOf(POIMerkletreeDatabase);
-    });
-
-    it('Should create collection indices', async () => {
-        // List all indexes for the collection
-        const indexes = await db.listCollectionIndexes();
-
-        // Check that an index on 'listKey' and 'rootHash' exists
-        const indexExists = indexes.some(index => {
-            return (
-                'key' in index &&
-                'tree' in index.key &&
-                'level' in index.key &&
-                'index' in index.key &&
-                'listKey' in index.key &&
-                index.unique === true
-            );
-        });
-
-        expect(indexExists).to.be.true;
-    });
+    expect(indexExists).to.be.true;
+  });
 });

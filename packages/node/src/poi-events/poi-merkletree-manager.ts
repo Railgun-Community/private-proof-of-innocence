@@ -20,8 +20,8 @@ export class POIMerkletreeManager {
   > = {};
 
   static initListMerkletrees(listKeys: string[]) {
-    Config.NETWORK_NAMES.forEach((networkName) => {
-      listKeys.forEach((listKey) => {
+    Config.NETWORK_NAMES.forEach(networkName => {
+      listKeys.forEach(listKey => {
         this.merkletrees[listKey] ??= {};
         this.merkletrees[listKey][networkName] = new POIMerkletree(
           networkName,
@@ -69,7 +69,7 @@ export class POIMerkletreeManager {
     );
 
     const merkleProofs: MerkleProof[] = await Promise.all(
-      blindedCommitments.map((blindedCommitment) => {
+      blindedCommitments.map(blindedCommitment => {
         const nodeHash = blindedCommitment;
         return merkletree.getMerkleProofFromNodeHash(nodeHash);
       }),
@@ -84,9 +84,9 @@ export class POIMerkletreeManager {
   ): Promise<POIStatusListMap> {
     const statusListMap: POIStatusListMap = {};
     await Promise.all(
-      listKeys.map(async (listKey) => {
+      listKeys.map(async listKey => {
         statusListMap[listKey] = await Promise.all(
-          blindedCommitmentDatas.map((blindedCommitmentData) =>
+          blindedCommitmentDatas.map(blindedCommitmentData =>
             POIMerkletreeManager.getPOIStatus(
               listKey,
               networkName,
