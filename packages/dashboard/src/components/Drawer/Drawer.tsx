@@ -1,5 +1,7 @@
+import { useNavigate } from 'react-router-dom';
 import cn from 'classnames';
-import { Item } from '@components/Item/Item';
+import { Button } from '@components/Button/Button';
+import { AppRoutes } from '@constants/routes';
 import { useDrawerStore } from '@state/stores';
 import { IconType } from '@utils/icon-service';
 import styles from './Drawer.module.scss';
@@ -16,11 +18,12 @@ type Props = {
 
 type DrawerOption = {
   title: string;
-  rightIcon?: IconType;
-  onClick?: () => void;
+  rightIcon: IconType;
+  route: AppRoutes;
 };
 
 export const Drawer = ({ variant, className }: Props) => {
+  const navigate = useNavigate();
   const { isOpen: showDrawer, closeDrawer } = useDrawerStore();
 
   const getNavStyles = () => {
@@ -38,26 +41,34 @@ export const Drawer = ({ variant, className }: Props) => {
 
   const navClassName = getNavStyles();
 
+  const goToRoute = (route: string) => () => {
+    navigate(route);
+    closeDrawer();
+  };
+
   const OPTIONS: DrawerOption[] = [
     {
-      title: 'Option 1',
+      title: 'Node Status',
       rightIcon: IconType.ChevronRight,
-      onClick: () => {},
+      route: AppRoutes.NodeStatus,
     },
     {
-      title: 'Option 2',
+      title: 'Compare Nodes',
       rightIcon: IconType.ChevronRight,
-      onClick: () => {},
-    },
-    {
-      title: 'Option 3',
-      rightIcon: IconType.ChevronRight,
-      onClick: () => {},
+      route: AppRoutes.CompareNodes,
     },
   ];
 
   const renderOption = (option: DrawerOption, index: number) => {
-    return <Item key={index} {...option} />;
+    const { title, rightIcon, route } = option;
+    return (
+      <Button
+        key={index}
+        title={title}
+        rightIcon={rightIcon}
+        onClick={goToRoute(route)}
+      />
+    );
   };
 
   return (

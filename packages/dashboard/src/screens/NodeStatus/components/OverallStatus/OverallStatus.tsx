@@ -2,7 +2,7 @@ import {
   isDefined,
   NodeStatusForNetwork,
 } from '@railgun-community/shared-models';
-import { Item } from '@components/Item/Item';
+import { Button } from '@components/Button/Button';
 import { Text } from '@components/Text/Text';
 import { useNodeStore } from '@state/stores';
 import { shortenWalletAddress } from '@utils/address';
@@ -22,6 +22,8 @@ export const OverallStatus = ({ nodeStatus }: Props) => {
     nodeIp,
   } = useNodeStore();
   const listStatuses = nodeStatus?.listStatuses ?? undefined;
+
+  console.log('nodeStatus', nodeStatus);
 
   const arrayOfEventListStatuses = isDefined(listStatuses)
     ? Object.entries(listStatuses).map(([key, value]) => ({
@@ -46,10 +48,10 @@ export const OverallStatus = ({ nodeStatus }: Props) => {
     <div className={styles.overallStatusContainer}>
       <div className={styles.titleContainer}>
         <Text className={styles.overallStatusTitle}>Overall Status</Text>
-        <Item
+        <Button
+          onClick={handleRefresh}
           title={refreshButtonTitle}
           rightIcon={IconType.Refresh}
-          onClick={handleRefresh}
           disabled={loadingNodeStatusForAllNetworks}
         />
       </div>

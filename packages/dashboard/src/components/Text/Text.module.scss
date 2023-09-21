@@ -1,12 +1,10 @@
 @import '@scss/styleguide';
 
 .text {
+  @include label;
   font-size: 18px;
   color: white();
-  font-weight: 400;
-  font-family: $inconsolata;
   margin: 0;
-  font-style: normal;
 }
 
 .clickable {

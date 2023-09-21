@@ -1,6 +1,4 @@
-[![Unit Tests](https://github.com/Railgun-Community/proof-of-innocence/actions/workflows/unit-tests.yml/badge.svg?branch=main)](https://github.com/Railgun-Community/proof-of-innocence/actions)
-
-# RAILGUN Proof Of Innocence
+# RAILGUN Proof Of Innocence Node
 
 Compatible with NodeJS environments.
 
@@ -18,3 +16,13 @@ Mac MongoDB (https://www.mongodb.com/docs/manual/tutorial/install-mongodb-on-os-
 2. Run `yarn test-db` to start local MongoDB server.
 
 3. In a separate terminal, run `yarn test` or `yarn test-coverage`.
+
+## DEPLOYING
+
+Make sure the box has Node.js >=16.20 installed, and yarn.
+
+1. `yarn`
+2. `yarn setup-env`
+3. `npx pm2 start`
+
+OR, from the root of the monorepo, run `./start-node`.

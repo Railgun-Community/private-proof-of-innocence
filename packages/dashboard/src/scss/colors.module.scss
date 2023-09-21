@@ -1,16 +1,19 @@
 // [------------------------------ STATIC COLORS ------------------------------]
 
-$white: #fff;
+$white: #fafafafa;
+$gray: #eaeaeaea;
 $black: #000000;
 $danger: #ff0000;
 $onlineGreen: #00ff00;
-$borderWhite: #eaeaea;
+
+$blue: #264653;
+$green: #2a9d8f;
+$orange: #f4a261;
+$darkOrange: #e76f51;
+$yellow: #e9c46a;
 
 // [------------------------------ ALPHA COLORS ------------------------------]
 
-@function error($decimalOpacity: 1) {
-  @return rgba(255, 55, 95, $decimalOpacity);
-}
 @function white($decimalOpacity: 1) {
   @return rgba(255, 255, 255, $decimalOpacity);
 }

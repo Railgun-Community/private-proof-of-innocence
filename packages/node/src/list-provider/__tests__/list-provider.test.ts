@@ -170,7 +170,7 @@ describe('list-provider', () => {
     expect(allowedShields).to.deep.equal([
       {
         blindedCommitment:
-          '0x0d6e051528e88dc8b83719af8a7dd08583bf56222adc215d8c70c6b9f430034c',
+          '0x1f82cb9af8e30f1b5c96b53333be320e8c72e5ca702d5b8a953d8caaa743fa8b',
         commitmentHash: '0x2345',
         txid: '0x1234',
         npk: '0x3456',

@@ -12,7 +12,6 @@ $drawerWidth: 350px;
   border-width: 0px;
   border-style: solid;
   border-color: $white;
-  background-color: $black;
 }
 
 .slideFromRight {
@@ -52,5 +51,6 @@ $drawerWidth: 350px;
   padding: 24px;
   display: flex;
   flex-direction: column;
+  background-color: $blue;
   gap: 20px;
 }

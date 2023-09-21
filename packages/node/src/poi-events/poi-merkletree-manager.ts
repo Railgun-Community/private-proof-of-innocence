@@ -3,9 +3,10 @@ import {
   isDefined,
   MerkleProof,
   POIStatus,
-  POIStatusListMap,
   BlindedCommitmentData,
   BlindedCommitmentType,
+  POIsPerList,
+  POIsPerListMap,
 } from '@railgun-community/shared-models';
 import { Config } from '../config/config';
 import { POIMerkletree } from './poi-merkletree';
@@ -81,22 +82,25 @@ export class POIMerkletreeManager {
     listKeys: string[],
     networkName: NetworkName,
     blindedCommitmentDatas: BlindedCommitmentData[],
-  ): Promise<POIStatusListMap> {
-    const statusListMap: POIStatusListMap = {};
+  ): Promise<POIsPerListMap> {
+    const poisPerListMap: POIsPerListMap = {};
     await Promise.all(
-      listKeys.map(async listKey => {
-        statusListMap[listKey] = await Promise.all(
-          blindedCommitmentDatas.map(blindedCommitmentData =>
-            POIMerkletreeManager.getPOIStatus(
-              listKey,
-              networkName,
-              blindedCommitmentData,
-            ),
-          ),
+      listKeys.map(async (listKey) => {
+        await Promise.all(
+          blindedCommitmentDatas.map(async (blindedCommitmentData) => {
+            const { blindedCommitment } = blindedCommitmentData;
+            poisPerListMap[blindedCommitment] ??= {};
+            poisPerListMap[blindedCommitment][listKey] =
+              await POIMerkletreeManager.getPOIStatus(
+                listKey,
+                networkName,
+                blindedCommitmentData,
+              );
+          }),
         );
       }),
     );
-    return statusListMap;
+    return poisPerListMap;
   }
 
   private static async getPOIStatus(

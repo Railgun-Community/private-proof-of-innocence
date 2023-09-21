@@ -6,3 +6,14 @@ Compatible with NodeJS environments.
 
 Install the POI Node package:
 `yarn add @railgun-community/proof-of-innocence`
+
+## Deploying
+
+On the server where you want to deploy the POI Node, install dependencies:
+
+1. Node.js 16.20.x or higher
+2. yarn
+3. MongoDB
+
+Then run `./start-node`.
+

@@ -4,12 +4,12 @@ import { IconType, renderIcon } from '@utils/icon-service';
 import styles from './Header.module.scss';
 
 export const Header = () => {
-  const { openDrawer } = useDrawerStore();
+  const { toggleDrawer } = useDrawerStore();
   const { nodeIp } = useNodeStore();
 
   return (
     <div className={styles.headerContainer}>
-      <div className={styles.hamburgerMenu} onClick={openDrawer}>
+      <div className={styles.hamburgerMenu} onClick={toggleDrawer}>
         {renderIcon(IconType.HamburgerMenu)}
         <Text>POI Dashboard</Text>
       </div>
