@@ -1,7 +1,7 @@
 #!/bin/bash
 
 npm install -g pm2
-if [[ $(npx pm2 list | grep node) ]]; then
+if [[ $(npx pm2 -s info node) -eq 0 ]]; then
   echo "The POI Node is already running. This script is no longer necessary."
   echo "You can now manage the processes with pm2, for example:"
   echo ""
