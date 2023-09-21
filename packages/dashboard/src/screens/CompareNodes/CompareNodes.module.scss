@@ -1,0 +1,12 @@
+@import '@scss/styleguide';
+
+.compareNodesContainer {
+  display: flex;
+  height: 100vh;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 24px 15%;
+  gap: 20px;
+  background-color: white;
+}

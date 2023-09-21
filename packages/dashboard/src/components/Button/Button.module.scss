@@ -6,7 +6,7 @@
   margin-left: 5px;
 }
 
-.itemContainer {
+.buttonContainer {
   background-color: white(0.2);
   border-radius: 6px;
   padding: 10px;
@@ -20,13 +20,13 @@
   }
 }
 
-.itemContainerDisabled {
+.buttonContainerDisabled {
   opacity: 0.5;
   background-color: white(0.4);
   cursor: not-allowed;
 }
 
-.itemContainerClickable {
+.buttonContainerClickable {
   cursor: pointer;
   pointer-events: all;
 }

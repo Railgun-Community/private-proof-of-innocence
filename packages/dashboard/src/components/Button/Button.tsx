@@ -2,7 +2,7 @@ import { isDefined } from '@railgun-community/shared-models';
 import cn from 'classnames';
 import { Text } from '@components/Text/Text';
 import { IconType, renderIcon } from '@utils/icon-service';
-import styles from './Item.module.scss';
+import styles from './Button.module.scss';
 
 type Props = {
   title: string;
@@ -11,7 +11,7 @@ type Props = {
   disabled?: boolean;
 };
 
-export const Item = ({ title, rightIcon, onClick, disabled }: Props) => {
+export const Button = ({ title, rightIcon, onClick, disabled }: Props) => {
   const handleClick = () => {
     if (!isDefined(disabled) || !disabled) {
       onClick?.();
@@ -20,9 +20,9 @@ export const Item = ({ title, rightIcon, onClick, disabled }: Props) => {
 
   return (
     <div
-      className={cn(styles.itemContainer, {
-        [styles.itemContainerClickable]: onClick,
-        [styles.itemContainerDisabled]: disabled,
+      className={cn(styles.buttonContainer, {
+        [styles.buttonContainerClickable]: onClick,
+        [styles.buttonContainerDisabled]: disabled,
       })}
       onClick={handleClick}
     >
