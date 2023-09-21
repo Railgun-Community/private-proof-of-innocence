@@ -9,4 +9,11 @@ Install the POI Node package:
 
 ## Deploying
 
-To the deploy the POI Node on a server, make sure the box has Node.js >=16.20 and yarn, then run `./start-node`.
+On the server where you want to deploy the POI Node, install dependencies:
+
+1. Node.js 16.20.x or higher
+2. yarn
+3. MongoDB
+
+Then run `./start-node`.
+
