@@ -22,10 +22,9 @@ fi
 
 pushd packages/node
 yarn
+if [[ $? -ne 0 ]]; then exit 1; fi
 yarn setup-env
-if [[ $? -ne 0 ]]; then
-  exit 1
-fi
+if [[ $? -ne 0 ]]; then exit 1; fi
 npx pm2 start
 popd
 
