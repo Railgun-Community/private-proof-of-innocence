@@ -21,11 +21,8 @@ if [[ $(npx pm2 list | grep node) ]]; then
 fi
 
 pushd packages/node
-yarn
+yarn && yarn setup-env && npx pm2 start
 if [[ $? -ne 0 ]]; then exit 1; fi
-yarn setup-env
-if [[ $? -ne 0 ]]; then exit 1; fi
-npx pm2 start
 popd
 
 echo "Done!"
