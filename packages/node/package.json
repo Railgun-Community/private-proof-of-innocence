@@ -27,6 +27,7 @@
     "test-coverage": "npm run compile-test && c8 mocha",
     "prod-db": "./run-mongodb-prod",
     "test-db": "./run-mongodb-test",
+    "setup-env": "node setup-env.js",
     "generate-keys": "node ./src/config/keyGenerator.js",
     "test": "npm run compile-test && NODE_ENV=test mocha",
     "test-debug": "env DEBUG=poi:* npm run test"
@@ -77,6 +78,7 @@
     "madge": "^6.1.0",
     "mocha": "^10.2.0",
     "mongoose": "^7.5.0",
+    "pm2": "^5.3.0",
     "prettier": "^3.0.0",
     "sinon": "^15.2.0",
     "supertest": "^6.3.3",
