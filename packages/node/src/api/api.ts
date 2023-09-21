@@ -156,7 +156,6 @@ export class API {
 
     this.app.post(
       route,
-      this.basicAuth, // Require basic auth for POST requests
       validate, // Validate request.params and request.body
       async (req: Request, res: Response, next: NextFunction) => {
         try {
@@ -186,7 +185,7 @@ export class API {
       res.json({ status: 'ok' });
     });
 
-    this.app.get('/perf', (_req: Request, res: Response) => {
+    this.app.get('/perf', this.basicAuth, (_req: Request, res: Response) => {
       res.json({
         time: new Date(),
         memoryUsage: process.memoryUsage(),
