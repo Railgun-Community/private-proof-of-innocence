@@ -959,10 +959,10 @@
   resolved "https://registry.yarnpkg.com/@railgun-community/shared-models/-/shared-models-5.5.0.tgz#ce8076eecd802ed7690df05ef679f91658c084d1"
   integrity sha512-AHgLkgCj1hDoU5La9EtJt9QdVn5W8XMKYkNPFaoca8iPOFIw6MMOnLBrtAGqVFeJnLsdKHAmkq5kSXY54wT4QQ==
 
-"@railgun-community/shared-models@5.5.3":
-  version "5.5.3"
-  resolved "https://registry.yarnpkg.com/@railgun-community/shared-models/-/shared-models-5.5.3.tgz#cd80eeb8f9cb03eb62bf1f37319e67c5074b63dd"
-  integrity sha512-8KTZ0o1O4H64d/1UWkHr2rB3g5me2D5QBCsXnyyONfrAEXdGMq/329f64t9i3s6Zqjj9By20ACVCntDVPKp5zQ==
+"@railgun-community/shared-models@5.5.4":
+  version "5.5.4"
+  resolved "https://registry.yarnpkg.com/@railgun-community/shared-models/-/shared-models-5.5.4.tgz#ee6ee9ca6a7ca822fa49dbc4b4ebcab27d1a1c72"
+  integrity sha512-Dzzgg/RRa3eHxUaXBnVlo6N1Ogv9p5UWhAb2d8RK+mUH9R/+7Jh3jS8hpvlGj3Wgen1sEfL2YsL4/Gz7z6P+BQ==
 
 "@railgun-community/wallet@5.7.2":
   version "5.7.2"

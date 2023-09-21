@@ -87,7 +87,6 @@ describe('poi-merkletree-manager', () => {
     const poiStatusPerList = await POIMerkletreeManager.getPOIStatusPerList(
       Config.LIST_KEYS,
       networkName,
-
       [
         { blindedCommitment: '0x1234', type: BlindedCommitmentType.Transact },
         { blindedCommitment: '0x5678', type: BlindedCommitmentType.Transact },
@@ -95,16 +94,18 @@ describe('poi-merkletree-manager', () => {
       ],
     );
     expect(poiStatusPerList).to.deep.equal({
-      [MOCK_LIST_KEYS[0]]: [
-        POIStatus.Valid,
-        POIStatus.Valid,
-        POIStatus.Missing,
-      ],
-      [MOCK_LIST_KEYS[1]]: [
-        POIStatus.Missing,
-        POIStatus.Missing,
-        POIStatus.Missing,
-      ],
+      '0x1234': {
+        [MOCK_LIST_KEYS[0]]: POIStatus.Valid,
+        [MOCK_LIST_KEYS[1]]: POIStatus.Missing,
+      },
+      '0x5678': {
+        [MOCK_LIST_KEYS[0]]: POIStatus.Valid,
+        [MOCK_LIST_KEYS[1]]: POIStatus.Missing,
+      },
+      '0x1111111': {
+        [MOCK_LIST_KEYS[0]]: POIStatus.Missing,
+        [MOCK_LIST_KEYS[1]]: POIStatus.Missing,
+      },
     });
   });
 });

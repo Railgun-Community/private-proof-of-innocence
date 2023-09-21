@@ -110,18 +110,22 @@ describe('list-provider-poi-event-queue', () => {
       ],
     );
     expect(poiStatusPerList).to.deep.equal({
-      [MOCK_LIST_KEYS[0]]: [
-        POIStatus.Valid,
-        POIStatus.Valid,
-        POIStatus.Valid,
-        POIStatus.Missing,
-      ],
-      [MOCK_LIST_KEYS[1]]: [
-        POIStatus.Missing,
-        POIStatus.Missing,
-        POIStatus.Missing,
-        POIStatus.Missing,
-      ],
+      '0x5678': {
+        [MOCK_LIST_KEYS[0]]: POIStatus.Valid,
+        [MOCK_LIST_KEYS[1]]: POIStatus.Missing,
+      },
+      '0x1111': {
+        [MOCK_LIST_KEYS[0]]: POIStatus.Valid,
+        [MOCK_LIST_KEYS[1]]: POIStatus.Missing,
+      },
+      '0x2222': {
+        [MOCK_LIST_KEYS[0]]: POIStatus.Valid,
+        [MOCK_LIST_KEYS[1]]: POIStatus.Missing,
+      },
+      '0x3333': {
+        [MOCK_LIST_KEYS[0]]: POIStatus.Missing,
+        [MOCK_LIST_KEYS[1]]: POIStatus.Missing,
+      },
     });
 
     // Expect transact proof to be removed
