@@ -20,7 +20,7 @@ const base64Credentials = Buffer.from(`${username}:${password}`).toString(
   'base64',
 );
 
-describe.only('api', function () {
+describe('api', function () {
   let node3010: ProofOfInnocenceNode;
   let node3011: ProofOfInnocenceNode;
   let apiUrl: string;
