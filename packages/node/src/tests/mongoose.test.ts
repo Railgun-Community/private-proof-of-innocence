@@ -7,7 +7,7 @@ let mongooseDB: typeof mongoose;
 export const setUpMongoose = async () => {
   const options: mongoose.ConnectOptions = {};
   mongooseDB = await mongoose.connect(MONGOOSE_DB_URL, options);
-  mongooseDB.connection.on('error', (err) => {
+  mongooseDB.connection.on('error', err => {
     // eslint-disable-next-line no-console
     console.error(err);
   });

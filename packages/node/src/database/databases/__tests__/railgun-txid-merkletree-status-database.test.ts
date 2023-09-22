@@ -32,7 +32,7 @@ describe('railgun-txid-merkletree-status-database', () => {
     const indexes = await db.listCollectionIndexes();
 
     // Filter out the default MongoDB index on the `_id` field
-    const additionalIndexes = indexes.filter((index) => {
+    const additionalIndexes = indexes.filter(index => {
       return !('key' in index && '_id' in index.key);
     });
 

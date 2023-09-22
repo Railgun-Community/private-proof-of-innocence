@@ -2,7 +2,8 @@ import {
   Chain,
   NETWORK_CONFIG,
   NetworkName,
- SnarkProof } from '@railgun-community/shared-models';
+  SnarkProof,
+} from '@railgun-community/shared-models';
 
 export const CHAIN_ETHEREUM: Chain = NETWORK_CONFIG[NetworkName.Ethereum].chain;
 

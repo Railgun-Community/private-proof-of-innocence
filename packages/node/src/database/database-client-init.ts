@@ -45,7 +45,7 @@ export class DatabaseClient {
     await Promise.all(
       Config.NETWORK_NAMES.map(async (networkName: NetworkName) => {
         await Promise.all(
-          Object.values(CollectionName).map(async (collectionName) => {
+          Object.values(CollectionName).map(async collectionName => {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             let db: AbstractDatabase<any>;
 

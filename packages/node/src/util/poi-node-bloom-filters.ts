@@ -33,16 +33,17 @@ export class POINodeCountingBloomFilter {
   }
 
   static serialize(filter: CountingBloomFilter): string {
-    const bitArray: number[] = filter._filter.map((element) => element[0]);
+    const bitArray: number[] = filter._filter.map(element => element[0]);
     const buffer: Uint8Array = bits.from(bitArray);
     return toBase64(buffer);
   }
 
   static deserialize(serialized: string): CountingBloomFilter {
     const filter = POINodeCountingBloomFilter.create();
-    filter._filter = [...bits.iterator(fromBase64(serialized))].map(
-      (element) => [Number(element), Number(element)],
-    );
+    filter._filter = [...bits.iterator(fromBase64(serialized))].map(element => [
+      Number(element),
+      Number(element),
+    ]);
     return filter;
   }
 }

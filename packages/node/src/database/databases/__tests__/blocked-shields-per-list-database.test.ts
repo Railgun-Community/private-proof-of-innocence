@@ -33,7 +33,7 @@ describe('blocked-shields-per-list-database', () => {
     const indexes = await db.listCollectionIndexes();
 
     // Check if a unique index exists for the combination of 'listKey' and 'blindedCommitment' fields
-    const uniqueCombinedIndexExists = indexes.some((index) => {
+    const uniqueCombinedIndexExists = indexes.some(index => {
       return (
         'key' in index &&
         'listKey' in index.key &&

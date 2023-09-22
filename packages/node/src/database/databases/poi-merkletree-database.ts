@@ -19,7 +19,7 @@ export class POIMerkletreeDatabase extends AbstractDatabase<POIMerkletreeDBItem>
 
   async updatePOIMerkletreeNodes(items: POIMerkletreeDBItem[]): Promise<void> {
     await Promise.all(
-      items.map(async (item) => await this.insertMerkletreeNode(item)),
+      items.map(async item => await this.insertMerkletreeNode(item)),
     );
   }
 

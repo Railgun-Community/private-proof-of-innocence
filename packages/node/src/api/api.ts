@@ -1,8 +1,13 @@
-import express, { Request, Response } from 'express';
+import express, { NextFunction, Request, Response } from 'express';
 import cors from 'cors';
 import os from 'os';
 import debug from 'debug';
 import { Server } from 'http';
+import {
+  Validator,
+  ValidationError,
+  AllowedSchema,
+} from 'express-json-validator-middleware';
 import { POIEventList } from '../poi-events/poi-event-list';
 import { networkNameForSerializedChain } from '../config/general';
 import { TransactProofMempool } from '../proof-mempool/transact-proof-mempool';
@@ -21,8 +26,26 @@ import {
   GetMerkleProofsParams,
   ValidateTxidMerklerootParams,
 } from '@railgun-community/shared-models';
+import {
+  GetTransactProofsParamsSchema,
+  GetTransactProofsBodySchema,
+  SubmitTransactProofBodySchema,
+  SubmitTransactProofParamsSchema,
+  GetPOIsPerListBodySchema,
+  GetPOIsPerListParamsSchema,
+  GetMerkleProofsParamsSchema,
+  GetMerkleProofsBodySchema,
+  ValidateTxidMerklerootBodySchema,
+  ValidateTxidMerklerootParamsSchema,
+  GetBlockedShieldsBodySchema,
+  GetBlockedShieldsParamsSchema,
+} from './schemas';
+import 'dotenv/config';
 
 const dbg = debug('poi:api');
+
+// Initialize the JSON schema validator
+const validator = new Validator({ allErrors: true });
 
 export class API {
   private app: express.Express;
@@ -39,6 +62,17 @@ export class API {
       }),
     );
     this.addRoutes();
+
+    // Error middleware for JSON validation errors
+    this.app.use(
+      (error: Error | any, req: Request, res: Response, next: NextFunction) => {
+        if (error instanceof ValidationError) {
+          res.status(400).send(error.validationErrors);
+        } else {
+          next(error);
+        }
+      },
+    );
   }
 
   serve(host: string, port: string) {
@@ -51,38 +85,87 @@ export class API {
   }
 
   stop() {
-    this.server?.close();
-    this.server = undefined;
+    if (this.server) {
+      this.server.close();
+      this.server = undefined;
+    } else {
+      dbg('Server was not running.');
+    }
+  }
+
+  private basicAuth(req: Request, res: Response, next: NextFunction): void {
+    const authorization = req.headers.authorization;
+
+    // If no authorization header is present, return 401
+    if (authorization == null || authorization == undefined) {
+      res.status(401).json({ message: 'Unauthorized' });
+      return;
+    }
+
+    // Check if the authorization header is valid
+    const base64Credentials = authorization.split(' ')[1] || '';
+    const credentials = Buffer.from(base64Credentials, 'base64').toString(
+      'utf-8',
+    );
+    const [username, password] = credentials.split(':');
+
+    if (
+      username === process.env.BASIC_AUTH_USERNAME &&
+      password === process.env.BASIC_AUTH_PASSWORD
+    ) {
+      return next();
+    }
+
+    res.status(401).json({ message: 'Unauthorized' });
   }
 
   private safeGet(
     route: string,
     handler: (req: Request, res: Response) => Promise<void>,
   ) {
-    this.app.get(route, async (req: Request, res: Response) => {
-      try {
-        await handler(req, res);
-      } catch (err) {
-        // TODO: Remove err message
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-        res.status(500).json(err.message);
-      }
-    });
+    this.app.get(
+      route,
+      async (req: Request, res: Response, next: NextFunction) => {
+        try {
+          await handler(req, res);
+        } catch (err) {
+          return next(err);
+        }
+      },
+    );
   }
 
+  /**
+   * Safe POST handler that catches errors and returns a 500 response.
+   *
+   * @param route - Route to handle POST requests for
+   * @param handler - Request handler function that returns a Promise
+   * @param paramsSchema - JSON schema for request.params
+   * @param bodySchema - JSON schema for request.body
+   */
   private safePost(
     route: string,
     handler: (req: Request, res: Response) => Promise<void>,
+    paramsSchema: AllowedSchema,
+    bodySchema: AllowedSchema,
   ) {
-    this.app.post(route, async (req: Request, res: Response) => {
-      try {
-        await handler(req, res);
-      } catch (err) {
-        // TODO: Remove err message
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-        res.status(500).json(err.message);
-      }
+    const validate = validator.validate({
+      params: paramsSchema,
+      body: bodySchema,
     });
+
+    this.app.post(
+      route,
+      validate, // Validate request.params and request.body
+      async (req: Request, res: Response, next: NextFunction) => {
+        try {
+          await handler(req, res);
+          return res.status(200).send(); // Explicitly return a value
+        } catch (err) {
+          return next(err);
+        }
+      },
+    );
   }
 
   private assertHasListKey(listKey: string) {
@@ -102,7 +185,7 @@ export class API {
       res.json({ status: 'ok' });
     });
 
-    this.app.get('/perf', (_req: Request, res: Response) => {
+    this.app.get('/perf', this.basicAuth, (_req: Request, res: Response) => {
       res.json({
         time: new Date(),
         memoryUsage: process.memoryUsage(),
@@ -191,6 +274,8 @@ export class API {
         );
         res.json(proofs);
       },
+      GetTransactProofsParamsSchema,
+      GetTransactProofsBodySchema,
     );
 
     this.safePost(
@@ -209,6 +294,8 @@ export class API {
         );
         res.json(proofs);
       },
+      GetBlockedShieldsParamsSchema,
+      GetBlockedShieldsBodySchema,
     );
   }
 
@@ -220,9 +307,9 @@ export class API {
         const { listKey, transactProofData } =
           req.body as SubmitTransactProofParams;
         this.assertHasListKey(listKey);
-
         const networkName = networkNameForSerializedChain(chainType, chainID);
 
+        // Submit and verify the proof
         await TransactProofMempool.submitProof(
           listKey,
           networkName,
@@ -230,6 +317,8 @@ export class API {
         );
         res.status(200);
       },
+      SubmitTransactProofParamsSchema,
+      SubmitTransactProofBodySchema,
     );
 
     this.safePost(
@@ -238,21 +327,19 @@ export class API {
         const { chainType, chainID } = req.params;
         const { listKeys, blindedCommitmentDatas } =
           req.body as GetPOIsPerListParams;
-        listKeys.forEach((listKey) => {
+        listKeys.forEach(listKey => {
           this.assertHasListKey(listKey);
         });
-
         const networkName = networkNameForSerializedChain(chainType, chainID);
 
         if (
-          QueryLimits.GET_POI_EXISTENCE_MAX_BLINDED_COMMITMENTS >
-          blindedCommitmentDatas.length
+          blindedCommitmentDatas.length >
+          QueryLimits.GET_POI_EXISTENCE_MAX_BLINDED_COMMITMENTS
         ) {
           throw new Error(
             `Too many blinded commitments: max ${QueryLimits.GET_POI_EXISTENCE_MAX_BLINDED_COMMITMENTS}`,
           );
         }
-
         const poiStatusMap = await POIMerkletreeManager.getPOIStatusPerList(
           listKeys,
           networkName,
@@ -260,6 +347,8 @@ export class API {
         );
         res.json(poiStatusMap);
       },
+      GetPOIsPerListParamsSchema,
+      GetPOIsPerListBodySchema,
     );
 
     this.safePost(
@@ -269,18 +358,15 @@ export class API {
         const { listKey, blindedCommitments } =
           req.body as GetMerkleProofsParams;
         this.assertHasListKey(listKey);
-
         const networkName = networkNameForSerializedChain(chainType, chainID);
-
         if (
-          QueryLimits.GET_MERKLE_PROOFS_MAX_BLINDED_COMMITMENTS >
-          blindedCommitments.length
+          blindedCommitments.length >
+          QueryLimits.GET_MERKLE_PROOFS_MAX_BLINDED_COMMITMENTS
         ) {
           throw new Error(
             `Too many blinded commitments: max ${QueryLimits.GET_MERKLE_PROOFS_MAX_BLINDED_COMMITMENTS}`,
           );
         }
-
         const merkleProofs = await POIMerkletreeManager.getMerkleProofs(
           listKey,
           networkName,
@@ -288,15 +374,15 @@ export class API {
         );
         res.json(merkleProofs);
       },
+      GetMerkleProofsParamsSchema,
+      GetMerkleProofsBodySchema,
     );
 
     this.safeGet(
       '/validated-txid/:chainType/:chainID',
       async (req: Request, res: Response) => {
         const { chainType, chainID } = req.params;
-
         const networkName = networkNameForSerializedChain(chainType, chainID);
-
         const validatedRailgunTxidStatus =
           RailgunTxidMerkletreeManager.getValidatedRailgunTxidStatus(
             networkName,
@@ -311,9 +397,7 @@ export class API {
         const { chainType, chainID } = req.params;
         const { tree, index, merkleroot } =
           req.body as ValidateTxidMerklerootParams;
-
         const networkName = networkNameForSerializedChain(chainType, chainID);
-
         const isValid =
           await RailgunTxidMerkletreeManager.checkIfMerklerootExists(
             networkName,
@@ -323,6 +407,8 @@ export class API {
           );
         res.json(isValid);
       },
+      ValidateTxidMerklerootParamsSchema,
+      ValidateTxidMerklerootBodySchema,
     );
   }
 }

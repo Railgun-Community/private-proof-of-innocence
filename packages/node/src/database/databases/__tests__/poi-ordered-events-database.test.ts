@@ -36,12 +36,12 @@ describe('poi-ordered-events-database', () => {
     const indexes = await db.listCollectionIndexes();
 
     // Check if an index exists for the 'index' field
-    const indexFieldExists = indexes.some((index) => {
+    const indexFieldExists = indexes.some(index => {
       return 'key' in index && 'index' in index.key;
     });
 
     // Check if a unique index exists for the combination of 'index' and 'listKey' fields
-    const combinedIndexExists = indexes.some((index) => {
+    const combinedIndexExists = indexes.some(index => {
       return (
         'key' in index &&
         'index' in index.key &&
