@@ -1,27 +1,28 @@
 #!/bin/bash
 
 npm install -g pm2
-if [[ $(npx pm2 -s info node) -eq 0 ]]; then
+pm2 -s info node
+if [[ $? -eq 0 ]]; then
   echo "The POI Node is already running. This script is no longer necessary."
   echo "You can now manage the processes with pm2, for example:"
   echo ""
   echo "- Show the process list:"
-  echo "  $ npx pm2 list"
+  echo "  $ pm2 list"
   echo ""
   echo "- Monitor the processes:"
-  echo "  $ npx pm2 monit"
+  echo "  $ pm2 monit"
   echo ""
   echo "- Stop the processes:"
-  echo "  $ npx pm2 stop all"
+  echo "  $ pm2 stop all"
   echo ""
   echo "- Kill the processes:"
-  echo "  $ npx pm2 kill"
+  echo "  $ pm2 kill"
   echo ""
   exit 1
 fi
 
 pushd packages/node
-yarn && yarn setup-env && npx pm2 start
+yarn && yarn build && yarn setup-env && pm2 start
 if [[ $? -ne 0 ]]; then exit 1; fi
 popd
 
@@ -30,5 +31,5 @@ echo "Done!"
 echo "Do you want pm2 to automatically start on boot? (y/n)"
 read -r response
 if [[ "$response" =~ ^([yY][eE][sS]|[yY])+$ ]]; then
-  npx pm2 startup
+  pm2 startup
 fi
