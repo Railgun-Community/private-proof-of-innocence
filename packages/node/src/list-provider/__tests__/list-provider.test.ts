@@ -78,24 +78,24 @@ describe('list-provider', () => {
 
     await listProvider.queueNewShields(networkName);
 
-    const pendingShield: ShieldQueueDBItem = {
+    const unknownShield: ShieldQueueDBItem = {
       txid: '0x1234',
       commitmentHash: '0x2345',
       blindedCommitment: calculateShieldBlindedCommitment(shieldDatas[0]),
       npk: '0x3456',
       timestamp: 1662421336, // Sept 5, 2022
-      status: ShieldStatus.Pending,
+      status: ShieldStatus.Unknown,
       lastValidatedTimestamp: null,
       blockNumber: 123436,
       utxoTree: 0,
       utxoIndex: 3,
     };
-    await expect(db.getPendingShields(daysAgo(3))).to.eventually.deep.equal([
-      pendingShield,
-    ]);
+    await expect(
+      db.getShields(ShieldStatus.Unknown, daysAgo(3)),
+    ).to.eventually.deep.equal([unknownShield]);
   });
 
-  it('Should validate queued shield batch', async () => {
+  it('Should categorize and validate queued shield batch', async () => {
     const shieldDatas: ShieldData[] = [
       // will be Allowed
       {
@@ -122,8 +122,11 @@ describe('list-provider', () => {
 
     await listProvider.queueNewShields(networkName);
 
-    const pendingShields = await db.getPendingShields(daysAgo(3));
-    expect(pendingShields.length).to.equal(2);
+    const unknownShields = await db.getShields(
+      ShieldStatus.Unknown,
+      daysAgo(3),
+    );
+    expect(unknownShields.length).to.equal(2);
 
     // Should be Allowed
     const txReceipt1 = { from: '0xabcd' } as TransactionReceipt;
@@ -154,9 +157,12 @@ describe('list-provider', () => {
       'queueUnsignedPOIShieldEvent',
     );
 
-    await listProvider.validateNextQueuedShieldBatch(networkName);
+    await listProvider.categorizeUnknownShields(networkName);
+    const pendingShields = await db.getShields(ShieldStatus.Pending);
+    expect(pendingShields.length).to.equal(2);
 
-    const allowedShields = await db.getAllowedShields();
+    await listProvider.validateNextPendingShieldBatch(networkName);
+    const allowedShields = await db.getShields(ShieldStatus.Allowed);
     expect(allowedShields.length).to.equal(1);
 
     expect(allowedShields[0].lastValidatedTimestamp).to.be.lessThanOrEqual(

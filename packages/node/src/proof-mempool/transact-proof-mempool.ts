@@ -1,6 +1,8 @@
 import {
+  NETWORK_CONFIG,
   NetworkName,
   TransactProofData,
+  isDefined,
 } from '@railgun-community/shared-models';
 import { TransactProofPerListMempoolDatabase } from '../database/databases/transact-proof-per-list-mempool-database';
 import { POIHistoricalMerklerootDatabase } from '../database/databases/poi-historical-merkleroot-database';
@@ -12,6 +14,8 @@ import { RailgunTxidMerkletreeManager } from '../railgun-txids/railgun-txid-merk
 import { QueryLimits } from '../config/query-limits';
 import { ListProviderPOIEventQueue } from '../list-provider/list-provider-poi-event-queue';
 import { Config } from '../config/config';
+import { networkForName } from '../config/general';
+import { validateRailgunTxidOccurredBeforeBlockNumber } from '@railgun-community/wallet';
 
 export class TransactProofMempool {
   static async submitProof(
@@ -57,17 +61,34 @@ export class TransactProofMempool {
       return;
     }
 
-    // Verify all POI Merkleroots exist
-    const poiMerklerootDb = new POIHistoricalMerklerootDatabase(networkName);
-    const allMerklerootsExist = await poiMerklerootDb.allMerklerootsExist(
-      listKey,
-      transactProofData.poiMerkleroots,
-    );
-    if (!allMerklerootsExist) {
-      return;
+    const { tree, index } =
+      RailgunTxidMerkletreeManager.getTreeAndIndexFromTxidIndex(
+        transactProofData.txidMerklerootIndex,
+      );
+
+    const networkPOISettings = networkForName(networkName).poi;
+    const isLegacyTransaction = isDefined(networkPOISettings)
+      ? await validateRailgunTxidOccurredBeforeBlockNumber(
+          networkName,
+          tree,
+          index,
+          networkPOISettings.launchBlock,
+        )
+      : false;
+
+    if (!isLegacyTransaction) {
+      // Verify all POI Merkleroots exist
+      const poiMerklerootDb = new POIHistoricalMerklerootDatabase(networkName);
+      const allMerklerootsExist = await poiMerklerootDb.allMerklerootsExist(
+        listKey,
+        transactProofData.poiMerkleroots,
+      );
+      if (!allMerklerootsExist) {
+        return;
+      }
     }
 
-    // Verify Railgun TX Merkleroot exists against Railgun TX Merkletree (Engine)
+    // Verify historical Railgun Txid Merkleroot exists
     const isValidTxMerkleroot =
       await RailgunTxidMerkletreeManager.checkIfMerklerootExistsByTxidIndex(
         networkName,

@@ -1,10 +1,18 @@
 import {
+  BlindedCommitmentData,
+  BlindedCommitmentType,
+  NETWORK_CONFIG,
   NetworkName,
+  POIStatus,
   delay,
   isDefined,
+  isHistoricalRelayAdaptContractAddress,
 } from '@railgun-community/shared-models';
-import { networkForName } from '../config/general';
-import { ShieldData } from '@railgun-community/wallet';
+import { chainForNetwork, networkForName } from '../config/general';
+import {
+  ShieldData,
+  getUnshieldRailgunTransactionBlindedCommitmentGroups,
+} from '@railgun-community/wallet';
 import debug from 'debug';
 import { ShieldQueueDatabase } from '../database/databases/shield-queue-database';
 import { Config } from '../config/config';
@@ -21,17 +29,20 @@ import { ListProviderPOIEventUpdater } from './list-provider-poi-event-updater';
 import { POIEventShield, POIEventType } from '../models/poi-types';
 import { ListProviderBlocklist } from './list-provider-blocklist';
 import { hoursAgo } from '../util/time-ago';
+import { POIMerkletreeManager } from '../poi-events/poi-merkletree-manager';
 
 export type ListProviderConfig = {
   name: string;
   description: string;
   queueShieldsOverrideDelayMsec?: number;
+  categorizeUnknownShieldsOverrideDelayMsec?: number;
   validateShieldsOverrideDelayMsec?: number;
 };
 
 // 20 minutes
 const DEFAULT_QUEUE_SHIELDS_DELAY_MSEC = 20 * 60 * 1000;
-
+// 30 seconds
+const CATEGORIZE_UNKNOWN_SHIELDS_DELAY_MSEC = 30 * 1000;
 // 30 seconds
 const DEFAULT_VALIDATE_SHIELDS_DELAY_MSEC = 30 * 1000;
 
@@ -70,7 +81,9 @@ export abstract class ListProvider {
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.runQueueShieldsPoller();
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    this.runValidateQueuedShieldsPoller();
+    this.runCategorizeUnknownShieldsPoller();
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    this.runValidatePendingShieldsPoller();
 
     ListProviderPOIEventQueue.startPolling();
     ListProviderPOIEventUpdater.startPolling();
@@ -92,11 +105,27 @@ export abstract class ListProvider {
     this.runQueueShieldsPoller();
   }
 
-  private async runValidateQueuedShieldsPoller() {
+  private async runCategorizeUnknownShieldsPoller() {
     // Run for each network in series.
     for (let i = 0; i < Config.NETWORK_NAMES.length; i++) {
       const networkName = Config.NETWORK_NAMES[i];
-      await this.validateNextQueuedShieldBatch(networkName);
+      await this.categorizeUnknownShields(networkName);
+    }
+
+    await delay(
+      this.config.categorizeUnknownShieldsOverrideDelayMsec ??
+        CATEGORIZE_UNKNOWN_SHIELDS_DELAY_MSEC,
+    );
+
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    this.runCategorizeUnknownShieldsPoller();
+  }
+
+  private async runValidatePendingShieldsPoller() {
+    // Run for each network in series.
+    for (let i = 0; i < Config.NETWORK_NAMES.length; i++) {
+      const networkName = Config.NETWORK_NAMES[i];
+      await this.validateNextPendingShieldBatch(networkName);
     }
 
     await delay(
@@ -105,7 +134,7 @@ export abstract class ListProvider {
     );
 
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    this.runValidateQueuedShieldsPoller();
+    this.runValidatePendingShieldsPoller();
   }
 
   async queueNewShields(networkName: NetworkName): Promise<void> {
@@ -120,7 +149,7 @@ export abstract class ListProvider {
     );
 
     dbg(
-      `[${networkName}] Attempting to insert ${newShields.length} pending shields`,
+      `[${networkName}] Attempting to insert ${newShields.length} unknown shields`,
     );
 
     await Promise.all(
@@ -136,13 +165,149 @@ export abstract class ListProvider {
     }
   }
 
+  async categorizeUnknownShields(networkName: NetworkName) {
+    try {
+      const shieldQueueDB = new ShieldQueueDatabase(networkName);
+      const unknownShields = await shieldQueueDB.getShields(
+        ShieldStatus.Unknown,
+      );
+      for (const shieldQueueDBItem of unknownShields) {
+        await this.categorizeUnknownShield(networkName, shieldQueueDBItem);
+      }
+    } catch (err) {
+      dbg(
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        `[${networkName}] Error queuing shield on ${networkName}: ${err.message}`,
+      );
+    }
+  }
+
+  private async categorizeUnknownShield(
+    networkName: NetworkName,
+    shieldQueueDBItem: ShieldQueueDBItem,
+  ) {
+    const { txid } = shieldQueueDBItem;
+
+    if (shieldQueueDBItem.timestamp < this.getMaxTimestampForValidation()) {
+      // Automatically mark pending if it's an old shield.
+      await this.markShieldPending(networkName, shieldQueueDBItem);
+      return;
+    }
+
+    const txReceipt = await getTransactionReceipt(networkName, txid);
+    const toAddress = txReceipt?.to;
+    if (!isDefined(toAddress)) {
+      throw new Error('Transaction receipt missing "to" address');
+    }
+    const isRelayAdaptContractCall = isHistoricalRelayAdaptContractAddress(
+      networkName,
+      toAddress,
+    );
+    if (!isRelayAdaptContractCall) {
+      await this.markShieldPending(networkName, shieldQueueDBItem);
+      return;
+    }
+
+    await this.handleRelayAdaptUnknownShield(
+      networkName,
+      shieldQueueDBItem,
+      toAddress,
+    );
+  }
+
+  // TODO: Needs tests for each case.
+  private async handleRelayAdaptUnknownShield(
+    networkName: NetworkName,
+    shieldQueueDBItem: ShieldQueueDBItem,
+    toAddress: string,
+  ) {
+    // PROCESS FOR RELAY ADAPT UNSHIELD+SHIELDS:
+    // 1. Check if any unshield exists for this eth txid.
+    // 2. If no unshield exists, then assume it's a base-token-shield. Mark as pending (will run the delay before a full POI List check).
+    // 3. If any unshield exists, find POI Status for each unshield railgunTxid (blindedCommitment).
+    // 4. Handle poi status for every unshield
+
+    // 1. Check if any unshield exists for this eth txid.
+    const chain = chainForNetwork(networkName);
+    const unshieldRailgunTransactionBlindedCommitmentGroups: string[][] =
+      await getUnshieldRailgunTransactionBlindedCommitmentGroups(
+        chain,
+        shieldQueueDBItem.txid,
+        toAddress, // Relay Adapt contract address
+      );
+
+    // 2. If no unshield exists, then we assume it's a base-token-shield.
+    // Mark as pending (will run the delay before a full POI List check).
+    if (!unshieldRailgunTransactionBlindedCommitmentGroups.length) {
+      await this.markShieldPending(networkName, shieldQueueDBItem);
+      return;
+    }
+
+    // 3. If any unshield exists, find POI Status for each unshield railgunTxid (by blindedCommitments).
+    const allBlindedCommitments: string[] =
+      unshieldRailgunTransactionBlindedCommitmentGroups.flat();
+
+    const poiStatuses: POIStatus[] = await Promise.all(
+      allBlindedCommitments.map(async blindedCommitment => {
+        const blindedCommitmentData: BlindedCommitmentData = {
+          blindedCommitment,
+          type: BlindedCommitmentType.Transact,
+        };
+        return POIMerkletreeManager.getPOIStatus(
+          this.listKey,
+          networkName,
+          blindedCommitmentData,
+        );
+      }),
+    );
+
+    // If all Unshield POI statuses are Valid, automatically Allow Relay Adapt Shield
+    if (poiStatuses.every(status => status === POIStatus.Valid)) {
+      await this.allowShield(networkName, shieldQueueDBItem);
+      return;
+    }
+
+    // If 1+ POI status is "TransactProofSubmitted" or "Missing",
+    // Mark as pending (will run the delay before a full POI List check)
+    const anyStatusIsPending =
+      poiStatuses.find(
+        status =>
+          status === POIStatus.TransactProofSubmitted ||
+          status === POIStatus.Missing,
+      ) != null;
+
+    if (anyStatusIsPending) {
+      // If shield is >60 min old, mark as pending.
+      if (shieldQueueDBItem.timestamp < hoursAgo(1)) {
+        await this.markShieldPending(networkName, shieldQueueDBItem);
+      }
+      // Otherwise, wait for next iteration.
+      return;
+    }
+
+    // ShieldBlocked and ShieldPending are not possible for Transact proof POIStatus.
+    // Mark as pending byt default (will run the delay before a full POI List check)
+    await this.markShieldPending(networkName, shieldQueueDBItem);
+  }
+
+  private async markShieldPending(
+    networkName: NetworkName,
+    shieldQueueDBItem: ShieldQueueDBItem,
+  ) {
+    const shieldQueueDB = new ShieldQueueDatabase(networkName);
+    await shieldQueueDB.updateShieldStatus(
+      shieldQueueDBItem,
+      ShieldStatus.Pending,
+    );
+  }
+
   private async queueShieldSafe(
     networkName: NetworkName,
     shieldData: ShieldData,
   ) {
     try {
       const shieldQueueDB = new ShieldQueueDatabase(networkName);
-      await shieldQueueDB.insertPendingShield(shieldData);
+      await shieldQueueDB.insertUnknownShield(shieldData);
     } catch (err) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       dbg(
@@ -156,13 +321,16 @@ export abstract class ListProvider {
     return hoursAgo(Constants.HOURS_SHIELD_PENDING_PERIOD);
   }
 
-  async validateNextQueuedShieldBatch(networkName: NetworkName): Promise<void> {
+  async validateNextPendingShieldBatch(
+    networkName: NetworkName,
+  ): Promise<void> {
     const endTimestamp = this.getMaxTimestampForValidation();
     let pendingShields: ShieldQueueDBItem[];
     try {
       const shieldQueueDB = new ShieldQueueDatabase(networkName);
       const limit = 100;
-      pendingShields = await shieldQueueDB.getPendingShields(
+      pendingShields = await shieldQueueDB.getShields(
+        ShieldStatus.Pending,
         endTimestamp,
         limit,
       );
@@ -203,6 +371,15 @@ export abstract class ListProvider {
         throw new Error('Invalid timestamp');
       }
 
+      const poiSettings = NETWORK_CONFIG[networkName].poi;
+
+      if (
+        isDefined(poiSettings) &&
+        poiSettings.launchBlock < txReceipt.blockNumber
+      ) {
+        return await this.allowShield(networkName, shieldDBItem);
+      }
+
       const { shouldAllow, blockReason } = await this.shouldAllowShield(
         networkName,
         txid,
@@ -211,35 +388,51 @@ export abstract class ListProvider {
       );
 
       if (shouldAllow) {
-        // Allow - add POIEvent
-        const poiEventShield: POIEventShield = {
-          type: POIEventType.Shield,
-          commitmentHash: shieldDBItem.commitmentHash,
-          blindedCommitment: shieldDBItem.blindedCommitment,
-        };
-        ListProviderPOIEventQueue.queueUnsignedPOIShieldEvent(
-          networkName,
-          poiEventShield,
-        );
+        return await this.allowShield(networkName, shieldDBItem);
       } else {
-        // Block - add BlockedShield
-        await ListProviderBlocklist.addBlockedShield(
-          networkName,
-          shieldDBItem,
-          blockReason,
-        );
+        return await this.blockShield(networkName, shieldDBItem, blockReason);
       }
-
-      // Update status in DB
-      const shieldQueueDB = new ShieldQueueDatabase(networkName);
-      await shieldQueueDB.updateShieldStatus(
-        shieldDBItem,
-        shouldAllow ? ShieldStatus.Allowed : ShieldStatus.Blocked,
-      );
     } catch (err) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       dbg(`Error validating queued shield on ${networkName}: ${err.message}`);
       dbg(shieldDBItem);
     }
+  }
+
+  private async allowShield(
+    networkName: NetworkName,
+    shieldDBItem: ShieldQueueDBItem,
+  ) {
+    // Allow - add POIEvent
+    const poiEventShield: POIEventShield = {
+      type: POIEventType.Shield,
+      commitmentHash: shieldDBItem.commitmentHash,
+      blindedCommitment: shieldDBItem.blindedCommitment,
+    };
+    ListProviderPOIEventQueue.queueUnsignedPOIShieldEvent(
+      networkName,
+      poiEventShield,
+    );
+
+    // Update status in DB
+    const shieldQueueDB = new ShieldQueueDatabase(networkName);
+    await shieldQueueDB.updateShieldStatus(shieldDBItem, ShieldStatus.Allowed);
+  }
+
+  private async blockShield(
+    networkName: NetworkName,
+    shieldDBItem: ShieldQueueDBItem,
+    blockReason: Optional<string>,
+  ) {
+    // Block - add BlockedShield
+    await ListProviderBlocklist.addBlockedShield(
+      networkName,
+      shieldDBItem,
+      blockReason,
+    );
+
+    // Update status in DB
+    const shieldQueueDB = new ShieldQueueDatabase(networkName);
+    await shieldQueueDB.updateShieldStatus(shieldDBItem, ShieldStatus.Blocked);
   }
 }

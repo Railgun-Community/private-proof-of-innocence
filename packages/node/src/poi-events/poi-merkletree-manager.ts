@@ -85,9 +85,9 @@ export class POIMerkletreeManager {
   ): Promise<POIsPerListMap> {
     const poisPerListMap: POIsPerListMap = {};
     await Promise.all(
-      listKeys.map(async (listKey) => {
+      listKeys.map(async listKey => {
         await Promise.all(
-          blindedCommitmentDatas.map(async (blindedCommitmentData) => {
+          blindedCommitmentDatas.map(async blindedCommitmentData => {
             const { blindedCommitment } = blindedCommitmentData;
             poisPerListMap[blindedCommitment] ??= {};
             poisPerListMap[blindedCommitment][listKey] =
@@ -103,7 +103,7 @@ export class POIMerkletreeManager {
     return poisPerListMap;
   }
 
-  private static async getPOIStatus(
+  static async getPOIStatus(
     listKey: string,
     networkName: NetworkName,
     blindedCommitmentData: BlindedCommitmentData,

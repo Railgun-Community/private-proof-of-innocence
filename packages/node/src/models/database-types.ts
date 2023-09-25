@@ -39,6 +39,9 @@ export enum CollectionName {
 
 export enum ShieldStatus {
   // Waiting for validation
+  Unknown = 'Unknown',
+
+  // Waiting for validation
   Pending = 'Pending',
 
   // Validation statuses

@@ -8,15 +8,17 @@ import { getFormattedTimeAgo } from '../util/time-ago';
 
 export const getShieldQueueStatus = async (
   networkName: NetworkName,
-): Promise<ShieldQueueStatus> => {
+): Promise<any> => {
+  // TODO: Update ShieldQueueStatus to include 'unknown'
   const db = new ShieldQueueDatabase(networkName);
 
+  const unknown = await db.getCount(ShieldStatus.Unknown);
   const pending = await db.getCount(ShieldStatus.Pending);
   const allowed = await db.getCount(ShieldStatus.Allowed);
   const blocked = await db.getCount(ShieldStatus.Blocked);
   const addedPOI = await db.getCount(ShieldStatus.AddedPOI);
 
-  const latestPendingShield = await db.getLatestPendingShield();
+  const latestPendingShield = await db.getLatestUnknownOrPendingShield();
   const latestPendingShieldTime = latestPendingShield
     ? `${getFormattedTimeAgo(new Date(latestPendingShield.timestamp * 1000))}`
     : undefined;
@@ -26,6 +28,7 @@ export const getShieldQueueStatus = async (
     allowed,
     blocked,
     addedPOI,
+    unknown,
     latestPendingShield: latestPendingShieldTime,
   };
 };

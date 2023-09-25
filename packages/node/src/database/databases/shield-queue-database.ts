@@ -11,6 +11,7 @@ import {
 import { AbstractDatabase } from '../abstract-database';
 import { ShieldData } from '@railgun-community/wallet';
 import { calculateShieldBlindedCommitment } from '../../util/shield-blinded-commitment';
+import { Filter } from 'mongodb';
 
 export class ShieldQueueDatabase extends AbstractDatabase<ShieldQueueDBItem> {
   constructor(networkName: NetworkName) {
@@ -26,7 +27,7 @@ export class ShieldQueueDatabase extends AbstractDatabase<ShieldQueueDBItem> {
     await this.createIndex(['status']);
   }
 
-  async insertPendingShield(shieldData: ShieldData): Promise<void> {
+  async insertUnknownShield(shieldData: ShieldData): Promise<void> {
     if (!isDefined(shieldData.timestamp)) {
       return;
     }
@@ -39,7 +40,7 @@ export class ShieldQueueDatabase extends AbstractDatabase<ShieldQueueDBItem> {
       utxoTree: shieldData.utxoTree,
       utxoIndex: shieldData.utxoIndex,
       timestamp: shieldData.timestamp,
-      status: ShieldStatus.Pending,
+      status: ShieldStatus.Unknown,
       lastValidatedTimestamp: undefined,
       blockNumber: shieldData.blockNumber,
     };
@@ -80,19 +81,22 @@ export class ShieldQueueDatabase extends AbstractDatabase<ShieldQueueDBItem> {
     return this.upsertOne(filter, replacement);
   }
 
-  async getPendingShields(
-    endTimestamp: number,
+  async getShields(
+    status: ShieldStatus,
+    endTimestamp?: number,
     limit?: number,
   ): Promise<ShieldQueueDBItem[]> {
     const filter: DBFilter<ShieldQueueDBItem> = {
-      status: ShieldStatus.Pending,
+      status,
     };
     const sort: DBSort<ShieldQueueDBItem> = {
       timestamp: 'ascending',
     };
-    const max: DBMaxMin<ShieldQueueDBItem> = {
-      timestamp: endTimestamp,
-    };
+    const max: Optional<DBMaxMin<ShieldQueueDBItem>> = isDefined(endTimestamp)
+      ? {
+          timestamp: endTimestamp,
+        }
+      : undefined;
     return this.findAll(filter, sort, max, undefined, limit);
   }
 
@@ -110,13 +114,6 @@ export class ShieldQueueDatabase extends AbstractDatabase<ShieldQueueDBItem> {
     return (await this.findOne({ hash }))?.status;
   }
 
-  async getAllowedShields(): Promise<ShieldQueueDBItem[]> {
-    const filter: DBFilter<ShieldQueueDBItem> = {
-      status: ShieldStatus.Allowed,
-    };
-    return this.findAll(filter);
-  }
-
   async streamAllowedShields(): Promise<DBStream<ShieldQueueDBItem>> {
     const filter: DBFilter<ShieldQueueDBItem> = {
       status: ShieldStatus.Allowed,
@@ -124,9 +121,11 @@ export class ShieldQueueDatabase extends AbstractDatabase<ShieldQueueDBItem> {
     return this.stream(filter);
   }
 
-  async getLatestPendingShield(): Promise<Optional<ShieldQueueDBItem>> {
-    const filter: DBFilter<ShieldQueueDBItem> = {
-      status: ShieldStatus.Pending,
+  async getLatestUnknownOrPendingShield(): Promise<
+    Optional<ShieldQueueDBItem>
+  > {
+    const filter: Filter<ShieldQueueDBItem> = {
+      status: { $in: [ShieldStatus.Pending, ShieldStatus.Unknown] },
     };
     const sort: DBSort<ShieldQueueDBItem> = {
       timestamp: 'descending',

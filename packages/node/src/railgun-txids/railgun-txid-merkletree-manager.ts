@@ -78,7 +78,7 @@ export class RailgunTxidMerkletreeManager {
     };
   }
 
-  private static getTreeAndIndexFromTxidIndex(txidIndex: number): {
+  static getTreeAndIndexFromTxidIndex(txidIndex: number): {
     tree: number;
     index: number;
   } {

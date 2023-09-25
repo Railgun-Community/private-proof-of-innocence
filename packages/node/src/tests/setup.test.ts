@@ -13,6 +13,9 @@ before(async function run() {
   process.env.pkey =
     '0x0012345678901234567890123456789000123456789012345678901234567890';
 
+  process.env.BASIC_AUTH_USERNAME = 'test-user';
+  process.env.BASIC_AUTH_PASSWORD = 'test-pass';
+
   Config.ENGINE_DB_DIR = TEST_DB_DIR;
 
   Config.LIST_KEYS = MOCK_LIST_KEYS;

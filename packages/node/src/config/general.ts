@@ -1,4 +1,5 @@
 import {
+  Chain,
   NETWORK_CONFIG,
   Network,
   NetworkName,
@@ -12,6 +13,10 @@ export const networkForName = (networkName: NetworkName): Network => {
     throw new Error(`No network info available for ${networkName}`);
   }
   return network;
+};
+
+export const chainForNetwork = (networkName: NetworkName): Chain => {
+  return networkForName(networkName).chain;
 };
 
 export const networkNameForSerializedChain = (

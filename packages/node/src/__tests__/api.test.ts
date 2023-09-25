@@ -16,9 +16,10 @@ const listKey = MOCK_LIST_KEYS[0];
 // Import admin and password from .env file
 const username = process.env.BASIC_AUTH_USERNAME;
 const password = process.env.BASIC_AUTH_PASSWORD;
-const base64Credentials = Buffer.from(`${username}:${password}`).toString(
-  'base64',
-);
+const base64Credentials = Buffer.from(
+  `${username}:${password}`,
+  'utf8',
+).toString('base64');
 
 describe('api', function () {
   let node3010: ProofOfInnocenceNode;
