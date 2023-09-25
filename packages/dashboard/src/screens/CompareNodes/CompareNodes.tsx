@@ -1,4 +1,5 @@
 import { Table } from '@components/Table/Table';
+import { Text } from '@components/Text/Text';
 import styles from './CompareNodes.module.scss';
 
 export const CompareNodes = () => {
@@ -17,13 +18,13 @@ export const CompareNodes = () => {
       nodeName3: 36,
     },
     {
-      key: 'Ajam index',
+      key: 'Example index',
     },
   ];
 
   return (
     <div className={styles.compareNodesContainer}>
-      <h1 style={{ color: 'black' }}>Compare Nodes</h1>
+      <Text className={styles.compareNodesTitle}>Compare Nodes</Text>
       <Table data={data} columns={columns} title="TxID Merkletree" />
     </div>
   );

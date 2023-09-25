@@ -6,32 +6,32 @@ $drawerWidth: 350px;
   position: fixed;
   height: 100%;
   width: $drawerWidth;
-  top: calc($headerHeight - 8px);
+  top: calc($headerHeight - 10px);
   z-index: $z-index-drawers;
   transition: transform 0.2s ease-in-out;
   border-width: 0px;
   border-style: solid;
-  border-color: $white;
+  border-color: $coldGray;
 }
 
 .slideFromRight {
   @include defaultDrawerStyles;
   right: -$drawerWidth;
   transform: translateX(-100%);
-  border-left-width: 1px;
+  box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.25);
 }
 
 .slideFromLeft {
   @include defaultDrawerStyles;
   left: -$drawerWidth;
   transform: translateX(100%);
-  border-right-width: 1px;
+  box-shadow: 4px 20px 10px rgba(0, 0, 0, 0.25);
 }
 
 .backdrop {
   position: fixed;
   width: 100vw;
-  height: calc(100vh - calc($headerHeight - 8px));
+  height: calc(100vh - calc($headerHeight - 10px));
   bottom: 0;
   left: 0;
   background-color: gray(0.72);
@@ -51,6 +51,6 @@ $drawerWidth: 350px;
   padding: 24px;
   display: flex;
   flex-direction: column;
-  background-color: $blue;
+  background-color: $black;
   gap: 20px;
 }

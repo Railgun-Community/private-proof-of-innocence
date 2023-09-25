@@ -5,19 +5,19 @@
   position: relative;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid $gray;
   padding: 0 24px;
   max-height: $headerHeight;
   height: $headerHeight;
   z-index: calc($z-index-drawers - 1);
-  background-color: $blue;
+  background-color: $black;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
 }
 
 .ipContainer {
   display: flex;
   justify-content: center;
   align-items: center;
-  border: 1px solid $gray;
+  border: 1px solid $coldGray;
   border-radius: 25px;
   padding: 5px 10px;
 }

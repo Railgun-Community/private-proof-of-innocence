@@ -8,5 +8,10 @@
   align-items: center;
   padding: 24px 15%;
   gap: 20px;
-  background-color: white;
+}
+
+.compareNodesTitle {
+  @include heading2;
+  padding-bottom: 46px;
+  color: $black;
 }

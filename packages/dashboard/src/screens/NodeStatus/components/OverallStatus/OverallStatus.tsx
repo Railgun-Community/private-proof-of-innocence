@@ -1,6 +1,7 @@
 import {
   isDefined,
   NodeStatusForNetwork,
+  POIListStatus,
 } from '@railgun-community/shared-models';
 import { Button } from '@components/Button/Button';
 import { Text } from '@components/Text/Text';
@@ -14,6 +15,11 @@ type Props = {
   nodeStatus: Optional<NodeStatusForNetwork>;
 };
 
+type EventListStatus = {
+  id: string;
+  value: POIListStatus;
+};
+
 export const OverallStatus = ({ nodeStatus }: Props) => {
   const {
     getNodeStatusForAllNetworks,
@@ -23,9 +29,7 @@ export const OverallStatus = ({ nodeStatus }: Props) => {
   } = useNodeStore();
   const listStatuses = nodeStatus?.listStatuses ?? undefined;
 
-  console.log('nodeStatus', nodeStatus);
-
-  const arrayOfEventListStatuses = isDefined(listStatuses)
+  const arrayOfEventListStatuses: EventListStatus[] = isDefined(listStatuses)
     ? Object.entries(listStatuses).map(([key, value]) => ({
         id: key,
         value,
@@ -44,6 +48,33 @@ export const OverallStatus = ({ nodeStatus }: Props) => {
       )
     : 'Refresh';
 
+  const renderListRow = (label: string, value: Optional<string | number>) => {
+    if (!isDefined(value)) return null;
+    return (
+      <div className={styles.listRowContainer}>
+        <Text>{label}</Text>
+        <Text>{value}</Text>
+      </div>
+    );
+  };
+
+  const renderList = (eventListStatus: EventListStatus) => {
+    return (
+      <div className={styles.listContainer} key={eventListStatus.id}>
+        {renderListRow('ID:', shortenWalletAddress(eventListStatus.id))}
+        {renderListRow(
+          'Blocked Shields:',
+          eventListStatus.value.blockedShields,
+        )}
+        {renderListRow(
+          'Pending TransactProofs:',
+          eventListStatus.value.pendingTransactProofs,
+        )}
+        {renderListRow('POI Events:', eventListStatus.value.poiEvents)}
+      </div>
+    );
+  };
+
   return (
     <div className={styles.overallStatusContainer}>
       <div className={styles.titleContainer}>
@@ -61,22 +92,20 @@ export const OverallStatus = ({ nodeStatus }: Props) => {
       </div>
       <div className={styles.sectionContainer}>
         <Text className={styles.subtitle}>{'Lists:'}</Text>
-        {arrayOfEventListStatuses.map(eventListStatus => (
-          <Text key={eventListStatus.id}>
-            {`${shortenWalletAddress(eventListStatus.id)}: ${
-              eventListStatus.value
-            }`}
-          </Text>
-        ))}
+        {arrayOfEventListStatuses.map(renderList)}
       </div>
       <div className={styles.sectionContainer}>
         <Text className={styles.subtitle}>{'Tx ID Tree:'}</Text>
-        {isDefined(nodeStatus?.txidStatus.currentTxidIndex) && (
-          <Text>{`Current Tx ID: ${nodeStatus?.txidStatus.currentTxidIndex}`}</Text>
-        )}
-        {isDefined(nodeStatus?.txidStatus.validatedTxidIndex) && (
-          <Text>{`Validated Tx ID: ${nodeStatus?.txidStatus.validatedTxidIndex}`}</Text>
-        )}
+        <div className={styles.listContainer}>
+          {renderListRow(
+            'Current Tx ID:',
+            nodeStatus?.txidStatus?.currentTxidIndex,
+          )}
+          {renderListRow(
+            'Validated Tx ID',
+            nodeStatus?.txidStatus?.validatedTxidIndex,
+          )}
+        </div>
       </div>
     </div>
   );

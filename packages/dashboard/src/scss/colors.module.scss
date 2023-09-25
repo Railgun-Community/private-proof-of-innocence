@@ -1,16 +1,26 @@
 // [------------------------------ STATIC COLORS ------------------------------]
 
-$white: #fafafafa;
-$gray: #eaeaeaea;
-$black: #000000;
+$coldGray: #fafafafa;
+$absoluteBlack: #000000;
 $danger: #ff0000;
 $onlineGreen: #00ff00;
 
-$blue: #264653;
-$green: #2a9d8f;
-$orange: #f4a261;
-$darkOrange: #e76f51;
-$yellow: #e9c46a;
+$yellow: #f5cb5c;
+$coldGray: #cfdbd5;
+$lightGray: #e8eddf;
+$lightBlack: #333533;
+$black: #242423;
+
+:export {
+  coldGray: $coldGray;
+  absoluteBlack: $absoluteBlack;
+  danger: $danger;
+  onlineGreen: $onlineGreen;
+  yellow: $yellow;
+  coldGray: $coldGray;
+  lightGray: $lightGray;
+  lightBlack: $lightBlack;
+}
 
 // [------------------------------ ALPHA COLORS ------------------------------]
 
