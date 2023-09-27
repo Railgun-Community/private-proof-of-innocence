@@ -158,6 +158,7 @@ describe('list-provider', () => {
     );
 
     await listProvider.categorizeUnknownShields(networkName);
+
     const pendingShields = await db.getShields(ShieldStatus.Pending);
     expect(pendingShields.length).to.equal(2);
 

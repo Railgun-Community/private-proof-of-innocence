@@ -18,6 +18,8 @@ import { Config } from '../config/config';
 import { ShieldQueueDatabase } from '../database/databases/shield-queue-database';
 import { ShieldStatus } from '../models/database-types';
 import debug from 'debug';
+import { POINodeRequest } from '../api/poi-node-request';
+import { PushSync } from '../sync/push-sync';
 
 const dbg = debug('poi:event-queue');
 
@@ -256,6 +258,15 @@ export class ListProviderPOIEventQueue {
           );
         }
       }
+
+      await PushSync.sendNodeRequestToAllLists(async nodeURL => {
+        await POINodeRequest.submitPOIEvent(
+          nodeURL,
+          networkName,
+          ListProviderPOIEventQueue.listKey,
+          signedPOIEvent,
+        );
+      });
 
       ListProviderPOIEventQueue.isAddingPOIEventForNetwork[networkName] = false;
 

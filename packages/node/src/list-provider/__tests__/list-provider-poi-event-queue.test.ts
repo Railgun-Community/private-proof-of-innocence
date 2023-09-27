@@ -2,7 +2,6 @@ import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import {
   NetworkName,
-  delay,
   TransactProofData,
   POIStatus,
   BlindedCommitmentType,
@@ -15,7 +14,6 @@ import { TransactProofPerListMempoolDatabase } from '../../database/databases/tr
 import { POIOrderedEventsDatabase } from '../../database/databases/poi-ordered-events-database';
 import { POIMerkletreeDatabase } from '../../database/databases/poi-merkletree-database';
 import { MOCK_LIST_KEYS, MOCK_SNARK_PROOF } from '../../tests/mocks.test';
-import { Config } from '../../config/config';
 import { POIEventShield, POIEventType } from '../../models/poi-types';
 
 chai.use(chaiAsPromised);
@@ -100,7 +98,6 @@ describe('list-provider-poi-event-queue', () => {
 
     // Expect all events to be added to merkletree
     const poiStatusPerList = await POIMerkletreeManager.getPOIStatusPerList(
-      Config.LIST_KEYS,
       networkName,
       [
         { blindedCommitment: '0x5678', type: BlindedCommitmentType.Shield },

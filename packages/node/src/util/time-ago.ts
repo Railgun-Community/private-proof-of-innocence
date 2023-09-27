@@ -14,5 +14,9 @@ export const daysAgo = (days: number) => {
 };
 
 export const hoursAgo = (hours: number) => {
-  return Date.now() - hours * 60 * 60 * 1000;
+  return minutesAgo(60 * hours);
+};
+
+export const minutesAgo = (minutes: number) => {
+  return Date.now() - minutes * 60 * 1000;
 };

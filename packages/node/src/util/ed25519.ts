@@ -130,6 +130,39 @@ export const verifyBlockedShield = async (
   }
 };
 
+export const signValidatedTxidMerkleroot = async (
+  txidIndex: number,
+  merkleroot: string,
+): Promise<string> => {
+  const message = getValidatedTxidMerklerootMessage(txidIndex, merkleroot);
+  return signMessage(message);
+};
+
+const getValidatedTxidMerklerootMessage = (
+  txidIndex: number,
+  merkleroot: string,
+): Uint8Array => {
+  const data = {
+    txidIndex,
+    merkleroot,
+  };
+  return utf8ToBytes(JSON.stringify(data));
+};
+
+export const verifyTxidMerkleroot = async (
+  txidIndex: number,
+  merkleroot: string,
+  signature: string,
+  publicKey: string,
+): Promise<boolean> => {
+  try {
+    const message = getValidatedTxidMerklerootMessage(txidIndex, merkleroot);
+    return await verify(signature, message, publicKey);
+  } catch (err) {
+    return false;
+  }
+};
+
 export const getListPublicKey = async (): Promise<string> => {
   const pkey = getPKey();
   const publicKey = await getPublicKey(pkey);

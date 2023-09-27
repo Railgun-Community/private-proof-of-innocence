@@ -35,3 +35,15 @@ export type SignedBlockedShield = {
   blockReason: Optional<string>;
   signature: string;
 };
+
+export type SubmitPOIEventParams = {
+  signedPOIEvent: SignedPOIEvent;
+  listKey: string;
+};
+
+export type SubmitValidatedTxidAndMerklerootParams = {
+  txidIndex: number;
+  merkleroot: string;
+  signature: string;
+  listKey: string;
+};

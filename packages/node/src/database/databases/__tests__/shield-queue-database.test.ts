@@ -92,12 +92,12 @@ describe('shield-queue-database', () => {
     };
     await db.insertUnknownShield(pendingShield1);
 
-    const fourDaysAgo = daysAgo(4);
+    const twoDaysAgo = daysAgo(2);
     const pendingShield2: ShieldData = {
       txid: '0x9876',
       commitmentHash: '0x5432',
       npk: '0x0000',
-      timestamp: fourDaysAgo,
+      timestamp: twoDaysAgo,
       blockNumber: 123456,
       utxoTree: 0,
       utxoIndex: 6,
@@ -119,12 +119,12 @@ describe('shield-queue-database', () => {
     const shieldQueueItem2: ShieldQueueDBItem = {
       ...pendingShield2,
       blindedCommitment: calculateShieldBlindedCommitment(pendingShield2),
-      timestamp: fourDaysAgo,
+      timestamp: twoDaysAgo,
       status: ShieldStatus.Unknown,
       lastValidatedTimestamp: null,
     };
     await expect(
-      db.getShields(ShieldStatus.Unknown, daysAgo(3)),
+      db.getShields(ShieldStatus.Unknown, daysAgo(1)),
     ).to.eventually.deep.equal([shieldQueueItem2]);
 
     const unknownCount = await db.getCount(ShieldStatus.Unknown);
@@ -140,14 +140,14 @@ describe('shield-queue-database', () => {
     expect(blockedCount).to.equal(0); // No block status shields
 
     const shieldQueueStatus = await getShieldQueueStatus(networkName);
-    expect(shieldQueueStatus.latestPendingShield).to.be.a('string');
+    expect(shieldQueueStatus.latestShield).to.be.a('string');
     expect(shieldQueueStatus).to.deep.equal({
       addedPOI: 0,
       allowed: 0,
       blocked: 0,
       pending: 0,
       unknown: 2,
-      latestPendingShield: shieldQueueStatus.latestPendingShield,
+      latestShield: shieldQueueStatus.latestShield,
     });
   });
 

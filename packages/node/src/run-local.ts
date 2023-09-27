@@ -4,6 +4,7 @@ import { Config } from './config/config';
 
 import 'dotenv/config';
 import { getListPublicKey } from './util/ed25519';
+import { NodeConfig } from './models/general-types';
 
 // eslint-disable-next-line @typescript-eslint/no-floating-promises
 (async () => {
@@ -15,19 +16,10 @@ import { getListPublicKey } from './util/ed25519';
   const host = process.env.HOST ?? '0.0.0.0';
   const port = process.env.PORT ?? '3010';
 
-  const envConnectedNodesString = process.env
-    .CONNECTED_NODE_URLS as Optional<string>;
-  const connectedNodeURLs: string[] = envConnectedNodesString?.split(',') ?? [];
+  // TODO: Pull the node configs from a file?
+  const envNodeConfigsString = process.env.NODE_CONFIGS ?? '[]';
+  const nodeConfigs: NodeConfig[] = JSON.parse(envNodeConfigsString);
 
-  const envListKeysString = process.env.LIST_KEYS as Optional<string>;
-  const listKeys: string[] = envListKeysString?.split(',') ?? [];
-  Config.LIST_KEYS = listKeys;
-
-  const node = new ProofOfInnocenceNode(
-    host,
-    port,
-    connectedNodeURLs,
-    listProvider,
-  );
+  const node = new ProofOfInnocenceNode(host, port, nodeConfigs, listProvider);
   await node.start();
 })();

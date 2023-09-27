@@ -35,7 +35,7 @@ describe('proof-of-innocence-node', () => {
     nodeWithListProvider = new ProofOfInnocenceNode(
       '0.0.0.0',
       PORT_1,
-      [`http://localhost:${PORT_2}`],
+      [{ name: 'test', nodeURL: `http://localhost:${PORT_2}` }],
       testListProvider,
     );
   });

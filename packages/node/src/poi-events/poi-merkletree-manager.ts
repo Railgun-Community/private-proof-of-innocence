@@ -5,7 +5,6 @@ import {
   POIStatus,
   BlindedCommitmentData,
   BlindedCommitmentType,
-  POIsPerList,
   POIsPerListMap,
 } from '@railgun-community/shared-models';
 import { Config } from '../config/config';
@@ -20,7 +19,10 @@ export class POIMerkletreeManager {
     Partial<Record<NetworkName, POIMerkletree>>
   > = {};
 
+  private static listKeys: string[] = [];
+
   static initListMerkletrees(listKeys: string[]) {
+    this.listKeys = listKeys;
     Config.NETWORK_NAMES.forEach(networkName => {
       listKeys.forEach(listKey => {
         this.merkletrees[listKey] ??= {};
@@ -79,13 +81,12 @@ export class POIMerkletreeManager {
   }
 
   static async getPOIStatusPerList(
-    listKeys: string[],
     networkName: NetworkName,
     blindedCommitmentDatas: BlindedCommitmentData[],
   ): Promise<POIsPerListMap> {
     const poisPerListMap: POIsPerListMap = {};
     await Promise.all(
-      listKeys.map(async listKey => {
+      this.listKeys.map(async listKey => {
         await Promise.all(
           blindedCommitmentDatas.map(async blindedCommitmentData => {
             const { blindedCommitment } = blindedCommitmentData;

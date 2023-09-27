@@ -16,7 +16,6 @@ import { getShieldQueueStatus } from '../shields/shield-queue';
 import { RailgunTxidMerkletreeManager } from '../railgun-txids/railgun-txid-merkletree-manager';
 import { QueryLimits } from '../config/query-limits';
 import { NodeStatus } from '../status/node-status';
-import { Config } from '../config/config';
 import {
   NodeStatusAllNetworks,
   GetTransactProofsParams,
@@ -41,6 +40,10 @@ import {
   GetBlockedShieldsParamsSchema,
 } from './schemas';
 import 'dotenv/config';
+import {
+  SubmitPOIEventParams,
+  SubmitValidatedTxidAndMerklerootParams,
+} from '../models/poi-types';
 
 const dbg = debug('poi:api');
 
@@ -52,7 +55,9 @@ export class API {
 
   private server: Optional<Server>;
 
-  constructor() {
+  private listKeys: string[];
+
+  constructor(listKeys: string[]) {
     this.app = express();
     this.app.use(express.json({ limit: '5mb' }));
     this.app.use(
@@ -62,6 +67,8 @@ export class API {
       }),
     );
     this.addRoutes();
+
+    this.listKeys = listKeys;
 
     // Error middleware for JSON validation errors
     this.app.use(
@@ -169,7 +176,7 @@ export class API {
   }
 
   private assertHasListKey(listKey: string) {
-    if (!Config.LIST_KEYS.includes(listKey)) {
+    if (!this.listKeys.includes(listKey)) {
       throw new Error('Missing listKey');
     }
   }
@@ -198,7 +205,7 @@ export class API {
   private addAggregatorRoutes() {
     this.safeGet('/node-status', async (req: Request, res: Response) => {
       const nodeStatusAllNetworks: NodeStatusAllNetworks =
-        await NodeStatus.getNodeStatusAllNetworks();
+        await NodeStatus.getNodeStatusAllNetworks(this.listKeys);
       res.json(nodeStatusAllNetworks);
     });
 
@@ -322,6 +329,47 @@ export class API {
     );
 
     this.safePost(
+      '/submit-poi-event/:chainType/:chainID',
+      async (req: Request, res: Response) => {
+        const { chainType, chainID } = req.params;
+        const { listKey, signedPOIEvent } = req.body as SubmitPOIEventParams;
+        this.assertHasListKey(listKey);
+        const networkName = networkNameForSerializedChain(chainType, chainID);
+
+        // Submit and verify the proof
+        await POIEventList.verifyAndAddSignedPOIEvents(networkName, listKey, [
+          signedPOIEvent,
+        ]);
+        res.status(200);
+      },
+      SubmitTransactProofParamsSchema,
+      SubmitTransactProofBodySchema,
+    );
+
+    this.safePost(
+      '/submit-validated-txid/:chainType/:chainID',
+      async (req: Request, res: Response) => {
+        const { chainType, chainID } = req.params;
+        const { txidIndex, merkleroot, signature, listKey } =
+          req.body as SubmitValidatedTxidAndMerklerootParams;
+        this.assertHasListKey(listKey);
+        const networkName = networkNameForSerializedChain(chainType, chainID);
+
+        // Submit and verify the proof
+        await RailgunTxidMerkletreeManager.verifySignatureAndUpdateValidatedRailgunTxidStatus(
+          networkName,
+          txidIndex,
+          merkleroot,
+          signature,
+          listKey,
+        );
+        res.status(200);
+      },
+      SubmitTransactProofParamsSchema,
+      SubmitTransactProofBodySchema,
+    );
+
+    this.safePost(
       '/pois-per-list/:chainType/:chainID',
       async (req: Request, res: Response) => {
         const { chainType, chainID } = req.params;
@@ -341,7 +389,6 @@ export class API {
           );
         }
         const poiStatusMap = await POIMerkletreeManager.getPOIStatusPerList(
-          listKeys,
           networkName,
           blindedCommitmentDatas,
         );

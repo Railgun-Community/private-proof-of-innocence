@@ -6,12 +6,12 @@ import { onMerkletreeScanCallback } from '../status/merkletree-scan-callback';
 import { DatabaseClient } from '../database/database-client-init';
 import { TransactProofMempool } from '../proof-mempool/transact-proof-mempool';
 import { POIMerkletreeManager } from '../poi-events/poi-merkletree-manager';
-import { Config } from '../config/config';
 import { BlockedShieldsSyncer } from '../shields/blocked-shields-syncer';
+import { PushSync } from '../sync/push-sync';
 
 const dbg = debug('poi:init');
 
-export const initModules = async () => {
+export const initModules = async (listKeys: string[]) => {
   // Init engine and RPCs
   dbg('Initializing Engine and RPCs...');
   startEngine();
@@ -23,13 +23,16 @@ export const initModules = async () => {
   await DatabaseClient.ensureDBIndicesAllChains();
 
   dbg('Inflating Transact Proof mempool cache...');
-  await TransactProofMempool.inflateCacheFromDatabase(Config.LIST_KEYS);
+  await TransactProofMempool.inflateCacheFromDatabase(listKeys);
 
   dbg('Inflating Blocked Shields cache...');
-  await BlockedShieldsSyncer.inflateCacheFromDatabase(Config.LIST_KEYS);
+  await BlockedShieldsSyncer.inflateCacheFromDatabase(listKeys);
 
   dbg('Generating POI Merkletrees for each list and network...');
-  POIMerkletreeManager.initListMerkletrees(Config.LIST_KEYS);
+  POIMerkletreeManager.initListMerkletrees(listKeys);
+
+  dbg('Initializing PushSync');
+  PushSync.init(listKeys);
 
   dbg('Node init successful.');
 };

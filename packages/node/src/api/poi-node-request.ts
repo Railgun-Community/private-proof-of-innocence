@@ -6,10 +6,17 @@ import {
   GetBlockedShieldsParams,
   NodeStatusAllNetworks,
   ValidateTxidMerklerootParams,
+  SubmitTransactProofParams,
 } from '@railgun-community/shared-models';
 import axios, { AxiosError } from 'axios';
-import { SignedBlockedShield, SignedPOIEvent } from '../models/poi-types';
+import {
+  SignedBlockedShield,
+  SignedPOIEvent,
+  SubmitPOIEventParams,
+  SubmitValidatedTxidAndMerklerootParams,
+} from '../models/poi-types';
 import debug from 'debug';
+import { getListPublicKey, signValidatedTxidMerkleroot } from '../util/ed25519';
 
 const dbg = debug('poi:request');
 
@@ -134,5 +141,61 @@ export class POINodeRequest {
       bloomFilterSerialized,
     });
     return signedBlockedShields;
+  };
+
+  static submitTransactProof = async (
+    nodeURL: string,
+    networkName: NetworkName,
+    listKey: string,
+    transactProofData: TransactProofData,
+  ) => {
+    const chain = NETWORK_CONFIG[networkName].chain;
+    const route = `submit-transact-proof/${chain.type}/${chain.id}`;
+    const url = POINodeRequest.getNodeRouteURL(nodeURL, route);
+
+    await POINodeRequest.postRequest<SubmitTransactProofParams, void>(url, {
+      listKey,
+      transactProofData,
+    });
+  };
+
+  static submitPOIEvent = async (
+    nodeURL: string,
+    networkName: NetworkName,
+    listKey: string,
+    signedPOIEvent: SignedPOIEvent,
+  ) => {
+    const chain = NETWORK_CONFIG[networkName].chain;
+    const route = `submit-poi-event/${chain.type}/${chain.id}`;
+    const url = POINodeRequest.getNodeRouteURL(nodeURL, route);
+
+    await POINodeRequest.postRequest<SubmitPOIEventParams, void>(url, {
+      listKey,
+      signedPOIEvent,
+    });
+  };
+
+  static submitValidatedTxidAndMerkleroot = async (
+    nodeURL: string,
+    networkName: NetworkName,
+    txidIndex: number,
+    merkleroot: string,
+  ) => {
+    const chain = NETWORK_CONFIG[networkName].chain;
+    const route = `submit-validated-txid/${chain.type}/${chain.id}`;
+    const url = POINodeRequest.getNodeRouteURL(nodeURL, route);
+
+    const listKey = await getListPublicKey();
+    const signature = await signValidatedTxidMerkleroot(txidIndex, merkleroot);
+
+    await POINodeRequest.postRequest<
+      SubmitValidatedTxidAndMerklerootParams,
+      void
+    >(url, {
+      txidIndex,
+      merkleroot,
+      signature,
+      listKey,
+    });
   };
 }

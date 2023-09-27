@@ -11,15 +11,16 @@ import { RailgunTxidMerkletreeManager } from '../railgun-txids/railgun-txid-merk
 import { POIEventList } from '../poi-events/poi-event-list';
 import { QueryLimits } from '../config/query-limits';
 import { TransactProofMempool } from '../proof-mempool/transact-proof-mempool';
-import { PollStatus } from '../models/general-types';
+import { NodeConfig, PollStatus } from '../models/general-types';
 import { TransactProofMempoolCache } from '../proof-mempool/transact-proof-mempool-cache';
 import { BlockedShieldsCache } from '../shields/blocked-shields-cache';
 import { BlockedShieldsSyncer } from '../shields/blocked-shields-syncer';
+import { getListKeysFromNodeConfigs } from '../config/general';
 
 const dbg = debug('poi:sync');
 
 export class RoundRobinSyncer {
-  private readonly connectedNodeURLs: string[] = [];
+  private readonly nodeConfigs: NodeConfig[] = [];
 
   private currentNodeIndex = 0;
 
@@ -27,9 +28,9 @@ export class RoundRobinSyncer {
 
   private listKeys: string[];
 
-  constructor(connectedNodeURLs: string[], listKeys: string[]) {
-    this.connectedNodeURLs = connectedNodeURLs;
-    this.listKeys = listKeys;
+  constructor(nodeConfigs: NodeConfig[]) {
+    this.nodeConfigs = nodeConfigs;
+    this.listKeys = getListKeysFromNodeConfigs(nodeConfigs);
   }
 
   getPollStatus(): PollStatus {
@@ -37,7 +38,7 @@ export class RoundRobinSyncer {
   }
 
   startPolling() {
-    if (this.connectedNodeURLs.length === 0) {
+    if (this.nodeConfigs.length === 0) {
       dbg('No connected nodes - not polling.');
       return;
     }
@@ -47,7 +48,7 @@ export class RoundRobinSyncer {
   }
 
   private async poll() {
-    const nodeURL = this.connectedNodeURLs[this.currentNodeIndex];
+    const { nodeURL } = this.nodeConfigs[this.currentNodeIndex];
 
     try {
       const nodeStatusAllNetworks =
@@ -308,6 +309,6 @@ export class RoundRobinSyncer {
 
   private incrementNodeIndex() {
     this.currentNodeIndex += 1;
-    this.currentNodeIndex %= this.connectedNodeURLs.length;
+    this.currentNodeIndex %= this.nodeConfigs.length;
   }
 }

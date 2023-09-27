@@ -14,6 +14,9 @@ import {
 import { RailgunTxidMerkletreeStatusDatabase } from '../database/databases/railgun-txid-merkletree-status-database';
 import { POINodeRequest } from '../api/poi-node-request';
 import debug from 'debug';
+import { PushSync } from '../sync/push-sync';
+import { verifyTxidMerkleroot } from '../util/ed25519';
+import { nodeURLForListKey } from '../config/general';
 
 const dbg = debug('poi:railgun-txid-merkletree');
 
@@ -113,6 +116,37 @@ export class RailgunTxidMerkletreeManager {
     }
   }
 
+  static async verifySignatureAndUpdateValidatedRailgunTxidStatus(
+    networkName: NetworkName,
+    txidIndex: number,
+    merkleroot: string,
+    signature: string,
+    listKey: string,
+  ) {
+    if (
+      !(await verifyTxidMerkleroot(txidIndex, merkleroot, signature, listKey))
+    ) {
+      dbg('Invalid signature: txid merkleroot');
+      return;
+    }
+
+    const nodeURL = nodeURLForListKey(listKey);
+    if (!isDefined(nodeURL)) {
+      return;
+    }
+
+    return RailgunTxidMerkletreeManager.updateValidatedRailgunTxidStatus(
+      nodeURL,
+      networkName,
+      {
+        currentMerkleroot: merkleroot,
+        currentTxidIndex: txidIndex,
+        validatedMerkleroot: merkleroot,
+        validatedTxidIndex: txidIndex,
+      },
+    );
+  }
+
   static async updateValidatedRailgunTxidStatus(
     nodeURL: string,
     networkName: NetworkName,
@@ -122,7 +156,10 @@ export class RailgunTxidMerkletreeManager {
       validatedTxidIndex: validatedTxidIndexA,
       currentTxidIndex: currentTxidIndexA,
     } = await this.getRailgunTxidStatus(networkName);
-    const { currentTxidIndex: currentTxidIndexB } = txidStatusOtherNode;
+    const {
+      currentTxidIndex: currentTxidIndexB,
+      currentMerkleroot: currentMerklerootB,
+    } = txidStatusOtherNode;
 
     if (!isDefined(currentTxidIndexA)) {
       throw new Error('Requires node current index');
@@ -139,7 +176,6 @@ export class RailgunTxidMerkletreeManager {
 
     // Validate the smaller of the current indices on the two nodes
     const txidIndexToValidate = Math.min(currentTxidIndexA, currentTxidIndexB);
-
     const { tree, index } =
       this.getTreeAndIndexFromTxidIndex(txidIndexToValidate);
 
@@ -153,13 +189,17 @@ export class RailgunTxidMerkletreeManager {
       throw new Error('Historical merkleroot does not exist');
     }
 
-    const isValid = await POINodeRequest.validateRailgunTxidMerkleroot(
-      nodeURL,
-      networkName,
-      tree,
-      index,
-      historicalMerkleroot,
-    );
+    const isPreValidated = currentMerklerootB === historicalMerkleroot;
+
+    const isValid: boolean =
+      isPreValidated ||
+      (await POINodeRequest.validateRailgunTxidMerkleroot(
+        nodeURL,
+        networkName,
+        tree,
+        index,
+        historicalMerkleroot,
+      ));
     if (isValid) {
       // Valid. Update validated txid.
       const db = new RailgunTxidMerkletreeStatusDatabase(networkName);
@@ -167,6 +207,19 @@ export class RailgunTxidMerkletreeManager {
         txidIndexToValidate,
         historicalMerkleroot,
       );
+      await PushSync.sendNodeRequestToAllLists(async nodeURLToSend => {
+        if (nodeURLToSend === nodeURL) {
+          return;
+        }
+        // TODO: We shouldn't send from nodes without lists.
+        // The receiving nodes will dismiss the request.
+        await POINodeRequest.submitValidatedTxidAndMerkleroot(
+          nodeURLToSend,
+          networkName,
+          txidIndexToValidate,
+          historicalMerkleroot,
+        );
+      });
       return;
     }
 

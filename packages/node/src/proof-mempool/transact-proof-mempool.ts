@@ -1,5 +1,4 @@
 import {
-  NETWORK_CONFIG,
   NetworkName,
   TransactProofData,
   isDefined,
@@ -16,6 +15,11 @@ import { ListProviderPOIEventQueue } from '../list-provider/list-provider-poi-ev
 import { Config } from '../config/config';
 import { networkForName } from '../config/general';
 import { validateRailgunTxidOccurredBeforeBlockNumber } from '@railgun-community/wallet';
+import { POINodeRequest } from '../api/poi-node-request';
+import debug from 'debug';
+import { PushSync } from '../sync/push-sync';
+
+const dbg = debug('poi:transact-proof-mempool');
 
 export class TransactProofMempool {
   static async submitProof(
@@ -45,11 +49,28 @@ export class TransactProofMempool {
       transactProofData,
     );
 
-    await TransactProofMempool.tryAddToActiveList(
-      listKey,
-      networkName,
-      transactProofData,
-    );
+    try {
+      if (ListProviderPOIEventQueue.listKey === listKey) {
+        await TransactProofMempool.tryAddToActiveList(
+          listKey,
+          networkName,
+          transactProofData,
+        );
+      } else {
+        // Immediately push to destination node, by its listKey
+        await PushSync.sendNodeRequestToList(listKey, async nodeURL => {
+          await POINodeRequest.submitTransactProof(
+            nodeURL,
+            networkName,
+            ListProviderPOIEventQueue.listKey,
+            transactProofData,
+          );
+        });
+      }
+    } catch (err) {
+      dbg(err);
+      return;
+    }
   }
 
   static async tryAddToActiveList(
@@ -57,10 +78,6 @@ export class TransactProofMempool {
     networkName: NetworkName,
     transactProofData: TransactProofData,
   ) {
-    if (ListProviderPOIEventQueue.listKey !== listKey) {
-      return;
-    }
-
     const { tree, index } =
       RailgunTxidMerkletreeManager.getTreeAndIndexFromTxidIndex(
         transactProofData.txidMerklerootIndex,

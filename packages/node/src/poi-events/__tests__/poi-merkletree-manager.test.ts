@@ -10,7 +10,6 @@ import { POIMerkletreeManager } from '../poi-merkletree-manager';
 import { POIMerkletreeDatabase } from '../../database/databases/poi-merkletree-database';
 import { MOCK_LIST_KEYS } from '../../tests/mocks.test';
 import { SignedPOIEvent } from '../../models/poi-types';
-import { Config } from '../../config/config';
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
@@ -85,7 +84,6 @@ describe('poi-merkletree-manager', () => {
     ]);
 
     const poiStatusPerList = await POIMerkletreeManager.getPOIStatusPerList(
-      Config.LIST_KEYS,
       networkName,
       [
         { blindedCommitment: '0x1234', type: BlindedCommitmentType.Transact },

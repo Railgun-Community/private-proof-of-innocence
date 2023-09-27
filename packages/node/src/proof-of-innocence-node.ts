@@ -4,7 +4,8 @@ import { ListProvider } from './list-provider/list-provider';
 import { API } from './api/api';
 import { RoundRobinSyncer } from './sync/round-robin-syncer';
 import { ConnectedNodeStartup } from './sync/connected-node-startup';
-import { Config } from './config/config';
+import { NodeConfig } from './models/general-types';
+import { getListKeysFromNodeConfigs } from './config/general';
 
 const dbg = debug('poi:node');
 
@@ -18,6 +19,8 @@ export class ProofOfInnocenceNode {
 
   private listProvider: Optional<ListProvider>;
 
+  private listKeys: string[];
+
   private connectedNodeStartup: ConnectedNodeStartup;
 
   private roundRobinSyncer: RoundRobinSyncer;
@@ -27,18 +30,16 @@ export class ProofOfInnocenceNode {
   constructor(
     host: string,
     port: string,
-    connectedNodeURLs: string[],
+    nodeConfigs: NodeConfig[],
     listProvider?: ListProvider,
   ) {
     this.host = host;
     this.port = port;
     this.listProvider = listProvider;
-    this.connectedNodeStartup = new ConnectedNodeStartup(connectedNodeURLs);
-    this.roundRobinSyncer = new RoundRobinSyncer(
-      connectedNodeURLs,
-      Config.LIST_KEYS,
-    );
-    this.api = new API();
+    this.connectedNodeStartup = new ConnectedNodeStartup(nodeConfigs);
+    this.roundRobinSyncer = new RoundRobinSyncer(nodeConfigs);
+    this.listKeys = getListKeysFromNodeConfigs(nodeConfigs);
+    this.api = new API(this.listKeys);
   }
 
   async start() {
@@ -51,7 +52,7 @@ export class ProofOfInnocenceNode {
 
     await this.connectedNodeStartup.start();
 
-    await initModules();
+    await initModules(this.listKeys);
 
     this.listProvider?.startPolling();
 

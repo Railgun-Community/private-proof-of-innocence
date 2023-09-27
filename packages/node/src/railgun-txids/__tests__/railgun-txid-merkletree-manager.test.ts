@@ -167,7 +167,7 @@ describe('railgun-txid-merkletree-manager', () => {
       nodeURL,
       networkName,
       {
-        currentMerkleroot: '60',
+        currentMerkleroot: '69',
         currentTxidIndex: 60,
         validatedMerkleroot: undefined,
         validatedTxidIndex: undefined,

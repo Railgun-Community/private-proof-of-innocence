@@ -1,40 +1,44 @@
 import debug from 'debug';
-import { PollStatus } from '../models/general-types';
+import { NodeConfig, PollStatus } from '../models/general-types';
 import { POINodeRequest } from '../api/poi-node-request';
 import { Config } from '../config/config';
 import { NetworkName } from '@railgun-community/shared-models';
 import { ListProviderPOIEventQueue } from '../list-provider/list-provider-poi-event-queue';
+import { getListKeysFromNodeConfigs } from '../config/general';
 
 const dbg = debug('poi:connected-node-startup');
 
 export class ConnectedNodeStartup {
-  private readonly connectedNodeURLs: string[] = [];
+  private readonly nodeConfigs: NodeConfig[];
+
+  private readonly listKeys: string[];
 
   private pollStatus = PollStatus.IDLE;
 
-  constructor(connectedNodeURLs: string[]) {
-    this.connectedNodeURLs = connectedNodeURLs;
+  constructor(nodeConfigs: NodeConfig[]) {
+    this.nodeConfigs = nodeConfigs;
+    this.listKeys = getListKeysFromNodeConfigs(nodeConfigs);
   }
 
   async start() {
-    if (this.connectedNodeURLs.length === 0) {
+    if (this.nodeConfigs.length === 0) {
       dbg('No connected nodes - nothing to start up.');
       return;
     }
 
     await Promise.all(
-      this.connectedNodeURLs.map(async nodeURL => {
+      this.nodeConfigs.map(async ({ nodeURL }) => {
         const nodeStatusAllNetworks =
           await POINodeRequest.getNodeStatusAllNetworks(nodeURL);
 
         // Check all list keys
-        Config.LIST_KEYS.forEach(listKey => {
+        this.listKeys.forEach(listKey => {
           if (!nodeStatusAllNetworks.listKeys.includes(listKey)) {
             dbg(`Local list key ${listKey} not found on node ${nodeURL}`);
           }
         });
         nodeStatusAllNetworks.listKeys.forEach(listKey => {
-          if (!Config.LIST_KEYS.includes(listKey)) {
+          if (!this.listKeys.includes(listKey)) {
             dbg(
               `Foreign list key ${listKey} from node ${nodeURL} not found locally`,
             );
@@ -60,7 +64,7 @@ export class ConnectedNodeStartup {
         // The "minimum next add index" ensures that no connected nodes have a more-updated list than this node.
         // If they do, this node will wait to add new events until it's synced.
         for (const networkName of Config.NETWORK_NAMES) {
-          for (const listKey of Config.LIST_KEYS) {
+          for (const listKey of this.listKeys) {
             const eventListLength =
               nodeStatusAllNetworks.forNetwork[networkName]?.listStatuses?.[
                 listKey

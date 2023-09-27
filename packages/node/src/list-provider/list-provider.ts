@@ -28,7 +28,7 @@ import { ListProviderPOIEventQueue } from './list-provider-poi-event-queue';
 import { ListProviderPOIEventUpdater } from './list-provider-poi-event-updater';
 import { POIEventShield, POIEventType } from '../models/poi-types';
 import { ListProviderBlocklist } from './list-provider-blocklist';
-import { hoursAgo } from '../util/time-ago';
+import { hoursAgo, minutesAgo } from '../util/time-ago';
 import { POIMerkletreeManager } from '../poi-events/poi-merkletree-manager';
 
 export type ListProviderConfig = {
@@ -188,7 +188,10 @@ export abstract class ListProvider {
   ) {
     const { txid } = shieldQueueDBItem;
 
-    if (shieldQueueDBItem.timestamp < this.getMaxTimestampForValidation()) {
+    if (
+      shieldQueueDBItem.timestamp <
+      this.getMaxTimestampForValidation(networkName)
+    ) {
       // Automatically mark pending if it's an old shield.
       await this.markShieldPending(networkName, shieldQueueDBItem);
       return;
@@ -317,14 +320,18 @@ export abstract class ListProvider {
     }
   }
 
-  private getMaxTimestampForValidation() {
+  private getMaxTimestampForValidation(networkName: NetworkName) {
+    const network = networkForName(networkName);
+    if (network.isTestnet === true) {
+      return minutesAgo(Constants.MINUTES_SHIELD_PENDING_PERIOD_TESTNET);
+    }
     return hoursAgo(Constants.HOURS_SHIELD_PENDING_PERIOD);
   }
 
   async validateNextPendingShieldBatch(
     networkName: NetworkName,
   ): Promise<void> {
-    const endTimestamp = this.getMaxTimestampForValidation();
+    const endTimestamp = this.getMaxTimestampForValidation(networkName);
     let pendingShields: ShieldQueueDBItem[];
     try {
       const shieldQueueDB = new ShieldQueueDatabase(networkName);

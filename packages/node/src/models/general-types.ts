@@ -3,3 +3,9 @@ export enum PollStatus {
   POLLING = 'POLLING',
   ERROR = 'ERROR',
 }
+
+export type NodeConfig = {
+  name: string;
+  nodeURL: string;
+  listKey?: string;
+};

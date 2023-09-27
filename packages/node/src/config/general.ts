@@ -5,7 +5,10 @@ import {
   NetworkName,
   isDefined,
   networkForChain,
+  removeUndefineds,
 } from '@railgun-community/shared-models';
+import { Config } from './config';
+import { NodeConfig } from '../models/general-types';
 
 export const networkForName = (networkName: NetworkName): Network => {
   const network = NETWORK_CONFIG[networkName];
@@ -31,4 +34,15 @@ export const networkNameForSerializedChain = (
     throw new Error('No network info available.');
   }
   return networkName;
+};
+
+export const nodeURLForListKey = (listKey: string): Optional<string> => {
+  return Config.NODE_CONFIGS.find(nodeConfig => nodeConfig.listKey === listKey)
+    ?.nodeURL;
+};
+
+export const getListKeysFromNodeConfigs = (
+  nodeConfigs: NodeConfig[],
+): string[] => {
+  return removeUndefineds(nodeConfigs.map(nodeConfig => nodeConfig.listKey));
 };
