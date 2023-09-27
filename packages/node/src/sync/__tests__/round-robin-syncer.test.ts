@@ -41,7 +41,7 @@ let roundRobinSyncer: RoundRobinSyncer;
 
 let listKey: string;
 
-let snarkVerifyStub: SinonStub;
+let verifyTransactProofStub: SinonStub;
 
 const nodeURL = 'mock-node-url';
 
@@ -85,13 +85,13 @@ describe('round-robin-syncer', () => {
 
     roundRobinSyncer = new RoundRobinSyncer([nodeURL], [listKey]);
 
-    snarkVerifyStub = sinon
-      .stub(SnarkProofVerifyModule, 'verifySnarkProof')
+    verifyTransactProofStub = sinon
+      .stub(SnarkProofVerifyModule, 'verifyTransactProof')
       .resolves(true);
   });
 
   after(() => {
-    snarkVerifyStub.restore();
+    verifyTransactProofStub.restore();
   });
 
   beforeEach(async () => {

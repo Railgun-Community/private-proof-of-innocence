@@ -26,3 +26,7 @@ Make sure the box has Node.js >=16.20 installed, and yarn.
 3. `npx pm2 start`
 
 OR, from the root of the monorepo, run `./start-node`.
+
+## INSTALL MONGODB ON AMAZON LINUX
+
+https://www.mongodb.com/docs/manual/tutorial/install-mongodb-on-amazon/#std-label-install-mdb-community-amazon-linux

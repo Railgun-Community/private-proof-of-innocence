@@ -1,10 +1,10 @@
 import LevelDOWN from 'leveldown';
 import {
-  startRailgunEngine,
   stopRailgunEngine,
   ArtifactStore,
   loadProvider,
   setLoggers,
+  startRailgunEngineForPOINode,
 } from '@railgun-community/wallet';
 import fs from 'fs';
 import {
@@ -43,20 +43,10 @@ export const startEngine = () => {
   }
   const levelDB = new LevelDOWN(Config.ENGINE_DB_DIR);
 
-  const walletSource = 'poi';
   const shouldDebug = true;
-
   setLoggers(dbgLog, dbgError);
 
-  startRailgunEngine(
-    walletSource,
-    levelDB,
-    shouldDebug,
-    testArtifactStore,
-    false, // useNativeArtifacts
-    false, // skipMerkletreeScans
-    true, // isPOINode
-  );
+  startRailgunEngineForPOINode(levelDB, shouldDebug, testArtifactStore);
 
   engineStarted = true;
 };

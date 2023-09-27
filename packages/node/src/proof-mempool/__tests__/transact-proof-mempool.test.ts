@@ -28,7 +28,7 @@ let transactProofMempoolDB: TransactProofPerListMempoolDatabase;
 let poiHistoricalMerklerootDB: POIHistoricalMerklerootDatabase;
 let orderedEventDB: POIOrderedEventsDatabase;
 
-let snarkVerifyStub: SinonStub;
+let verifyTransactProofStub: SinonStub;
 let txidMerklerootExistsStub: SinonStub;
 
 describe('transact-proof-mempool', () => {
@@ -41,7 +41,10 @@ describe('transact-proof-mempool', () => {
       networkName,
     );
     orderedEventDB = new POIOrderedEventsDatabase(networkName);
-    snarkVerifyStub = Sinon.stub(SnarkProofVerifyModule, 'verifySnarkProof');
+    verifyTransactProofStub = Sinon.stub(
+      SnarkProofVerifyModule,
+      'verifyTransactProof',
+    );
     txidMerklerootExistsStub = Sinon.stub(
       RailgunTxidMerkletreeManager,
       'checkIfMerklerootExistsByTxidIndex',
@@ -63,7 +66,7 @@ describe('transact-proof-mempool', () => {
   });
 
   after(() => {
-    snarkVerifyStub.restore();
+    verifyTransactProofStub.restore();
     txidMerklerootExistsStub.restore();
   });
 
@@ -77,7 +80,7 @@ describe('transact-proof-mempool', () => {
     };
 
     // 1. THROW: Snark fails verification.
-    snarkVerifyStub.resolves(false);
+    verifyTransactProofStub.resolves(false);
     txidMerklerootExistsStub.resolves(true);
     await expect(
       TransactProofMempool.submitProof(listKey, networkName, transactProofData),
@@ -91,7 +94,7 @@ describe('transact-proof-mempool', () => {
     );
 
     // 2. SUCCESS: snark verifies and commitmentHash recognized.
-    snarkVerifyStub.resolves(true);
+    verifyTransactProofStub.resolves(true);
     txidMerklerootExistsStub.resolves(true);
     await poiHistoricalMerklerootDB.insertMerkleroot(
       listKey,
@@ -133,7 +136,7 @@ describe('transact-proof-mempool', () => {
       blindedCommitmentOutputs: ['0x7777', '0x6666'],
     };
 
-    snarkVerifyStub.resolves(true);
+    verifyTransactProofStub.resolves(true);
     txidMerklerootExistsStub.resolves(true);
 
     await poiHistoricalMerklerootDB.insertMerkleroot(
@@ -207,7 +210,7 @@ describe('transact-proof-mempool', () => {
       blindedCommitmentOutputs: ['0x7777', '0x6666'],
     };
 
-    snarkVerifyStub.resolves(true);
+    verifyTransactProofStub.resolves(true);
     txidMerklerootExistsStub.resolves(true);
 
     await poiHistoricalMerklerootDB.insertMerkleroot(

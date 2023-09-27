@@ -3,10 +3,9 @@ import {
   TransactProofData,
 } from '@railgun-community/shared-models';
 import { TransactProofPerListMempoolDatabase } from '../database/databases/transact-proof-per-list-mempool-database';
-import TransactProofVkey from './json/transact-proof-vkey.json';
 import { POIHistoricalMerklerootDatabase } from '../database/databases/poi-historical-merkleroot-database';
 import { TransactProofMempoolCache } from './transact-proof-mempool-cache';
-import { verifySnarkProof } from '../util/snark-proof-verify';
+import { verifyTransactProof } from '../util/snark-proof-verify';
 import { POINodeCountingBloomFilter } from '../util/poi-node-bloom-filters';
 import { POIOrderedEventsDatabase } from '../database/databases/poi-ordered-events-database';
 import { RailgunTxidMerkletreeManager } from '../railgun-txids/railgun-txid-merkletree-manager';
@@ -111,25 +110,12 @@ export class TransactProofMempool {
     }
 
     // 3. Verify snark proof
-    const verifiedProof = await this.verifyProof(transactProofData);
+    const verifiedProof = await verifyTransactProof(transactProofData);
     if (!verifiedProof) {
       throw new Error('Invalid proof');
     }
 
     return true;
-  }
-
-  private static async verifyProof(
-    transactProofData: TransactProofData,
-  ): Promise<boolean> {
-    // TODO-HIGH-PRI
-    const publicSignals: string[] = [];
-
-    return verifySnarkProof(
-      TransactProofVkey,
-      publicSignals,
-      transactProofData.snarkProof,
-    );
   }
 
   static async inflateCacheFromDatabase(listKeys: string[]) {

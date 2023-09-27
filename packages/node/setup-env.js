@@ -40,7 +40,7 @@ const question = promisify(rl.question).bind(rl);
   dotEnv += `pkey=0x${pkey}\n`;
 
   const port = await question(
-    '(Optional) Enter the port number to run the node on: ',
+    '(Required) Enter the port number to run the node on: ',
   );
   // Validate port number:
   if (typeof port === 'string' && port.length > 0) {
@@ -60,7 +60,7 @@ const question = promisify(rl.question).bind(rl);
   }
 
   const listKeys = await question(
-    '(Optional) Enter the list of keys, comma separated: ',
+    '(Optional) Enter the list public keys, comma separated: ',
   );
   if (typeof listKeys === 'string' && listKeys.length > 0) {
     dotEnv += `LIST_KEYS=${listKeys}\n`;
