@@ -52,18 +52,11 @@ const question = promisify(rl.question).bind(rl);
     dotEnv += `PORT=${port}\n`;
   }
 
-  const connectedNodeUrls = await question(
-    '(Optional) Enter the URLs of connected nodes, comma separated: ',
+  const nodeConfigs = await question(
+    '(Optional) Enter a formatted JSON array of NodeConfigs: ',
   );
-  if (typeof connectedNodeUrls === 'string' && connectedNodeUrls.length > 0) {
-    dotEnv += `CONNECTED_NODE_URLS=${connectedNodeUrls}\n`;
-  }
-
-  const listKeys = await question(
-    '(Optional) Enter the list public keys, comma separated: ',
-  );
-  if (typeof listKeys === 'string' && listKeys.length > 0) {
-    dotEnv += `LIST_KEYS=${listKeys}\n`;
+  if (typeof nodeConfigs === 'string' && nodeConfigs.length > 0) {
+    dotEnv += `NODE_CONFIGS=${nodeConfigs}\n`;
   }
 
   // If .env exists, refuse to overwrite it:
