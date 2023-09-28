@@ -39,6 +39,9 @@ export class ProofOfInnocenceNode {
     this.connectedNodeStartup = new ConnectedNodeStartup(nodeConfigs);
     this.roundRobinSyncer = new RoundRobinSyncer(nodeConfigs);
     this.listKeys = getListKeysFromNodeConfigs(nodeConfigs);
+    if (listProvider) {
+      this.listKeys.push(listProvider.listKey);
+    }
     this.api = new API(this.listKeys);
   }
 

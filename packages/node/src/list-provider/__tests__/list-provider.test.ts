@@ -76,7 +76,7 @@ describe('list-provider', () => {
     ];
     createStubGetAllShields(shieldDatas);
 
-    await listProvider.queueNewShields(networkName);
+    await listProvider.queueNewUnknownShields(networkName);
 
     const unknownShield: ShieldQueueDBItem = {
       txid: '0x1234',
@@ -120,7 +120,7 @@ describe('list-provider', () => {
     ];
     createStubGetAllShields(shieldDatas);
 
-    await listProvider.queueNewShields(networkName);
+    await listProvider.queueNewUnknownShields(networkName);
 
     const unknownShields = await db.getShields(
       ShieldStatus.Unknown,

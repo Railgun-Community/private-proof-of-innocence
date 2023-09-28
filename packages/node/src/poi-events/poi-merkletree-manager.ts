@@ -40,7 +40,9 @@ export class POIMerkletreeManager {
   ) {
     const merkletree = this.merkletrees[listKey]?.[networkName];
     if (!isDefined(merkletree)) {
-      throw new Error('No merkletree for list/network');
+      throw new Error(
+        `No merkletree for list ${listKey} and network ${networkName}`,
+      );
     }
     return merkletree;
   }

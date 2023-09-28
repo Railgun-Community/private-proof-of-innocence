@@ -37,6 +37,7 @@ export type ListProviderConfig = {
   queueShieldsOverrideDelayMsec?: number;
   categorizeUnknownShieldsOverrideDelayMsec?: number;
   validateShieldsOverrideDelayMsec?: number;
+  addAllowedShieldsOverrideDelayMsec?: number;
 };
 
 // 20 minutes
@@ -45,6 +46,8 @@ const DEFAULT_QUEUE_SHIELDS_DELAY_MSEC = 20 * 60 * 1000;
 const CATEGORIZE_UNKNOWN_SHIELDS_DELAY_MSEC = 30 * 1000;
 // 30 seconds
 const DEFAULT_VALIDATE_SHIELDS_DELAY_MSEC = 30 * 1000;
+// 30 seconds
+const DEFAULT_ADD_ALLOWED_SHIELDS_DELAY_MSEC = 30 * 1000;
 
 const dbg = debug('poi:list-provider');
 
@@ -79,21 +82,23 @@ export abstract class ListProvider {
     );
 
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    this.runQueueShieldsPoller();
+    this.runQueueNewUnknownShieldsPoller();
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.runCategorizeUnknownShieldsPoller();
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.runValidatePendingShieldsPoller();
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    this.runAddAllowedShieldsPoller();
 
     ListProviderPOIEventQueue.startPolling();
     ListProviderPOIEventUpdater.startPolling();
   }
 
-  private async runQueueShieldsPoller() {
+  private async runQueueNewUnknownShieldsPoller() {
     // Run for each network in series.
     for (let i = 0; i < Config.NETWORK_NAMES.length; i++) {
       const networkName = Config.NETWORK_NAMES[i];
-      await this.queueNewShields(networkName);
+      await this.queueNewUnknownShields(networkName);
     }
 
     await delay(
@@ -102,7 +107,7 @@ export abstract class ListProvider {
     );
 
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    this.runQueueShieldsPoller();
+    this.runQueueNewUnknownShieldsPoller();
   }
 
   private async runCategorizeUnknownShieldsPoller() {
@@ -129,7 +134,7 @@ export abstract class ListProvider {
     }
 
     await delay(
-      this.config.queueShieldsOverrideDelayMsec ??
+      this.config.validateShieldsOverrideDelayMsec ??
         DEFAULT_VALIDATE_SHIELDS_DELAY_MSEC,
     );
 
@@ -137,7 +142,23 @@ export abstract class ListProvider {
     this.runValidatePendingShieldsPoller();
   }
 
-  async queueNewShields(networkName: NetworkName): Promise<void> {
+  private async runAddAllowedShieldsPoller() {
+    // Run for each network in series.
+    for (let i = 0; i < Config.NETWORK_NAMES.length; i++) {
+      const networkName = Config.NETWORK_NAMES[i];
+      await this.addAllowedShields(networkName);
+    }
+
+    await delay(
+      this.config.addAllowedShieldsOverrideDelayMsec ??
+        DEFAULT_ADD_ALLOWED_SHIELDS_DELAY_MSEC,
+    );
+
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    this.runAddAllowedShieldsPoller();
+  }
+
+  async queueNewUnknownShields(networkName: NetworkName): Promise<void> {
     const statusDB = new StatusDatabase(networkName);
     const status = await statusDB.getStatus();
     const network = networkForName(networkName);
@@ -171,13 +192,18 @@ export abstract class ListProvider {
       const unknownShields = await shieldQueueDB.getShields(
         ShieldStatus.Unknown,
       );
+
+      dbg(
+        `[${networkName}] Attempting to categorize ${unknownShields.length} unknown shields...`,
+      );
+
       for (const shieldQueueDBItem of unknownShields) {
         await this.categorizeUnknownShield(networkName, shieldQueueDBItem);
       }
     } catch (err) {
       dbg(
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        `[${networkName}] Error queuing shield on ${networkName}: ${err.message}`,
+        `[${networkName}] Error categorizing shield on ${networkName}: ${err.message}`,
       );
     }
   }
@@ -406,21 +432,32 @@ export abstract class ListProvider {
     }
   }
 
+  private async addAllowedShields(networkName: NetworkName) {
+    const shieldQueueDB = new ShieldQueueDatabase(networkName);
+    const allowedShields = await shieldQueueDB.getShields(ShieldStatus.Allowed);
+
+    dbg(
+      `[${networkName}] Attempting to queue POI events for ${allowedShields.length} allowed shields...`,
+    );
+
+    allowedShields.forEach(shieldDBItem => {
+      // Allow - add POIEvent
+      const poiEventShield: POIEventShield = {
+        type: POIEventType.Shield,
+        commitmentHash: shieldDBItem.commitmentHash,
+        blindedCommitment: shieldDBItem.blindedCommitment,
+      };
+      ListProviderPOIEventQueue.queueUnsignedPOIShieldEvent(
+        networkName,
+        poiEventShield,
+      );
+    });
+  }
+
   private async allowShield(
     networkName: NetworkName,
     shieldDBItem: ShieldQueueDBItem,
   ) {
-    // Allow - add POIEvent
-    const poiEventShield: POIEventShield = {
-      type: POIEventType.Shield,
-      commitmentHash: shieldDBItem.commitmentHash,
-      blindedCommitment: shieldDBItem.blindedCommitment,
-    };
-    ListProviderPOIEventQueue.queueUnsignedPOIShieldEvent(
-      networkName,
-      poiEventShield,
-    );
-
     // Update status in DB
     const shieldQueueDB = new ShieldQueueDatabase(networkName);
     await shieldQueueDB.updateShieldStatus(shieldDBItem, ShieldStatus.Allowed);
