@@ -15,7 +15,8 @@
     ".": "./dist/index.js"
   },
   "scripts": {
-    "start": "npm run build && env DEBUG=poi:* node dist/run-local.js",
+    "start-aggregator": "npm run build && env DEBUG=poi:* LIST_PROVIDER=0 node dist/run-local.js",
+    "start-list-provider": "npm run build && env DEBUG=poi:* LIST_PROVIDER=1 node dist/run-local.js",
     "clean": "rm -rf dist",
     "build": "npm run clean && tsc",
     "check-circular-deps": "madge --circular .",

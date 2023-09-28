@@ -10,8 +10,11 @@ import { NodeConfig } from './models/general-types';
 (async () => {
   Config.MONGODB_URL = 'mongodb://localhost:27017';
 
+  const isListProvider = process.env.LIST_PROVIDER === '1';
   const listKey = await getListPublicKey();
-  const listProvider = new LocalListProvider(listKey);
+  const listProvider = isListProvider
+    ? new LocalListProvider(listKey)
+    : undefined;
 
   const host = process.env.HOST ?? '0.0.0.0';
   const port = process.env.PORT ?? '3010';
