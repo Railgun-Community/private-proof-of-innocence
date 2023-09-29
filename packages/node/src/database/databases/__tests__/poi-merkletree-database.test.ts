@@ -1,20 +1,21 @@
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { POIMerkletreeDatabase } from '../poi-merkletree-database';
-import { NetworkName } from '@railgun-community/shared-models';
+import { NetworkName, TXIDVersion } from '@railgun-community/shared-models';
 import { DatabaseClient } from '../../database-client-init';
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
 
 const networkName = NetworkName.Ethereum;
+const txidVersion = TXIDVersion.V2_PoseidonMerkle;
 
 let db: POIMerkletreeDatabase;
 
 describe('poi-merkletree-database', () => {
   before(async () => {
     await DatabaseClient.init();
-    db = new POIMerkletreeDatabase(networkName);
+    db = new POIMerkletreeDatabase(networkName, txidVersion);
     await db.createCollectionIndices();
   });
 

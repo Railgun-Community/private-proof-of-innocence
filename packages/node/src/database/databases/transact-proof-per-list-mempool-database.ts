@@ -1,5 +1,6 @@
 import {
   NetworkName,
+  TXIDVersion,
   TransactProofData,
 } from '@railgun-community/shared-models';
 import {
@@ -12,8 +13,8 @@ import { AbstractDatabase } from '../abstract-database';
 import { Filter } from 'mongodb';
 
 export class TransactProofPerListMempoolDatabase extends AbstractDatabase<TransactProofMempoolDBItem> {
-  constructor(networkName: NetworkName) {
-    super(networkName, CollectionName.TransactProofPerListMempool);
+  constructor(networkName: NetworkName, txidVersion: TXIDVersion) {
+    super(networkName, txidVersion, CollectionName.TransactProofPerListMempool);
   }
 
   async createCollectionIndices() {

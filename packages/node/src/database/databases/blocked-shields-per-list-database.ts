@@ -1,4 +1,4 @@
-import { NetworkName } from '@railgun-community/shared-models';
+import { NetworkName, TXIDVersion } from '@railgun-community/shared-models';
 import { AbstractDatabase } from '../abstract-database';
 import {
   CollectionName,
@@ -9,8 +9,8 @@ import {
 import { SignedBlockedShield } from '../../models/poi-types';
 
 export class BlockedShieldsPerListDatabase extends AbstractDatabase<BlockedShieldsPerListDBItem> {
-  constructor(networkName: NetworkName) {
-    super(networkName, CollectionName.BlockedShieldsPerList);
+  constructor(networkName: NetworkName, txidVersion: TXIDVersion) {
+    super(networkName, txidVersion, CollectionName.BlockedShieldsPerList);
   }
 
   async createCollectionIndices() {

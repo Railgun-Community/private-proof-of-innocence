@@ -3,13 +3,14 @@ import {
   isDefined,
   RailgunTxidStatus,
   ValidatedRailgunTxidStatus,
+  TXIDVersion,
 } from '@railgun-community/shared-models';
 import {
-  fullResetRailgunTxidMerkletrees,
   resetRailgunTxidsAfterTxidIndex,
   validateRailgunTxidMerkleroot,
   getLatestRailgunTxidData,
   getRailgunTxidMerkleroot,
+  fullResetTXIDMerkletrees,
 } from '@railgun-community/wallet';
 import { RailgunTxidMerkletreeStatusDatabase } from '../database/databases/railgun-txid-merkletree-status-database';
 import { POINodeRequest } from '../api/poi-node-request';
@@ -25,37 +26,56 @@ const TREE_MAX_ITEMS = 65536;
 export class RailgunTxidMerkletreeManager {
   static async checkIfMerklerootExists(
     networkName: NetworkName,
+    txidVersion: TXIDVersion,
     tree: number,
     index: number,
     merkleroot: string,
   ): Promise<boolean> {
-    return validateRailgunTxidMerkleroot(networkName, tree, index, merkleroot);
+    return validateRailgunTxidMerkleroot(
+      txidVersion,
+      networkName,
+      tree,
+      index,
+      merkleroot,
+    );
   }
 
   static async checkIfMerklerootExistsByTxidIndex(
     networkName: NetworkName,
+    txidVersion: TXIDVersion,
     txidIndex: number,
     merkleroot: string,
   ): Promise<boolean> {
     const { tree, index } = this.getTreeAndIndexFromTxidIndex(txidIndex);
-    return validateRailgunTxidMerkleroot(networkName, tree, index, merkleroot);
+    return validateRailgunTxidMerkleroot(
+      txidVersion,
+      networkName,
+      tree,
+      index,
+      merkleroot,
+    );
   }
 
   static async fullResetRailgunTxidMerkletrees(networkName: NetworkName) {
-    return fullResetRailgunTxidMerkletrees(networkName);
+    return fullResetTXIDMerkletrees(networkName);
   }
 
   static async resetRailgunTxidsAfterTxidIndex(
     networkName: NetworkName,
+    txidVersion: TXIDVersion,
     txidIndex: number,
   ) {
-    return resetRailgunTxidsAfterTxidIndex(networkName, txidIndex);
+    return resetRailgunTxidsAfterTxidIndex(txidVersion, networkName, txidIndex);
   }
 
   static async getValidatedRailgunTxidStatus(
     networkName: NetworkName,
+    txidVersion: TXIDVersion,
   ): Promise<ValidatedRailgunTxidStatus> {
-    const db = new RailgunTxidMerkletreeStatusDatabase(networkName);
+    const db = new RailgunTxidMerkletreeStatusDatabase(
+      networkName,
+      txidVersion,
+    );
     const status = await db.getStatus();
 
     return {
@@ -66,12 +86,14 @@ export class RailgunTxidMerkletreeManager {
 
   static async getRailgunTxidStatus(
     networkName: NetworkName,
+    txidVersion: TXIDVersion,
   ): Promise<RailgunTxidStatus> {
     const { txidIndex: currentTxidIndex, merkleroot: currentMerkleroot } =
-      await getLatestRailgunTxidData(networkName);
+      await getLatestRailgunTxidData(txidVersion, networkName);
     const { validatedTxidIndex, validatedMerkleroot } =
       await RailgunTxidMerkletreeManager.getValidatedRailgunTxidStatus(
         networkName,
+        txidVersion,
       );
     return {
       currentTxidIndex,
@@ -93,21 +115,24 @@ export class RailgunTxidMerkletreeManager {
 
   static async getHistoricalTxidMerkleroot(
     networkName: NetworkName,
+    txidVersion: TXIDVersion,
     tree: number,
     index: number,
   ) {
-    return getRailgunTxidMerkleroot(networkName, tree, index);
+    return getRailgunTxidMerkleroot(txidVersion, networkName, tree, index);
   }
 
   static async updateValidatedRailgunTxidStatusSafe(
     nodeURL: string,
     networkName: NetworkName,
+    txidVersion: TXIDVersion,
     txidStatusOtherNode: RailgunTxidStatus,
   ): Promise<void> {
     try {
       return await RailgunTxidMerkletreeManager.updateValidatedRailgunTxidStatus(
         nodeURL,
         networkName,
+        txidVersion,
         txidStatusOtherNode,
       );
     } catch (err) {
@@ -118,6 +143,7 @@ export class RailgunTxidMerkletreeManager {
 
   static async verifySignatureAndUpdateValidatedRailgunTxidStatus(
     networkName: NetworkName,
+    txidVersion: TXIDVersion,
     txidIndex: number,
     merkleroot: string,
     signature: string,
@@ -138,6 +164,7 @@ export class RailgunTxidMerkletreeManager {
     return RailgunTxidMerkletreeManager.updateValidatedRailgunTxidStatus(
       nodeURL,
       networkName,
+      txidVersion,
       {
         currentMerkleroot: merkleroot,
         currentTxidIndex: txidIndex,
@@ -150,12 +177,13 @@ export class RailgunTxidMerkletreeManager {
   static async updateValidatedRailgunTxidStatus(
     nodeURL: string,
     networkName: NetworkName,
+    txidVersion: TXIDVersion,
     txidStatusOtherNode: RailgunTxidStatus,
   ): Promise<void> {
     const {
       validatedTxidIndex: validatedTxidIndexA,
       currentTxidIndex: currentTxidIndexA,
-    } = await this.getRailgunTxidStatus(networkName);
+    } = await this.getRailgunTxidStatus(networkName, txidVersion);
     const {
       currentTxidIndex: currentTxidIndexB,
       currentMerkleroot: currentMerklerootB,
@@ -182,6 +210,7 @@ export class RailgunTxidMerkletreeManager {
     const historicalMerkleroot =
       await RailgunTxidMerkletreeManager.getHistoricalTxidMerkleroot(
         networkName,
+        txidVersion,
         tree,
         index,
       );
@@ -196,13 +225,17 @@ export class RailgunTxidMerkletreeManager {
       (await POINodeRequest.validateRailgunTxidMerkleroot(
         nodeURL,
         networkName,
+        txidVersion,
         tree,
         index,
         historicalMerkleroot,
       ));
     if (isValid) {
       // Valid. Update validated txid.
-      const db = new RailgunTxidMerkletreeStatusDatabase(networkName);
+      const db = new RailgunTxidMerkletreeStatusDatabase(
+        networkName,
+        txidVersion,
+      );
       await db.saveValidatedTxidStatus(
         txidIndexToValidate,
         historicalMerkleroot,
@@ -216,6 +249,7 @@ export class RailgunTxidMerkletreeManager {
         await POINodeRequest.submitValidatedTxidAndMerkleroot(
           nodeURLToSend,
           networkName,
+          txidVersion,
           txidIndexToValidate,
           historicalMerkleroot,
         );
@@ -229,6 +263,10 @@ export class RailgunTxidMerkletreeManager {
 
     // Invalid. Clear the merkletree after validatedTxidIndexA, and re-sync.
     const clearFromTxidIndex = validatedTxidIndexA ?? -1;
-    await this.resetRailgunTxidsAfterTxidIndex(networkName, clearFromTxidIndex);
+    await this.resetRailgunTxidsAfterTxidIndex(
+      networkName,
+      txidVersion,
+      clearFromTxidIndex,
+    );
   }
 }

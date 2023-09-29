@@ -3,6 +3,7 @@ import {
   delay,
   isDefined,
   TransactProofData,
+  TXIDVersion,
 } from '@railgun-community/shared-models';
 import {
   POIEvent,
@@ -28,7 +29,9 @@ export class ListProviderPOIEventQueue {
     Record<NetworkName, boolean>
   > = {};
 
-  private static poiEventQueue: Partial<Record<NetworkName, POIEvent[]>> = {};
+  private static poiEventQueue: Partial<
+    Record<NetworkName, Record<TXIDVersion, POIEvent[]>>
+  > = {};
 
   private static minimumNextAddIndex: Partial<Record<NetworkName, number>> = {};
 
@@ -49,7 +52,12 @@ export class ListProviderPOIEventQueue {
 
   private static async poll() {
     for (const networkName of Config.NETWORK_NAMES) {
-      await ListProviderPOIEventQueue.addPOIEventsFromQueue(networkName);
+      for (const txidVersion of Config.TXID_VERSIONS) {
+        await ListProviderPOIEventQueue.addPOIEventsFromQueue(
+          networkName,
+          txidVersion,
+        );
+      }
     }
 
     await delay(30000);
@@ -58,19 +66,28 @@ export class ListProviderPOIEventQueue {
     ListProviderPOIEventQueue.poll();
   }
 
-  static getPOIEventQueueLength(networkName: NetworkName): Optional<number> {
-    return this.poiEventQueue[networkName]?.length;
+  static getPOIEventQueueLength(
+    networkName: NetworkName,
+    txidVersion: TXIDVersion,
+  ): Optional<number> {
+    return this.poiEventQueue[networkName]?.[txidVersion]?.length;
   }
 
   static queueUnsignedPOIShieldEvent(
     networkName: NetworkName,
+    txidVersion: TXIDVersion,
     poiEventShield: POIEventShield,
   ) {
-    return ListProviderPOIEventQueue.queuePOIEvent(networkName, poiEventShield);
+    return ListProviderPOIEventQueue.queuePOIEvent(
+      networkName,
+      txidVersion,
+      poiEventShield,
+    );
   }
 
   static queueUnsignedPOITransactEvent(
     networkName: NetworkName,
+    txidVersion: TXIDVersion,
     transactProofData: TransactProofData,
   ) {
     const poiEvent: POIEventTransact = {
@@ -78,7 +95,11 @@ export class ListProviderPOIEventQueue {
       blindedCommitments: transactProofData.blindedCommitmentOutputs,
       proof: transactProofData.snarkProof,
     };
-    return ListProviderPOIEventQueue.queuePOIEvent(networkName, poiEvent);
+    return ListProviderPOIEventQueue.queuePOIEvent(
+      networkName,
+      txidVersion,
+      poiEvent,
+    );
   }
 
   private static getPOIEventFirstBlindedCommitment(poiEvent: POIEvent) {
@@ -90,12 +111,19 @@ export class ListProviderPOIEventQueue {
     }
   }
 
-  private static queuePOIEvent(networkName: NetworkName, poiEvent: POIEvent) {
-    ListProviderPOIEventQueue.poiEventQueue[networkName] ??= [];
+  private static queuePOIEvent(
+    networkName: NetworkName,
+    txidVersion: TXIDVersion,
+    poiEvent: POIEvent,
+  ) {
+    ListProviderPOIEventQueue.poiEventQueue[networkName] ??= {
+      [TXIDVersion.V2_PoseidonMerkle]: [],
+    };
 
-    const existingEvent = ListProviderPOIEventQueue.poiEventQueue[
-      networkName
-    ]?.find(e => {
+    const queue =
+      ListProviderPOIEventQueue.poiEventQueue[networkName]?.[txidVersion];
+
+    const existingEvent = queue?.find(e => {
       return (
         ListProviderPOIEventQueue.getPOIEventFirstBlindedCommitment(e) ===
         ListProviderPOIEventQueue.getPOIEventFirstBlindedCommitment(poiEvent)
@@ -105,10 +133,10 @@ export class ListProviderPOIEventQueue {
       return;
     }
 
-    ListProviderPOIEventQueue.poiEventQueue[networkName]?.push(poiEvent);
+    queue?.push(poiEvent);
 
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    ListProviderPOIEventQueue.addPOIEventsFromQueue(networkName);
+    ListProviderPOIEventQueue.addPOIEventsFromQueue(networkName, txidVersion);
   }
 
   private static getMinimumNextAddIndex(networkName: NetworkName) {
@@ -184,10 +212,13 @@ export class ListProviderPOIEventQueue {
     };
   }
 
-  static async addPOIEventsFromQueue(networkName: NetworkName): Promise<void> {
-    const queueForNetwork =
-      ListProviderPOIEventQueue.poiEventQueue[networkName];
-    if (!queueForNetwork || queueForNetwork.length === 0) {
+  static async addPOIEventsFromQueue(
+    networkName: NetworkName,
+    txidVersion: TXIDVersion,
+  ): Promise<void> {
+    const queue =
+      ListProviderPOIEventQueue.poiEventQueue[networkName]?.[txidVersion];
+    if (!queue || queue.length === 0) {
       return;
     }
     if (
@@ -199,7 +230,10 @@ export class ListProviderPOIEventQueue {
     ListProviderPOIEventQueue.isAddingPOIEventForNetwork[networkName] = true;
 
     try {
-      const orderedEventsDB = new POIOrderedEventsDatabase(networkName);
+      const orderedEventsDB = new POIOrderedEventsDatabase(
+        networkName,
+        txidVersion,
+      );
       const lastAddedItem = await orderedEventsDB.getLastAddedItem(
         ListProviderPOIEventQueue.listKey,
       );
@@ -214,7 +248,7 @@ export class ListProviderPOIEventQueue {
         );
       }
 
-      const poiEvent = queueForNetwork[0];
+      const poiEvent = queue[0];
 
       if (
         await orderedEventsDB.eventExists(
@@ -222,7 +256,7 @@ export class ListProviderPOIEventQueue {
           ListProviderPOIEventQueue.getPOIEventFirstBlindedCommitment(poiEvent),
         )
       ) {
-        queueForNetwork.splice(0, 1);
+        queue.splice(0, 1);
         throw new Error('Event already exists in database');
       }
 
@@ -238,15 +272,16 @@ export class ListProviderPOIEventQueue {
 
       await POIEventList.addValidSignedPOIEvent(
         networkName,
+        txidVersion,
         ListProviderPOIEventQueue.listKey,
         signedPOIEvent,
       );
 
       // Remove item
-      queueForNetwork.splice(0, 1);
+      queue.splice(0, 1);
 
       if (poiEvent.type === POIEventType.Shield) {
-        const shieldQueueDB = new ShieldQueueDatabase(networkName);
+        const shieldQueueDB = new ShieldQueueDatabase(networkName, txidVersion);
         const shieldQueueDBItem =
           await shieldQueueDB.getAllowedShieldByCommitmentHash(
             poiEvent.commitmentHash,
@@ -263,6 +298,7 @@ export class ListProviderPOIEventQueue {
         await POINodeRequest.submitPOIEvent(
           nodeURL,
           networkName,
+          txidVersion,
           ListProviderPOIEventQueue.listKey,
           signedPOIEvent,
         );
@@ -270,9 +306,10 @@ export class ListProviderPOIEventQueue {
 
       ListProviderPOIEventQueue.isAddingPOIEventForNetwork[networkName] = false;
 
-      if (queueForNetwork.length > 0) {
+      if (queue.length > 0) {
         return await ListProviderPOIEventQueue.addPOIEventsFromQueue(
           networkName,
+          txidVersion,
         );
       }
     } catch (err) {

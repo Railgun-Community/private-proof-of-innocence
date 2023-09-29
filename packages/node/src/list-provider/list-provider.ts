@@ -4,6 +4,7 @@ import {
   NETWORK_CONFIG,
   NetworkName,
   POIStatus,
+  TXIDVersion,
   delay,
   isDefined,
   isHistoricalRelayAdaptContractAddress,
@@ -40,12 +41,12 @@ export type ListProviderConfig = {
   addAllowedShieldsOverrideDelayMsec?: number;
 };
 
-// 20 minutes
-const DEFAULT_QUEUE_SHIELDS_DELAY_MSEC = 20 * 60 * 1000;
 // 30 seconds
+const DEFAULT_QUEUE_SHIELDS_DELAY_MSEC = 30 * 1000;
+// 15 seconds
 const CATEGORIZE_UNKNOWN_SHIELDS_DELAY_MSEC = 30 * 1000;
-// 30 seconds
-const DEFAULT_VALIDATE_SHIELDS_DELAY_MSEC = 30 * 1000;
+// 60 seconds
+const DEFAULT_VALIDATE_SHIELDS_DELAY_MSEC = 60 * 1000;
 // 30 seconds
 const DEFAULT_ADD_ALLOWED_SHIELDS_DELAY_MSEC = 30 * 1000;
 
@@ -96,9 +97,10 @@ export abstract class ListProvider {
 
   private async runQueueNewUnknownShieldsPoller() {
     // Run for each network in series.
-    for (let i = 0; i < Config.NETWORK_NAMES.length; i++) {
-      const networkName = Config.NETWORK_NAMES[i];
-      await this.queueNewUnknownShields(networkName);
+    for (const networkName of Config.NETWORK_NAMES) {
+      for (const txidVersion of Config.TXID_VERSIONS) {
+        await this.queueNewUnknownShields(networkName, txidVersion);
+      }
     }
 
     await delay(
@@ -112,9 +114,10 @@ export abstract class ListProvider {
 
   private async runCategorizeUnknownShieldsPoller() {
     // Run for each network in series.
-    for (let i = 0; i < Config.NETWORK_NAMES.length; i++) {
-      const networkName = Config.NETWORK_NAMES[i];
-      await this.categorizeUnknownShields(networkName);
+    for (const networkName of Config.NETWORK_NAMES) {
+      for (const txidVersion of Config.TXID_VERSIONS) {
+        await this.categorizeUnknownShields(networkName, txidVersion);
+      }
     }
 
     await delay(
@@ -128,9 +131,10 @@ export abstract class ListProvider {
 
   private async runValidatePendingShieldsPoller() {
     // Run for each network in series.
-    for (let i = 0; i < Config.NETWORK_NAMES.length; i++) {
-      const networkName = Config.NETWORK_NAMES[i];
-      await this.validateNextPendingShieldBatch(networkName);
+    for (const networkName of Config.NETWORK_NAMES) {
+      for (const txidVersion of Config.TXID_VERSIONS) {
+        await this.validateNextPendingShieldBatch(networkName, txidVersion);
+      }
     }
 
     await delay(
@@ -144,9 +148,10 @@ export abstract class ListProvider {
 
   private async runAddAllowedShieldsPoller() {
     // Run for each network in series.
-    for (let i = 0; i < Config.NETWORK_NAMES.length; i++) {
-      const networkName = Config.NETWORK_NAMES[i];
-      await this.addAllowedShields(networkName);
+    for (const networkName of Config.NETWORK_NAMES) {
+      for (const txidVersion of Config.TXID_VERSIONS) {
+        await this.addAllowedShields(networkName, txidVersion);
+      }
     }
 
     await delay(
@@ -158,8 +163,11 @@ export abstract class ListProvider {
     this.runAddAllowedShieldsPoller();
   }
 
-  async queueNewUnknownShields(networkName: NetworkName): Promise<void> {
-    const statusDB = new StatusDatabase(networkName);
+  async queueNewUnknownShields(
+    networkName: NetworkName,
+    txidVersion: TXIDVersion,
+  ): Promise<void> {
+    const statusDB = new StatusDatabase(networkName, txidVersion);
     const status = await statusDB.getStatus();
     const network = networkForName(networkName);
     const startingBlock = status?.latestBlockScanned ?? network.deploymentBlock;
@@ -175,7 +183,7 @@ export abstract class ListProvider {
 
     await Promise.all(
       newShields.map(shieldData =>
-        this.queueShieldSafe(networkName, shieldData),
+        this.queueShieldSafe(networkName, txidVersion, shieldData),
       ),
     );
 
@@ -186,9 +194,12 @@ export abstract class ListProvider {
     }
   }
 
-  async categorizeUnknownShields(networkName: NetworkName) {
+  async categorizeUnknownShields(
+    networkName: NetworkName,
+    txidVersion: TXIDVersion,
+  ) {
     try {
-      const shieldQueueDB = new ShieldQueueDatabase(networkName);
+      const shieldQueueDB = new ShieldQueueDatabase(networkName, txidVersion);
       const unknownShields = await shieldQueueDB.getShields(
         ShieldStatus.Unknown,
       );
@@ -198,7 +209,11 @@ export abstract class ListProvider {
       );
 
       for (const shieldQueueDBItem of unknownShields) {
-        await this.categorizeUnknownShield(networkName, shieldQueueDBItem);
+        await this.categorizeUnknownShield(
+          networkName,
+          txidVersion,
+          shieldQueueDBItem,
+        );
       }
     } catch (err) {
       dbg(
@@ -210,6 +225,7 @@ export abstract class ListProvider {
 
   private async categorizeUnknownShield(
     networkName: NetworkName,
+    txidVersion: TXIDVersion,
     shieldQueueDBItem: ShieldQueueDBItem,
   ) {
     const { txid } = shieldQueueDBItem;
@@ -219,7 +235,7 @@ export abstract class ListProvider {
       this.getMaxTimestampForValidation(networkName)
     ) {
       // Automatically mark pending if it's an old shield.
-      await this.markShieldPending(networkName, shieldQueueDBItem);
+      await this.markShieldPending(networkName, txidVersion, shieldQueueDBItem);
       return;
     }
 
@@ -233,12 +249,13 @@ export abstract class ListProvider {
       toAddress,
     );
     if (!isRelayAdaptContractCall) {
-      await this.markShieldPending(networkName, shieldQueueDBItem);
+      await this.markShieldPending(networkName, txidVersion, shieldQueueDBItem);
       return;
     }
 
     await this.handleRelayAdaptUnknownShield(
       networkName,
+      txidVersion,
       shieldQueueDBItem,
       toAddress,
     );
@@ -247,6 +264,7 @@ export abstract class ListProvider {
   // TODO: Needs tests for each case.
   private async handleRelayAdaptUnknownShield(
     networkName: NetworkName,
+    txidVersion: TXIDVersion,
     shieldQueueDBItem: ShieldQueueDBItem,
     toAddress: string,
   ) {
@@ -268,7 +286,7 @@ export abstract class ListProvider {
     // 2. If no unshield exists, then we assume it's a base-token-shield.
     // Mark as pending (will run the delay before a full POI List check).
     if (!unshieldRailgunTransactionBlindedCommitmentGroups.length) {
-      await this.markShieldPending(networkName, shieldQueueDBItem);
+      await this.markShieldPending(networkName, txidVersion, shieldQueueDBItem);
       return;
     }
 
@@ -285,6 +303,7 @@ export abstract class ListProvider {
         return POIMerkletreeManager.getPOIStatus(
           this.listKey,
           networkName,
+          txidVersion,
           blindedCommitmentData,
         );
       }),
@@ -292,7 +311,7 @@ export abstract class ListProvider {
 
     // If all Unshield POI statuses are Valid, automatically Allow Relay Adapt Shield
     if (poiStatuses.every(status => status === POIStatus.Valid)) {
-      await this.allowShield(networkName, shieldQueueDBItem);
+      await this.allowShield(networkName, txidVersion, shieldQueueDBItem);
       return;
     }
 
@@ -308,7 +327,11 @@ export abstract class ListProvider {
     if (anyStatusIsPending) {
       // If shield is >60 min old, mark as pending.
       if (shieldQueueDBItem.timestamp < hoursAgo(1)) {
-        await this.markShieldPending(networkName, shieldQueueDBItem);
+        await this.markShieldPending(
+          networkName,
+          txidVersion,
+          shieldQueueDBItem,
+        );
       }
       // Otherwise, wait for next iteration.
       return;
@@ -316,14 +339,15 @@ export abstract class ListProvider {
 
     // ShieldBlocked and ShieldPending are not possible for Transact proof POIStatus.
     // Mark as pending byt default (will run the delay before a full POI List check)
-    await this.markShieldPending(networkName, shieldQueueDBItem);
+    await this.markShieldPending(networkName, txidVersion, shieldQueueDBItem);
   }
 
   private async markShieldPending(
     networkName: NetworkName,
+    txidVersion: TXIDVersion,
     shieldQueueDBItem: ShieldQueueDBItem,
   ) {
-    const shieldQueueDB = new ShieldQueueDatabase(networkName);
+    const shieldQueueDB = new ShieldQueueDatabase(networkName, txidVersion);
     await shieldQueueDB.updateShieldStatus(
       shieldQueueDBItem,
       ShieldStatus.Pending,
@@ -332,10 +356,11 @@ export abstract class ListProvider {
 
   private async queueShieldSafe(
     networkName: NetworkName,
+    txidVersion: TXIDVersion,
     shieldData: ShieldData,
   ) {
     try {
-      const shieldQueueDB = new ShieldQueueDatabase(networkName);
+      const shieldQueueDB = new ShieldQueueDatabase(networkName, txidVersion);
       await shieldQueueDB.insertUnknownShield(shieldData);
     } catch (err) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -356,11 +381,12 @@ export abstract class ListProvider {
 
   async validateNextPendingShieldBatch(
     networkName: NetworkName,
+    txidVersion: TXIDVersion,
   ): Promise<void> {
     const endTimestamp = this.getMaxTimestampForValidation(networkName);
     let pendingShields: ShieldQueueDBItem[];
     try {
-      const shieldQueueDB = new ShieldQueueDatabase(networkName);
+      const shieldQueueDB = new ShieldQueueDatabase(networkName, txidVersion);
       const limit = 100;
       pendingShields = await shieldQueueDB.getShields(
         ShieldStatus.Pending,
@@ -382,13 +408,14 @@ export abstract class ListProvider {
 
     await Promise.all(
       pendingShields.map(shieldData =>
-        this.validateShield(networkName, shieldData, endTimestamp),
+        this.validateShield(networkName, txidVersion, shieldData, endTimestamp),
       ),
     );
   }
 
   private async validateShield(
     networkName: NetworkName,
+    txidVersion: TXIDVersion,
     shieldDBItem: ShieldQueueDBItem,
     endTimestamp: number,
   ) {
@@ -410,7 +437,7 @@ export abstract class ListProvider {
         isDefined(poiSettings) &&
         poiSettings.launchBlock < txReceipt.blockNumber
       ) {
-        return await this.allowShield(networkName, shieldDBItem);
+        return await this.allowShield(networkName, txidVersion, shieldDBItem);
       }
 
       const { shouldAllow, blockReason } = await this.shouldAllowShield(
@@ -421,9 +448,14 @@ export abstract class ListProvider {
       );
 
       if (shouldAllow) {
-        return await this.allowShield(networkName, shieldDBItem);
+        return await this.allowShield(networkName, txidVersion, shieldDBItem);
       } else {
-        return await this.blockShield(networkName, shieldDBItem, blockReason);
+        return await this.blockShield(
+          networkName,
+          txidVersion,
+          shieldDBItem,
+          blockReason,
+        );
       }
     } catch (err) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -432,8 +464,8 @@ export abstract class ListProvider {
     }
   }
 
-  private async addAllowedShields(networkName: NetworkName) {
-    const shieldQueueDB = new ShieldQueueDatabase(networkName);
+  async addAllowedShields(networkName: NetworkName, txidVersion: TXIDVersion) {
+    const shieldQueueDB = new ShieldQueueDatabase(networkName, txidVersion);
     const allowedShields = await shieldQueueDB.getShields(ShieldStatus.Allowed);
 
     dbg(
@@ -449,6 +481,7 @@ export abstract class ListProvider {
       };
       ListProviderPOIEventQueue.queueUnsignedPOIShieldEvent(
         networkName,
+        txidVersion,
         poiEventShield,
       );
     });
@@ -456,27 +489,30 @@ export abstract class ListProvider {
 
   private async allowShield(
     networkName: NetworkName,
+    txidVersion: TXIDVersion,
     shieldDBItem: ShieldQueueDBItem,
   ) {
     // Update status in DB
-    const shieldQueueDB = new ShieldQueueDatabase(networkName);
+    const shieldQueueDB = new ShieldQueueDatabase(networkName, txidVersion);
     await shieldQueueDB.updateShieldStatus(shieldDBItem, ShieldStatus.Allowed);
   }
 
   private async blockShield(
     networkName: NetworkName,
+    txidVersion: TXIDVersion,
     shieldDBItem: ShieldQueueDBItem,
     blockReason: Optional<string>,
   ) {
     // Block - add BlockedShield
     await ListProviderBlocklist.addBlockedShield(
       networkName,
+      txidVersion,
       shieldDBItem,
       blockReason,
     );
 
     // Update status in DB
-    const shieldQueueDB = new ShieldQueueDatabase(networkName);
+    const shieldQueueDB = new ShieldQueueDatabase(networkName, txidVersion);
     await shieldQueueDB.updateShieldStatus(shieldDBItem, ShieldStatus.Blocked);
   }
 }

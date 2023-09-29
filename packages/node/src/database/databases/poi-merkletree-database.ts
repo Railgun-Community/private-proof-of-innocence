@@ -1,4 +1,4 @@
-import { NetworkName } from '@railgun-community/shared-models';
+import { NetworkName, TXIDVersion } from '@railgun-community/shared-models';
 import {
   CollectionName,
   DBFilter,
@@ -7,8 +7,8 @@ import {
 import { AbstractDatabase } from '../abstract-database';
 
 export class POIMerkletreeDatabase extends AbstractDatabase<POIMerkletreeDBItem> {
-  constructor(networkName: NetworkName) {
-    super(networkName, CollectionName.POIMerkletree);
+  constructor(networkName: NetworkName, txidVersion: TXIDVersion) {
+    super(networkName, txidVersion, CollectionName.POIMerkletree);
   }
 
   async createCollectionIndices() {

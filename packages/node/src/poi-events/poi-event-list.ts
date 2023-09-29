@@ -1,4 +1,4 @@
-import { NetworkName } from '@railgun-community/shared-models';
+import { NetworkName, TXIDVersion } from '@railgun-community/shared-models';
 import { POIOrderedEventsDatabase } from '../database/databases/poi-ordered-events-database';
 import { SignedPOIEvent } from '../models/poi-types';
 import { verifyPOIEvent } from '../util/ed25519';
@@ -8,20 +8,22 @@ import { TransactProofMempoolPruner } from '../proof-mempool/transact-proof-memp
 export class POIEventList {
   static async getPOIEventsLength(
     networkName: NetworkName,
+    txidVersion: TXIDVersion,
     listKey: string,
   ): Promise<number> {
-    const db = new POIOrderedEventsDatabase(networkName);
+    const db = new POIOrderedEventsDatabase(networkName, txidVersion);
     const poiEventsLength = await db.getCount(listKey);
     return poiEventsLength;
   }
 
   static async getPOIListEventRange(
     networkName: NetworkName,
+    txidVersion: TXIDVersion,
     listKey: string,
     startIndex: number,
     endIndex: number,
   ): Promise<SignedPOIEvent[]> {
-    const db = new POIOrderedEventsDatabase(networkName);
+    const db = new POIOrderedEventsDatabase(networkName, txidVersion);
     const dbEvents = await db.getPOIEvents(listKey, startIndex, endIndex);
 
     return dbEvents.map(dbEvent => {
@@ -44,6 +46,7 @@ export class POIEventList {
 
   static async verifyAndAddSignedPOIEvents(
     networkName: NetworkName,
+    txidVersion: TXIDVersion,
     listKey: string,
     signedPOIEvents: SignedPOIEvent[],
   ): Promise<void> {
@@ -54,6 +57,7 @@ export class POIEventList {
       }
       await POIEventList.addValidSignedPOIEvent(
         networkName,
+        txidVersion,
         listKey,
         signedPOIEvent,
       );
@@ -62,21 +66,24 @@ export class POIEventList {
 
   static async addValidSignedPOIEvent(
     networkName: NetworkName,
+    txidVersion: TXIDVersion,
     listKey: string,
     signedPOIEvent: SignedPOIEvent,
   ) {
     await POIMerkletreeManager.addPOIEvent(
       listKey,
       networkName,
+      txidVersion,
       signedPOIEvent,
     );
 
-    const db = new POIOrderedEventsDatabase(networkName);
+    const db = new POIOrderedEventsDatabase(networkName, txidVersion);
     await db.insertValidSignedPOIEvent(listKey, signedPOIEvent);
 
     await TransactProofMempoolPruner.removeProof(
       listKey,
       networkName,
+      txidVersion,
       signedPOIEvent.blindedCommitments[0],
     );
   }

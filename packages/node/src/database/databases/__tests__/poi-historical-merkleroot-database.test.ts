@@ -1,7 +1,7 @@
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { POIHistoricalMerklerootDatabase } from '../poi-historical-merkleroot-database';
-import { NetworkName } from '@railgun-community/shared-models';
+import { NetworkName, TXIDVersion } from '@railgun-community/shared-models';
 import { DatabaseClient } from '../../database-client-init';
 import { MOCK_LIST_KEYS } from '../../../tests/mocks.test';
 
@@ -9,6 +9,7 @@ chai.use(chaiAsPromised);
 const { expect } = chai;
 
 const networkName = NetworkName.Ethereum;
+const txidVersion = TXIDVersion.V2_PoseidonMerkle;
 
 let db: POIHistoricalMerklerootDatabase;
 
@@ -17,7 +18,7 @@ const listKey = MOCK_LIST_KEYS[0];
 describe('poi-historical-merkleroot-database', () => {
   before(async () => {
     await DatabaseClient.init();
-    db = new POIHistoricalMerklerootDatabase(networkName);
+    db = new POIHistoricalMerklerootDatabase(networkName, txidVersion);
     await db.createCollectionIndices();
   });
 

@@ -4,6 +4,7 @@ import {
   BlindedCommitmentType,
   NetworkName,
   POIStatus,
+  TXIDVersion,
 } from '@railgun-community/shared-models';
 import { DatabaseClient } from '../../database/database-client-init';
 import { POIMerkletreeManager } from '../poi-merkletree-manager';
@@ -15,16 +16,17 @@ chai.use(chaiAsPromised);
 const { expect } = chai;
 
 const networkName = NetworkName.Ethereum;
+const txidVersion = TXIDVersion.V2_PoseidonMerkle;
 
 let merkletreeDB: POIMerkletreeDatabase;
 
-const listKey = MOCK_LIST_KEYS[0];
+const listKey = MOCK_LIST_KEYS[1];
 
 describe('poi-merkletree-manager', () => {
   before(async () => {
     await DatabaseClient.init();
 
-    merkletreeDB = new POIMerkletreeDatabase(networkName);
+    merkletreeDB = new POIMerkletreeDatabase(networkName, txidVersion);
 
     POIMerkletreeManager.initListMerkletrees(MOCK_LIST_KEYS);
   });
@@ -39,12 +41,14 @@ describe('poi-merkletree-manager', () => {
 
   it('Should add event to POI merkletree and get updated merkle proofs', async () => {
     await expect(
-      POIMerkletreeManager.getMerkleProofs(listKey, networkName, ['0x1234']),
+      POIMerkletreeManager.getMerkleProofs(listKey, networkName, txidVersion, [
+        '0x1234',
+      ]),
     ).to.eventually.be.rejectedWith(
       'No POI node for blinded commitment (node hash) 0x1234',
     );
 
-    await POIMerkletreeManager.addPOIEvent(listKey, networkName, {
+    await POIMerkletreeManager.addPOIEvent(listKey, networkName, txidVersion, {
       blindedCommitmentStartingIndex: 0,
       blindedCommitments: ['0x1234', '0x5678'],
     } as SignedPOIEvent);
@@ -52,6 +56,7 @@ describe('poi-merkletree-manager', () => {
     const merkleProofs = await POIMerkletreeManager.getMerkleProofs(
       listKey,
       networkName,
+      txidVersion,
       ['0x1234'],
     );
 
@@ -85,6 +90,7 @@ describe('poi-merkletree-manager', () => {
 
     const poiStatusPerList = await POIMerkletreeManager.getPOIStatusPerList(
       networkName,
+      txidVersion,
       [
         { blindedCommitment: '0x1234', type: BlindedCommitmentType.Transact },
         { blindedCommitment: '0x5678', type: BlindedCommitmentType.Transact },
@@ -93,12 +99,12 @@ describe('poi-merkletree-manager', () => {
     );
     expect(poiStatusPerList).to.deep.equal({
       '0x1234': {
-        [MOCK_LIST_KEYS[0]]: POIStatus.Valid,
-        [MOCK_LIST_KEYS[1]]: POIStatus.Missing,
+        [MOCK_LIST_KEYS[0]]: POIStatus.Missing,
+        [MOCK_LIST_KEYS[1]]: POIStatus.Valid,
       },
       '0x5678': {
-        [MOCK_LIST_KEYS[0]]: POIStatus.Valid,
-        [MOCK_LIST_KEYS[1]]: POIStatus.Missing,
+        [MOCK_LIST_KEYS[0]]: POIStatus.Missing,
+        [MOCK_LIST_KEYS[1]]: POIStatus.Valid,
       },
       '0x1111111': {
         [MOCK_LIST_KEYS[0]]: POIStatus.Missing,

@@ -2,6 +2,7 @@ import {
   NetworkName,
   isDefined,
   MerkleProof,
+  TXIDVersion,
 } from '@railgun-community/shared-models';
 import {
   nToHex,
@@ -39,9 +40,16 @@ export class POIMerkletree {
     [tree: number]: { [level: number]: { [index: number]: string } };
   } = {};
 
-  constructor(networkName: NetworkName, listKey: string) {
-    this.merkletreeDB = new POIMerkletreeDatabase(networkName);
-    this.merklerootDB = new POIHistoricalMerklerootDatabase(networkName);
+  constructor(
+    networkName: NetworkName,
+    txidVersion: TXIDVersion,
+    listKey: string,
+  ) {
+    this.merkletreeDB = new POIMerkletreeDatabase(networkName, txidVersion);
+    this.merklerootDB = new POIHistoricalMerklerootDatabase(
+      networkName,
+      txidVersion,
+    );
     this.listKey = listKey;
     this.calculateZeros();
   }
@@ -221,7 +229,7 @@ export class POIMerkletree {
     nodeHashes: string[],
   ): Promise<void> {
     if (this.isUpdating) {
-      throw new Error('POI merkletree is already updating');
+      throw new Error('POI merkletree is already updating - test only');
     }
     this.isUpdating = true;
 

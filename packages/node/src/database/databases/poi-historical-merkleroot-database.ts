@@ -1,4 +1,4 @@
-import { NetworkName } from '@railgun-community/shared-models';
+import { NetworkName, TXIDVersion } from '@railgun-community/shared-models';
 import {
   CollectionName,
   POIHistoricalMerklerootDBItem,
@@ -7,8 +7,8 @@ import { AbstractDatabase } from '../abstract-database';
 import { Filter } from 'mongodb';
 
 export class POIHistoricalMerklerootDatabase extends AbstractDatabase<POIHistoricalMerklerootDBItem> {
-  constructor(networkName: NetworkName) {
-    super(networkName, CollectionName.POIHistoricalMerkleroots);
+  constructor(networkName: NetworkName, txidVersion: TXIDVersion) {
+    super(networkName, txidVersion, CollectionName.POIHistoricalMerkleroots);
   }
 
   async createCollectionIndices() {

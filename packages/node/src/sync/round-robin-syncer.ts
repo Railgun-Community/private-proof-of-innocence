@@ -3,6 +3,7 @@ import {
   delay,
   isDefined,
   NodeStatusAllNetworks,
+  TXIDVersion,
 } from '@railgun-community/shared-models';
 import debug from 'debug';
 import { Config } from '../config/config';
@@ -98,20 +99,21 @@ export class RoundRobinSyncer {
     nodeURL: string,
     nodeStatusAllNetworks: NodeStatusAllNetworks,
   ) {
-    await Promise.all(
-      Config.NETWORK_NAMES.map(async networkName => {
-        const nodeStatus = nodeStatusAllNetworks.forNetwork[networkName];
-        if (!nodeStatus) {
-          dbg(`Node ${nodeURL} does not support network ${networkName}`);
-          return;
-        }
+    for (const networkName of Config.NETWORK_NAMES) {
+      const nodeStatus = nodeStatusAllNetworks.forNetwork[networkName];
+      if (!nodeStatus) {
+        dbg(`Node ${nodeURL} does not support network ${networkName}`);
+        return;
+      }
+      for (const txidVersion of Config.TXID_VERSIONS) {
         await RailgunTxidMerkletreeManager.updateValidatedRailgunTxidStatusSafe(
           nodeURL,
           networkName,
+          txidVersion,
           nodeStatus.txidStatus,
         );
-      }),
-    );
+      }
+    }
   }
 
   async updatePOIEventListAllNetworks(
@@ -125,16 +127,19 @@ export class RoundRobinSyncer {
       }
       const { listStatuses } = nodeStatus;
 
-      for (const listKey of this.listKeys) {
-        if (!isDefined(listStatuses[listKey])) {
-          continue;
+      for (const txidVersion of Config.TXID_VERSIONS) {
+        for (const listKey of this.listKeys) {
+          if (!isDefined(listStatuses[listKey])) {
+            continue;
+          }
+          await this.updatePOIEventList(
+            nodeURL,
+            networkName,
+            txidVersion,
+            listKey,
+            listStatuses[listKey].poiEvents,
+          );
         }
-        await this.updatePOIEventList(
-          nodeURL,
-          networkName,
-          listKey,
-          listStatuses[listKey].poiEvents,
-        );
       }
     }
   }
@@ -142,11 +147,13 @@ export class RoundRobinSyncer {
   private async updatePOIEventList(
     nodeURL: string,
     networkName: NetworkName,
+    txidVersion: TXIDVersion,
     listKey: string,
     nodePOIEventsLength: number,
   ) {
     const currentListLength = await POIEventList.getPOIEventsLength(
       networkName,
+      txidVersion,
       listKey,
     );
     if (nodePOIEventsLength <= currentListLength) {
@@ -163,6 +170,7 @@ export class RoundRobinSyncer {
     const signedPOIEvents = await POINodeRequest.getPOIListEventRange(
       nodeURL,
       networkName,
+      txidVersion,
       listKey,
       startIndex,
       endIndex,
@@ -170,6 +178,7 @@ export class RoundRobinSyncer {
 
     await POIEventList.verifyAndAddSignedPOIEvents(
       networkName,
+      txidVersion,
       listKey,
       signedPOIEvents,
     );
@@ -188,18 +197,22 @@ export class RoundRobinSyncer {
       if (!nodeStatus) {
         continue;
       }
+
       const { listStatuses } = nodeStatus;
 
-      for (const listKey of this.listKeys) {
-        if (!isDefined(listStatuses[listKey])) {
-          continue;
+      for (const txidVersion of Config.TXID_VERSIONS) {
+        for (const listKey of this.listKeys) {
+          if (!isDefined(listStatuses[listKey])) {
+            continue;
+          }
+          await this.updateTransactProofMempool(
+            nodeURL,
+            networkName,
+            txidVersion,
+            listKey,
+            listStatuses[listKey].pendingTransactProofs,
+          );
         }
-        await this.updateTransactProofMempool(
-          nodeURL,
-          networkName,
-          listKey,
-          listStatuses[listKey].pendingTransactProofs,
-        );
       }
     }
   }
@@ -207,12 +220,14 @@ export class RoundRobinSyncer {
   private async updateTransactProofMempool(
     nodeURL: string,
     networkName: NetworkName,
+    txidVersion: TXIDVersion,
     listKey: string,
     nodePendingTransactProofsLength: number,
   ) {
     const currentTransactProofsLength = TransactProofMempoolCache.getCacheSize(
       listKey,
       networkName,
+      txidVersion,
     );
     if (nodePendingTransactProofsLength <= currentTransactProofsLength) {
       return;
@@ -223,6 +238,7 @@ export class RoundRobinSyncer {
     const transactProofs = await POINodeRequest.getFilteredTransactProofs(
       nodeURL,
       networkName,
+      txidVersion,
       listKey,
       serializedBloomFilter,
     );
@@ -231,6 +247,7 @@ export class RoundRobinSyncer {
         await TransactProofMempool.submitProof(
           listKey,
           networkName,
+          txidVersion,
           transactProof,
         );
       } catch (err) {
@@ -253,16 +270,19 @@ export class RoundRobinSyncer {
       }
       const { listStatuses } = nodeStatus;
 
-      for (const listKey of this.listKeys) {
-        if (!isDefined(listStatuses[listKey])) {
-          continue;
+      for (const txidVersion of Config.TXID_VERSIONS) {
+        for (const listKey of this.listKeys) {
+          if (!isDefined(listStatuses[listKey])) {
+            continue;
+          }
+          await this.updateBlockedShields(
+            nodeURL,
+            networkName,
+            txidVersion,
+            listKey,
+            listStatuses[listKey].blockedShields,
+          );
         }
-        await this.updateBlockedShields(
-          nodeURL,
-          networkName,
-          listKey,
-          listStatuses[listKey].blockedShields,
-        );
       }
     }
   }
@@ -270,6 +290,7 @@ export class RoundRobinSyncer {
   private async updateBlockedShields(
     nodeURL: string,
     networkName: NetworkName,
+    txidVersion: TXIDVersion,
     listKey: string,
     nodeBlockedShieldsLength: number,
   ) {
@@ -288,6 +309,7 @@ export class RoundRobinSyncer {
     const signedBlockedShields = await POINodeRequest.getFilteredBlockedShields(
       nodeURL,
       networkName,
+      txidVersion,
       listKey,
       serializedBloomFilter,
     );
@@ -296,6 +318,7 @@ export class RoundRobinSyncer {
         await BlockedShieldsSyncer.addSignedBlockedShield(
           listKey,
           networkName,
+          txidVersion,
           signedBlockedShield,
         );
       } catch (err) {

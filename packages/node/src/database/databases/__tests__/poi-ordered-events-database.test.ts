@@ -1,7 +1,7 @@
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { POIOrderedEventsDatabase } from '../poi-ordered-events-database';
-import { NetworkName } from '@railgun-community/shared-models';
+import { NetworkName, TXIDVersion } from '@railgun-community/shared-models';
 import { DatabaseClient } from '../../database-client-init';
 import { SignedPOIEvent } from '../../../models/poi-types';
 import { POIEventList } from '../../../poi-events/poi-event-list';
@@ -11,6 +11,7 @@ chai.use(chaiAsPromised);
 const { expect } = chai;
 
 const networkName = NetworkName.Ethereum;
+const txidVersion = TXIDVersion.V2_PoseidonMerkle;
 
 let db: POIOrderedEventsDatabase;
 
@@ -19,7 +20,7 @@ const listKey = MOCK_LIST_KEYS[0];
 describe('poi-ordered-events-database', () => {
   before(async () => {
     await DatabaseClient.init();
-    db = new POIOrderedEventsDatabase(networkName);
+    db = new POIOrderedEventsDatabase(networkName, txidVersion);
     await db.createCollectionIndices();
   });
 
@@ -150,6 +151,7 @@ describe('poi-ordered-events-database', () => {
     // Retrieve only the 2nd event
     const eventRange = await POIEventList.getPOIListEventRange(
       networkName,
+      txidVersion,
       listKey,
       1,
       2,

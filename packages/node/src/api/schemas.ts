@@ -1,5 +1,25 @@
 import { AllowedSchema } from 'express-json-validator-middleware';
 
+export const GetPOIListEventRangeParamsSchema: AllowedSchema = {
+  type: 'object',
+  properties: {
+    chainType: { type: 'string' },
+    chainID: { type: 'string' },
+  },
+  required: ['chainType', 'chainID'],
+};
+
+export const GetPOIListEventRangeBodySchema: AllowedSchema = {
+  type: 'object',
+  properties: {
+    txidVersion: { type: 'string' },
+    startIndex: { type: 'number' },
+    endIndex: { type: 'number' },
+    listKey: { type: 'string' },
+  },
+  required: ['txidVersion', 'startIndex', 'endIndex', 'listKey'],
+};
+
 export const GetTransactProofsParamsSchema: AllowedSchema = {
   type: 'object',
   properties: {
@@ -13,9 +33,10 @@ export const GetTransactProofsParamsSchema: AllowedSchema = {
 export const GetTransactProofsBodySchema: AllowedSchema = {
   type: 'object',
   properties: {
+    txidVersion: { type: 'string' },
     bloomFilterSerialized: { type: 'string' },
   },
-  required: ['bloomFilterSerialized'],
+  required: ['txidVersion', 'bloomFilterSerialized'],
 };
 
 export const GetBlockedShieldsParamsSchema: AllowedSchema = {
@@ -31,9 +52,10 @@ export const GetBlockedShieldsParamsSchema: AllowedSchema = {
 export const GetBlockedShieldsBodySchema: AllowedSchema = {
   type: 'object',
   properties: {
+    txidVersion: { type: 'string' },
     bloomFilterSerialized: { type: 'string' },
   },
-  required: ['bloomFilterSerialized'],
+  required: ['txidVersion', 'bloomFilterSerialized'],
 };
 
 export const SubmitTransactProofParamsSchema: AllowedSchema = {
@@ -48,6 +70,7 @@ export const SubmitTransactProofParamsSchema: AllowedSchema = {
 export const SubmitTransactProofBodySchema: AllowedSchema = {
   type: 'object',
   properties: {
+    txidVersion: { type: 'string' },
     listKey: { type: 'string' },
     transactProofData: {
       type: 'object',
@@ -95,7 +118,7 @@ export const SubmitTransactProofBodySchema: AllowedSchema = {
       ],
     },
   },
-  required: ['listKey', 'transactProofData'],
+  required: ['txidVersion', 'listKey', 'transactProofData'],
 };
 
 export const GetPOIsPerListParamsSchema: AllowedSchema = {
@@ -110,6 +133,7 @@ export const GetPOIsPerListParamsSchema: AllowedSchema = {
 export const GetPOIsPerListBodySchema: AllowedSchema = {
   type: 'object',
   properties: {
+    txidVersion: { type: 'string' },
     listKeys: {
       type: 'array',
       items: { type: 'string' },
@@ -129,7 +153,7 @@ export const GetPOIsPerListBodySchema: AllowedSchema = {
       },
     },
   },
-  required: ['listKeys', 'blindedCommitmentDatas'],
+  required: ['txidVersion', 'listKeys', 'blindedCommitmentDatas'],
 };
 
 export const GetMerkleProofsParamsSchema: AllowedSchema = {
@@ -144,10 +168,28 @@ export const GetMerkleProofsParamsSchema: AllowedSchema = {
 export const GetMerkleProofsBodySchema: AllowedSchema = {
   type: 'object',
   properties: {
+    txidVersion: { type: 'string' },
     listKey: { type: 'string' },
     blindedCommitments: { type: 'array', items: { type: 'string' } },
   },
-  required: ['listKey', 'blindedCommitments'],
+  required: ['txidVersion', 'listKey', 'blindedCommitments'],
+};
+
+export const GetLatestValidatedRailgunTxidParamsSchema: AllowedSchema = {
+  type: 'object',
+  properties: {
+    chainType: { type: 'string' },
+    chainID: { type: 'string' },
+  },
+  required: ['chainType', 'chainID'],
+};
+
+export const GetLatestValidatedRailgunTxidBodySchema: AllowedSchema = {
+  type: 'object',
+  properties: {
+    txidVersion: { type: 'string' },
+  },
+  required: ['txidVersion'],
 };
 
 export const ValidateTxidMerklerootParamsSchema: AllowedSchema = {
@@ -162,9 +204,10 @@ export const ValidateTxidMerklerootParamsSchema: AllowedSchema = {
 export const ValidateTxidMerklerootBodySchema: AllowedSchema = {
   type: 'object',
   properties: {
+    txidVersion: { type: 'string' },
     tree: { type: 'number' },
     index: { type: 'number' },
     merkleroot: { type: 'string' },
   },
-  required: ['tree', 'index', 'merkleroot'],
+  required: ['txidVersion', 'tree', 'index', 'merkleroot'],
 };

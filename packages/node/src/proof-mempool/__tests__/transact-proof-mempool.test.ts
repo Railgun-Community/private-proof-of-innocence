@@ -6,6 +6,7 @@ import { RailgunTxidMerkletreeManager } from '../../railgun-txids/railgun-txid-m
 import Sinon, { SinonStub } from 'sinon';
 import {
   NetworkName,
+  TXIDVersion,
   TransactProofData,
 } from '@railgun-community/shared-models';
 import { MOCK_LIST_KEYS, MOCK_SNARK_PROOF } from '../../tests/mocks.test';
@@ -22,6 +23,7 @@ chai.use(chaiAsPromised);
 const { expect } = chai;
 
 const networkName = NetworkName.Ethereum;
+const txidVersion = TXIDVersion.V2_PoseidonMerkle;
 const listKey = MOCK_LIST_KEYS[0];
 
 let transactProofMempoolDB: TransactProofPerListMempoolDatabase;
@@ -36,11 +38,13 @@ describe('transact-proof-mempool', () => {
     await DatabaseClient.init();
     transactProofMempoolDB = new TransactProofPerListMempoolDatabase(
       networkName,
+      txidVersion,
     );
     poiHistoricalMerklerootDB = new POIHistoricalMerklerootDatabase(
       networkName,
+      txidVersion,
     );
-    orderedEventDB = new POIOrderedEventsDatabase(networkName);
+    orderedEventDB = new POIOrderedEventsDatabase(networkName, txidVersion);
     verifyTransactProofStub = Sinon.stub(
       SnarkProofVerifyModule,
       'verifyTransactProof',
@@ -83,7 +87,12 @@ describe('transact-proof-mempool', () => {
     verifyTransactProofStub.resolves(false);
     txidMerklerootExistsStub.resolves(true);
     await expect(
-      TransactProofMempool.submitProof(listKey, networkName, transactProofData),
+      TransactProofMempool.submitProof(
+        listKey,
+        networkName,
+        txidVersion,
+        transactProofData,
+      ),
     ).to.be.rejectedWith('Invalid proof');
 
     ListProviderPOIEventQueue.listKey = listKey;
@@ -107,6 +116,7 @@ describe('transact-proof-mempool', () => {
     await TransactProofMempool.submitProof(
       listKey,
       networkName,
+      txidVersion,
       transactProofData,
     );
     await expect(
@@ -159,16 +169,18 @@ describe('transact-proof-mempool', () => {
     await TransactProofMempool.submitProof(
       listKey,
       networkName,
+      txidVersion,
       transactProofData1,
     );
     await TransactProofMempool.submitProof(
       listKey,
       networkName,
+      txidVersion,
       transactProofData2,
     );
 
     expect(
-      TransactProofMempoolCache.getCacheSize(listKey, networkName),
+      TransactProofMempoolCache.getCacheSize(listKey, networkName, txidVersion),
     ).to.equal(2);
 
     const bloomFilter = POINodeBloomFilter.create();
@@ -178,6 +190,7 @@ describe('transact-proof-mempool', () => {
       TransactProofMempool.getFilteredProofs(
         listKey,
         networkName,
+        txidVersion,
         bloomFilterSerializedNoData,
       ),
     ).to.deep.equal([transactProofData1, transactProofData2]);
@@ -189,6 +202,7 @@ describe('transact-proof-mempool', () => {
       TransactProofMempool.getFilteredProofs(
         listKey,
         networkName,
+        txidVersion,
         bloomFilterSerializedWithProof1,
       ),
     ).to.deep.equal([transactProofData2]);
@@ -233,36 +247,39 @@ describe('transact-proof-mempool', () => {
     await TransactProofMempool.submitProof(
       listKey,
       networkName,
+      txidVersion,
       transactProofData1,
     );
     await TransactProofMempool.submitProof(
       listKey,
       networkName,
+      txidVersion,
       transactProofData2,
     );
 
     expect(
-      TransactProofMempoolCache.getCacheSize(listKey, networkName),
+      TransactProofMempoolCache.getCacheSize(listKey, networkName, txidVersion),
     ).to.equal(2);
 
     TransactProofMempoolCache.clearCache_FOR_TEST_ONLY();
     expect(
-      TransactProofMempoolCache.getCacheSize(listKey, networkName),
+      TransactProofMempoolCache.getCacheSize(listKey, networkName, txidVersion),
     ).to.equal(0);
 
     await TransactProofMempool.inflateCacheFromDatabase(MOCK_LIST_KEYS);
     expect(
-      TransactProofMempoolCache.getCacheSize(listKey, networkName),
+      TransactProofMempoolCache.getCacheSize(listKey, networkName, txidVersion),
     ).to.equal(2);
 
     // Remove a proof and check cache
     await TransactProofMempoolPruner.removeProof(
       listKey,
       networkName,
+      txidVersion,
       '0x3333',
     );
     expect(
-      TransactProofMempoolCache.getCacheSize(listKey, networkName),
+      TransactProofMempoolCache.getCacheSize(listKey, networkName, txidVersion),
     ).to.equal(1);
   }).timeout(10000);
 });

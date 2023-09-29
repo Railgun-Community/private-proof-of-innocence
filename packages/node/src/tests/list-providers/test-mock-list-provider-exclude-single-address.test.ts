@@ -1,7 +1,7 @@
 /// <reference types="../../types/index" />
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import { NetworkName } from '@railgun-community/shared-models';
+import { NetworkName, TXIDVersion } from '@railgun-community/shared-models';
 import {
   ListProvider,
   ListProviderConfig,

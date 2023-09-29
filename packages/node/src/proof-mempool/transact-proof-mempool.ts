@@ -1,5 +1,6 @@
 import {
   NetworkName,
+  TXIDVersion,
   TransactProofData,
   isDefined,
 } from '@railgun-community/shared-models';
@@ -25,6 +26,7 @@ export class TransactProofMempool {
   static async submitProof(
     listKey: string,
     networkName: NetworkName,
+    txidVersion: TXIDVersion,
     transactProofData: TransactProofData,
   ) {
     if (transactProofData.blindedCommitmentOutputs.length < 1) {
@@ -34,18 +36,23 @@ export class TransactProofMempool {
     const shouldAdd = await this.shouldAdd(
       listKey,
       networkName,
+      txidVersion,
       transactProofData,
     );
     if (!shouldAdd) {
       return;
     }
 
-    const db = new TransactProofPerListMempoolDatabase(networkName);
+    const db = new TransactProofPerListMempoolDatabase(
+      networkName,
+      txidVersion,
+    );
     await db.insertTransactProof(listKey, transactProofData);
 
     TransactProofMempoolCache.addToCache(
       listKey,
       networkName,
+      txidVersion,
       transactProofData,
     );
 
@@ -54,6 +61,7 @@ export class TransactProofMempool {
         await TransactProofMempool.tryAddToActiveList(
           listKey,
           networkName,
+          txidVersion,
           transactProofData,
         );
       } else {
@@ -62,6 +70,7 @@ export class TransactProofMempool {
           await POINodeRequest.submitTransactProof(
             nodeURL,
             networkName,
+            txidVersion,
             ListProviderPOIEventQueue.listKey,
             transactProofData,
           );
@@ -76,6 +85,7 @@ export class TransactProofMempool {
   static async tryAddToActiveList(
     listKey: string,
     networkName: NetworkName,
+    txidVersion: TXIDVersion,
     transactProofData: TransactProofData,
   ) {
     const { tree, index } =
@@ -86,6 +96,7 @@ export class TransactProofMempool {
     const networkPOISettings = networkForName(networkName).poi;
     const isLegacyTransaction = isDefined(networkPOISettings)
       ? await validateRailgunTxidOccurredBeforeBlockNumber(
+          txidVersion,
           networkName,
           tree,
           index,
@@ -95,7 +106,10 @@ export class TransactProofMempool {
 
     if (!isLegacyTransaction) {
       // Verify all POI Merkleroots exist
-      const poiMerklerootDb = new POIHistoricalMerklerootDatabase(networkName);
+      const poiMerklerootDb = new POIHistoricalMerklerootDatabase(
+        networkName,
+        txidVersion,
+      );
       const allMerklerootsExist = await poiMerklerootDb.allMerklerootsExist(
         listKey,
         transactProofData.poiMerkleroots,
@@ -109,6 +123,7 @@ export class TransactProofMempool {
     const isValidTxMerkleroot =
       await RailgunTxidMerkletreeManager.checkIfMerklerootExistsByTxidIndex(
         networkName,
+        txidVersion,
         transactProofData.txidMerklerootIndex,
         transactProofData.txidMerkleroot,
       );
@@ -118,6 +133,7 @@ export class TransactProofMempool {
 
     ListProviderPOIEventQueue.queueUnsignedPOITransactEvent(
       networkName,
+      txidVersion,
       transactProofData,
     );
   }
@@ -125,10 +141,14 @@ export class TransactProofMempool {
   private static async shouldAdd(
     listKey: string,
     networkName: NetworkName,
+    txidVersion: TXIDVersion,
     transactProofData: TransactProofData,
   ): Promise<boolean> {
     // 1. Verify that doesn't already exist
-    const db = new TransactProofPerListMempoolDatabase(networkName);
+    const db = new TransactProofPerListMempoolDatabase(
+      networkName,
+      txidVersion,
+    );
     const exists = await db.proofExists(
       listKey,
       transactProofData.blindedCommitmentOutputs[0],
@@ -138,7 +158,10 @@ export class TransactProofMempool {
     }
 
     // 2. Verify that OrderedEvent for this list doesn't exist.
-    const orderedEventsDB = new POIOrderedEventsDatabase(networkName);
+    const orderedEventsDB = new POIOrderedEventsDatabase(
+      networkName,
+      txidVersion,
+    );
     const orderedEventExists = await orderedEventsDB.eventExists(
       listKey,
       transactProofData.blindedCommitmentOutputs[0],
@@ -158,25 +181,31 @@ export class TransactProofMempool {
 
   static async inflateCacheFromDatabase(listKeys: string[]) {
     for (const networkName of Config.NETWORK_NAMES) {
-      const db = new TransactProofPerListMempoolDatabase(networkName);
+      for (const txidVersion of Config.TXID_VERSIONS) {
+        const db = new TransactProofPerListMempoolDatabase(
+          networkName,
+          txidVersion,
+        );
 
-      for (const listKey of listKeys) {
-        const transactProofsStream = await db.streamTransactProofs(listKey);
+        for (const listKey of listKeys) {
+          const transactProofsStream = await db.streamTransactProofs(listKey);
 
-        for await (const transactProofDBItem of transactProofsStream) {
-          const transactProofData: TransactProofData = {
-            snarkProof: transactProofDBItem.snarkProof,
-            poiMerkleroots: transactProofDBItem.poiMerkleroots,
-            txidMerkleroot: transactProofDBItem.txidMerkleroot,
-            txidMerklerootIndex: transactProofDBItem.txidMerklerootIndex,
-            blindedCommitmentOutputs:
-              transactProofDBItem.blindedCommitmentOutputs,
-          };
-          TransactProofMempoolCache.addToCache(
-            listKey,
-            networkName,
-            transactProofData,
-          );
+          for await (const transactProofDBItem of transactProofsStream) {
+            const transactProofData: TransactProofData = {
+              snarkProof: transactProofDBItem.snarkProof,
+              poiMerkleroots: transactProofDBItem.poiMerkleroots,
+              txidMerkleroot: transactProofDBItem.txidMerkleroot,
+              txidMerklerootIndex: transactProofDBItem.txidMerklerootIndex,
+              blindedCommitmentOutputs:
+                transactProofDBItem.blindedCommitmentOutputs,
+            };
+            TransactProofMempoolCache.addToCache(
+              listKey,
+              networkName,
+              txidVersion,
+              transactProofData,
+            );
+          }
         }
       }
     }
@@ -185,10 +214,15 @@ export class TransactProofMempool {
   static getFilteredProofs(
     listKey: string,
     networkName: NetworkName,
+    txidVersion: TXIDVersion,
     countingBloomFilterSerialized: string,
   ): TransactProofData[] {
     const transactProofDatas: TransactProofData[] =
-      TransactProofMempoolCache.getTransactProofs(listKey, networkName);
+      TransactProofMempoolCache.getTransactProofs(
+        listKey,
+        networkName,
+        txidVersion,
+      );
 
     const bloomFilter = POINodeCountingBloomFilter.deserialize(
       countingBloomFilterSerialized,

@@ -1,4 +1,8 @@
-import { NetworkName, isDefined } from '@railgun-community/shared-models';
+import {
+  NetworkName,
+  TXIDVersion,
+  isDefined,
+} from '@railgun-community/shared-models';
 import debug from 'debug';
 import {
   Collection,
@@ -30,14 +34,18 @@ export abstract class AbstractDatabase<T extends Document> {
 
   private dbg: debug.Debugger;
 
-  constructor(networkName: NetworkName, collection: CollectionName) {
+  constructor(
+    networkName: NetworkName,
+    txidVersion: TXIDVersion,
+    collection: CollectionName,
+  ) {
     if (!DatabaseClientStorage.client) {
       throw new Error('DatabaseClient not initialized');
     }
 
     const { chain } = networkForName(networkName);
-    const chainKey = `${chain.type}:${chain.id}`;
-    this.db = DatabaseClientStorage.client.db(chainKey);
+    const dbKey = `${chain.type}:${chain.id}:${txidVersion}`;
+    this.db = DatabaseClientStorage.client.db(dbKey);
 
     this.collection = this.db.collection<T>(collection);
     this.dbg = debug(`poi:db:${collection}`);

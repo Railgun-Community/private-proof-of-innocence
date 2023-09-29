@@ -1,4 +1,4 @@
-import { NetworkName } from '@railgun-community/shared-models';
+import { NetworkName, TXIDVersion } from '@railgun-community/shared-models';
 import { NodeConfig } from '../models/general-types';
 
 export class Config {
@@ -10,6 +10,8 @@ export class Config {
     NetworkName.Ethereum,
     NetworkName.EthereumGoerli,
   ];
+
+  static TXID_VERSIONS: TXIDVersion[] = Object.values(TXIDVersion);
 
   static ENGINE_DB_DIR = 'engine.db';
 }

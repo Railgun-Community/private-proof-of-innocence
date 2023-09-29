@@ -1,4 +1,4 @@
-import { NetworkName } from '@railgun-community/shared-models';
+import { NetworkName, TXIDVersion } from '@railgun-community/shared-models';
 import {
   CollectionName,
   DBFilter,
@@ -7,8 +7,8 @@ import {
 import { AbstractDatabase } from '../abstract-database';
 
 export class StatusDatabase extends AbstractDatabase<StatusDBItem> {
-  constructor(networkName: NetworkName) {
-    super(networkName, CollectionName.Status);
+  constructor(networkName: NetworkName, txidVersion: TXIDVersion) {
+    super(networkName, txidVersion, CollectionName.Status);
   }
 
   async createCollectionIndices() {

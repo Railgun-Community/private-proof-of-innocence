@@ -1,6 +1,6 @@
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import { NetworkName } from '@railgun-community/shared-models';
+import { NetworkName, TXIDVersion } from '@railgun-community/shared-models';
 import { DatabaseClient } from '../../database/database-client-init';
 import { RailgunTxidMerkletreeManager } from '../railgun-txid-merkletree-manager';
 import Sinon, { SinonSpy, SinonStub } from 'sinon';
@@ -13,6 +13,7 @@ chai.use(chaiAsPromised);
 const { expect } = chai;
 
 const networkName = NetworkName.Ethereum;
+const txidVersion = TXIDVersion.V2_PoseidonMerkle;
 
 let txidMerkletreeStatusDB: RailgunTxidMerkletreeStatusDatabase;
 
@@ -34,6 +35,7 @@ describe('railgun-txid-merkletree-manager', () => {
 
     txidMerkletreeStatusDB = new RailgunTxidMerkletreeStatusDatabase(
       networkName,
+      txidVersion,
     );
 
     getRailgunTxidStatusStub = Sinon.stub(
@@ -49,7 +51,7 @@ describe('railgun-txid-merkletree-manager', () => {
     getHistoricalTxidMerklerootStub = Sinon.stub(
       RailgunTxidMerkletreeManager,
       'getHistoricalTxidMerkleroot',
-    ).callsFake(async (_networkName, _tree, index) => {
+    ).callsFake(async (_networkName, _txidVersion, _tree, index) => {
       if (index === 60) {
         return '60';
       }
@@ -84,6 +86,7 @@ describe('railgun-txid-merkletree-manager', () => {
       RailgunTxidMerkletreeManager.updateValidatedRailgunTxidStatus(
         nodeURL,
         networkName,
+        txidVersion,
         {
           currentMerkleroot: undefined,
           currentTxidIndex: undefined,
@@ -100,6 +103,7 @@ describe('railgun-txid-merkletree-manager', () => {
       RailgunTxidMerkletreeManager.updateValidatedRailgunTxidStatus(
         nodeURL,
         networkName,
+        txidVersion,
         {
           currentMerkleroot: '50',
           currentTxidIndex: 50,
@@ -114,6 +118,7 @@ describe('railgun-txid-merkletree-manager', () => {
       RailgunTxidMerkletreeManager.updateValidatedRailgunTxidStatus(
         nodeURL,
         networkName,
+        txidVersion,
         {
           currentMerkleroot: '50',
           currentTxidIndex: 50,
@@ -127,6 +132,7 @@ describe('railgun-txid-merkletree-manager', () => {
       RailgunTxidMerkletreeManager.updateValidatedRailgunTxidStatus(
         nodeURL,
         networkName,
+        txidVersion,
         {
           currentMerkleroot: '61',
           currentTxidIndex: 61,
@@ -144,6 +150,7 @@ describe('railgun-txid-merkletree-manager', () => {
     await RailgunTxidMerkletreeManager.updateValidatedRailgunTxidStatus(
       nodeURL,
       networkName,
+      txidVersion,
       {
         currentMerkleroot: '60',
         currentTxidIndex: 60,
@@ -166,6 +173,7 @@ describe('railgun-txid-merkletree-manager', () => {
     await RailgunTxidMerkletreeManager.updateValidatedRailgunTxidStatus(
       nodeURL,
       networkName,
+      txidVersion,
       {
         currentMerkleroot: '69',
         currentTxidIndex: 60,

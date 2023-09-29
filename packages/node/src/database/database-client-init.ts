@@ -1,5 +1,6 @@
 import {
   NetworkName,
+  TXIDVersion,
   isDefined,
   promiseTimeout,
 } from '@railgun-community/shared-models';
@@ -45,47 +46,65 @@ export class DatabaseClient {
     await Promise.all(
       Config.NETWORK_NAMES.map(async (networkName: NetworkName) => {
         await Promise.all(
-          Object.values(CollectionName).map(async collectionName => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            let db: AbstractDatabase<any>;
-
-            switch (collectionName) {
-              case CollectionName.Status:
-                db = new StatusDatabase(networkName);
-                break;
-              case CollectionName.ShieldQueue:
-                db = new ShieldQueueDatabase(networkName);
-                break;
-              case CollectionName.TransactProofPerListMempool:
-                db = new TransactProofPerListMempoolDatabase(networkName);
-                break;
-              case CollectionName.BlockedShieldsPerList:
-                db = new BlockedShieldsPerListDatabase(networkName);
-                break;
-              case CollectionName.RailgunTxidMerkletreeStatus:
-                db = new RailgunTxidMerkletreeStatusDatabase(networkName);
-                break;
-              case CollectionName.POIOrderedEvents:
-                db = new POIOrderedEventsDatabase(networkName);
-                break;
-              case CollectionName.POIMerkletree:
-                db = new POIMerkletreeDatabase(networkName);
-                break;
-              case CollectionName.POIHistoricalMerkleroots:
-                db = new POIHistoricalMerklerootDatabase(networkName);
-                break;
-              case CollectionName.Test:
-                db = new TestDatabase(networkName);
-                break;
-              default:
-                throw new Error(
-                  `Unsupported collection name: ${collectionName}`,
-                );
-            }
-
-            await db.createCollectionIndices();
+          Config.TXID_VERSIONS.map(async (txidVersion: TXIDVersion) => {
+            await this.createAllCollectionsWithIndices(
+              networkName,
+              txidVersion,
+            );
           }),
         );
+      }),
+    );
+  }
+
+  static async createAllCollectionsWithIndices(
+    networkName: NetworkName,
+    txidVersion: TXIDVersion,
+  ): Promise<void> {
+    await Promise.all(
+      Object.values(CollectionName).map(async collectionName => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        let db: AbstractDatabase<any>;
+
+        switch (collectionName) {
+          case CollectionName.Status:
+            db = new StatusDatabase(networkName, txidVersion);
+            break;
+          case CollectionName.ShieldQueue:
+            db = new ShieldQueueDatabase(networkName, txidVersion);
+            break;
+          case CollectionName.TransactProofPerListMempool:
+            db = new TransactProofPerListMempoolDatabase(
+              networkName,
+              txidVersion,
+            );
+            break;
+          case CollectionName.BlockedShieldsPerList:
+            db = new BlockedShieldsPerListDatabase(networkName, txidVersion);
+            break;
+          case CollectionName.RailgunTxidMerkletreeStatus:
+            db = new RailgunTxidMerkletreeStatusDatabase(
+              networkName,
+              txidVersion,
+            );
+            break;
+          case CollectionName.POIOrderedEvents:
+            db = new POIOrderedEventsDatabase(networkName, txidVersion);
+            break;
+          case CollectionName.POIMerkletree:
+            db = new POIMerkletreeDatabase(networkName, txidVersion);
+            break;
+          case CollectionName.POIHistoricalMerkleroots:
+            db = new POIHistoricalMerklerootDatabase(networkName, txidVersion);
+            break;
+          case CollectionName.Test:
+            db = new TestDatabase(networkName, txidVersion);
+            break;
+          default:
+            throw new Error(`Unsupported collection name: ${collectionName}`);
+        }
+
+        await db.createCollectionIndices();
       }),
     );
   }

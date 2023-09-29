@@ -1,7 +1,7 @@
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { TransactProofPerListMempoolDatabase } from '../transact-proof-per-list-mempool-database';
-import { NetworkName } from '@railgun-community/shared-models';
+import { NetworkName, TXIDVersion } from '@railgun-community/shared-models';
 import { DatabaseClient } from '../../database-client-init';
 import { TransactProofMempoolDBItem } from '../../../models/database-types';
 import { MOCK_LIST_KEYS } from '../../../tests/mocks.test';
@@ -10,6 +10,7 @@ chai.use(chaiAsPromised);
 const { expect } = chai;
 
 const networkName = NetworkName.Ethereum;
+const txidVersion = TXIDVersion.V2_PoseidonMerkle;
 
 let db: TransactProofPerListMempoolDatabase;
 
@@ -18,7 +19,7 @@ const listKey = MOCK_LIST_KEYS[0];
 describe('transact-proof-per-list-mempool-database', () => {
   before(async () => {
     await DatabaseClient.init();
-    db = new TransactProofPerListMempoolDatabase(networkName);
+    db = new TransactProofPerListMempoolDatabase(networkName, txidVersion);
     await db.createCollectionIndices();
   });
 

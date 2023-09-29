@@ -5,7 +5,7 @@ import {
   initNetworkProviders,
 } from '../active-network-providers';
 import { startEngine, stopEngine } from '../../engine/engine-init';
-import { NetworkName } from '@railgun-community/shared-models';
+import { NetworkName, TXIDVersion } from '@railgun-community/shared-models';
 
 chai.use(chaiAsPromised);
 const { expect } = chai;

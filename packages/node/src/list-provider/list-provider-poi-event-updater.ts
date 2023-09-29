@@ -2,6 +2,7 @@ import {
   NetworkName,
   delay,
   TransactProofData,
+  TXIDVersion,
 } from '@railgun-community/shared-models';
 import { Config } from '../config/config';
 import { TransactProofMempool } from '../proof-mempool/transact-proof-mempool';
@@ -23,7 +24,9 @@ export class ListProviderPOIEventUpdater {
 
   private static async poll() {
     for (const networkName of Config.NETWORK_NAMES) {
-      await this.addPOIEventsForTransacts(networkName);
+      for (const txidVersion of Config.TXID_VERSIONS) {
+        await this.addPOIEventsForTransacts(networkName, txidVersion);
+      }
     }
 
     // Run every 10 minutes
@@ -33,9 +36,13 @@ export class ListProviderPOIEventUpdater {
     this.poll();
   }
 
-  private static async addPOIEventsForTransacts(networkName: NetworkName) {
+  private static async addPOIEventsForTransacts(
+    networkName: NetworkName,
+    txidVersion: TXIDVersion,
+  ) {
     const transactProofMempoolDB = new TransactProofPerListMempoolDatabase(
       networkName,
+      txidVersion,
     );
     const transactProofsStream =
       await transactProofMempoolDB.streamTransactProofs(
@@ -52,6 +59,7 @@ export class ListProviderPOIEventUpdater {
       await TransactProofMempool.tryAddToActiveList(
         ListProviderPOIEventUpdater.listKey,
         networkName,
+        txidVersion,
         transactProofData,
       );
     }

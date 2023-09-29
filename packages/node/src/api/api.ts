@@ -12,7 +12,6 @@ import { POIEventList } from '../poi-events/poi-event-list';
 import { networkNameForSerializedChain } from '../config/general';
 import { TransactProofMempool } from '../proof-mempool/transact-proof-mempool';
 import { POIMerkletreeManager } from '../poi-events/poi-merkletree-manager';
-import { getShieldQueueStatus } from '../shields/shield-queue';
 import { RailgunTxidMerkletreeManager } from '../railgun-txids/railgun-txid-merkletree-manager';
 import { QueryLimits } from '../config/query-limits';
 import { NodeStatus } from '../status/node-status';
@@ -24,6 +23,8 @@ import {
   GetPOIsPerListParams,
   GetMerkleProofsParams,
   ValidateTxidMerklerootParams,
+  GetLatestValidatedRailgunTxidParams,
+  TXIDVersion,
 } from '@railgun-community/shared-models';
 import {
   GetTransactProofsParamsSchema,
@@ -38,9 +39,14 @@ import {
   ValidateTxidMerklerootParamsSchema,
   GetBlockedShieldsBodySchema,
   GetBlockedShieldsParamsSchema,
+  GetLatestValidatedRailgunTxidParamsSchema,
+  GetLatestValidatedRailgunTxidBodySchema,
+  GetPOIListEventRangeParamsSchema,
+  GetPOIListEventRangeBodySchema,
 } from './schemas';
 import 'dotenv/config';
 import {
+  GetPOIListEventRangeParams,
   SubmitPOIEventParams,
   SubmitValidatedTxidAndMerklerootParams,
 } from '../models/poi-types';
@@ -57,6 +63,8 @@ export class API {
 
   private listKeys: string[];
 
+  static debug = false;
+
   constructor(listKeys: string[]) {
     this.app = express();
     this.app.use(express.json({ limit: '5mb' }));
@@ -72,12 +80,25 @@ export class API {
 
     // Error middleware for JSON validation errors
     this.app.use(
-      (error: Error | any, req: Request, res: Response, next: NextFunction) => {
+      (
+        error: Error | unknown,
+        req: Request,
+        res: Response,
+        next: NextFunction,
+      ) => {
         if (error instanceof ValidationError) {
-          res.status(400).send(error.validationErrors);
-        } else {
-          next(error);
+          res
+            .status(400)
+            .send(
+              `${
+                error?.validationErrors?.body?.[0]?.message ??
+                'Unknown validation error'
+              }`,
+            );
+          return;
         }
+
+        next(error);
       },
     );
   }
@@ -136,6 +157,10 @@ export class API {
         try {
           await handler(req, res);
         } catch (err) {
+          if (API.debug) {
+            // eslint-disable-next-line no-console
+            console.error(err);
+          }
           return next(err);
         }
       },
@@ -169,6 +194,10 @@ export class API {
           await handler(req, res);
           return res.status(200).send(); // Explicitly return a value
         } catch (err) {
+          if (API.debug) {
+            // eslint-disable-next-line no-console
+            console.error(err);
+          }
           return next(err);
         }
       },
@@ -203,49 +232,25 @@ export class API {
   }
 
   private addAggregatorRoutes() {
-    this.safeGet('/node-status', async (req: Request, res: Response) => {
+    this.safeGet('/node-status-v2', async (req: Request, res: Response) => {
       const nodeStatusAllNetworks: NodeStatusAllNetworks =
-        await NodeStatus.getNodeStatusAllNetworks(this.listKeys);
+        await NodeStatus.getNodeStatusAllNetworks(
+          this.listKeys,
+          TXIDVersion.V2_PoseidonMerkle,
+        );
       res.json(nodeStatusAllNetworks);
     });
 
-    this.safeGet(
-      '/shield-queue-status/:chainType/:chainID',
+    this.safePost(
+      '/poi-events/:chainType/:chainID',
       async (req: Request, res: Response) => {
         const { chainType, chainID } = req.params;
-        const networkName = networkNameForSerializedChain(chainType, chainID);
-
-        const status = await getShieldQueueStatus(networkName);
-        res.json(status);
-      },
-    );
-
-    this.safeGet(
-      '/list-status/:chainType/:chainID/:listKey',
-      async (req: Request, res: Response) => {
-        const { chainType, chainID, listKey } = req.params;
+        const { txidVersion, listKey, startIndex, endIndex } =
+          req.body as GetPOIListEventRangeParams;
         this.assertHasListKey(listKey);
         const networkName = networkNameForSerializedChain(chainType, chainID);
 
-        const status = await POIEventList.getPOIEventsLength(
-          networkName,
-          listKey,
-        );
-        res.json(status);
-      },
-    );
-
-    this.safeGet(
-      '/poi-events/:chainType/:chainID/:listKey/:startIndex/:endIndex',
-      async (req: Request, res: Response) => {
-        const { chainType, chainID, listKey, startIndex, endIndex } =
-          req.params;
-        this.assertHasListKey(listKey);
-        const networkName = networkNameForSerializedChain(chainType, chainID);
-
-        const start = Number(startIndex);
-        const end = Number(endIndex);
-        const rangeLength = end - start;
+        const rangeLength = endIndex - startIndex;
         if (rangeLength > QueryLimits.MAX_EVENT_QUERY_RANGE_LENGTH) {
           throw new Error(
             `Max event query range length is ${QueryLimits.MAX_EVENT_QUERY_RANGE_LENGTH}`,
@@ -257,19 +262,23 @@ export class API {
 
         const events = await POIEventList.getPOIListEventRange(
           networkName,
+          txidVersion,
           listKey,
-          start,
-          end,
+          startIndex,
+          endIndex,
         );
         res.json(events);
       },
+      GetPOIListEventRangeParamsSchema,
+      GetPOIListEventRangeBodySchema,
     );
 
     this.safePost(
       '/transact-proofs/:chainType/:chainID/:listKey',
       async (req: Request, res: Response) => {
         const { chainType, chainID, listKey } = req.params;
-        const { bloomFilterSerialized } = req.body as GetTransactProofsParams;
+        const { txidVersion, bloomFilterSerialized } =
+          req.body as GetTransactProofsParams;
         this.assertHasListKey(listKey);
 
         const networkName = networkNameForSerializedChain(chainType, chainID);
@@ -277,6 +286,7 @@ export class API {
         const proofs = TransactProofMempool.getFilteredProofs(
           listKey,
           networkName,
+          txidVersion,
           bloomFilterSerialized,
         );
         res.json(proofs);
@@ -289,7 +299,8 @@ export class API {
       '/blocked-shields/:chainType/:chainID/:listKey',
       async (req: Request, res: Response) => {
         const { chainType, chainID, listKey } = req.params;
-        const { bloomFilterSerialized } = req.body as GetBlockedShieldsParams;
+        const { txidVersion, bloomFilterSerialized } =
+          req.body as GetBlockedShieldsParams;
         this.assertHasListKey(listKey);
 
         const networkName = networkNameForSerializedChain(chainType, chainID);
@@ -297,6 +308,7 @@ export class API {
         const proofs = TransactProofMempool.getFilteredProofs(
           listKey,
           networkName,
+          txidVersion,
           bloomFilterSerialized,
         );
         res.json(proofs);
@@ -311,7 +323,7 @@ export class API {
       '/submit-transact-proof/:chainType/:chainID',
       async (req: Request, res: Response) => {
         const { chainType, chainID } = req.params;
-        const { listKey, transactProofData } =
+        const { txidVersion, listKey, transactProofData } =
           req.body as SubmitTransactProofParams;
         this.assertHasListKey(listKey);
         const networkName = networkNameForSerializedChain(chainType, chainID);
@@ -320,6 +332,7 @@ export class API {
         await TransactProofMempool.submitProof(
           listKey,
           networkName,
+          txidVersion,
           transactProofData,
         );
         res.status(200);
@@ -332,14 +345,18 @@ export class API {
       '/submit-poi-event/:chainType/:chainID',
       async (req: Request, res: Response) => {
         const { chainType, chainID } = req.params;
-        const { listKey, signedPOIEvent } = req.body as SubmitPOIEventParams;
+        const { txidVersion, listKey, signedPOIEvent } =
+          req.body as SubmitPOIEventParams;
         this.assertHasListKey(listKey);
         const networkName = networkNameForSerializedChain(chainType, chainID);
 
         // Submit and verify the proof
-        await POIEventList.verifyAndAddSignedPOIEvents(networkName, listKey, [
-          signedPOIEvent,
-        ]);
+        await POIEventList.verifyAndAddSignedPOIEvents(
+          networkName,
+          txidVersion,
+          listKey,
+          [signedPOIEvent],
+        );
         res.status(200);
       },
       SubmitTransactProofParamsSchema,
@@ -350,7 +367,7 @@ export class API {
       '/submit-validated-txid/:chainType/:chainID',
       async (req: Request, res: Response) => {
         const { chainType, chainID } = req.params;
-        const { txidIndex, merkleroot, signature, listKey } =
+        const { txidVersion, txidIndex, merkleroot, signature, listKey } =
           req.body as SubmitValidatedTxidAndMerklerootParams;
         this.assertHasListKey(listKey);
         const networkName = networkNameForSerializedChain(chainType, chainID);
@@ -358,6 +375,7 @@ export class API {
         // Submit and verify the proof
         await RailgunTxidMerkletreeManager.verifySignatureAndUpdateValidatedRailgunTxidStatus(
           networkName,
+          txidVersion,
           txidIndex,
           merkleroot,
           signature,
@@ -373,7 +391,7 @@ export class API {
       '/pois-per-list/:chainType/:chainID',
       async (req: Request, res: Response) => {
         const { chainType, chainID } = req.params;
-        const { listKeys, blindedCommitmentDatas } =
+        const { txidVersion, listKeys, blindedCommitmentDatas } =
           req.body as GetPOIsPerListParams;
         listKeys.forEach(listKey => {
           this.assertHasListKey(listKey);
@@ -390,6 +408,7 @@ export class API {
         }
         const poiStatusMap = await POIMerkletreeManager.getPOIStatusPerList(
           networkName,
+          txidVersion,
           blindedCommitmentDatas,
         );
         res.json(poiStatusMap);
@@ -402,7 +421,7 @@ export class API {
       '/merkle-proofs/:chainType/:chainID',
       async (req: Request, res: Response) => {
         const { chainType, chainID } = req.params;
-        const { listKey, blindedCommitments } =
+        const { txidVersion, listKey, blindedCommitments } =
           req.body as GetMerkleProofsParams;
         this.assertHasListKey(listKey);
         const networkName = networkNameForSerializedChain(chainType, chainID);
@@ -417,6 +436,7 @@ export class API {
         const merkleProofs = await POIMerkletreeManager.getMerkleProofs(
           listKey,
           networkName,
+          txidVersion,
           blindedCommitments,
         );
         res.json(merkleProofs);
@@ -425,29 +445,35 @@ export class API {
       GetMerkleProofsBodySchema,
     );
 
-    this.safeGet(
+    this.safePost(
       '/validated-txid/:chainType/:chainID',
       async (req: Request, res: Response) => {
         const { chainType, chainID } = req.params;
+        const { txidVersion } = req.body as GetLatestValidatedRailgunTxidParams;
         const networkName = networkNameForSerializedChain(chainType, chainID);
+
         const validatedRailgunTxidStatus =
           RailgunTxidMerkletreeManager.getValidatedRailgunTxidStatus(
             networkName,
+            txidVersion,
           );
         res.json(validatedRailgunTxidStatus);
       },
+      GetLatestValidatedRailgunTxidParamsSchema,
+      GetLatestValidatedRailgunTxidBodySchema,
     );
 
     this.safePost(
       '/validate-txid-merkleroot/:chainType/:chainID',
       async (req: Request, res: Response) => {
         const { chainType, chainID } = req.params;
-        const { tree, index, merkleroot } =
+        const { txidVersion, tree, index, merkleroot } =
           req.body as ValidateTxidMerklerootParams;
         const networkName = networkNameForSerializedChain(chainType, chainID);
         const isValid =
           await RailgunTxidMerkletreeManager.checkIfMerklerootExists(
             networkName,
+            txidVersion,
             tree,
             index,
             merkleroot,

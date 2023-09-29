@@ -3,6 +3,7 @@ import {
   NodeStatusForNetwork,
   NodeStatusAllNetworks,
   POIListStatus,
+  TXIDVersion,
 } from '@railgun-community/shared-models';
 import { RailgunTxidMerkletreeManager } from '../railgun-txids/railgun-txid-merkletree-manager';
 import { Config } from '../config/config';
@@ -14,6 +15,7 @@ import { getShieldQueueStatus } from '../shields/shield-queue';
 export class NodeStatus {
   static async getNodeStatusAllNetworks(
     listKeys: string[],
+    txidVersion: TXIDVersion,
   ): Promise<NodeStatusAllNetworks> {
     const statusForNetwork: Partial<Record<NetworkName, NodeStatusForNetwork>> =
       {};
@@ -22,6 +24,7 @@ export class NodeStatus {
       allNetworks.map(async networkName => {
         statusForNetwork[networkName] = await NodeStatus.getNodeStatus(
           networkName,
+          txidVersion,
           listKeys,
         );
       }),
@@ -34,18 +37,26 @@ export class NodeStatus {
 
   private static async getNodeStatus(
     networkName: NetworkName,
+    txidVersion: TXIDVersion,
     listKeys: string[],
   ): Promise<NodeStatusForNetwork> {
     return {
-      txidStatus:
-        await RailgunTxidMerkletreeManager.getRailgunTxidStatus(networkName),
-      listStatuses: await NodeStatus.getListStatuses(networkName, listKeys),
-      shieldQueueStatus: await getShieldQueueStatus(networkName),
+      txidStatus: await RailgunTxidMerkletreeManager.getRailgunTxidStatus(
+        networkName,
+        txidVersion,
+      ),
+      listStatuses: await NodeStatus.getListStatuses(
+        networkName,
+        txidVersion,
+        listKeys,
+      ),
+      shieldQueueStatus: await getShieldQueueStatus(networkName, txidVersion),
     };
   }
 
   private static async getListStatuses(
     networkName: NetworkName,
+    txidVersion: TXIDVersion,
     listKeys: string[],
   ): Promise<Record<string, POIListStatus>> {
     const allStatuses: Record<string, POIListStatus> = {};
@@ -53,6 +64,7 @@ export class NodeStatus {
       listKeys.map(async listKey => {
         const poiEvents = await POIEventList.getPOIEventsLength(
           networkName,
+          txidVersion,
           listKey,
         );
         allStatuses[listKey] = {
@@ -60,6 +72,7 @@ export class NodeStatus {
           pendingTransactProofs: TransactProofMempoolCache.getCacheSize(
             listKey,
             networkName,
+            txidVersion,
           ),
           blockedShields: BlockedShieldsCache.getCacheSize(
             listKey,

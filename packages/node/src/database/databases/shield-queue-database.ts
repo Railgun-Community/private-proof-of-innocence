@@ -1,4 +1,8 @@
-import { NetworkName, isDefined } from '@railgun-community/shared-models';
+import {
+  NetworkName,
+  TXIDVersion,
+  isDefined,
+} from '@railgun-community/shared-models';
 import {
   CollectionName,
   DBFilter,
@@ -14,8 +18,8 @@ import { calculateShieldBlindedCommitment } from '../../util/shield-blinded-comm
 import { Filter } from 'mongodb';
 
 export class ShieldQueueDatabase extends AbstractDatabase<ShieldQueueDBItem> {
-  constructor(networkName: NetworkName) {
-    super(networkName, CollectionName.ShieldQueue);
+  constructor(networkName: NetworkName, txidVersion: TXIDVersion) {
+    super(networkName, txidVersion, CollectionName.ShieldQueue);
   }
 
   async createCollectionIndices() {

@@ -1,4 +1,4 @@
-import { NetworkName } from '@railgun-community/shared-models';
+import { NetworkName, TXIDVersion } from '@railgun-community/shared-models';
 import {
   CollectionName,
   DBFilter,
@@ -10,8 +10,8 @@ import { AbstractDatabase } from '../abstract-database';
 import { SignedPOIEvent } from '../../models/poi-types';
 
 export class POIOrderedEventsDatabase extends AbstractDatabase<POIOrderedEventDBItem> {
-  constructor(networkName: NetworkName) {
-    super(networkName, CollectionName.POIOrderedEvents);
+  constructor(networkName: NetworkName, txidVersion: TXIDVersion) {
+    super(networkName, txidVersion, CollectionName.POIOrderedEvents);
   }
 
   async createCollectionIndices() {

@@ -7,9 +7,11 @@ import {
   NodeStatusAllNetworks,
   ValidateTxidMerklerootParams,
   SubmitTransactProofParams,
+  TXIDVersion,
 } from '@railgun-community/shared-models';
 import axios, { AxiosError } from 'axios';
 import {
+  GetPOIListEventRangeParams,
   SignedBlockedShield,
   SignedPOIEvent,
   SubmitPOIEventParams,
@@ -61,6 +63,7 @@ export class POINodeRequest {
   static validateRailgunTxidMerkleroot = async (
     nodeURL: string,
     networkName: NetworkName,
+    txidVersion: TXIDVersion,
     tree: number,
     index: number,
     merkleroot: string,
@@ -72,6 +75,7 @@ export class POINodeRequest {
       ValidateTxidMerklerootParams,
       boolean
     >(url, {
+      txidVersion,
       tree,
       index,
       merkleroot,
@@ -82,7 +86,7 @@ export class POINodeRequest {
   static getNodeStatusAllNetworks = async (
     nodeURL: string,
   ): Promise<NodeStatusAllNetworks> => {
-    const route = `node-status`;
+    const route = `node-status-v2`;
     const url = POINodeRequest.getNodeRouteURL(nodeURL, route);
 
     const nodeStatusAllNetworks =
@@ -93,21 +97,31 @@ export class POINodeRequest {
   static getPOIListEventRange = async (
     nodeURL: string,
     networkName: NetworkName,
+    txidVersion: TXIDVersion,
     listKey: string,
     startIndex: number,
     endIndex: number,
   ): Promise<SignedPOIEvent[]> => {
     const chain = NETWORK_CONFIG[networkName].chain;
-    const route = `poi-events/${chain.type}/${chain.id}/${listKey}/${startIndex}/${endIndex}`;
+    const route = `poi-events/${chain.type}/${chain.id}`;
     const url = POINodeRequest.getNodeRouteURL(nodeURL, route);
 
-    const poiEvents = await POINodeRequest.getRequest<SignedPOIEvent[]>(url);
+    const poiEvents = await POINodeRequest.postRequest<
+      GetPOIListEventRangeParams,
+      SignedPOIEvent[]
+    >(url, {
+      txidVersion,
+      listKey,
+      startIndex,
+      endIndex,
+    });
     return poiEvents;
   };
 
   static getFilteredTransactProofs = async (
     nodeURL: string,
     networkName: NetworkName,
+    txidVersion: TXIDVersion,
     listKey: string,
     bloomFilterSerialized: string,
   ) => {
@@ -119,6 +133,7 @@ export class POINodeRequest {
       GetTransactProofsParams,
       TransactProofData[]
     >(url, {
+      txidVersion,
       bloomFilterSerialized,
     });
     return transactProofs;
@@ -127,6 +142,7 @@ export class POINodeRequest {
   static getFilteredBlockedShields = async (
     nodeURL: string,
     networkName: NetworkName,
+    txidVersion: TXIDVersion,
     listKey: string,
     bloomFilterSerialized: string,
   ) => {
@@ -138,6 +154,7 @@ export class POINodeRequest {
       GetBlockedShieldsParams,
       SignedBlockedShield[]
     >(url, {
+      txidVersion,
       bloomFilterSerialized,
     });
     return signedBlockedShields;
@@ -146,6 +163,7 @@ export class POINodeRequest {
   static submitTransactProof = async (
     nodeURL: string,
     networkName: NetworkName,
+    txidVersion: TXIDVersion,
     listKey: string,
     transactProofData: TransactProofData,
   ) => {
@@ -154,6 +172,7 @@ export class POINodeRequest {
     const url = POINodeRequest.getNodeRouteURL(nodeURL, route);
 
     await POINodeRequest.postRequest<SubmitTransactProofParams, void>(url, {
+      txidVersion,
       listKey,
       transactProofData,
     });
@@ -162,6 +181,7 @@ export class POINodeRequest {
   static submitPOIEvent = async (
     nodeURL: string,
     networkName: NetworkName,
+    txidVersion: TXIDVersion,
     listKey: string,
     signedPOIEvent: SignedPOIEvent,
   ) => {
@@ -170,6 +190,7 @@ export class POINodeRequest {
     const url = POINodeRequest.getNodeRouteURL(nodeURL, route);
 
     await POINodeRequest.postRequest<SubmitPOIEventParams, void>(url, {
+      txidVersion,
       listKey,
       signedPOIEvent,
     });
@@ -178,6 +199,7 @@ export class POINodeRequest {
   static submitValidatedTxidAndMerkleroot = async (
     nodeURL: string,
     networkName: NetworkName,
+    txidVersion: TXIDVersion,
     txidIndex: number,
     merkleroot: string,
   ) => {
@@ -192,6 +214,7 @@ export class POINodeRequest {
       SubmitValidatedTxidAndMerklerootParams,
       void
     >(url, {
+      txidVersion,
       txidIndex,
       merkleroot,
       signature,

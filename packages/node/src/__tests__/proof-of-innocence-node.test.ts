@@ -62,7 +62,7 @@ describe('proof-of-innocence-node', () => {
     }
 
     await nodeWithListProvider.stop();
-  }).timeout(200000);
+  }).timeout(20000);
 
   it('Should start up a node with only aggregator', async () => {
     await nodeOnlyAggregator.start();

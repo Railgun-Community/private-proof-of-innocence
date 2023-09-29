@@ -1,6 +1,6 @@
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import { NetworkName } from '@railgun-community/shared-models';
+import { NetworkName, TXIDVersion } from '@railgun-community/shared-models';
 import { DatabaseClient } from '../../database-client-init';
 import { DatabaseClientStorage } from '../../database-client-storage';
 import { TestDatabase } from '../test-database';
@@ -13,24 +13,25 @@ chai.use(chaiAsPromised);
 const { expect } = chai;
 
 const networkName = NetworkName.Ethereum;
+const txidVersion = TXIDVersion.V2_PoseidonMerkle;
+
+let db: TestDatabase;
 
 describe('abstract-database', () => {
   before(async () => {
     await DatabaseClient.init();
+    db = new TestDatabase(networkName, txidVersion);
   });
-
-  let db: TestDatabase;
 
   it('Should throw error if DatabaseClient is not initialized', async () => {
     DatabaseClientStorage.client = undefined;
-    expect(() => new TestDatabase(networkName)).to.throw(
+    expect(() => new TestDatabase(networkName, txidVersion)).to.throw(
       'DatabaseClient not initialized',
     );
     await DatabaseClient.init(); // Re-initialize for the following tests
   });
 
   it('Should correctly initialize TestDatabase', async () => {
-    db = new TestDatabase(networkName);
     expect(db).to.be.instanceOf(TestDatabase);
     await db.createCollectionIndices();
   });

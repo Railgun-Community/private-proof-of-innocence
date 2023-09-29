@@ -1,4 +1,4 @@
-import { NetworkName } from '@railgun-community/shared-models';
+import { NetworkName, TXIDVersion } from '@railgun-community/shared-models';
 import { ShieldData, getAllShields } from '@railgun-community/wallet';
 
 export const getNewShieldsFromWallet = (

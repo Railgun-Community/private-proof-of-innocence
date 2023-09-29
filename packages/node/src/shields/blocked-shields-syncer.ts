@@ -1,4 +1,4 @@
-import { NetworkName } from '@railgun-community/shared-models';
+import { NetworkName, TXIDVersion } from '@railgun-community/shared-models';
 import { POINodeCountingBloomFilter } from '../util/poi-node-bloom-filters';
 import { QueryLimits } from '../config/query-limits';
 import { Config } from '../config/config';
@@ -11,18 +11,20 @@ export class BlockedShieldsSyncer {
   static async addSignedBlockedShield(
     listKey: string,
     networkName: NetworkName,
+    txidVersion: TXIDVersion,
     signedBlockedShield: SignedBlockedShield,
   ) {
     const shouldAdd = await this.shouldAdd(
       listKey,
       networkName,
+      txidVersion,
       signedBlockedShield,
     );
     if (!shouldAdd) {
       return;
     }
 
-    const db = new BlockedShieldsPerListDatabase(networkName);
+    const db = new BlockedShieldsPerListDatabase(networkName, txidVersion);
     await db.insertSignedBlockedShield(listKey, signedBlockedShield);
 
     BlockedShieldsCache.addToCache(listKey, networkName, signedBlockedShield);
@@ -31,10 +33,11 @@ export class BlockedShieldsSyncer {
   private static async shouldAdd(
     listKey: string,
     networkName: NetworkName,
+    txidVersion: TXIDVersion,
     signedBlockedShield: SignedBlockedShield,
   ): Promise<boolean> {
     // 1. Verify that doesn't already exist
-    const db = new BlockedShieldsPerListDatabase(networkName);
+    const db = new BlockedShieldsPerListDatabase(networkName, txidVersion);
     const exists = await db.isShieldBlockedByList(
       listKey,
       signedBlockedShield.blindedCommitment,
@@ -57,23 +60,25 @@ export class BlockedShieldsSyncer {
 
   static async inflateCacheFromDatabase(listKeys: string[]) {
     for (const networkName of Config.NETWORK_NAMES) {
-      const db = new BlockedShieldsPerListDatabase(networkName);
+      for (const txidVersion of Config.TXID_VERSIONS) {
+        const db = new BlockedShieldsPerListDatabase(networkName, txidVersion);
 
-      for (const listKey of listKeys) {
-        const blockedShieldsStream = await db.streamBlockedShields(listKey);
+        for (const listKey of listKeys) {
+          const blockedShieldsStream = await db.streamBlockedShields(listKey);
 
-        for await (const blockedShieldDBItem of blockedShieldsStream) {
-          const blockedShieldData: SignedBlockedShield = {
-            commitmentHash: blockedShieldDBItem.commitmentHash,
-            blindedCommitment: blockedShieldDBItem.blindedCommitment,
-            blockReason: blockedShieldDBItem.blockReason ?? undefined,
-            signature: blockedShieldDBItem.signature,
-          };
-          BlockedShieldsCache.addToCache(
-            listKey,
-            networkName,
-            blockedShieldData,
-          );
+          for await (const blockedShieldDBItem of blockedShieldsStream) {
+            const blockedShieldData: SignedBlockedShield = {
+              commitmentHash: blockedShieldDBItem.commitmentHash,
+              blindedCommitment: blockedShieldDBItem.blindedCommitment,
+              blockReason: blockedShieldDBItem.blockReason ?? undefined,
+              signature: blockedShieldDBItem.signature,
+            };
+            BlockedShieldsCache.addToCache(
+              listKey,
+              networkName,
+              blockedShieldData,
+            );
+          }
         }
       }
     }

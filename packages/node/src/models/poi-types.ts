@@ -1,4 +1,4 @@
-import { SnarkProof } from '@railgun-community/shared-models';
+import { SnarkProof, TXIDVersion } from '@railgun-community/shared-models';
 
 export enum POIEventType {
   Shield = 'Shield',
@@ -37,13 +37,22 @@ export type SignedBlockedShield = {
 };
 
 export type SubmitPOIEventParams = {
+  txidVersion: TXIDVersion;
   signedPOIEvent: SignedPOIEvent;
   listKey: string;
 };
 
 export type SubmitValidatedTxidAndMerklerootParams = {
+  txidVersion: TXIDVersion;
   txidIndex: number;
   merkleroot: string;
   signature: string;
   listKey: string;
+};
+
+export type GetPOIListEventRangeParams = {
+  txidVersion: TXIDVersion;
+  listKey: string;
+  startIndex: number;
+  endIndex: number;
 };

@@ -1,6 +1,6 @@
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import { NetworkName } from '@railgun-community/shared-models';
+import { NetworkName, TXIDVersion } from '@railgun-community/shared-models';
 import * as WalletModule from '../../engine/wallet';
 import * as TxReceiptModule from '../../rpc-providers/tx-receipt';
 import { ShieldData } from '@railgun-community/wallet';
@@ -18,11 +18,13 @@ import {
 import { ListProviderPOIEventQueue } from '../list-provider-poi-event-queue';
 import { calculateShieldBlindedCommitment } from '../../util/shield-blinded-commitment';
 import { daysAgo } from '../../util/time-ago';
+import { POIMerkletreeManager } from '../../poi-events/poi-merkletree-manager';
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
 
 const networkName = NetworkName.Ethereum;
+const txidVersion = TXIDVersion.V2_PoseidonMerkle;
 
 let listProvider: ListProvider;
 let db: ShieldQueueDatabase;
@@ -38,7 +40,7 @@ const createStubGetAllShields = (shieldDatas: ShieldData[]) => {
 describe('list-provider', () => {
   before(async () => {
     await DatabaseClient.init();
-    db = new ShieldQueueDatabase(networkName);
+    db = new ShieldQueueDatabase(networkName, txidVersion);
     await db.createCollectionIndices();
     listProvider = new TestMockListProviderExcludeSingleAddress(
       MOCK_LIST_KEYS[0],
@@ -51,6 +53,10 @@ describe('list-provider', () => {
 
   beforeEach(async () => {
     await db.deleteAllItems_DANGEROUS();
+  });
+
+  after(() => {
+    POIMerkletreeManager.clearAllMerkletrees_TestOnly();
   });
 
   it('Should add new shields to queue', async () => {
@@ -76,7 +82,7 @@ describe('list-provider', () => {
     ];
     createStubGetAllShields(shieldDatas);
 
-    await listProvider.queueNewUnknownShields(networkName);
+    await listProvider.queueNewUnknownShields(networkName, txidVersion);
 
     const unknownShield: ShieldQueueDBItem = {
       txid: '0x1234',
@@ -120,7 +126,7 @@ describe('list-provider', () => {
     ];
     createStubGetAllShields(shieldDatas);
 
-    await listProvider.queueNewUnknownShields(networkName);
+    await listProvider.queueNewUnknownShields(networkName, txidVersion);
 
     const unknownShields = await db.getShields(
       ShieldStatus.Unknown,
@@ -157,12 +163,12 @@ describe('list-provider', () => {
       'queueUnsignedPOIShieldEvent',
     );
 
-    await listProvider.categorizeUnknownShields(networkName);
+    await listProvider.categorizeUnknownShields(networkName, txidVersion);
 
     const pendingShields = await db.getShields(ShieldStatus.Pending);
     expect(pendingShields.length).to.equal(2);
 
-    await listProvider.validateNextPendingShieldBatch(networkName);
+    await listProvider.validateNextPendingShieldBatch(networkName, txidVersion);
     const allowedShields = await db.getShields(ShieldStatus.Allowed);
     expect(allowedShields.length).to.equal(1);
 
@@ -192,6 +198,8 @@ describe('list-provider', () => {
 
     txReceiptMock.restore();
     timestampMock.restore();
+
+    await listProvider.addAllowedShields(networkName, txidVersion);
 
     expect(listProviderEventQueueSpy.calledOnce).to.equal(true);
     listProviderEventQueueSpy.restore();

@@ -1,11 +1,11 @@
-import { NetworkName } from '@railgun-community/shared-models';
+import { NetworkName, TXIDVersion } from '@railgun-community/shared-models';
 import { AbstractDatabase } from '../abstract-database';
 import { TestDBItem, CollectionName } from '../../models/database-types';
 import { WithId } from 'mongodb';
 
 export class TestDatabase extends AbstractDatabase<TestDBItem> {
-  constructor(networkName: NetworkName) {
-    super(networkName, CollectionName.Test);
+  constructor(networkName: NetworkName, txidVersion: TXIDVersion) {
+    super(networkName, txidVersion, CollectionName.Test);
   }
 
   async createCollectionIndices() {

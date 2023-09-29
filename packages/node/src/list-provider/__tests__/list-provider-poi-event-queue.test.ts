@@ -6,6 +6,7 @@ import {
   POIStatus,
   BlindedCommitmentType,
   poll,
+  TXIDVersion,
 } from '@railgun-community/shared-models';
 import { DatabaseClient } from '../../database/database-client-init';
 import { ListProviderPOIEventQueue } from '../list-provider-poi-event-queue';
@@ -20,6 +21,7 @@ chai.use(chaiAsPromised);
 const { expect } = chai;
 
 const networkName = NetworkName.Ethereum;
+const txidVersion = TXIDVersion.V2_PoseidonMerkle;
 
 let orderedEventsDB: POIOrderedEventsDatabase;
 let transactProofMempoolDB: TransactProofPerListMempoolDatabase;
@@ -34,11 +36,12 @@ describe('list-provider-poi-event-queue', () => {
     ListProviderPOIEventQueue.init(listKey);
     POIMerkletreeManager.initListMerkletrees(MOCK_LIST_KEYS);
 
-    orderedEventsDB = new POIOrderedEventsDatabase(networkName);
+    orderedEventsDB = new POIOrderedEventsDatabase(networkName, txidVersion);
     transactProofMempoolDB = new TransactProofPerListMempoolDatabase(
       networkName,
+      txidVersion,
     );
-    poiMerkletreeDB = new POIMerkletreeDatabase(networkName);
+    poiMerkletreeDB = new POIMerkletreeDatabase(networkName, txidVersion);
   });
 
   afterEach(async () => {
@@ -51,6 +54,10 @@ describe('list-provider-poi-event-queue', () => {
     await orderedEventsDB.deleteAllItems_DANGEROUS();
     await transactProofMempoolDB.deleteAllItems_DANGEROUS();
     await poiMerkletreeDB.deleteAllItems_DANGEROUS();
+  });
+
+  after(() => {
+    POIMerkletreeManager.clearAllMerkletrees_TestOnly();
   });
 
   it('Should add shield and transact events to queue', async () => {
@@ -78,16 +85,22 @@ describe('list-provider-poi-event-queue', () => {
     // Queue proofs serially - they should process in order
     ListProviderPOIEventQueue.queueUnsignedPOIShieldEvent(
       networkName,
+      txidVersion,
       poiEventShield,
     );
     ListProviderPOIEventQueue.queueUnsignedPOITransactEvent(
       networkName,
+      txidVersion,
       transactProofData,
     );
 
     // Wait until queue is empty
     const pollQueueLength = await poll(
-      async () => ListProviderPOIEventQueue.getPOIEventQueueLength(networkName),
+      async () =>
+        ListProviderPOIEventQueue.getPOIEventQueueLength(
+          networkName,
+          txidVersion,
+        ),
       queueLength => queueLength === 0,
       20,
       5000 / 20, // 5 sec.
@@ -99,6 +112,7 @@ describe('list-provider-poi-event-queue', () => {
     // Expect all events to be added to merkletree
     const poiStatusPerList = await POIMerkletreeManager.getPOIStatusPerList(
       networkName,
+      txidVersion,
       [
         { blindedCommitment: '0x5678', type: BlindedCommitmentType.Shield },
         { blindedCommitment: '0x1111', type: BlindedCommitmentType.Shield },
@@ -129,5 +143,5 @@ describe('list-provider-poi-event-queue', () => {
     expect(
       await transactProofMempoolDB.proofExists(listKey, '0x1111'),
     ).to.equal(false);
-  }).timeout(200000);
+  }).timeout(20000);
 });

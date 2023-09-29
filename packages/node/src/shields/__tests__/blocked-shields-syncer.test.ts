@@ -1,7 +1,6 @@
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import { NetworkName } from '@railgun-community/shared-models';
-import { MOCK_LIST_KEYS } from '../../tests/mocks.test';
+import { NetworkName, TXIDVersion } from '@railgun-community/shared-models';
 import { DatabaseClient } from '../../database/database-client-init';
 import { BlockedShieldsCache } from '../blocked-shields-cache';
 import { POINodeBloomFilter } from '../../util/poi-node-bloom-filters';
@@ -14,6 +13,7 @@ chai.use(chaiAsPromised);
 const { expect } = chai;
 
 const networkName = NetworkName.Ethereum;
+const txidVersion = TXIDVersion.V2_PoseidonMerkle;
 let listKey: string;
 
 let blockedShieldsDB: BlockedShieldsPerListDatabase;
@@ -23,7 +23,10 @@ describe('blocked-shields-syncer', () => {
     listKey = await getListPublicKey();
 
     await DatabaseClient.init();
-    blockedShieldsDB = new BlockedShieldsPerListDatabase(networkName);
+    blockedShieldsDB = new BlockedShieldsPerListDatabase(
+      networkName,
+      txidVersion,
+    );
   });
 
   beforeEach(async () => {
@@ -56,10 +59,15 @@ describe('blocked-shields-syncer', () => {
 
     // 1. THROW: signature fails verification.
     await expect(
-      BlockedShieldsSyncer.addSignedBlockedShield(listKey, networkName, {
-        ...signedBlockedShield,
-        signature: '1234',
-      }),
+      BlockedShieldsSyncer.addSignedBlockedShield(
+        listKey,
+        networkName,
+        txidVersion,
+        {
+          ...signedBlockedShield,
+          signature: '1234',
+        },
+      ),
     ).to.be.rejectedWith('Signature invalid for blocked shield');
 
     // 2. SUCCESS: snark verifies and commitmentHash recognized.
@@ -67,6 +75,7 @@ describe('blocked-shields-syncer', () => {
     await BlockedShieldsSyncer.addSignedBlockedShield(
       listKey,
       networkName,
+      txidVersion,
       signedBlockedShield,
     );
     await expect(
@@ -112,11 +121,13 @@ describe('blocked-shields-syncer', () => {
     await BlockedShieldsSyncer.addSignedBlockedShield(
       listKey,
       networkName,
+      txidVersion,
       blockedShield1,
     );
     await BlockedShieldsSyncer.addSignedBlockedShield(
       listKey,
       networkName,
+      txidVersion,
       blockedShield2,
     );
 
@@ -180,11 +191,13 @@ describe('blocked-shields-syncer', () => {
     await BlockedShieldsSyncer.addSignedBlockedShield(
       listKey,
       networkName,
+      txidVersion,
       blockedShield1,
     );
     await BlockedShieldsSyncer.addSignedBlockedShield(
       listKey,
       networkName,
+      txidVersion,
       blockedShield2,
     );
 

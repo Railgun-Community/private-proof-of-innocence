@@ -1,7 +1,7 @@
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { StatusDatabase } from '../status-database';
-import { NetworkName } from '@railgun-community/shared-models';
+import { NetworkName, TXIDVersion } from '@railgun-community/shared-models';
 import { DatabaseClient } from '../../database-client-init';
 import { StatusDBItem } from '../../../models/database-types';
 
@@ -9,13 +9,14 @@ chai.use(chaiAsPromised);
 const { expect } = chai;
 
 const networkName = NetworkName.Ethereum;
+const txidVersion = TXIDVersion.V2_PoseidonMerkle;
 
 let db: StatusDatabase;
 
 describe('status-database', () => {
   before(async () => {
     await DatabaseClient.init();
-    db = new StatusDatabase(networkName);
+    db = new StatusDatabase(networkName, txidVersion);
 
     // Insert dummy document, ensures DB gets a namespace since is empty
     await db.saveStatus(0);

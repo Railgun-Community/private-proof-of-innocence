@@ -5,6 +5,7 @@ import {
   TransactProofData,
   NodeStatusAllNetworks,
   ShieldQueueStatus,
+  TXIDVersion,
 } from '@railgun-community/shared-models';
 import { DatabaseClient } from '../../database/database-client-init';
 import { RoundRobinSyncer } from '../round-robin-syncer';
@@ -30,6 +31,7 @@ chai.use(chaiAsPromised);
 const { expect } = chai;
 
 const networkName = NetworkName.Ethereum;
+const txidVersion = TXIDVersion.V2_PoseidonMerkle;
 
 let merkletreeDB: POIMerkletreeDatabase;
 let merklerootDB: POIHistoricalMerklerootDatabase;
@@ -73,13 +75,20 @@ describe('round-robin-syncer', () => {
 
     await DatabaseClient.init();
 
-    merkletreeDB = new POIMerkletreeDatabase(networkName);
-    merklerootDB = new POIHistoricalMerklerootDatabase(networkName);
-    orderedEventsDB = new POIOrderedEventsDatabase(networkName);
+    merkletreeDB = new POIMerkletreeDatabase(networkName, txidVersion);
+    merklerootDB = new POIHistoricalMerklerootDatabase(
+      networkName,
+      txidVersion,
+    );
+    orderedEventsDB = new POIOrderedEventsDatabase(networkName, txidVersion);
     transactProofMempoolDB = new TransactProofPerListMempoolDatabase(
       networkName,
+      txidVersion,
     );
-    blockedShieldsDB = new BlockedShieldsPerListDatabase(networkName);
+    blockedShieldsDB = new BlockedShieldsPerListDatabase(
+      networkName,
+      txidVersion,
+    );
 
     POIMerkletreeManager.initListMerkletrees([listKey]);
 

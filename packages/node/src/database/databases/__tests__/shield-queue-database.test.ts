@@ -1,7 +1,7 @@
 /// <reference types="../../../types/index" />
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import { NetworkName } from '@railgun-community/shared-models';
+import { NetworkName, TXIDVersion } from '@railgun-community/shared-models';
 import { DatabaseClient } from '../../database-client-init';
 import { ShieldQueueDatabase } from '../shield-queue-database';
 import { ShieldData } from '@railgun-community/wallet';
@@ -17,13 +17,14 @@ chai.use(chaiAsPromised);
 const { expect } = chai;
 
 const networkName = NetworkName.Ethereum;
+const txidVersion = TXIDVersion.V2_PoseidonMerkle;
 
 let db: ShieldQueueDatabase;
 
 describe('shield-queue-database', () => {
   before(async () => {
     await DatabaseClient.init();
-    db = new ShieldQueueDatabase(networkName);
+    db = new ShieldQueueDatabase(networkName, txidVersion);
     await db.createCollectionIndices();
   });
 
@@ -139,7 +140,10 @@ describe('shield-queue-database', () => {
     const blockedCount = await db.getCount(ShieldStatus.Blocked);
     expect(blockedCount).to.equal(0); // No block status shields
 
-    const shieldQueueStatus = await getShieldQueueStatus(networkName);
+    const shieldQueueStatus = await getShieldQueueStatus(
+      networkName,
+      txidVersion,
+    );
     expect(shieldQueueStatus.latestShield).to.be.a('string');
     expect(shieldQueueStatus).to.deep.equal({
       addedPOI: 0,

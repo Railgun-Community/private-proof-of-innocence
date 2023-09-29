@@ -1,4 +1,4 @@
-import { NetworkName } from '@railgun-community/shared-models';
+import { NetworkName, TXIDVersion } from '@railgun-community/shared-models';
 import { BlockedShieldsPerListDatabase } from '../database/databases/blocked-shields-per-list-database';
 import { ShieldQueueDBItem } from '../models/database-types';
 import { signBlockedShield } from '../util/ed25519';
@@ -13,10 +13,11 @@ export class ListProviderBlocklist {
 
   static async addBlockedShield(
     networkName: NetworkName,
+    txidVersion: TXIDVersion,
     shieldDBItem: ShieldQueueDBItem,
     blockReason: Optional<string>,
   ): Promise<void> {
-    const db = new BlockedShieldsPerListDatabase(networkName);
+    const db = new BlockedShieldsPerListDatabase(networkName, txidVersion);
 
     const signature = await signBlockedShield(
       shieldDBItem.commitmentHash,
