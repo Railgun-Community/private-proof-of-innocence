@@ -149,13 +149,6 @@ export const SubmitValidatedTxidBodySchema: AllowedSchema = {
     merkleroot: { type: 'string' },
     signature: { type: 'string' },
     listKey: { type: 'string' },
-    required: [
-      'txidVersion',
-      'txidIndex',
-      'merkleroot',
-      'signature',
-      'listKey',
-    ],
   },
   required: ['txidVersion', 'txidIndex', 'merkleroot', 'signature', 'listKey'],
 };
