@@ -1,0 +1,7 @@
+#!/bin/bash
+set -e
+
+git pull && \
+yarn build && \
+pm2 reload pm2-list-provider.config.js && \
+./lp-log;

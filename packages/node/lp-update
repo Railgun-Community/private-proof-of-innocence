@@ -1,0 +1,7 @@
+#!/bin/bash
+set -e
+
+git pull && \
+yarn build && \
+pm2 restart node-list-provider && \
+./lp-log;

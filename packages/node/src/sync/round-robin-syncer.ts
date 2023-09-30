@@ -59,25 +59,22 @@ export class RoundRobinSyncer {
       dbg(`-- Syncing with ${nodeURL} -- `);
 
       await this.updatePOIEventListAllNetworks(nodeURL, nodeStatusAllNetworks);
-      dbg('Synced: POI Event Lists');
 
       await this.updateTransactProofMempoolsAllNetworks(
         nodeURL,
         nodeStatusAllNetworks,
       );
-      dbg('Synced: Transact Proof Mempools');
 
       await this.updateRailgunTxidMerkletreeValidatedRootAllNetworks(
         nodeURL,
         nodeStatusAllNetworks,
       );
-      dbg('Synced: Railgun Validated TXID Merkletree Roots');
 
       await this.updateBlockedShieldsAllNetworks(
         nodeURL,
         nodeStatusAllNetworks,
       );
-      dbg('Synced: Blocked Shields');
+      dbg('');
 
       this.pollStatus = PollStatus.POLLING;
 

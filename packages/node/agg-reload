@@ -1,0 +1,7 @@
+#!/bin/bash
+set -e
+
+git pull && \
+yarn build && \
+pm2 reload pm2-aggregator.config.js && \
+./agg-log;
