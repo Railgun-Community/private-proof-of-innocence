@@ -39,6 +39,7 @@ import {
   GetPOIListEventRangeBodySchema,
   SharedChainTypeIDParamsSchema,
   SubmitPOIEventBodySchema,
+  SubmitValidatedTxidBodySchema,
 } from './schemas';
 import 'dotenv/config';
 import {
@@ -380,7 +381,7 @@ export class API {
         res.status(200);
       },
       SharedChainTypeIDParamsSchema,
-      SubmitTransactProofBodySchema,
+      SubmitValidatedTxidBodySchema,
     );
 
     this.safePost(

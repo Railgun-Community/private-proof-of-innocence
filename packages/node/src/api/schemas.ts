@@ -141,6 +141,25 @@ export const SubmitPOIEventBodySchema: AllowedSchema = {
   required: ['txidVersion', 'listKey', 'signedPOIEvent'],
 };
 
+export const SubmitValidatedTxidBodySchema: AllowedSchema = {
+  type: 'object',
+  properties: {
+    txidVersion: { type: 'string' },
+    txidIndex: { type: 'number' },
+    merkleroot: { type: 'string' },
+    signature: { type: 'string' },
+    listKey: { type: 'string' },
+    required: [
+      'txidVersion',
+      'txidIndex',
+      'merkleroot',
+      'signature',
+      'listKey',
+    ],
+  },
+  required: ['txidVersion', 'txidIndex', 'merkleroot', 'signature', 'listKey'],
+};
+
 export const GetPOIsPerListBodySchema: AllowedSchema = {
   type: 'object',
   properties: {
