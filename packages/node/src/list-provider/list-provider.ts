@@ -13,6 +13,7 @@ import { chainForNetwork, networkForName } from '../config/general';
 import {
   ShieldData,
   getUnshieldRailgunTransactionBlindedCommitmentGroups,
+  scanUpdatesForMerkletreeAndWallets,
 } from '@railgun-community/wallet';
 import debug from 'debug';
 import { ShieldQueueDatabase } from '../database/databases/shield-queue-database';
@@ -39,6 +40,7 @@ export type ListProviderConfig = {
   categorizeUnknownShieldsOverrideDelayMsec?: number;
   validateShieldsOverrideDelayMsec?: number;
   addAllowedShieldsOverrideDelayMsec?: number;
+  rescanHistoryOverrideDelayMsec?: number;
 };
 
 // 30 seconds
@@ -49,6 +51,8 @@ const CATEGORIZE_UNKNOWN_SHIELDS_DELAY_MSEC = 30 * 1000;
 const DEFAULT_VALIDATE_SHIELDS_DELAY_MSEC = 60 * 1000;
 // 30 seconds
 const DEFAULT_ADD_ALLOWED_SHIELDS_DELAY_MSEC = 30 * 1000;
+// 5 minutes
+const DEFAULT_RESCAN_HISTORY_DELAY_MSEC = 5 * 60 * 1000;
 
 const dbg = debug('poi:list-provider');
 
@@ -90,6 +94,8 @@ export abstract class ListProvider {
     this.runValidatePendingShieldsPoller();
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.runAddAllowedShieldsPoller();
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    this.runRescanHistoryPoller();
 
     ListProviderPOIEventQueue.startPolling();
     ListProviderPOIEventUpdater.startPolling();
@@ -161,6 +167,22 @@ export abstract class ListProvider {
 
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.runAddAllowedShieldsPoller();
+  }
+
+  private async runRescanHistoryPoller() {
+    // Delay on first run - Engine is scanned on initialization.
+    await delay(
+      this.config.rescanHistoryOverrideDelayMsec ??
+        DEFAULT_RESCAN_HISTORY_DELAY_MSEC,
+    );
+
+    for (const networkName of Config.NETWORK_NAMES) {
+      const chain = chainForNetwork(networkName);
+      await scanUpdatesForMerkletreeAndWallets(chain);
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    this.runRescanHistoryPoller();
   }
 
   async queueNewUnknownShields(
