@@ -32,6 +32,7 @@ import { POIEventShield, POIEventType } from '../models/poi-types';
 import { ListProviderBlocklist } from './list-provider-blocklist';
 import { hoursAgo, minutesAgo } from '../util/time-ago';
 import { POIMerkletreeManager } from '../poi-events/poi-merkletree-manager';
+import { BlockedShieldsPerListDatabase } from '../database/databases/blocked-shields-per-list-database';
 
 export type ListProviderConfig = {
   name: string;
@@ -225,6 +226,9 @@ export abstract class ListProvider {
       const unknownShields = await shieldQueueDB.getShields(
         ShieldStatus.Unknown,
       );
+
+      // const db = new BlockedShieldsPerListDatabase(networkName, txidVersion);
+      // const blocked = await db.getBlockedShields(this.listKey);
 
       dbg(
         `[${networkName}] Attempting to categorize ${unknownShields.length} unknown shields...`,

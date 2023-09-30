@@ -40,6 +40,15 @@ export class BlockedShieldsPerListDatabase extends AbstractDatabase<BlockedShiel
     return this.stream(filter);
   }
 
+  async getBlockedShields(
+    listKey: string,
+  ): Promise<BlockedShieldsPerListDBItem[]> {
+    const filter: DBFilter<BlockedShieldsPerListDBItem> = {
+      listKey,
+    };
+    return this.findAll(filter);
+  }
+
   async isShieldBlockedByList(
     listKey: string,
     blindedCommitment: string,

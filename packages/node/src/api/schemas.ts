@@ -1,6 +1,8 @@
 import { AllowedSchema } from 'express-json-validator-middleware';
+import { JSONSchema4 } from 'json-schema';
 
-export const GetPOIListEventRangeParamsSchema: AllowedSchema = {
+// SHARED SCHEMA FOR MANY REQUESTS:
+export const SharedChainTypeIDParamsSchema: AllowedSchema = {
   type: 'object',
   properties: {
     chainType: { type: 'string' },
@@ -58,13 +60,34 @@ export const GetBlockedShieldsBodySchema: AllowedSchema = {
   required: ['txidVersion', 'bloomFilterSerialized'],
 };
 
-export const SubmitTransactProofParamsSchema: AllowedSchema = {
+const SnarkProofSchema: JSONSchema4 = {
   type: 'object',
   properties: {
-    chainType: { type: 'string' },
-    chainID: { type: 'string' },
+    pi_a: {
+      type: 'array',
+      items: [{ type: 'string' }, { type: 'string' }],
+      minItems: 2,
+      maxItems: 2,
+    },
+    pi_b: {
+      type: 'array',
+      items: {
+        type: 'array',
+        items: { type: 'string' },
+        minItems: 2,
+        maxItems: 2,
+      },
+      minItems: 2,
+      maxItems: 2,
+    },
+    pi_c: {
+      type: 'array',
+      items: [{ type: 'string' }, { type: 'string' }],
+      minItems: 2,
+      maxItems: 2,
+    },
   },
-  required: ['chainType', 'chainID'],
+  required: ['pi_a', 'pi_b', 'pi_c'],
 };
 
 export const SubmitTransactProofBodySchema: AllowedSchema = {
@@ -75,35 +98,7 @@ export const SubmitTransactProofBodySchema: AllowedSchema = {
     transactProofData: {
       type: 'object',
       properties: {
-        snarkProof: {
-          type: 'object',
-          properties: {
-            pi_a: {
-              type: 'array',
-              items: [{ type: 'string' }, { type: 'string' }],
-              minItems: 2,
-              maxItems: 2,
-            },
-            pi_b: {
-              type: 'array',
-              items: {
-                type: 'array',
-                items: { type: 'string' },
-                minItems: 2,
-                maxItems: 2,
-              },
-              minItems: 2,
-              maxItems: 2,
-            },
-            pi_c: {
-              type: 'array',
-              items: [{ type: 'string' }, { type: 'string' }],
-              minItems: 2,
-              maxItems: 2,
-            },
-          },
-          required: ['pi_a', 'pi_b', 'pi_c'],
-        },
+        snarkProof: SnarkProofSchema,
         poiMerkleroots: { type: 'array', items: { type: 'string' } },
         txidMerkleroot: { type: 'string' },
         txidMerklerootIndex: { type: 'number' },
@@ -121,13 +116,29 @@ export const SubmitTransactProofBodySchema: AllowedSchema = {
   required: ['txidVersion', 'listKey', 'transactProofData'],
 };
 
-export const GetPOIsPerListParamsSchema: AllowedSchema = {
+export const SubmitPOIEventBodySchema: AllowedSchema = {
   type: 'object',
   properties: {
-    chainType: { type: 'string' },
-    chainID: { type: 'string' },
+    txidVersion: { type: 'string' },
+    listKey: { type: 'string' },
+    signedPOIEvent: {
+      type: 'object',
+      properties: {
+        index: { type: 'number' },
+        blindedCommitmentStartingIndex: { type: 'number' },
+        blindedCommitments: { type: 'array', items: { type: 'string' } },
+        signature: { type: 'string' },
+        proof: SnarkProofSchema, // optional
+      },
+      required: [
+        'index',
+        'blindedCommitmentStartingIndex',
+        'blindedCommitments',
+        'signature',
+      ],
+    },
   },
-  required: ['chainType', 'chainID'],
+  required: ['txidVersion', 'listKey', 'signedPOIEvent'],
 };
 
 export const GetPOIsPerListBodySchema: AllowedSchema = {
@@ -156,15 +167,6 @@ export const GetPOIsPerListBodySchema: AllowedSchema = {
   required: ['txidVersion', 'listKeys', 'blindedCommitmentDatas'],
 };
 
-export const GetMerkleProofsParamsSchema: AllowedSchema = {
-  type: 'object',
-  properties: {
-    chainType: { type: 'string' },
-    chainID: { type: 'string' },
-  },
-  required: ['chainType', 'chainID'],
-};
-
 export const GetMerkleProofsBodySchema: AllowedSchema = {
   type: 'object',
   properties: {
@@ -175,30 +177,12 @@ export const GetMerkleProofsBodySchema: AllowedSchema = {
   required: ['txidVersion', 'listKey', 'blindedCommitments'],
 };
 
-export const GetLatestValidatedRailgunTxidParamsSchema: AllowedSchema = {
-  type: 'object',
-  properties: {
-    chainType: { type: 'string' },
-    chainID: { type: 'string' },
-  },
-  required: ['chainType', 'chainID'],
-};
-
 export const GetLatestValidatedRailgunTxidBodySchema: AllowedSchema = {
   type: 'object',
   properties: {
     txidVersion: { type: 'string' },
   },
   required: ['txidVersion'],
-};
-
-export const ValidateTxidMerklerootParamsSchema: AllowedSchema = {
-  type: 'object',
-  properties: {
-    chainType: { type: 'string' },
-    chainID: { type: 'string' },
-  },
-  required: ['chainType', 'chainID'],
 };
 
 export const ValidateTxidMerklerootBodySchema: AllowedSchema = {

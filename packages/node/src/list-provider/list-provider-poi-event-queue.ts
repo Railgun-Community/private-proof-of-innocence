@@ -294,7 +294,7 @@ export class ListProviderPOIEventQueue {
         }
       }
 
-      await PushSync.sendNodeRequestToAllLists(async nodeURL => {
+      await PushSync.sendNodeRequestToAllNodes(async nodeURL => {
         await POINodeRequest.submitPOIEvent(
           nodeURL,
           networkName,

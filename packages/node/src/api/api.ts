@@ -30,19 +30,15 @@ import {
   GetTransactProofsParamsSchema,
   GetTransactProofsBodySchema,
   SubmitTransactProofBodySchema,
-  SubmitTransactProofParamsSchema,
   GetPOIsPerListBodySchema,
-  GetPOIsPerListParamsSchema,
-  GetMerkleProofsParamsSchema,
   GetMerkleProofsBodySchema,
   ValidateTxidMerklerootBodySchema,
-  ValidateTxidMerklerootParamsSchema,
   GetBlockedShieldsBodySchema,
   GetBlockedShieldsParamsSchema,
-  GetLatestValidatedRailgunTxidParamsSchema,
   GetLatestValidatedRailgunTxidBodySchema,
-  GetPOIListEventRangeParamsSchema,
   GetPOIListEventRangeBodySchema,
+  SharedChainTypeIDParamsSchema,
+  SubmitPOIEventBodySchema,
 } from './schemas';
 import 'dotenv/config';
 import {
@@ -269,7 +265,7 @@ export class API {
         );
         res.json(events);
       },
-      GetPOIListEventRangeParamsSchema,
+      SharedChainTypeIDParamsSchema,
       GetPOIListEventRangeBodySchema,
     );
 
@@ -337,7 +333,7 @@ export class API {
         );
         res.status(200);
       },
-      SubmitTransactProofParamsSchema,
+      SharedChainTypeIDParamsSchema,
       SubmitTransactProofBodySchema,
     );
 
@@ -359,8 +355,8 @@ export class API {
         );
         res.status(200);
       },
-      SubmitTransactProofParamsSchema,
-      SubmitTransactProofBodySchema,
+      SharedChainTypeIDParamsSchema,
+      SubmitPOIEventBodySchema,
     );
 
     this.safePost(
@@ -383,7 +379,7 @@ export class API {
         );
         res.status(200);
       },
-      SubmitTransactProofParamsSchema,
+      SharedChainTypeIDParamsSchema,
       SubmitTransactProofBodySchema,
     );
 
@@ -413,7 +409,7 @@ export class API {
         );
         res.json(poiStatusMap);
       },
-      GetPOIsPerListParamsSchema,
+      SharedChainTypeIDParamsSchema,
       GetPOIsPerListBodySchema,
     );
 
@@ -441,7 +437,7 @@ export class API {
         );
         res.json(merkleProofs);
       },
-      GetMerkleProofsParamsSchema,
+      SharedChainTypeIDParamsSchema,
       GetMerkleProofsBodySchema,
     );
 
@@ -459,7 +455,7 @@ export class API {
           );
         res.json(validatedRailgunTxidStatus);
       },
-      GetLatestValidatedRailgunTxidParamsSchema,
+      SharedChainTypeIDParamsSchema,
       GetLatestValidatedRailgunTxidBodySchema,
     );
 
@@ -480,7 +476,7 @@ export class API {
           );
         res.json(isValid);
       },
-      ValidateTxidMerklerootParamsSchema,
+      SharedChainTypeIDParamsSchema,
       ValidateTxidMerklerootBodySchema,
     );
   }

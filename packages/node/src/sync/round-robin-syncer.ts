@@ -78,8 +78,8 @@ export class RoundRobinSyncer {
 
       this.pollStatus = PollStatus.POLLING;
 
-      // 30 second delay before next poll
-      await delay(30 * 1000);
+      // 15 second delay before next poll
+      await delay(15 * 1000);
     } catch (err) {
       dbg(`Error syncing from ${nodeURL}: ${err.message}`);
 

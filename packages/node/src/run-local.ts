@@ -23,6 +23,8 @@ import { NodeConfig } from './models/general-types';
   const envNodeConfigsString = process.env.NODE_CONFIGS ?? '[]';
   const nodeConfigs: NodeConfig[] = JSON.parse(envNodeConfigsString);
 
+  Config.NODE_CONFIGS = nodeConfigs;
+
   const node = new ProofOfInnocenceNode(host, port, nodeConfigs, listProvider);
   await node.start();
 })();

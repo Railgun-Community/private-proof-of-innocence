@@ -7,7 +7,6 @@ import { DatabaseClient } from '../database/database-client-init';
 import { TransactProofMempool } from '../proof-mempool/transact-proof-mempool';
 import { POIMerkletreeManager } from '../poi-events/poi-merkletree-manager';
 import { BlockedShieldsSyncer } from '../shields/blocked-shields-syncer';
-import { PushSync } from '../sync/push-sync';
 
 const dbg = debug('poi:init');
 
@@ -30,9 +29,6 @@ export const initModules = async (listKeys: string[]) => {
 
   dbg('Generating POI Merkletrees for each list and network...');
   POIMerkletreeManager.initListMerkletrees(listKeys);
-
-  dbg('Initializing PushSync');
-  PushSync.init(listKeys);
 
   dbg('Node init successful.');
 };

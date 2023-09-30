@@ -187,17 +187,19 @@ export class RailgunTxidMerkletreeManager {
     const {
       currentTxidIndex: currentTxidIndexB,
       currentMerkleroot: currentMerklerootB,
+      validatedTxidIndex: validatedTxidIndexB,
     } = txidStatusOtherNode;
 
     if (!isDefined(currentTxidIndexA)) {
-      throw new Error('Requires node current index');
+      throw new Error('Requires node current txid index');
     }
-    if (!isDefined(currentTxidIndexB) || !isDefined(validatedTxidIndexA)) {
-      throw new Error('Requires other node current/validated indices');
+    if (!isDefined(currentTxidIndexB)) {
+      throw new Error('Requires other node current txid index');
     }
 
     // Update validated txid if the other node has a current value > this node's validated value.
-    const shouldUpdateValidatedTxid = currentTxidIndexB > validatedTxidIndexA;
+    const shouldUpdateValidatedTxid =
+      currentTxidIndexB > (validatedTxidIndexA ?? -1);
     if (!shouldUpdateValidatedTxid) {
       throw new Error('Current node is already up to date');
     }
@@ -236,12 +238,18 @@ export class RailgunTxidMerkletreeManager {
         networkName,
         txidVersion,
       );
+
+      const validatedTxidIndex = txidIndexToValidate;
+
       await db.saveValidatedTxidStatus(
-        txidIndexToValidate,
+        validatedTxidIndex,
         historicalMerkleroot,
       );
-      await PushSync.sendNodeRequestToAllLists(async nodeURLToSend => {
-        if (nodeURLToSend === nodeURL) {
+      await PushSync.sendNodeRequestToAllNodes(async nodeURLToSend => {
+        if (
+          nodeURLToSend === nodeURL &&
+          (validatedTxidIndexB ?? -1) > validatedTxidIndex
+        ) {
           return;
         }
         // TODO: We shouldn't send from nodes without lists.
@@ -250,7 +258,7 @@ export class RailgunTxidMerkletreeManager {
           nodeURLToSend,
           networkName,
           txidVersion,
-          txidIndexToValidate,
+          validatedTxidIndex,
           historicalMerkleroot,
         );
       });

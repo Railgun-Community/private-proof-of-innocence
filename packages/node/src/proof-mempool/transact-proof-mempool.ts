@@ -14,7 +14,7 @@ import { RailgunTxidMerkletreeManager } from '../railgun-txids/railgun-txid-merk
 import { QueryLimits } from '../config/query-limits';
 import { ListProviderPOIEventQueue } from '../list-provider/list-provider-poi-event-queue';
 import { Config } from '../config/config';
-import { networkForName } from '../config/general';
+import { networkForName, nodeURLForListKey } from '../config/general';
 import { validateRailgunTxidOccurredBeforeBlockNumber } from '@railgun-community/wallet';
 import { POINodeRequest } from '../api/poi-node-request';
 import debug from 'debug';
@@ -66,7 +66,11 @@ export class TransactProofMempool {
         );
       } else {
         // Immediately push to destination node, by its listKey
-        await PushSync.sendNodeRequestToList(listKey, async nodeURL => {
+        const nodeURL = nodeURLForListKey(listKey);
+        if (!isDefined(nodeURL)) {
+          return;
+        }
+        await PushSync.sendNodeRequest(nodeURL, async nodeURL => {
           await POINodeRequest.submitTransactProof(
             nodeURL,
             networkName,
