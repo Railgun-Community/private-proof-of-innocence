@@ -168,6 +168,9 @@ export class API {
             // eslint-disable-next-line no-console
             console.error(err);
           }
+
+          dbg(err);
+
           return res.status(500).send();
 
           // return next(err);
@@ -211,6 +214,9 @@ export class API {
             // eslint-disable-next-line no-console
             console.error(err);
           }
+
+          dbg(err);
+
           return res.status(500).send();
 
           // return next(err);
