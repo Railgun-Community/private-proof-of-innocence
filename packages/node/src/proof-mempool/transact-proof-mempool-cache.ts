@@ -109,7 +109,9 @@ export class TransactProofMempoolCache {
         Record<TXIDVersion, CountingBloomFilter>
       >
     )[txidVersion] ??= POINodeCountingBloomFilter.create();
-    return this.bloomFilters[listKey][networkName] as CountingBloomFilter;
+    return this.bloomFilters[listKey][networkName]?.[
+      txidVersion
+    ] as CountingBloomFilter;
   }
 
   private static addToBloomFilter(

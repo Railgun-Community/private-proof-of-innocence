@@ -97,7 +97,9 @@ export class BlockedShieldsCache {
         Record<TXIDVersion, BloomFilter>
       >
     )[txidVersion] ??= POINodeBloomFilter.create();
-    return this.bloomFilters[listKey][networkName] as BloomFilter;
+    return this.bloomFilters[listKey][networkName]?.[
+      txidVersion
+    ] as BloomFilter;
   }
 
   private static addToBloomFilter(

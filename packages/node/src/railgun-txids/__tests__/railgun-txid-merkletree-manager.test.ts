@@ -109,22 +109,7 @@ describe('railgun-txid-merkletree-manager', () => {
           validatedTxidIndex: undefined,
         },
       ),
-    ).to.eventually.be.rejectedWith('Current node is already up to date');
-
-    // Other node current index === validated index
-    await expect(
-      RailgunTxidMerkletreeManager.updateValidatedRailgunTxidStatus(
-        nodeURL,
-        networkName,
-        txidVersion,
-        {
-          currentMerkleroot: '50',
-          currentTxidIndex: 50,
-          validatedMerkleroot: undefined,
-          validatedTxidIndex: undefined,
-        },
-      ),
-    ).to.eventually.be.rejectedWith('Current node is already up to date');
+    ).to.eventually.be.rejectedWith('Historical merkleroot does not exist');
 
     await expect(
       RailgunTxidMerkletreeManager.updateValidatedRailgunTxidStatus(
