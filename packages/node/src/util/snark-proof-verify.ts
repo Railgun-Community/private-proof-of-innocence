@@ -5,9 +5,9 @@ export const verifyTransactProof = async (
   transactProofData: TransactProofData,
 ): Promise<boolean> => {
   // Mini
-  if (await tryVerifyProof(transactProofData, 3, 3)) {
-    return true;
-  }
+  // if (await tryVerifyProof(transactProofData, 3, 3)) {
+  //   return true;
+  // }
   // Full
   return tryVerifyProof(transactProofData, 13, 13);
 };
