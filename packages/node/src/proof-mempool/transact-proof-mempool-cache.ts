@@ -20,7 +20,9 @@ export class TransactProofMempoolCache {
 
   private static bloomFilters: Record<
     string,
-    Partial<Record<NetworkName, CountingBloomFilter>>
+    Partial<
+      Record<NetworkName, Partial<Record<TXIDVersion, CountingBloomFilter>>>
+    >
   > = {};
 
   static getTransactProofs(
@@ -70,7 +72,12 @@ export class TransactProofMempoolCache {
       transactProofData.blindedCommitmentOutputs[0];
     cache.set(firstBlindedCommitment, transactProofData);
 
-    this.addToBloomFilter(listKey, networkName, firstBlindedCommitment);
+    this.addToBloomFilter(
+      listKey,
+      networkName,
+      txidVersion,
+      firstBlindedCommitment,
+    );
   }
 
   static removeFromCache(
@@ -82,41 +89,58 @@ export class TransactProofMempoolCache {
     const cache = this.getCache(listKey, networkName, txidVersion);
     cache.delete(firstBlindedCommitment);
 
-    this.removeFromBloomFilter(listKey, networkName, firstBlindedCommitment);
+    this.removeFromBloomFilter(
+      listKey,
+      networkName,
+      txidVersion,
+      firstBlindedCommitment,
+    );
   }
 
   private static getBloomFilter(
     listKey: string,
     networkName: NetworkName,
+    txidVersion: TXIDVersion,
   ): CountingBloomFilter {
     this.bloomFilters[listKey] ??= {};
-    this.bloomFilters[listKey][networkName] ??=
-      POINodeCountingBloomFilter.create();
+    this.bloomFilters[listKey][networkName] ??= {};
+    (
+      this.bloomFilters[listKey][networkName] as Partial<
+        Record<TXIDVersion, CountingBloomFilter>
+      >
+    )[txidVersion] ??= POINodeCountingBloomFilter.create();
     return this.bloomFilters[listKey][networkName] as CountingBloomFilter;
   }
 
   private static addToBloomFilter(
     listKey: string,
     networkName: NetworkName,
+    txidVersion: TXIDVersion,
     firstBlindedCommitment: string,
   ) {
-    this.getBloomFilter(listKey, networkName).add(firstBlindedCommitment);
+    this.getBloomFilter(listKey, networkName, txidVersion).add(
+      firstBlindedCommitment,
+    );
   }
 
   private static removeFromBloomFilter(
     listKey: string,
     networkName: NetworkName,
+    txidVersion: TXIDVersion,
     firstBlindedCommitment: string,
   ) {
-    this.getBloomFilter(listKey, networkName).remove(firstBlindedCommitment);
+    this.getBloomFilter(listKey, networkName, txidVersion).remove(
+      firstBlindedCommitment,
+    );
   }
 
   static serializeBloomFilter(
     listKey: string,
     networkName: NetworkName,
+    txidVersion: TXIDVersion,
   ): string {
     return POINodeCountingBloomFilter.serialize(
-      this.getBloomFilter(listKey, networkName),
+      this.getBloomFilter(listKey, networkName, txidVersion),
     );
   }
 

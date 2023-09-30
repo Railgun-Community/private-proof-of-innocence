@@ -27,7 +27,12 @@ export class BlockedShieldsSyncer {
     const db = new BlockedShieldsPerListDatabase(networkName, txidVersion);
     await db.insertSignedBlockedShield(listKey, signedBlockedShield);
 
-    BlockedShieldsCache.addToCache(listKey, networkName, signedBlockedShield);
+    BlockedShieldsCache.addToCache(
+      listKey,
+      networkName,
+      txidVersion,
+      signedBlockedShield,
+    );
   }
 
   private static async shouldAdd(
@@ -76,6 +81,7 @@ export class BlockedShieldsSyncer {
             BlockedShieldsCache.addToCache(
               listKey,
               networkName,
+              txidVersion,
               blockedShieldData,
             );
           }
@@ -85,12 +91,13 @@ export class BlockedShieldsSyncer {
   }
 
   static getFilteredBlockedShields(
+    txidVersion: TXIDVersion,
     listKey: string,
     networkName: NetworkName,
     bloomFilterSerialized: string,
   ): SignedBlockedShield[] {
     const blockedShieldDatas: SignedBlockedShield[] =
-      BlockedShieldsCache.getBlockedShields(listKey, networkName);
+      BlockedShieldsCache.getBlockedShields(listKey, networkName, txidVersion);
 
     const bloomFilter = POINodeCountingBloomFilter.deserialize(
       bloomFilterSerialized,

@@ -25,6 +25,11 @@ import {
   ValidateTxidMerklerootParams,
   GetLatestValidatedRailgunTxidParams,
   TXIDVersion,
+  ValidatedRailgunTxidStatus,
+  MerkleProof,
+  POIsPerListMap,
+  isDefined,
+  TransactProofData,
 } from '@railgun-community/shared-models';
 import {
   GetTransactProofsParamsSchema,
@@ -47,6 +52,7 @@ import {
   SubmitPOIEventParams,
   SubmitValidatedTxidAndMerklerootParams,
 } from '../models/poi-types';
+import { BlockedShieldsSyncer } from '../shields/blocked-shields-syncer';
 
 const dbg = debug('poi:api');
 
@@ -144,16 +150,16 @@ export class API {
     res.status(401).json({ message: 'Unauthorized' });
   }
 
-  private safeGet(
+  private safeGet = <ReturnType>(
     route: string,
-    handler: (req: Request, res: Response) => Promise<void>,
-  ) {
+    handler: (req: Request) => Promise<ReturnType>,
+  ) => {
     this.app.get(
       route,
       async (req: Request, res: Response, next: NextFunction) => {
         try {
-          await handler(req, res);
-          return res.status(200).send();
+          const value: ReturnType = await handler(req);
+          return res.json(value).status(200).send();
         } catch (err) {
           if (API.debug) {
             // eslint-disable-next-line no-console
@@ -165,7 +171,7 @@ export class API {
         }
       },
     );
-  }
+  };
 
   /**
    * Safe POST handler that catches errors and returns a 500 response.
@@ -175,12 +181,12 @@ export class API {
    * @param paramsSchema - JSON schema for request.params
    * @param bodySchema - JSON schema for request.body
    */
-  private safePost(
+  private safePost = <ReturnType>(
     route: string,
-    handler: (req: Request, res: Response) => Promise<void>,
+    handler: (req: Request) => Promise<ReturnType>,
     paramsSchema: AllowedSchema,
     bodySchema: AllowedSchema,
-  ) {
+  ) => {
     const validate = validator.validate({
       params: paramsSchema,
       body: bodySchema,
@@ -191,7 +197,10 @@ export class API {
       validate, // Validate request.params and request.body
       async (req: Request, res: Response, next: NextFunction) => {
         try {
-          await handler(req, res);
+          const value: ReturnType = await handler(req);
+          if (isDefined(value)) {
+            res.json(value);
+          }
           return res.status(200).send();
         } catch (err) {
           if (API.debug) {
@@ -204,7 +213,7 @@ export class API {
         }
       },
     );
-  }
+  };
 
   private hasListKey(listKey: string) {
     return this.listKeys.includes(listKey);
@@ -232,18 +241,18 @@ export class API {
   }
 
   private addAggregatorRoutes() {
-    this.safeGet('/node-status-v2', async (req: Request, res: Response) => {
+    this.safeGet('/node-status-v2', async (req: Request) => {
       const nodeStatusAllNetworks: NodeStatusAllNetworks =
         await NodeStatus.getNodeStatusAllNetworks(
           this.listKeys,
           TXIDVersion.V2_PoseidonMerkle,
         );
-      res.json(nodeStatusAllNetworks);
+      return nodeStatusAllNetworks;
     });
 
     this.safePost(
       '/poi-events/:chainType/:chainID',
-      async (req: Request, res: Response) => {
+      async (req: Request) => {
         const { chainType, chainID } = req.params;
         const { txidVersion, listKey, startIndex, endIndex } =
           req.body as GetPOIListEventRangeParams;
@@ -269,20 +278,20 @@ export class API {
           startIndex,
           endIndex,
         );
-        res.json(events);
+        return events;
       },
       SharedChainTypeIDParamsSchema,
       GetPOIListEventRangeBodySchema,
     );
 
-    this.safePost(
+    this.safePost<TransactProofData[]>(
       '/transact-proofs/:chainType/:chainID/:listKey',
-      async (req: Request, res: Response) => {
+      async (req: Request) => {
         const { chainType, chainID, listKey } = req.params;
         const { txidVersion, bloomFilterSerialized } =
           req.body as GetTransactProofsParams;
         if (!this.hasListKey(listKey)) {
-          return;
+          return [];
         }
 
         const networkName = networkNameForSerializedChain(chainType, chainID);
@@ -293,7 +302,7 @@ export class API {
           txidVersion,
           bloomFilterSerialized,
         );
-        res.json(proofs);
+        return proofs;
       },
       GetTransactProofsParamsSchema,
       GetTransactProofsBodySchema,
@@ -301,7 +310,7 @@ export class API {
 
     this.safePost(
       '/blocked-shields/:chainType/:chainID/:listKey',
-      async (req: Request, res: Response) => {
+      async (req: Request) => {
         const { chainType, chainID, listKey } = req.params;
         const { txidVersion, bloomFilterSerialized } =
           req.body as GetBlockedShieldsParams;
@@ -311,13 +320,13 @@ export class API {
 
         const networkName = networkNameForSerializedChain(chainType, chainID);
 
-        const proofs = TransactProofMempool.getFilteredProofs(
+        const proofs = BlockedShieldsSyncer.getFilteredBlockedShields(
+          txidVersion,
           listKey,
           networkName,
-          txidVersion,
           bloomFilterSerialized,
         );
-        res.json(proofs);
+        return proofs;
       },
       GetBlockedShieldsParamsSchema,
       GetBlockedShieldsBodySchema,
@@ -325,9 +334,9 @@ export class API {
   }
 
   private addClientRoutes() {
-    this.safePost(
+    this.safePost<void>(
       '/submit-transact-proof/:chainType/:chainID',
-      async (req: Request, res: Response) => {
+      async (req: Request) => {
         const { chainType, chainID } = req.params;
         const { txidVersion, listKey, transactProofData } =
           req.body as SubmitTransactProofParams;
@@ -343,15 +352,14 @@ export class API {
           txidVersion,
           transactProofData,
         );
-        res.status(200);
       },
       SharedChainTypeIDParamsSchema,
       SubmitTransactProofBodySchema,
     );
 
-    this.safePost(
+    this.safePost<void>(
       '/submit-poi-event/:chainType/:chainID',
-      async (req: Request, res: Response) => {
+      async (req: Request) => {
         const { chainType, chainID } = req.params;
         const { txidVersion, listKey, signedPOIEvent } =
           req.body as SubmitPOIEventParams;
@@ -367,15 +375,14 @@ export class API {
           listKey,
           [signedPOIEvent],
         );
-        res.status(200);
       },
       SharedChainTypeIDParamsSchema,
       SubmitPOIEventBodySchema,
     );
 
-    this.safePost(
+    this.safePost<void>(
       '/submit-validated-txid/:chainType/:chainID',
-      async (req: Request, res: Response) => {
+      async (req: Request) => {
         const { chainType, chainID } = req.params;
         const { txidVersion, txidIndex, merkleroot, signature, listKey } =
           req.body as SubmitValidatedTxidAndMerklerootParams;
@@ -393,15 +400,14 @@ export class API {
           signature,
           listKey,
         );
-        res.status(200);
       },
       SharedChainTypeIDParamsSchema,
       SubmitValidatedTxidBodySchema,
     );
 
-    this.safePost(
+    this.safePost<POIsPerListMap>(
       '/pois-per-list/:chainType/:chainID',
-      async (req: Request, res: Response) => {
+      async (req: Request) => {
         const { chainType, chainID } = req.params;
         const { txidVersion, listKeys, blindedCommitmentDatas } =
           req.body as GetPOIsPerListParams;
@@ -425,20 +431,20 @@ export class API {
           txidVersion,
           blindedCommitmentDatas,
         );
-        res.json(poiStatusMap);
+        return poiStatusMap;
       },
       SharedChainTypeIDParamsSchema,
       GetPOIsPerListBodySchema,
     );
 
-    this.safePost(
+    this.safePost<MerkleProof[]>(
       '/merkle-proofs/:chainType/:chainID',
-      async (req: Request, res: Response) => {
+      async (req: Request) => {
         const { chainType, chainID } = req.params;
         const { txidVersion, listKey, blindedCommitments } =
           req.body as GetMerkleProofsParams;
         if (!this.hasListKey(listKey)) {
-          return;
+          return [];
         }
         const networkName = networkNameForSerializedChain(chainType, chainID);
         if (
@@ -455,33 +461,33 @@ export class API {
           txidVersion,
           blindedCommitments,
         );
-        res.json(merkleProofs);
+        return merkleProofs;
       },
       SharedChainTypeIDParamsSchema,
       GetMerkleProofsBodySchema,
     );
 
-    this.safePost(
+    this.safePost<ValidatedRailgunTxidStatus>(
       '/validated-txid/:chainType/:chainID',
-      async (req: Request, res: Response) => {
+      async (req: Request) => {
         const { chainType, chainID } = req.params;
         const { txidVersion } = req.body as GetLatestValidatedRailgunTxidParams;
         const networkName = networkNameForSerializedChain(chainType, chainID);
 
         const validatedRailgunTxidStatus =
-          RailgunTxidMerkletreeManager.getValidatedRailgunTxidStatus(
+          await RailgunTxidMerkletreeManager.getValidatedRailgunTxidStatus(
             networkName,
             txidVersion,
           );
-        res.json(validatedRailgunTxidStatus);
+        return validatedRailgunTxidStatus;
       },
       SharedChainTypeIDParamsSchema,
       GetLatestValidatedRailgunTxidBodySchema,
     );
 
-    this.safePost(
+    this.safePost<boolean>(
       '/validate-txid-merkleroot/:chainType/:chainID',
-      async (req: Request, res: Response) => {
+      async (req: Request) => {
         const { chainType, chainID } = req.params;
         const { txidVersion, tree, index, merkleroot } =
           req.body as ValidateTxidMerklerootParams;
@@ -494,7 +500,7 @@ export class API {
             index,
             merkleroot,
           );
-        res.json(isValid);
+        return isValid;
       },
       SharedChainTypeIDParamsSchema,
       ValidateTxidMerklerootBodySchema,
