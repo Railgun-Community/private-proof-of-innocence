@@ -94,9 +94,7 @@ describe('railgun-txid-merkletree-manager', () => {
           validatedTxidIndex: undefined,
         },
       ),
-    ).to.eventually.be.rejectedWith(
-      'Requires other node current/validated indices',
-    );
+    ).to.eventually.be.rejectedWith('Requires other node current txid index');
 
     // Other node current index === validated index
     await expect(

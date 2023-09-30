@@ -153,12 +153,15 @@ export class API {
       async (req: Request, res: Response, next: NextFunction) => {
         try {
           await handler(req, res);
+          return res.status(200).send();
         } catch (err) {
           if (API.debug) {
             // eslint-disable-next-line no-console
             console.error(err);
           }
-          return next(err);
+          return res.status(500).send();
+
+          // return next(err);
         }
       },
     );
@@ -189,22 +192,22 @@ export class API {
       async (req: Request, res: Response, next: NextFunction) => {
         try {
           await handler(req, res);
-          return res.status(200).send(); // Explicitly return a value
+          return res.status(200).send();
         } catch (err) {
           if (API.debug) {
             // eslint-disable-next-line no-console
             console.error(err);
           }
-          return next(err);
+          return res.status(500).send();
+
+          // return next(err);
         }
       },
     );
   }
 
-  private assertHasListKey(listKey: string) {
-    if (!this.listKeys.includes(listKey)) {
-      throw new Error('Missing listKey');
-    }
+  private hasListKey(listKey: string) {
+    return this.listKeys.includes(listKey);
   }
 
   private addRoutes() {
@@ -244,7 +247,9 @@ export class API {
         const { chainType, chainID } = req.params;
         const { txidVersion, listKey, startIndex, endIndex } =
           req.body as GetPOIListEventRangeParams;
-        this.assertHasListKey(listKey);
+        if (!this.hasListKey(listKey)) {
+          return;
+        }
         const networkName = networkNameForSerializedChain(chainType, chainID);
 
         const rangeLength = endIndex - startIndex;
@@ -276,7 +281,9 @@ export class API {
         const { chainType, chainID, listKey } = req.params;
         const { txidVersion, bloomFilterSerialized } =
           req.body as GetTransactProofsParams;
-        this.assertHasListKey(listKey);
+        if (!this.hasListKey(listKey)) {
+          return;
+        }
 
         const networkName = networkNameForSerializedChain(chainType, chainID);
 
@@ -298,7 +305,9 @@ export class API {
         const { chainType, chainID, listKey } = req.params;
         const { txidVersion, bloomFilterSerialized } =
           req.body as GetBlockedShieldsParams;
-        this.assertHasListKey(listKey);
+        if (!this.hasListKey(listKey)) {
+          return;
+        }
 
         const networkName = networkNameForSerializedChain(chainType, chainID);
 
@@ -322,7 +331,9 @@ export class API {
         const { chainType, chainID } = req.params;
         const { txidVersion, listKey, transactProofData } =
           req.body as SubmitTransactProofParams;
-        this.assertHasListKey(listKey);
+        if (!this.hasListKey(listKey)) {
+          return;
+        }
         const networkName = networkNameForSerializedChain(chainType, chainID);
 
         // Submit and verify the proof
@@ -344,7 +355,9 @@ export class API {
         const { chainType, chainID } = req.params;
         const { txidVersion, listKey, signedPOIEvent } =
           req.body as SubmitPOIEventParams;
-        this.assertHasListKey(listKey);
+        if (!this.hasListKey(listKey)) {
+          return;
+        }
         const networkName = networkNameForSerializedChain(chainType, chainID);
 
         // Submit and verify the proof
@@ -366,7 +379,9 @@ export class API {
         const { chainType, chainID } = req.params;
         const { txidVersion, txidIndex, merkleroot, signature, listKey } =
           req.body as SubmitValidatedTxidAndMerklerootParams;
-        this.assertHasListKey(listKey);
+        if (!this.hasListKey(listKey)) {
+          return;
+        }
         const networkName = networkNameForSerializedChain(chainType, chainID);
 
         // Submit and verify the proof
@@ -391,7 +406,9 @@ export class API {
         const { txidVersion, listKeys, blindedCommitmentDatas } =
           req.body as GetPOIsPerListParams;
         listKeys.forEach(listKey => {
-          this.assertHasListKey(listKey);
+          if (!this.hasListKey(listKey)) {
+            return;
+          }
         });
         const networkName = networkNameForSerializedChain(chainType, chainID);
 
@@ -420,7 +437,9 @@ export class API {
         const { chainType, chainID } = req.params;
         const { txidVersion, listKey, blindedCommitments } =
           req.body as GetMerkleProofsParams;
-        this.assertHasListKey(listKey);
+        if (!this.hasListKey(listKey)) {
+          return;
+        }
         const networkName = networkNameForSerializedChain(chainType, chainID);
         if (
           blindedCommitments.length >

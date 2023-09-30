@@ -80,13 +80,6 @@ export class RoundRobinSyncer {
 
       // 15 second delay before next poll
       await delay(15 * 1000);
-    } catch (err) {
-      dbg(`Error syncing from ${nodeURL}: ${err.message}`);
-
-      this.pollStatus = PollStatus.ERROR;
-
-      // 5 second delay before next poll
-      await delay(5 * 1000);
     } finally {
       this.incrementNodeIndex();
 
@@ -106,12 +99,19 @@ export class RoundRobinSyncer {
         return;
       }
       for (const txidVersion of Config.TXID_VERSIONS) {
-        await RailgunTxidMerkletreeManager.updateValidatedRailgunTxidStatusSafe(
-          nodeURL,
-          networkName,
-          txidVersion,
-          nodeStatus.txidStatus,
-        );
+        try {
+          await RailgunTxidMerkletreeManager.updateValidatedRailgunTxidStatusSafe(
+            nodeURL,
+            networkName,
+            txidVersion,
+            nodeStatus.txidStatus,
+          );
+        } catch (err) {
+          dbg(
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+            `Error syncing railgun txid merkletree validated root for network ${networkName}: ${err.message}`,
+          );
+        }
       }
     }
   }
@@ -132,13 +132,20 @@ export class RoundRobinSyncer {
           if (!isDefined(listStatuses[listKey])) {
             continue;
           }
-          await this.updatePOIEventList(
-            nodeURL,
-            networkName,
-            txidVersion,
-            listKey,
-            listStatuses[listKey].poiEvents,
-          );
+          try {
+            await this.updatePOIEventList(
+              nodeURL,
+              networkName,
+              txidVersion,
+              listKey,
+              listStatuses[listKey].poiEvents,
+            );
+          } catch (err) {
+            dbg(
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+              `Error syncing POI events for list ${listKey} on network ${networkName}: ${err.message}`,
+            );
+          }
         }
       }
     }
@@ -202,13 +209,20 @@ export class RoundRobinSyncer {
           if (!isDefined(listStatuses[listKey])) {
             continue;
           }
-          await this.updateTransactProofMempool(
-            nodeURL,
-            networkName,
-            txidVersion,
-            listKey,
-            listStatuses[listKey].pendingTransactProofs,
-          );
+          try {
+            await this.updateTransactProofMempool(
+              nodeURL,
+              networkName,
+              txidVersion,
+              listKey,
+              listStatuses[listKey].pendingTransactProofs,
+            );
+          } catch (err) {
+            dbg(
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+              `Error syncing transact proofs for list ${listKey} on network ${networkName}: ${err.message}`,
+            );
+          }
         }
       }
     }
@@ -272,13 +286,20 @@ export class RoundRobinSyncer {
           if (!isDefined(listStatuses[listKey])) {
             continue;
           }
-          await this.updateBlockedShields(
-            nodeURL,
-            networkName,
-            txidVersion,
-            listKey,
-            listStatuses[listKey].blockedShields,
-          );
+          try {
+            await this.updateBlockedShields(
+              nodeURL,
+              networkName,
+              txidVersion,
+              listKey,
+              listStatuses[listKey].blockedShields,
+            );
+          } catch (err) {
+            dbg(
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+              `Error syncing blocked shields for list ${listKey} on network ${networkName}: ${err.message}`,
+            );
+          }
         }
       }
     }
