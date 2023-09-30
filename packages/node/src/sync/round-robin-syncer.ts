@@ -55,7 +55,7 @@ export class RoundRobinSyncer {
       const nodeStatusAllNetworks =
         await POINodeRequest.getNodeStatusAllNetworks(nodeURL);
 
-      dbg(`-- Syncing with ${nodeURL} -- `);
+      dbg(`\n-- Syncing with ${nodeURL} -- `);
 
       await this.updatePOIEventListAllNetworks(nodeURL, nodeStatusAllNetworks);
       dbg('Synced: POI Event Lists');
