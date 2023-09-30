@@ -158,6 +158,7 @@ export class API {
   ) => {
     this.app.get(
       route,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       async (req: Request, res: Response, next: NextFunction) => {
         try {
           const value: ReturnType = await handler(req);
@@ -196,7 +197,8 @@ export class API {
 
     this.app.post(
       route,
-      validate, // Validate request.params and request.body
+      validate,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       async (req: Request, res: Response, next: NextFunction) => {
         try {
           const value: ReturnType = await handler(req);
@@ -243,15 +245,12 @@ export class API {
   }
 
   private addAggregatorRoutes() {
-    this.safeGet<NodeStatusAllNetworks>(
-      '/node-status-v2',
-      async (req: Request) => {
-        return NodeStatus.getNodeStatusAllNetworks(
-          this.listKeys,
-          TXIDVersion.V2_PoseidonMerkle,
-        );
-      },
-    );
+    this.safeGet<NodeStatusAllNetworks>('/node-status-v2', async () => {
+      return NodeStatus.getNodeStatusAllNetworks(
+        this.listKeys,
+        TXIDVersion.V2_PoseidonMerkle,
+      );
+    });
 
     // TODO:
     // this.safePost<NodeStatusAllNetworks>(

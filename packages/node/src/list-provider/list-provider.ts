@@ -32,7 +32,7 @@ import { POIEventShield, POIEventType } from '../models/poi-types';
 import { ListProviderBlocklist } from './list-provider-blocklist';
 import { hoursAgo, minutesAgo } from '../util/time-ago';
 import { POIMerkletreeManager } from '../poi-events/poi-merkletree-manager';
-import { BlockedShieldsPerListDatabase } from '../database/databases/blocked-shields-per-list-database';
+import {} from '../database/databases/blocked-shields-per-list-database';
 
 export type ListProviderConfig = {
   name: string;

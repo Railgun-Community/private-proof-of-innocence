@@ -245,7 +245,11 @@ export class RoundRobinSyncer {
     }
 
     const serializedBloomFilter =
-      TransactProofMempoolCache.serializeBloomFilter(listKey, networkName);
+      TransactProofMempoolCache.serializeBloomFilter(
+        listKey,
+        networkName,
+        txidVersion,
+      );
     const transactProofs = await POINodeRequest.getFilteredTransactProofs(
       nodeURL,
       networkName,
@@ -315,6 +319,7 @@ export class RoundRobinSyncer {
     const currentBlockedShieldsLength = BlockedShieldsCache.getBlockedShields(
       listKey,
       networkName,
+      txidVersion,
     ).length;
     if (nodeBlockedShieldsLength <= currentBlockedShieldsLength) {
       return;
@@ -323,6 +328,7 @@ export class RoundRobinSyncer {
     const serializedBloomFilter = BlockedShieldsCache.serializeBloomFilter(
       listKey,
       networkName,
+      txidVersion,
     );
     const signedBlockedShields = await POINodeRequest.getFilteredBlockedShields(
       nodeURL,

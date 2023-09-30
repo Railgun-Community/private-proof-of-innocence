@@ -77,6 +77,7 @@ export class NodeStatus {
           blockedShields: BlockedShieldsCache.getCacheSize(
             listKey,
             networkName,
+            txidVersion,
           ),
         };
       }),
