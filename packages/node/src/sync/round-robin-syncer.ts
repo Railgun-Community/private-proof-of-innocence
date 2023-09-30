@@ -55,6 +55,8 @@ export class RoundRobinSyncer {
       const nodeStatusAllNetworks =
         await POINodeRequest.getNodeStatusAllNetworks(nodeURL);
 
+      dbg(`-- Syncing with ${nodeURL} -- `);
+
       await this.updatePOIEventListAllNetworks(nodeURL, nodeStatusAllNetworks);
       dbg('Synced: POI Event Lists');
 
@@ -81,7 +83,7 @@ export class RoundRobinSyncer {
       // 30 second delay before next poll
       await delay(30 * 1000);
     } catch (err) {
-      dbg(`Error polling node ${nodeURL}: ${err.message}`);
+      dbg(`Error syncing from ${nodeURL}: ${err.message}`);
 
       this.pollStatus = PollStatus.ERROR;
 
