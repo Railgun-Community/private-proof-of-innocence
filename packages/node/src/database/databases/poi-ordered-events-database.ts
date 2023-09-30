@@ -1,4 +1,8 @@
-import { NetworkName, TXIDVersion } from '@railgun-community/shared-models';
+import {
+  NetworkName,
+  TXIDVersion,
+  isDefined,
+} from '@railgun-community/shared-models';
 import {
   CollectionName,
   DBFilter,
@@ -63,8 +67,8 @@ export class POIOrderedEventsDatabase extends AbstractDatabase<POIOrderedEventDB
 
     // If endIndex is defined, set it as the max index
     const max: DBMaxMin<POIOrderedEventDBItem> = {};
-    if (typeof endIndex !== 'undefined') {
-      max.index = endIndex;
+    if (isDefined(endIndex)) {
+      max.index = endIndex === startIndex ? endIndex + 1 : endIndex;
     }
 
     return this.findAll(filter, sort, max, min);
