@@ -5,6 +5,8 @@ import {
   loadProvider,
   setLoggers,
   startRailgunEngineForPOINode,
+  getProver,
+  SnarkJSGroth16,
 } from '@railgun-community/wallet';
 import fs from 'fs';
 import {
@@ -12,6 +14,7 @@ import {
   NetworkName,
 } from '@railgun-community/shared-models';
 import { Config } from '../config/config';
+import { groth16 } from 'snarkjs';
 import debug from 'debug';
 
 const dbgLog = debug('poi:engine:log');
@@ -47,6 +50,8 @@ export const startEngine = () => {
   setLoggers(dbgLog, dbgError);
 
   startRailgunEngineForPOINode(levelDB, shouldDebug, testArtifactStore);
+
+  getProver().setSnarkJSGroth16(groth16 as SnarkJSGroth16);
 
   engineStarted = true;
 };
