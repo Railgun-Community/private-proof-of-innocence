@@ -23,7 +23,9 @@ before(async function run() {
   await promiseTimeout(
     setUpMongoose(),
     2000,
-    new Error('Mongoose DB setup timed out - make sure you run ./'),
+    new Error(
+      'Mongoose DB setup timed out - make sure you run ./run-mongodb-test',
+    ),
   );
   Config.MONGODB_URL = MONGOOSE_DB_URL;
 });

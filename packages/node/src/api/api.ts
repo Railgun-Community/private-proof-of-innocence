@@ -162,7 +162,7 @@ export class API {
       async (req: Request, res: Response, next: NextFunction) => {
         try {
           const value: ReturnType = await handler(req);
-          return res.json(value).status(200).send();
+          return res.status(200).json(value);
         } catch (err) {
           if (API.debug) {
             // eslint-disable-next-line no-console
@@ -206,7 +206,7 @@ export class API {
         try {
           const value: ReturnType = await handler(req);
           if (isDefined(value)) {
-            res.json(value);
+            return res.status(200).json(value);
           }
           return res.status(200).send();
         } catch (err) {

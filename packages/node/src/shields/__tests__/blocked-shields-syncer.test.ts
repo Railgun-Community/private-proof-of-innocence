@@ -131,13 +131,16 @@ describe('blocked-shields-syncer', () => {
       blockedShield2,
     );
 
-    expect(BlockedShieldsCache.getCacheSize(listKey, networkName)).to.equal(2);
+    expect(
+      BlockedShieldsCache.getCacheSize(listKey, networkName, txidVersion),
+    ).to.equal(2);
 
     const bloomFilter = POINodeBloomFilter.create();
     const bloomFilterSerializedNoData =
       POINodeBloomFilter.serialize(bloomFilter);
     expect(
       BlockedShieldsSyncer.getFilteredBlockedShields(
+        txidVersion,
         listKey,
         networkName,
         bloomFilterSerializedNoData,
@@ -149,6 +152,7 @@ describe('blocked-shields-syncer', () => {
       POINodeBloomFilter.serialize(bloomFilter);
     expect(
       BlockedShieldsSyncer.getFilteredBlockedShields(
+        txidVersion,
         listKey,
         networkName,
         bloomFilterSerializedWithProof1,
@@ -201,12 +205,18 @@ describe('blocked-shields-syncer', () => {
       blockedShield2,
     );
 
-    expect(BlockedShieldsCache.getCacheSize(listKey, networkName)).to.equal(2);
+    expect(
+      BlockedShieldsCache.getCacheSize(listKey, networkName, txidVersion),
+    ).to.equal(2);
 
     BlockedShieldsCache.clearCache_FOR_TEST_ONLY();
-    expect(BlockedShieldsCache.getCacheSize(listKey, networkName)).to.equal(0);
+    expect(
+      BlockedShieldsCache.getCacheSize(listKey, networkName, txidVersion),
+    ).to.equal(0);
 
     await BlockedShieldsSyncer.inflateCacheFromDatabase([listKey]);
-    expect(BlockedShieldsCache.getCacheSize(listKey, networkName)).to.equal(2);
+    expect(
+      BlockedShieldsCache.getCacheSize(listKey, networkName, txidVersion),
+    ).to.equal(2);
   }).timeout(10000);
 });
