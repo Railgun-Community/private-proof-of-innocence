@@ -20,3 +20,6 @@ mongo.test.db
 # Test
 .nyc_output
 coverage/
+
+# Prover Artifacts
+artifacts-v*/
