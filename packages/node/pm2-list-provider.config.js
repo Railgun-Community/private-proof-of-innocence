@@ -8,7 +8,7 @@ module.exports = {
     },
     {
       name: 'node-list-provider',
-      script: 'npm run build && ./dist/run-local.js',
+      script: './dist/run-local.js',
       env: {
         DEBUG: 'poi:*',
         LIST_PROVIDER: '1',

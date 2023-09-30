@@ -8,7 +8,7 @@ module.exports = {
     },
     {
       name: 'node-aggregator',
-      script: 'npm run build && ./dist/run-local.js',
+      script: './dist/run-local.js',
       env: {
         DEBUG: 'poi:*',
       },
