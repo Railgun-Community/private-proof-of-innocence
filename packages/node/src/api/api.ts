@@ -49,6 +49,8 @@ import {
 import 'dotenv/config';
 import {
   GetPOIListEventRangeParams,
+  SignedBlockedShield,
+  SignedPOIEvent,
   SubmitPOIEventParams,
   SubmitValidatedTxidAndMerklerootParams,
 } from '../models/poi-types';
@@ -241,23 +243,34 @@ export class API {
   }
 
   private addAggregatorRoutes() {
-    this.safeGet('/node-status-v2', async (req: Request) => {
-      const nodeStatusAllNetworks: NodeStatusAllNetworks =
-        await NodeStatus.getNodeStatusAllNetworks(
+    this.safeGet<NodeStatusAllNetworks>(
+      '/node-status-v2',
+      async (req: Request) => {
+        return NodeStatus.getNodeStatusAllNetworks(
           this.listKeys,
           TXIDVersion.V2_PoseidonMerkle,
         );
-      return nodeStatusAllNetworks;
-    });
+      },
+    );
 
-    this.safePost(
+    // TODO:
+    // this.safePost<NodeStatusAllNetworks>(
+    //   '/node-status',
+    //   async (req: Request) => {
+    //     const { txidVersion } = req.body as NodeStatusParams;
+
+    //     return NodeStatus.getNodeStatusAllNetworks(this.listKeys, txidVersion);
+    //   },
+    // );
+
+    this.safePost<SignedPOIEvent[]>(
       '/poi-events/:chainType/:chainID',
       async (req: Request) => {
         const { chainType, chainID } = req.params;
         const { txidVersion, listKey, startIndex, endIndex } =
           req.body as GetPOIListEventRangeParams;
         if (!this.hasListKey(listKey)) {
-          return;
+          return [];
         }
         const networkName = networkNameForSerializedChain(chainType, chainID);
 
@@ -308,14 +321,14 @@ export class API {
       GetTransactProofsBodySchema,
     );
 
-    this.safePost(
+    this.safePost<SignedBlockedShield[]>(
       '/blocked-shields/:chainType/:chainID/:listKey',
       async (req: Request) => {
         const { chainType, chainID, listKey } = req.params;
         const { txidVersion, bloomFilterSerialized } =
           req.body as GetBlockedShieldsParams;
         if (!this.hasListKey(listKey)) {
-          return;
+          return [];
         }
 
         const networkName = networkNameForSerializedChain(chainType, chainID);
