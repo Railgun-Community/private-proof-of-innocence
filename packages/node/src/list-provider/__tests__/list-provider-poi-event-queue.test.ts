@@ -111,6 +111,7 @@ describe('list-provider-poi-event-queue', () => {
 
     // Expect all events to be added to merkletree
     const poiStatusPerList = await POIMerkletreeManager.getPOIStatusPerList(
+      MOCK_LIST_KEYS,
       networkName,
       txidVersion,
       [

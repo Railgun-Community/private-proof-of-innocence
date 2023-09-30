@@ -429,11 +429,7 @@ export class API {
         const { chainType, chainID } = req.params;
         const { txidVersion, listKeys, blindedCommitmentDatas } =
           req.body as GetPOIsPerListParams;
-        listKeys.forEach(listKey => {
-          if (!this.hasListKey(listKey)) {
-            return;
-          }
-        });
+
         const networkName = networkNameForSerializedChain(chainType, chainID);
 
         if (
@@ -444,12 +440,13 @@ export class API {
             `Too many blinded commitments: max ${QueryLimits.GET_POI_EXISTENCE_MAX_BLINDED_COMMITMENTS}`,
           );
         }
-        const poiStatusMap = await POIMerkletreeManager.getPOIStatusPerList(
+
+        return POIMerkletreeManager.getPOIStatusPerList(
+          listKeys,
           networkName,
           txidVersion,
           blindedCommitmentDatas,
         );
-        return poiStatusMap;
       },
       SharedChainTypeIDParamsSchema,
       GetPOIsPerListBodySchema,

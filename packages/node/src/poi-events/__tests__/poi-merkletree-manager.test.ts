@@ -89,6 +89,7 @@ describe('poi-merkletree-manager', () => {
     ]);
 
     const poiStatusPerList = await POIMerkletreeManager.getPOIStatusPerList(
+      MOCK_LIST_KEYS,
       networkName,
       txidVersion,
       [

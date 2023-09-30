@@ -98,13 +98,18 @@ export class POIMerkletreeManager {
   }
 
   static async getPOIStatusPerList(
+    listKeys: string[],
     networkName: NetworkName,
     txidVersion: TXIDVersion,
     blindedCommitmentDatas: BlindedCommitmentData[],
   ): Promise<POIsPerListMap> {
     const poisPerListMap: POIsPerListMap = {};
+
     await Promise.all(
-      this.listKeys.map(async listKey => {
+      listKeys.map(async listKey => {
+        if (!this.listKeys.includes(listKey)) {
+          return;
+        }
         await Promise.all(
           blindedCommitmentDatas.map(async blindedCommitmentData => {
             const { blindedCommitment } = blindedCommitmentData;
