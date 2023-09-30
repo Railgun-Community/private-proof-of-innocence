@@ -11,6 +11,7 @@ module.exports = {
       script: './dist/run-local.js',
       env: {
         DEBUG: 'poi:*',
+        DEBUG_COLORS: true,
       },
     },
   ],
