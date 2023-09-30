@@ -28,53 +28,62 @@ export class ConnectedNodeStartup {
 
     await Promise.all(
       this.nodeConfigs.map(async ({ nodeURL }) => {
-        const nodeStatusAllNetworks =
-          await POINodeRequest.getNodeStatusAllNetworks(nodeURL);
+        try {
+          const nodeStatusAllNetworks =
+            await POINodeRequest.getNodeStatusAllNetworks(nodeURL);
 
-        // Check all list keys
-        this.listKeys.forEach(listKey => {
-          if (!nodeStatusAllNetworks.listKeys.includes(listKey)) {
-            dbg(`Local list key ${listKey} not found on node ${nodeURL}`);
-          }
-        });
-        nodeStatusAllNetworks.listKeys.forEach(listKey => {
-          if (!this.listKeys.includes(listKey)) {
-            dbg(
-              `Foreign list key ${listKey} from node ${nodeURL} not found locally`,
-            );
-          }
-        });
+          // Check all list keys
+          this.listKeys.forEach(listKey => {
+            if (!nodeStatusAllNetworks.listKeys.includes(listKey)) {
+              dbg(`Local list key ${listKey} not found on node ${nodeURL}`);
+            }
+          });
+          nodeStatusAllNetworks.listKeys.forEach(listKey => {
+            if (!this.listKeys.includes(listKey)) {
+              dbg(
+                `Foreign list key ${listKey} from node ${nodeURL} not found locally`,
+              );
+            }
+          });
 
-        // Check all networks
-        Config.NETWORK_NAMES.forEach(networkName => {
-          if (
-            !Object.keys(nodeStatusAllNetworks.forNetwork).includes(networkName)
-          ) {
-            dbg(`Local network ${networkName} not found on node ${nodeURL}`);
-          }
-        });
-        Object.keys(nodeStatusAllNetworks.forNetwork).forEach(networkName => {
-          if (!Config.NETWORK_NAMES.includes(networkName as NetworkName)) {
-            dbg(
-              `Foreign list key ${networkName} from node ${nodeURL} not found locally`,
-            );
-          }
-        });
+          // Check all networks
+          Config.NETWORK_NAMES.forEach(networkName => {
+            if (
+              !Object.keys(nodeStatusAllNetworks.forNetwork).includes(
+                networkName,
+              )
+            ) {
+              dbg(`Local network ${networkName} not found on node ${nodeURL}`);
+            }
+          });
+          Object.keys(nodeStatusAllNetworks.forNetwork).forEach(networkName => {
+            if (!Config.NETWORK_NAMES.includes(networkName as NetworkName)) {
+              dbg(
+                `Foreign list key ${networkName} from node ${nodeURL} not found locally`,
+              );
+            }
+          });
 
-        // The "minimum next add index" ensures that no connected nodes have a more-updated list than this node.
-        // If they do, this node will wait to add new events until it's synced.
-        for (const networkName of Config.NETWORK_NAMES) {
-          for (const listKey of this.listKeys) {
-            const eventListLength =
-              nodeStatusAllNetworks.forNetwork[networkName]?.listStatuses?.[
-                listKey
-              ]?.poiEvents ?? 0;
-            const syncedIndex = eventListLength - 1;
-            ListProviderPOIEventQueue.updateMinimumNextAddIndex(
-              networkName,
-              syncedIndex,
-            );
+          // The "minimum next add index" ensures that no connected nodes have a more-updated list than this node.
+          // If they do, this node will wait to add new events until it's synced.
+          for (const networkName of Config.NETWORK_NAMES) {
+            for (const listKey of this.listKeys) {
+              const eventListLength =
+                nodeStatusAllNetworks.forNetwork[networkName]?.listStatuses?.[
+                  listKey
+                ]?.poiEvents ?? 0;
+              const syncedIndex = eventListLength - 1;
+              ListProviderPOIEventQueue.updateMinimumNextAddIndex(
+                networkName,
+                syncedIndex,
+              );
+            }
           }
+        } catch (err) {
+          dbg(
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+            `Error initially connecting and getting node status from ${nodeURL}: ${err.message}`,
+          );
         }
       }),
     );
