@@ -347,32 +347,6 @@ export class API {
       SharedChainTypeIDParamsSchema,
       GetBlockedShieldsBodySchema,
     );
-  }
-
-  private addClientRoutes() {
-    this.safePost<void>(
-      '/submit-transact-proof/:chainType/:chainID',
-      async (req: Request) => {
-        const { chainType, chainID } = req.params;
-        const { txidVersion, listKey, transactProofData } =
-          req.body as SubmitTransactProofParams;
-        if (!this.hasListKey(listKey)) {
-          return;
-        }
-
-        const networkName = networkNameForSerializedChain(chainType, chainID);
-
-        // Submit and verify the proof
-        await TransactProofMempool.submitProof(
-          listKey,
-          networkName,
-          txidVersion,
-          transactProofData,
-        );
-      },
-      SharedChainTypeIDParamsSchema,
-      SubmitTransactProofBodySchema,
-    );
 
     this.safePost<void>(
       '/submit-poi-event/:chainType/:chainID',
@@ -384,6 +358,10 @@ export class API {
           return;
         }
         const networkName = networkNameForSerializedChain(chainType, chainID);
+
+        dbg(
+          `REQUEST: Submit Signed POI Event: ${listKey}, ${signedPOIEvent.index}`,
+        );
 
         // Submit and verify the proof
         await POIEventList.verifyAndAddSignedPOIEvents(
@@ -408,6 +386,8 @@ export class API {
         }
         const networkName = networkNameForSerializedChain(chainType, chainID);
 
+        dbg(`REQUEST: Submit Validated TXID: ${txidIndex}`);
+
         // Submit and verify the proof
         await RailgunTxidMerkletreeManager.verifySignatureAndUpdateValidatedRailgunTxidStatus(
           networkName,
@@ -420,6 +400,36 @@ export class API {
       },
       SharedChainTypeIDParamsSchema,
       SubmitValidatedTxidBodySchema,
+    );
+  }
+
+  private addClientRoutes() {
+    this.safePost<void>(
+      '/submit-transact-proof/:chainType/:chainID',
+      async (req: Request) => {
+        const { chainType, chainID } = req.params;
+        const { txidVersion, listKey, transactProofData } =
+          req.body as SubmitTransactProofParams;
+        if (!this.hasListKey(listKey)) {
+          return;
+        }
+
+        const networkName = networkNameForSerializedChain(chainType, chainID);
+
+        dbg(
+          `REQUEST: Submit Transact Proof: ${listKey}, ${transactProofData.blindedCommitmentOutputs[0]}`,
+        );
+
+        // Submit and verify the proof
+        await TransactProofMempool.submitProof(
+          listKey,
+          networkName,
+          txidVersion,
+          transactProofData,
+        );
+      },
+      SharedChainTypeIDParamsSchema,
+      SubmitTransactProofBodySchema,
     );
 
     this.safePost<POIsPerListMap>(
