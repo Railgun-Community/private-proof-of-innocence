@@ -104,7 +104,7 @@ export const OverallStatus = ({ nodeStatus }: Props) => {
             nodeStatus?.txidStatus?.currentTxidIndex,
           )}
           {renderListRow(
-            'Validated Tx ID',
+            'Validated Tx ID:',
             nodeStatus?.txidStatus?.validatedTxidIndex,
           )}
         </div>
