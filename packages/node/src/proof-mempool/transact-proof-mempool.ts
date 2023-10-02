@@ -76,7 +76,7 @@ export class TransactProofMempool {
             nodeURL,
             networkName,
             txidVersion,
-            ListProviderPOIEventQueue.listKey,
+            listKey,
             transactProofData,
           );
         });
