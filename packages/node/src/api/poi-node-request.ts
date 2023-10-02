@@ -126,13 +126,14 @@ export class POINodeRequest {
     bloomFilterSerialized: string,
   ) => {
     const chain = NETWORK_CONFIG[networkName].chain;
-    const route = `transact-proofs/${chain.type}/${chain.id}/${listKey}`;
+    const route = `transact-proofs/${chain.type}/${chain.id}`;
     const url = POINodeRequest.getNodeRouteURL(nodeURL, route);
 
     const transactProofs = await POINodeRequest.postRequest<
       GetTransactProofsParams,
       TransactProofData[]
     >(url, {
+      listKey,
       txidVersion,
       bloomFilterSerialized,
     });
@@ -147,13 +148,14 @@ export class POINodeRequest {
     bloomFilterSerialized: string,
   ) => {
     const chain = NETWORK_CONFIG[networkName].chain;
-    const route = `blocked-shields/${chain.type}/${chain.id}/${listKey}`;
+    const route = `blocked-shields/${chain.type}/${chain.id}`;
     const url = POINodeRequest.getNodeRouteURL(nodeURL, route);
 
     const signedBlockedShields = await POINodeRequest.postRequest<
       GetBlockedShieldsParams,
       SignedBlockedShield[]
     >(url, {
+      listKey,
       txidVersion,
       bloomFilterSerialized,
     });

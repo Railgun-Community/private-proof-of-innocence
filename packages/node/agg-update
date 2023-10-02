@@ -2,6 +2,7 @@
 set -e
 
 git pull && \
+yarn && \
 yarn build && \
 pm2 restart node-aggregator && \
 ./agg-log;

@@ -2,7 +2,7 @@ import debug from 'debug';
 import { NodeConfig, PollStatus } from '../models/general-types';
 import { POINodeRequest } from '../api/poi-node-request';
 import { Config } from '../config/config';
-import { NetworkName, TXIDVersion } from '@railgun-community/shared-models';
+import { NetworkName } from '@railgun-community/shared-models';
 import { ListProviderPOIEventQueue } from '../list-provider/list-provider-poi-event-queue';
 import { getListKeysFromNodeConfigs } from '../config/general';
 

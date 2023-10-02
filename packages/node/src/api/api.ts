@@ -32,14 +32,12 @@ import {
   TransactProofData,
 } from '@railgun-community/shared-models';
 import {
-  GetTransactProofsParamsSchema,
   GetTransactProofsBodySchema,
   SubmitTransactProofBodySchema,
   GetPOIsPerListBodySchema,
   GetMerkleProofsBodySchema,
   ValidateTxidMerklerootBodySchema,
   GetBlockedShieldsBodySchema,
-  GetBlockedShieldsParamsSchema,
   GetLatestValidatedRailgunTxidBodySchema,
   GetPOIListEventRangeBodySchema,
   SharedChainTypeIDParamsSchema,
@@ -303,10 +301,10 @@ export class API {
     );
 
     this.safePost<TransactProofData[]>(
-      '/transact-proofs/:chainType/:chainID/:listKey',
+      '/transact-proofs/:chainType/:chainID',
       async (req: Request) => {
-        const { chainType, chainID, listKey } = req.params;
-        const { txidVersion, bloomFilterSerialized } =
+        const { chainType, chainID } = req.params;
+        const { txidVersion, bloomFilterSerialized, listKey } =
           req.body as GetTransactProofsParams;
         if (!this.hasListKey(listKey)) {
           return [];
@@ -322,15 +320,15 @@ export class API {
         );
         return proofs;
       },
-      GetTransactProofsParamsSchema,
+      SharedChainTypeIDParamsSchema,
       GetTransactProofsBodySchema,
     );
 
     this.safePost<SignedBlockedShield[]>(
-      '/blocked-shields/:chainType/:chainID/:listKey',
+      '/blocked-shields/:chainType/:chainID',
       async (req: Request) => {
-        const { chainType, chainID, listKey } = req.params;
-        const { txidVersion, bloomFilterSerialized } =
+        const { chainType, chainID } = req.params;
+        const { txidVersion, bloomFilterSerialized, listKey } =
           req.body as GetBlockedShieldsParams;
         if (!this.hasListKey(listKey)) {
           return [];
@@ -346,7 +344,7 @@ export class API {
         );
         return proofs;
       },
-      GetBlockedShieldsParamsSchema,
+      SharedChainTypeIDParamsSchema,
       GetBlockedShieldsBodySchema,
     );
   }
@@ -361,6 +359,7 @@ export class API {
         if (!this.hasListKey(listKey)) {
           return;
         }
+
         const networkName = networkNameForSerializedChain(chainType, chainID);
 
         // Submit and verify the proof

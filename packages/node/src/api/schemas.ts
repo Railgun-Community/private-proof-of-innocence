@@ -22,42 +22,24 @@ export const GetPOIListEventRangeBodySchema: AllowedSchema = {
   required: ['txidVersion', 'startIndex', 'endIndex', 'listKey'],
 };
 
-export const GetTransactProofsParamsSchema: AllowedSchema = {
-  type: 'object',
-  properties: {
-    chainType: { type: 'string' },
-    chainID: { type: 'string' },
-    listKey: { type: 'string' },
-  },
-  required: ['chainType', 'chainID', 'listKey'],
-};
-
 export const GetTransactProofsBodySchema: AllowedSchema = {
   type: 'object',
   properties: {
     txidVersion: { type: 'string' },
     bloomFilterSerialized: { type: 'string' },
-  },
-  required: ['txidVersion', 'bloomFilterSerialized'],
-};
-
-export const GetBlockedShieldsParamsSchema: AllowedSchema = {
-  type: 'object',
-  properties: {
-    chainType: { type: 'string' },
-    chainID: { type: 'string' },
     listKey: { type: 'string' },
   },
-  required: ['chainType', 'chainID', 'listKey'],
+  required: ['txidVersion', 'bloomFilterSerialized', 'listKey'],
 };
 
 export const GetBlockedShieldsBodySchema: AllowedSchema = {
   type: 'object',
   properties: {
+    listKey: { type: 'string' },
     txidVersion: { type: 'string' },
     bloomFilterSerialized: { type: 'string' },
   },
-  required: ['txidVersion', 'bloomFilterSerialized'],
+  required: ['txidVersion', 'bloomFilterSerialized', 'listKey'],
 };
 
 const SnarkProofSchema: JSONSchema4 = {
