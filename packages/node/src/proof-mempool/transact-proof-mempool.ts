@@ -19,6 +19,7 @@ import { validateRailgunTxidOccurredBeforeBlockNumber } from '@railgun-community
 import { POINodeRequest } from '../api/poi-node-request';
 import debug from 'debug';
 import { PushSync } from '../sync/push-sync';
+import { TransactProofMempoolPruner } from './transact-proof-mempool-pruner';
 
 const dbg = debug('poi:transact-proof-mempool');
 
@@ -162,14 +163,13 @@ export class TransactProofMempool {
     }
 
     // 2. Verify that OrderedEvent for this list doesn't exist.
-    const orderedEventsDB = new POIOrderedEventsDatabase(
-      networkName,
-      txidVersion,
-    );
-    const orderedEventExists = await orderedEventsDB.eventExists(
-      listKey,
-      transactProofData.blindedCommitmentOutputs[0],
-    );
+    const orderedEventExists =
+      await this.hasOrderedEventForFirstBlindedCommitment(
+        listKey,
+        networkName,
+        txidVersion,
+        transactProofData.blindedCommitmentOutputs[0],
+      );
     if (orderedEventExists) {
       return false;
     }
@@ -181,6 +181,23 @@ export class TransactProofMempool {
     }
 
     return true;
+  }
+
+  private static async hasOrderedEventForFirstBlindedCommitment(
+    listKey: string,
+    networkName: NetworkName,
+    txidVersion: TXIDVersion,
+    blindedCommitment: string,
+  ): Promise<boolean> {
+    const orderedEventsDB = new POIOrderedEventsDatabase(
+      networkName,
+      txidVersion,
+    );
+    const orderedEventExists = await orderedEventsDB.eventExists(
+      listKey,
+      blindedCommitment,
+    );
+    return orderedEventExists;
   }
 
   static async inflateCacheFromDatabase(listKeys: string[]) {
@@ -203,6 +220,25 @@ export class TransactProofMempool {
               blindedCommitmentOutputs:
                 transactProofDBItem.blindedCommitmentOutputs,
             };
+            const firstBlindedCommitment =
+              transactProofData.blindedCommitmentOutputs[0];
+            const orderedEventExists =
+              await this.hasOrderedEventForFirstBlindedCommitment(
+                listKey,
+                networkName,
+                txidVersion,
+                firstBlindedCommitment,
+              );
+            if (orderedEventExists) {
+              // Remove item from the database.
+              await TransactProofMempoolPruner.removeProof(
+                listKey,
+                networkName,
+                txidVersion,
+                firstBlindedCommitment,
+              );
+              return;
+            }
             TransactProofMempoolCache.addToCache(
               listKey,
               networkName,

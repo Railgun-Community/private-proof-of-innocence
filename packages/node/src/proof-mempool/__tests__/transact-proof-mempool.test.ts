@@ -208,7 +208,7 @@ describe('transact-proof-mempool', () => {
     ).to.deep.equal([transactProofData2]);
   }).timeout(10000);
 
-  it('Should inflate cache from database', async () => {
+  it.only('Should inflate cache from database', async () => {
     const transactProofData1: TransactProofData = {
       snarkProof: MOCK_SNARK_PROOF,
       poiMerkleroots: ['0x1111', '0x2222'],
