@@ -180,15 +180,15 @@ export class RoundRobinSyncer {
       endIndex,
     );
 
+    dbg(
+      `Syncing ${signedPOIEvents.length} POI events to list ${listKey} for network ${networkName}`,
+    );
+
     await POIEventList.verifyAndAddSignedPOIEvents(
       networkName,
       txidVersion,
       listKey,
       signedPOIEvents,
-    );
-
-    dbg(
-      `Synced ${signedPOIEvents.length} POI events to list ${listKey} for network ${networkName}`,
     );
   }
 
@@ -257,6 +257,11 @@ export class RoundRobinSyncer {
       listKey,
       serializedBloomFilter,
     );
+
+    dbg(
+      `Syncing ${transactProofs.length} transact proofs to list ${listKey} for network ${networkName}`,
+    );
+
     for (const transactProof of transactProofs) {
       try {
         await TransactProofMempool.submitProof(
@@ -337,6 +342,11 @@ export class RoundRobinSyncer {
       listKey,
       serializedBloomFilter,
     );
+
+    dbg(
+      `Syncing ${signedBlockedShields.length} blocked shields to list ${listKey} for network ${networkName}`,
+    );
+
     for (const signedBlockedShield of signedBlockedShields) {
       try {
         await BlockedShieldsSyncer.addSignedBlockedShield(
