@@ -2,7 +2,7 @@
 set -e
 
 git pull && \
-git rebase origin/main && \
+git rebase origin main && \
 yarn && \
 yarn build && \
 pm2 restart node-list-provider && \
