@@ -143,10 +143,14 @@ export class ListProviderPOIEventQueue {
     return ListProviderPOIEventQueue.minimumNextAddIndex[networkName] ?? 0;
   }
 
-  static updateMinimumNextAddIndex(
+  static tryUpdateMinimumNextAddIndex(
+    listKey: string,
     networkName: NetworkName,
     syncedIndex: number,
   ) {
+    if (listKey !== this.listKey) {
+      return;
+    }
     ListProviderPOIEventQueue.minimumNextAddIndex[networkName] = Math.max(
       ListProviderPOIEventQueue.getMinimumNextAddIndex(networkName),
       syncedIndex,

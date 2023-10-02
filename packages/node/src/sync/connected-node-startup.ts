@@ -73,7 +73,8 @@ export class ConnectedNodeStartup {
                   listKey
                 ]?.poiEvents ?? 0;
               const syncedIndex = eventListLength - 1;
-              ListProviderPOIEventQueue.updateMinimumNextAddIndex(
+              ListProviderPOIEventQueue.tryUpdateMinimumNextAddIndex(
+                listKey,
                 networkName,
                 syncedIndex,
               );
