@@ -9,9 +9,18 @@ type Props = {
   rightIcon?: IconType;
   onClick?: () => void;
   disabled?: boolean;
+  iconSize?: number;
+  iconColor?: string;
 };
 
-export const Button = ({ title, rightIcon, onClick, disabled }: Props) => {
+export const Button = ({
+  title,
+  rightIcon,
+  onClick,
+  disabled,
+  iconSize,
+  iconColor,
+}: Props) => {
   const handleClick = () => {
     if (!isDefined(disabled) || !disabled) {
       onClick?.();
@@ -28,7 +37,9 @@ export const Button = ({ title, rightIcon, onClick, disabled }: Props) => {
     >
       <Text className={styles.title}>{title}</Text>
       {rightIcon && (
-        <div className={styles.rightIcon}>{renderIcon(rightIcon)}</div>
+        <div className={styles.rightIcon}>
+          {renderIcon(rightIcon, iconSize, iconColor)}
+        </div>
       )}
     </div>
   );

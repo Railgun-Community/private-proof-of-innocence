@@ -7,7 +7,7 @@
 }
 
 .buttonContainer {
-  background-color: white(0.2);
+  background-color: $lightGray;
   border-radius: 6px;
   padding: 10px;
   display: flex;
@@ -16,7 +16,8 @@
   border: 1px solid transparent;
 
   &:not(.disabled):hover {
-    border: 1px solid $coldGray;
+    box-shadow: $commonShadow;
+    border: 1px solid $darkGray;
   }
 }
 

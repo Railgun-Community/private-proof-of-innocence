@@ -5,6 +5,7 @@ import { AppRoutes } from '@constants/routes';
 import { useDrawerStore } from '@state/stores';
 import { IconType } from '@utils/icon-service';
 import styles from './Drawer.module.scss';
+import colors from '@scss/colors.module.scss';
 
 export enum SlideDirection {
   SLIDE_FROM_LEFT = 'SLIDE_FROM_LEFT',
@@ -66,6 +67,7 @@ export const Drawer = ({ variant, className }: Props) => {
         key={index}
         title={title}
         rightIcon={rightIcon}
+        iconColor={colors.black}
         onClick={goToRoute(route)}
       />
     );

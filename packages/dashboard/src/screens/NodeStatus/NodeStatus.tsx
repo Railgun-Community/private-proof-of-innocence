@@ -39,11 +39,9 @@ export const NodeStatus = () => {
   }
 
   return (
-    <>
-      <div className={styles.nodeStatusContainer}>
-        <OverallStatus nodeStatus={nodeStatusForCurrentNetwork} />
-        {isDefined(listKeys) && listKeys.map(renderListKey)}
-      </div>
-    </>
+    <div className={styles.nodeStatusContainer}>
+      <OverallStatus nodeStatus={nodeStatusForCurrentNetwork} />
+      {isDefined(listKeys) && listKeys.map(renderListKey)}
+    </div>
   );
 };

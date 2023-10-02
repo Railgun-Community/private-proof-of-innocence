@@ -3,14 +3,14 @@ import {
   NodeStatusAllNetworks,
 } from '@railgun-community/shared-models';
 import { StateCreator } from 'zustand';
+import { AvailableNodes } from '@constants/nodes';
 import { POINodeRequest } from '@services/poi-node-request';
 
 export type NodesSlice = {
-  nodeIp: string | null;
+  nodeIp: AvailableNodes;
   nodeStatusForAllNetworks: NodeStatusAllNetworks | null;
-  setNodeIp: (ip: string) => void;
+  setNodeIp: (ip: AvailableNodes) => void;
   getNodeStatusForAllNetworks: () => void;
-  clearNodeIp: () => void;
   loadingNodeStatusForAllNetworks: boolean;
   lastRefreshedNodeStatusForAllNetworks: Date | null;
 };
@@ -19,9 +19,7 @@ export const createNodesSlice: StateCreator<NodesSlice, [], [], NodesSlice> = (
   set,
   get,
 ) => ({
-  nodeIp: 'http://localhost:3010', // TODO: Change this in the future
-  setNodeIp: ip => set(() => ({ nodeIp: ip })),
-  clearNodeIp: () => set(() => ({ nodeIp: null })),
+  nodeIp: AvailableNodes.Local,
   nodeStatusForAllNetworks: null,
   loadingNodeStatusForAllNetworks: false,
   lastRefreshedNodeStatusForAllNetworks: null,
@@ -42,5 +40,9 @@ export const createNodesSlice: StateCreator<NodesSlice, [], [], NodesSlice> = (
     } else {
       set(() => ({ nodeStatusForAllNetworks: null }));
     }
+  },
+  setNodeIp: (ip: AvailableNodes) => {
+    set(() => ({ nodeIp: ip }));
+    get().getNodeStatusForAllNetworks();
   },
 });

@@ -21,7 +21,7 @@ $extraBold: 800;
 @mixin label {
   font-family: $nunito;
   font-weight: $medium;
-  font-size: 16px;
+  font-size: 12px;
   letter-spacing: 1px;
   line-height: 20px;
 }
@@ -29,7 +29,7 @@ $extraBold: 800;
 @mixin heading2 {
   font-family: $nunito;
   font-weight: $medium;
-  font-size: 34px;
+  font-size: 22px;
   letter-spacing: 0px;
   line-height: 40px;
 }
@@ -37,7 +37,7 @@ $extraBold: 800;
 @mixin heading3 {
   font-family: $nunito;
   font-weight: $medium;
-  font-size: 22px;
+  font-size: 18px;
   letter-spacing: 0px;
   line-height: 24px;
 }

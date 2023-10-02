@@ -2,8 +2,8 @@
 
 .text {
   @include label;
-  font-size: 18px;
-  color: white();
+  font-size: 12px;
+  color: $black;
   margin: 0;
 }
 

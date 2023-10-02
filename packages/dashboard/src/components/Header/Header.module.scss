@@ -9,15 +9,15 @@
   max-height: $headerHeight;
   height: $headerHeight;
   z-index: calc($z-index-drawers - 1);
-  background-color: $black;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  background-color: $white;
 }
 
 .ipContainer {
   display: flex;
   justify-content: center;
   align-items: center;
-  border: 1px solid $coldGray;
+  border: 1px solid $white;
   border-radius: 25px;
   padding: 5px 10px;
 }
@@ -34,4 +34,8 @@
   display: flex;
   cursor: pointer;
   gap: 10px;
+}
+
+.projectTitle {
+  font-size: 14px;
 }

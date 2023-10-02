@@ -2,11 +2,11 @@
 
 .compareNodesContainer {
   display: flex;
-  height: 100vh;
+  height: calc(100vh - $headerHeight);
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 24px 15%;
+  padding: 0 15%;
   gap: 20px;
 }
 

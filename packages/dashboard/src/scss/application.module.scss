@@ -19,6 +19,7 @@ $z-index-alerts: 60;
 // [------------------------------ GLOBAL CLASSES, MIXINS & VARIABLES ------------------------------]
 
 $headerHeight: 70px;
+$commonShadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.1);
 
 @mixin forceToCenter {
   position: absolute;

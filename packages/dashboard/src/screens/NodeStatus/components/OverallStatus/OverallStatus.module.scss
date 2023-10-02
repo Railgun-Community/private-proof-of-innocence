@@ -4,17 +4,20 @@
   width: 80%;
   display: flex;
   flex-direction: column;
-  background-color: $black;
   border-radius: 8px;
   padding: 20px;
+  background-color: $white;
+  box-shadow: $commonShadow;
 }
 
 .overallStatusTitle {
   @include heading2;
+  color: $black;
 }
 
 .subtitle {
   @include heading3;
+  color: $black;
   margin: 5px 0;
   text-align: start;
 }
@@ -30,6 +33,8 @@
   margin: 20px 0;
   display: flex;
   flex-direction: column;
+  border-radius: 8px;
+  gap: 5px;
 }
 
 .greenDot {
@@ -43,6 +48,10 @@
 .connectionContainer {
   display: flex;
   align-items: center;
+  background-color: $lightGray;
+  border-radius: 6px;
+  width: fit-content;
+  padding: 10px;
 }
 
 .listContainer {
@@ -51,7 +60,7 @@
   display: flex;
   flex-direction: column;
   padding: 10px;
-  background-color: white(0.2);
+  background-color: $lightGray;
   border-radius: 6px;
 }
 

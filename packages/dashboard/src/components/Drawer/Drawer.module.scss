@@ -6,12 +6,12 @@ $drawerWidth: 350px;
   position: fixed;
   height: 100%;
   width: $drawerWidth;
-  top: calc($headerHeight - 10px);
+  top: $headerHeight;
   z-index: $z-index-drawers;
   transition: transform 0.2s ease-in-out;
   border-width: 0px;
   border-style: solid;
-  border-color: $coldGray;
+  border-color: $white;
 }
 
 .slideFromRight {
@@ -31,7 +31,7 @@ $drawerWidth: 350px;
 .backdrop {
   position: fixed;
   width: 100vw;
-  height: calc(100vh - calc($headerHeight - 10px));
+  height: calc(100vh - $headerHeight);
   bottom: 0;
   left: 0;
   background-color: gray(0.72);
@@ -51,6 +51,6 @@ $drawerWidth: 350px;
   padding: 24px;
   display: flex;
   flex-direction: column;
-  background-color: $black;
+  background-color: $white;
   gap: 20px;
 }

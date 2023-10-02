@@ -1,47 +1,47 @@
 import { useState } from 'react';
 import { Selector } from '@components/Selector/Selector';
 import { Text } from '@components/Text/Text';
+import { AvailableNodes, availableNodesArray } from '@constants/nodes';
 import { useDrawerStore, useNodeStore } from '@state/stores';
 import { IconType, renderIcon } from '@utils/icon-service';
 import styles from './Header.module.scss';
+import colors from '@scss/colors.module.scss';
 
 type NodeOption = {
-  value: string; // TODO: Change for the correct value
+  value: AvailableNodes;
   label: string;
+};
+
+const getNodeLabel = (nodeIp: AvailableNodes) => {
+  return `Node IP: ${nodeIp}`;
 };
 
 export const Header = () => {
   const { toggleDrawer } = useDrawerStore();
-  const { nodeIp } = useNodeStore();
+  const { nodeIp, setNodeIp } = useNodeStore();
 
   const defaultNodeOption = {
-    label: `Node IP: ${nodeIp}`,
-    value: nodeIp ?? 'localhost',
+    label: getNodeLabel(nodeIp),
+    value: nodeIp,
   };
   const [currentNodeOption, setCurrentNodeOption] =
     useState<NodeOption>(defaultNodeOption);
 
   const onSelectNode = (option: NodeOption) => {
     setCurrentNodeOption(option);
+    setNodeIp(option.value);
   };
 
-  const nodeOptions: NodeOption[] = [
-    defaultNodeOption,
-    {
-      label: 'Node fake1',
-      value: nodeIp ?? 'localhost',
-    },
-    {
-      label: 'Node fake2',
-      value: nodeIp ?? 'localhost',
-    },
-  ];
+  const nodeOptions: NodeOption[] = availableNodesArray.map(nodeIp => ({
+    label: getNodeLabel(nodeIp),
+    value: nodeIp,
+  }));
 
   return (
     <div className={styles.headerContainer}>
       <div className={styles.hamburgerMenu} onClick={toggleDrawer}>
-        {renderIcon(IconType.HamburgerMenu)}
-        <Text>POI Dashboard</Text>
+        {renderIcon(IconType.HamburgerMenu, undefined, colors.black)}
+        <Text className={styles.projectTitle}>POI Dashboard</Text>
       </div>
       <Selector
         options={nodeOptions}

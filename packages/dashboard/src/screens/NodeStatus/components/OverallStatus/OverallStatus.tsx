@@ -10,6 +10,7 @@ import { shortenWalletAddress } from '@utils/address';
 import { getLastRefreshedTimeText } from '@utils/date';
 import { IconType } from '@utils/icon-service';
 import styles from './OverallStatus.module.scss';
+import colors from '@scss/colors.module.scss';
 
 type Props = {
   nodeStatus: Optional<NodeStatusForNetwork>;
@@ -83,6 +84,7 @@ export const OverallStatus = ({ nodeStatus }: Props) => {
           onClick={handleRefresh}
           title={refreshButtonTitle}
           rightIcon={IconType.Refresh}
+          iconColor={colors.black}
           disabled={loadingNodeStatusForAllNetworks}
         />
       </div>

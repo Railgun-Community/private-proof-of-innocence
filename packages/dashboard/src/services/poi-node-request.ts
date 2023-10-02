@@ -1,13 +1,20 @@
 import { NodeStatusAllNetworks } from '@railgun-community/shared-models';
 import axios from 'axios';
 import debug from 'debug';
+import { AvailableNodes } from '@constants/nodes';
 
 const dbg = debug('poi:request');
 
-// TODO: This file is a copy of packages/node/src/api/poi-node-request.ts it should be moved to a shared location
+/*
+ TODO: This file is a copy of packages/node/src/api/poi-node-request.ts it should be moved to a shared location
+ Some changes has been made in this file, before deleting check changes.
+*/
 
 export class POINodeRequest {
-  private static getNodeRouteURL = (url: string, route: string): string => {
+  private static getNodeRouteURL = (
+    url: AvailableNodes,
+    route: string,
+  ): string => {
     return `${url}/${route}`;
   };
 
@@ -25,9 +32,14 @@ export class POINodeRequest {
   }
 
   static getNodeStatusAllNetworks = async (
-    nodeURL: string,
+    nodeURL: AvailableNodes,
   ): Promise<NodeStatusAllNetworks> => {
-    const route = `node-status`;
+    let route = `node-status-v2`;
+
+    if (nodeURL === AvailableNodes.Local) {
+      route = 'node-status';
+    }
+
     const url = POINodeRequest.getNodeRouteURL(nodeURL, route);
 
     const nodeStatusAllNetworks =
