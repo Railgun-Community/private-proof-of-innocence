@@ -77,11 +77,11 @@ export class RoundRobinSyncer {
       dbg('');
 
       this.pollStatus = PollStatus.POLLING;
+    } finally {
+      this.incrementNodeIndex();
 
       // 15 second delay before next poll
       await delay(15 * 1000);
-    } finally {
-      this.incrementNodeIndex();
 
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
       this.poll();
