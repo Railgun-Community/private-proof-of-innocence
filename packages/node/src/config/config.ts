@@ -6,10 +6,7 @@ export class Config {
 
   static MONGODB_URL = process.env.MONGODB_URL;
 
-  static NETWORK_NAMES: NetworkName[] = [
-    NetworkName.Ethereum,
-    NetworkName.EthereumGoerli,
-  ];
+  static NETWORK_NAMES: NetworkName[] = [NetworkName.EthereumGoerli];
 
   static TXID_VERSIONS: TXIDVersion[] = Object.values(TXIDVersion);
 
