@@ -135,21 +135,12 @@ describe('api', function () {
 
     expect(response.status).to.equal(200);
     expect(body).to.have.keys(['listKeys', 'forNetwork']);
-    expect(body.forNetwork).to.have.keys(['Ethereum', 'Ethereum_Goerli']);
-    expect(body.forNetwork.Ethereum).to.have.keys([
+    expect(body.forNetwork).to.have.keys(['Ethereum_Goerli']);
+    expect(body.forNetwork.Ethereum_Goerli).to.have.keys([
       'txidStatus',
       'listStatuses',
       'shieldQueueStatus',
     ]);
-
-    if (body.forNetwork.Ethereum) {
-      expect(body.forNetwork.Ethereum.txidStatus).to.haveOwnProperty(
-        'currentTxidIndex',
-      );
-      expect(body.forNetwork.Ethereum.txidStatus).to.haveOwnProperty(
-        'currentMerkleroot',
-      );
-    }
 
     if (body.forNetwork.Ethereum_Goerli) {
       expect(body.forNetwork.Ethereum_Goerli.txidStatus).to.haveOwnProperty(
@@ -167,8 +158,12 @@ describe('api', function () {
     const validBloomFilterSerialized = 'someValidSerializedData';
 
     const response = await AxiosTest.postRequest(
-      `${apiUrl}/transact-proofs/${chainType}/${chainID}/${listKey}`,
-      { txidVersion, bloomFilterSerialized: validBloomFilterSerialized },
+      `${apiUrl}/transact-proofs/${chainType}/${chainID}`,
+      {
+        txidVersion,
+        bloomFilterSerialized: validBloomFilterSerialized,
+        listKey,
+      },
     );
 
     expect(response.status).to.equal(200);
@@ -180,8 +175,8 @@ describe('api', function () {
 
     await expect(
       AxiosTest.postRequest(
-        `${apiUrl}/transact-proofs/${chainType}/${chainID}/${listKey}`,
-        { bloomFilterSerialized: 0 },
+        `${apiUrl}/transact-proofs/${chainType}/${chainID}`,
+        { bloomFilterSerialized: 0, listKey },
       ),
     ).to.eventually.be.rejectedWith('Request failed with status code 400');
   });
@@ -192,8 +187,8 @@ describe('api', function () {
     const bloomFilterSerialized = 'someValidSerializedData';
 
     const response = await AxiosTest.postRequest(
-      `${apiUrl}/blocked-shields/${chainType}/${chainID}/${listKey}`,
-      { txidVersion, bloomFilterSerialized },
+      `${apiUrl}/blocked-shields/${chainType}/${chainID}`,
+      { txidVersion, bloomFilterSerialized, listKey },
     );
 
     expect(response.status).to.equal(200);
@@ -205,8 +200,8 @@ describe('api', function () {
 
     await expect(
       AxiosTest.postRequest(
-        `${apiUrl}/blocked-shields/${chainType}/${chainID}/${listKey}`,
-        { bloomFilterSerialized: 0 },
+        `${apiUrl}/blocked-shields/${chainType}/${chainID}`,
+        { bloomFilterSerialized: 0, listKey },
       ),
     ).to.eventually.be.rejectedWith('Request failed with status code 400');
   });
@@ -229,7 +224,8 @@ describe('api', function () {
       poiMerkleroots: ['', ''],
       txidMerkleroot: '',
       txidMerklerootIndex: 0,
-      blindedCommitmentOutputs: ['', ''],
+      blindedCommitmentsOut: ['', ''],
+      railgunTxidIfHasUnshield: '0x00',
     };
 
     const response = await AxiosTest.postRequest(

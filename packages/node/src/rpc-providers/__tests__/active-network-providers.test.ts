@@ -5,16 +5,19 @@ import {
   initNetworkProviders,
 } from '../active-network-providers';
 import { startEngine, stopEngine } from '../../engine/engine-init';
-import { NetworkName, TXIDVersion } from '@railgun-community/shared-models';
+import { NetworkName } from '@railgun-community/shared-models';
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
 
 describe('active-network-providers', () => {
   before(async function run() {
-    this.timeout(20000);
+    this.timeout(30000);
     startEngine();
-    await initNetworkProviders([NetworkName.Ethereum]);
+    await initNetworkProviders([
+      NetworkName.Ethereum,
+      NetworkName.EthereumGoerli,
+    ]);
   });
 
   after(async () => {

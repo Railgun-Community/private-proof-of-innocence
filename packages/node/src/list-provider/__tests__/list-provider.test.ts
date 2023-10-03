@@ -23,7 +23,7 @@ import { POIMerkletreeManager } from '../../poi-events/poi-merkletree-manager';
 chai.use(chaiAsPromised);
 const { expect } = chai;
 
-const networkName = NetworkName.Ethereum;
+const networkName = NetworkName.EthereumGoerli;
 const txidVersion = TXIDVersion.V2_PoseidonMerkle;
 
 let listProvider: ListProvider;

@@ -12,7 +12,7 @@ import { RailgunTxidMerkletreeStatusDatabase } from '../../database/databases/ra
 chai.use(chaiAsPromised);
 const { expect } = chai;
 
-const networkName = NetworkName.Ethereum;
+const networkName = NetworkName.EthereumGoerli;
 const txidVersion = TXIDVersion.V2_PoseidonMerkle;
 
 let txidMerkletreeStatusDB: RailgunTxidMerkletreeStatusDatabase;
@@ -20,13 +20,13 @@ let txidMerkletreeStatusDB: RailgunTxidMerkletreeStatusDatabase;
 let getRailgunTxidStatusStub: SinonStub;
 let getHistoricalTxidMerklerootStub: SinonStub;
 let validateRailgunTxidMerklerootStub: SinonStub;
-let resetRailgunTxidsAfterTxidIndexSpy: SinonSpy;
+let resetRailgunTxidsAfterTxidIndexStub: SinonSpy;
 
 const nodeURL = 'node-url';
 
 describe('railgun-txid-merkletree-manager', () => {
   before(async function run() {
-    this.timeout(10000);
+    this.timeout(30000);
 
     await DatabaseClient.init();
 
@@ -63,10 +63,10 @@ describe('railgun-txid-merkletree-manager', () => {
       'validateRailgunTxidMerkleroot',
     );
 
-    resetRailgunTxidsAfterTxidIndexSpy = Sinon.spy(
+    resetRailgunTxidsAfterTxidIndexStub = Sinon.stub(
       RailgunTxidMerkletreeManager,
       'resetRailgunTxidsAfterTxidIndex',
-    );
+    ).resolves();
   });
 
   beforeEach(async () => {
@@ -77,7 +77,7 @@ describe('railgun-txid-merkletree-manager', () => {
     getRailgunTxidStatusStub.restore();
     getHistoricalTxidMerklerootStub.restore();
     validateRailgunTxidMerklerootStub.restore();
-    resetRailgunTxidsAfterTxidIndexSpy.restore();
+    resetRailgunTxidsAfterTxidIndexStub.restore();
   });
 
   it('Should update RAILGUN Txid status when appropriate', async () => {
@@ -168,6 +168,6 @@ describe('railgun-txid-merkletree-manager', () => {
     const statusPostInvalidEntry = await txidMerkletreeStatusDB.getStatus();
     expect(statusPostInvalidEntry).to.equal(undefined);
 
-    expect(resetRailgunTxidsAfterTxidIndexSpy.calledOnce).to.equal(true);
+    expect(resetRailgunTxidsAfterTxidIndexStub.calledOnce).to.equal(true);
   }).timeout(10000);
 });

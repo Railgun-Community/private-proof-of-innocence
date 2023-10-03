@@ -9,7 +9,7 @@ import { MOCK_LIST_KEYS } from '../../../tests/mocks.test';
 chai.use(chaiAsPromised);
 const { expect } = chai;
 
-const networkName = NetworkName.Ethereum;
+const networkName = NetworkName.EthereumGoerli;
 const txidVersion = TXIDVersion.V2_PoseidonMerkle;
 
 let db: TransactProofPerListMempoolDatabase;
@@ -64,24 +64,29 @@ describe('transact-proof-per-list-mempool-database', () => {
       poiMerkleroots: ['poiMerkleroots_0', 'poiMerkleroots_1'],
       txidMerklerootIndex: 58,
       txidMerkleroot: 'txMerkleroot',
-      blindedCommitmentOutputs: [
-        'blindedCommitmentOutputs_0',
-        'blindedCommitmentOutputs_1',
+      blindedCommitmentsOut: [
+        'blindedCommitmentsOut_0',
+        'blindedCommitmentsOut_1',
       ],
-      firstBlindedCommitment: 'blindedCommitmentOutputs_0', // This will be ignored
+      firstBlindedCommitment: 'blindedCommitmentsOut_0', // This will be ignored
+      railgunTxidIfHasUnshield: '0x00',
     };
 
     // Insert the item
-    await db.insertTransactProof(listKey, transactProofItem);
+    await db.insertTransactProof(
+      listKey,
+      transactProofItem,
+      transactProofItem.firstBlindedCommitment,
+    );
 
     // Check that the proof exists and is in getAllTransactProofsAndLists
-    expect(
-      await db.proofExists(listKey, 'blindedCommitmentOutputs_0'),
-    ).to.equal(true);
+    expect(await db.proofExists(listKey, 'blindedCommitmentsOut_0')).to.equal(
+      true,
+    );
     expect(
       await db.proofExistsContainingBlindedCommitment(
         listKey,
-        'blindedCommitmentOutputs_1',
+        'blindedCommitmentsOut_1',
       ),
     ).to.equal(true);
   });
@@ -101,36 +106,32 @@ describe('transact-proof-per-list-mempool-database', () => {
       poiMerkleroots: ['poiMerkleroots_0', 'poiMerkleroots_1'],
       txidMerklerootIndex: 59,
       txidMerkleroot: 'txMerkleroot',
-      blindedCommitmentOutputs: [
-        'blindedCommitmentOutputs_0',
-        'blindedCommitmentOutputs_1',
+      blindedCommitmentsOut: [
+        'blindedCommitmentsOut_0',
+        'blindedCommitmentsOut_1',
       ],
       firstBlindedCommitment: 'firstBlindedCommitment',
+      railgunTxidIfHasUnshield: '0x00',
     };
 
     // Insert the item
-    await db.insertTransactProof(listKey, transactProofItem);
+    await db.insertTransactProof(
+      listKey,
+      transactProofItem,
+      transactProofItem.firstBlindedCommitment,
+    );
 
     // Check that the proof exists
     expect(
-      await db.proofExists(
-        listKey,
-        transactProofItem.blindedCommitmentOutputs[0],
-      ),
+      await db.proofExists(listKey, transactProofItem.blindedCommitmentsOut[0]),
     ).to.equal(true);
 
     // Delete the proof
-    await db.deleteProof(
-      listKey,
-      transactProofItem.blindedCommitmentOutputs[0],
-    );
+    await db.deleteProof(listKey, transactProofItem.blindedCommitmentsOut[0]);
 
     // Check that the proof no longer exists
     expect(
-      await db.proofExists(
-        listKey,
-        transactProofItem.blindedCommitmentOutputs[0],
-      ),
+      await db.proofExists(listKey, transactProofItem.blindedCommitmentsOut[0]),
     ).to.equal(false);
   });
 });

@@ -30,7 +30,7 @@ import { BlockedShieldsPerListDatabase } from '../../database/databases/blocked-
 chai.use(chaiAsPromised);
 const { expect } = chai;
 
-const networkName = NetworkName.Ethereum;
+const networkName = NetworkName.EthereumGoerli;
 const txidVersion = TXIDVersion.V2_PoseidonMerkle;
 
 let merkletreeDB: POIMerkletreeDatabase;
@@ -173,14 +173,16 @@ describe('round-robin-syncer', () => {
       poiMerkleroots: ['0x1111', '0x2222'],
       txidMerklerootIndex: 58,
       txidMerkleroot: '0x1234567890',
-      blindedCommitmentOutputs: ['0x3333', '0x4444'],
+      blindedCommitmentsOut: ['0x3333', '0x4444'],
+      railgunTxidIfHasUnshield: '0x00',
     };
     const transactProofData2: TransactProofData = {
       snarkProof: MOCK_SNARK_PROOF,
       poiMerkleroots: ['0x9999', '0x8888'],
       txidMerklerootIndex: 59,
       txidMerkleroot: '0x0987654321',
-      blindedCommitmentOutputs: ['0x7777', '0x6666'],
+      blindedCommitmentsOut: [],
+      railgunTxidIfHasUnshield: '0x7777',
     };
 
     const getFilteredTransactProofsStub = sinon
@@ -196,13 +198,13 @@ describe('round-robin-syncer', () => {
     expect(
       await transactProofMempoolDB.proofExists(
         listKey,
-        transactProofData1.blindedCommitmentOutputs[0],
+        transactProofData1.blindedCommitmentsOut[0],
       ),
     ).to.equal(true);
     expect(
       await transactProofMempoolDB.proofExists(
         listKey,
-        transactProofData2.blindedCommitmentOutputs[0],
+        transactProofData2.railgunTxidIfHasUnshield,
       ),
     ).to.equal(true);
 

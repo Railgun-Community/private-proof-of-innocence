@@ -20,7 +20,7 @@ import { POIEventShield, POIEventType } from '../../models/poi-types';
 chai.use(chaiAsPromised);
 const { expect } = chai;
 
-const networkName = NetworkName.Ethereum;
+const networkName = NetworkName.EthereumGoerli;
 const txidVersion = TXIDVersion.V2_PoseidonMerkle;
 
 let orderedEventsDB: POIOrderedEventsDatabase;
@@ -69,14 +69,16 @@ describe('list-provider-poi-event-queue', () => {
 
     const transactProofData: TransactProofData = {
       snarkProof: MOCK_SNARK_PROOF,
-      blindedCommitmentOutputs: ['0x1111', '0x2222'],
+      blindedCommitmentsOut: ['0x1111', '0x2222'],
       poiMerkleroots: ['0x3333', '0x4444'],
       txidMerkleroot: '0x1234567890',
       txidMerklerootIndex: 55,
+      railgunTxidIfHasUnshield: '0x00',
     };
     await transactProofMempoolDB.insertTransactProof(
       listKey,
       transactProofData,
+      transactProofData.blindedCommitmentsOut[0],
     );
     expect(
       await transactProofMempoolDB.proofExists(listKey, '0x1111'),

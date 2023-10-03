@@ -5,9 +5,9 @@ export const verifyTransactProof = async (
   transactProofData: TransactProofData,
 ): Promise<boolean> => {
   // Mini
-  // if (await tryVerifyProof(transactProofData, 3, 3)) {
-  //   return true;
-  // }
+  if (await tryVerifyProof(transactProofData, 3, 3)) {
+    return true;
+  }
   // Full
   return tryVerifyProof(transactProofData, 13, 13);
 };
@@ -20,8 +20,9 @@ const getPublicInputsPOI = (
   const prover = getProver();
   return prover.getPublicInputsPOI(
     transactProofData.txidMerkleroot,
-    transactProofData.blindedCommitmentOutputs,
+    transactProofData.blindedCommitmentsOut,
     transactProofData.poiMerkleroots,
+    transactProofData.railgunTxidIfHasUnshield,
     maxInputs,
     maxOutputs,
   );

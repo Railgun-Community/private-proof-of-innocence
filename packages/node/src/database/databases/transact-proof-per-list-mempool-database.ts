@@ -26,6 +26,7 @@ export class TransactProofPerListMempoolDatabase extends AbstractDatabase<Transa
   async insertTransactProof(
     listKey: string,
     transactProofData: TransactProofData,
+    firstBlindedCommitment: string,
   ): Promise<void> {
     const item: TransactProofMempoolDBItem = {
       listKey,
@@ -33,8 +34,9 @@ export class TransactProofPerListMempoolDatabase extends AbstractDatabase<Transa
       poiMerkleroots: transactProofData.poiMerkleroots,
       txidMerkleroot: transactProofData.txidMerkleroot,
       txidMerklerootIndex: transactProofData.txidMerklerootIndex,
-      blindedCommitmentOutputs: transactProofData.blindedCommitmentOutputs,
-      firstBlindedCommitment: transactProofData.blindedCommitmentOutputs[0],
+      blindedCommitmentsOut: transactProofData.blindedCommitmentsOut,
+      railgunTxidIfHasUnshield: transactProofData.railgunTxidIfHasUnshield,
+      firstBlindedCommitment,
     };
     return this.insertOne(item);
   }
@@ -56,7 +58,7 @@ export class TransactProofPerListMempoolDatabase extends AbstractDatabase<Transa
   ): Promise<boolean> {
     const filter: Filter<TransactProofMempoolDBItem> = {
       listKey,
-      blindedCommitmentOutputs: blindedCommitment,
+      blindedCommitmentsOut: blindedCommitment,
     };
     return this.exists(filter);
   }

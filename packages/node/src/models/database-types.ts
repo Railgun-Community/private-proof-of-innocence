@@ -89,8 +89,9 @@ export type TransactProofMempoolDBItem = {
   poiMerkleroots: string[];
   txidMerkleroot: string;
   txidMerklerootIndex: number;
-  blindedCommitmentOutputs: string[];
+  blindedCommitmentsOut: string[];
   firstBlindedCommitment: string;
+  railgunTxidIfHasUnshield: string;
 };
 
 // DO NOT CHANGE FIELDS WITHOUT CLEARING OR MIGRATING THE DB.

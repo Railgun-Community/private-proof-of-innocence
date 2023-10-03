@@ -16,7 +16,7 @@ import { daysAgo } from '../../../util/time-ago';
 chai.use(chaiAsPromised);
 const { expect } = chai;
 
-const networkName = NetworkName.Ethereum;
+const networkName = NetworkName.EthereumGoerli;
 const txidVersion = TXIDVersion.V2_PoseidonMerkle;
 
 let db: ShieldQueueDatabase;

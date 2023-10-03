@@ -21,6 +21,7 @@ import { ShieldStatus } from '../models/database-types';
 import debug from 'debug';
 import { POINodeRequest } from '../api/poi-node-request';
 import { PushSync } from '../sync/push-sync';
+import { hexToBigInt } from '@railgun-community/wallet';
 
 const dbg = debug('poi:event-queue');
 
@@ -90,9 +91,14 @@ export class ListProviderPOIEventQueue {
     txidVersion: TXIDVersion,
     transactProofData: TransactProofData,
   ) {
+    const blindedCommitmentsOut = [...transactProofData.blindedCommitmentsOut];
+    if (hexToBigInt(transactProofData.railgunTxidIfHasUnshield) !== 0n) {
+      blindedCommitmentsOut.push(transactProofData.railgunTxidIfHasUnshield);
+    }
+
     const poiEvent: POIEventTransact = {
       type: POIEventType.Transact,
-      blindedCommitments: transactProofData.blindedCommitmentOutputs,
+      blindedCommitments: blindedCommitmentsOut,
       proof: transactProofData.snarkProof,
     };
     return ListProviderPOIEventQueue.queuePOIEvent(

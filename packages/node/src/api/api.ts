@@ -417,7 +417,7 @@ export class API {
         const networkName = networkNameForSerializedChain(chainType, chainID);
 
         dbg(
-          `REQUEST: Submit Transact Proof: ${listKey}, ${transactProofData.blindedCommitmentOutputs[0]}`,
+          `REQUEST: Submit Transact Proof: ${listKey}, ${transactProofData.blindedCommitmentsOut[0]}`,
         );
 
         // Submit and verify the proof

@@ -65,11 +65,10 @@ export class TransactProofMempoolCache {
     networkName: NetworkName,
     txidVersion: TXIDVersion,
     transactProofData: TransactProofData,
+    firstBlindedCommitment: string,
   ) {
     const cache = this.getCache(listKey, networkName, txidVersion);
 
-    const firstBlindedCommitment =
-      transactProofData.blindedCommitmentOutputs[0];
     cache.set(firstBlindedCommitment, transactProofData);
 
     this.addToBloomFilter(

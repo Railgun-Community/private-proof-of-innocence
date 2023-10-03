@@ -12,7 +12,7 @@ import {
 import { chainForNetwork, networkForName } from '../config/general';
 import {
   ShieldData,
-  getUnshieldRailgunTransactionBlindedCommitmentGroups,
+  getRailgunTxidsForUnshields,
   scanUpdatesForMerkletreeAndWallets,
 } from '@railgun-community/wallet';
 import debug from 'debug';
@@ -283,7 +283,6 @@ export abstract class ListProvider {
       networkName,
       txidVersion,
       shieldQueueDBItem,
-      toAddress,
     );
   }
 
@@ -292,7 +291,6 @@ export abstract class ListProvider {
     networkName: NetworkName,
     txidVersion: TXIDVersion,
     shieldQueueDBItem: ShieldQueueDBItem,
-    toAddress: string,
   ) {
     // PROCESS FOR RELAY ADAPT UNSHIELD+SHIELDS:
     // 1. Check if any unshield exists for this eth txid.
@@ -302,26 +300,22 @@ export abstract class ListProvider {
 
     // 1. Check if any unshield exists for this eth txid.
     const chain = chainForNetwork(networkName);
-    const unshieldRailgunTransactionBlindedCommitmentGroups: string[][] =
-      await getUnshieldRailgunTransactionBlindedCommitmentGroups(
-        chain,
-        shieldQueueDBItem.txid,
-        toAddress, // Relay Adapt contract address
-      );
+    const unshieldRailgunTxids: string[] = await getRailgunTxidsForUnshields(
+      chain,
+      shieldQueueDBItem.txid,
+    );
 
     // 2. If no unshield exists, then we assume it's a base-token-shield.
     // Mark as pending (will run the delay before a full POI List check).
-    if (!unshieldRailgunTransactionBlindedCommitmentGroups.length) {
+    if (!unshieldRailgunTxids.length) {
       await this.markShieldPending(networkName, txidVersion, shieldQueueDBItem);
       return;
     }
 
     // 3. If any unshield exists, find POI Status for each unshield railgunTxid (by blindedCommitments).
-    const allBlindedCommitments: string[] =
-      unshieldRailgunTransactionBlindedCommitmentGroups.flat();
-
     const poiStatuses: POIStatus[] = await Promise.all(
-      allBlindedCommitments.map(async blindedCommitment => {
+      unshieldRailgunTxids.map(async unshieldRailgunTxid => {
+        const blindedCommitment = unshieldRailgunTxid;
         const blindedCommitmentData: BlindedCommitmentData = {
           blindedCommitment,
           type: BlindedCommitmentType.Transact,

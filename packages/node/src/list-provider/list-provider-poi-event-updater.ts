@@ -54,7 +54,8 @@ export class ListProviderPOIEventUpdater {
         poiMerkleroots: transactProofDBItem.poiMerkleroots,
         txidMerkleroot: transactProofDBItem.txidMerkleroot,
         txidMerklerootIndex: transactProofDBItem.txidMerklerootIndex,
-        blindedCommitmentOutputs: transactProofDBItem.blindedCommitmentOutputs,
+        blindedCommitmentsOut: transactProofDBItem.blindedCommitmentsOut,
+        railgunTxidIfHasUnshield: transactProofDBItem.railgunTxidIfHasUnshield,
       };
       await TransactProofMempool.tryAddToActiveList(
         ListProviderPOIEventUpdater.listKey,

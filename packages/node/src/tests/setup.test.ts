@@ -2,7 +2,11 @@
 import fs from 'fs';
 import { MONGOOSE_DB_URL, setUpMongoose } from './mongoose.test';
 import { Config } from '../config/config';
-import { promiseTimeout } from '@railgun-community/shared-models';
+import {
+  NETWORK_CONFIG,
+  NetworkName,
+  promiseTimeout,
+} from '@railgun-community/shared-models';
 import { API } from '../api/api';
 
 const TEST_DB_DIR = 'test.db';
@@ -19,6 +23,11 @@ before(async function run() {
   Config.ENGINE_DB_DIR = TEST_DB_DIR;
 
   API.debug = true;
+
+  // TODO: Remove after launched via shared-models.
+  // NETWORK_CONFIG[NetworkName.Ethereum].poi = { launchBlock: 100 };
+
+  Config.NETWORK_NAMES = [NetworkName.EthereumGoerli];
 
   await promiseTimeout(
     setUpMongoose(),

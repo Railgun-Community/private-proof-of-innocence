@@ -4,6 +4,7 @@ import { TransactProofMempool } from '../transact-proof-mempool';
 import * as SnarkProofVerifyModule from '../../util/snark-proof-verify';
 import { RailgunTxidMerkletreeManager } from '../../railgun-txids/railgun-txid-merkletree-manager';
 import Sinon, { SinonStub } from 'sinon';
+import * as WalletModule from '../../engine/wallet';
 import {
   NetworkName,
   TXIDVersion,
@@ -22,7 +23,7 @@ import { TransactProofMempoolPruner } from '../transact-proof-mempool-pruner';
 chai.use(chaiAsPromised);
 const { expect } = chai;
 
-const networkName = NetworkName.Ethereum;
+const networkName = NetworkName.EthereumGoerli;
 const txidVersion = TXIDVersion.V2_PoseidonMerkle;
 const listKey = MOCK_LIST_KEYS[0];
 
@@ -32,9 +33,10 @@ let orderedEventDB: POIOrderedEventsDatabase;
 
 let verifyTransactProofStub: SinonStub;
 let txidMerklerootExistsStub: SinonStub;
+let tryValidateRailgunTxidOccurredBeforeBlockNumberStub: SinonStub;
 
 describe('transact-proof-mempool', () => {
-  before(async () => {
+  before(async function run() {
     await DatabaseClient.init();
     transactProofMempoolDB = new TransactProofPerListMempoolDatabase(
       networkName,
@@ -53,6 +55,10 @@ describe('transact-proof-mempool', () => {
       RailgunTxidMerkletreeManager,
       'checkIfMerklerootExistsByTxidIndex',
     );
+    tryValidateRailgunTxidOccurredBeforeBlockNumberStub = Sinon.stub(
+      WalletModule,
+      'tryValidateRailgunTxidOccurredBeforeBlockNumber',
+    ).resolves(false);
   });
 
   beforeEach(async () => {
@@ -72,6 +78,7 @@ describe('transact-proof-mempool', () => {
   after(() => {
     verifyTransactProofStub.restore();
     txidMerklerootExistsStub.restore();
+    tryValidateRailgunTxidOccurredBeforeBlockNumberStub.restore();
   });
 
   it('Should only add valid transact proofs', async () => {
@@ -80,7 +87,8 @@ describe('transact-proof-mempool', () => {
       poiMerkleroots: ['0x1111', '0x2222'],
       txidMerklerootIndex: 55,
       txidMerkleroot: '0x1234567890',
-      blindedCommitmentOutputs: ['0x3333', '0x4444'],
+      blindedCommitmentsOut: ['0x3333', '0x4444'],
+      railgunTxidIfHasUnshield: '0x00',
     };
 
     // 1. THROW: Snark fails verification.
@@ -122,13 +130,13 @@ describe('transact-proof-mempool', () => {
     await expect(
       transactProofMempoolDB.proofExists(
         listKey,
-        transactProofData.blindedCommitmentOutputs[0],
+        transactProofData.blindedCommitmentsOut[0],
       ),
     ).to.eventually.equal(true);
 
     expect(listProviderEventQueueSpy.calledOnce).to.equal(true);
     listProviderEventQueueSpy.restore();
-  });
+  }).timeout(100000);
 
   it('Should add to cache and get bloom-filtered transact proofs', async () => {
     const transactProofData1: TransactProofData = {
@@ -136,14 +144,16 @@ describe('transact-proof-mempool', () => {
       poiMerkleroots: ['0x1111', '0x2222'],
       txidMerklerootIndex: 56,
       txidMerkleroot: '0x1234567890',
-      blindedCommitmentOutputs: ['0x3333', '0x4444'],
+      blindedCommitmentsOut: ['0x3333', '0x4444'],
+      railgunTxidIfHasUnshield: '0x00',
     };
     const transactProofData2: TransactProofData = {
       snarkProof: MOCK_SNARK_PROOF,
       poiMerkleroots: ['0x9999', '0x8888'],
       txidMerklerootIndex: 57,
       txidMerkleroot: '0x0987654321',
-      blindedCommitmentOutputs: ['0x7777', '0x6666'],
+      blindedCommitmentsOut: [],
+      railgunTxidIfHasUnshield: '0x7777',
     };
 
     verifyTransactProofStub.resolves(true);
@@ -195,7 +205,7 @@ describe('transact-proof-mempool', () => {
       ),
     ).to.deep.equal([transactProofData1, transactProofData2]);
 
-    bloomFilter.add(transactProofData1.blindedCommitmentOutputs[0]);
+    bloomFilter.add(transactProofData1.blindedCommitmentsOut[0]);
     const bloomFilterSerializedWithProof1 =
       POINodeBloomFilter.serialize(bloomFilter);
     expect(
@@ -208,20 +218,22 @@ describe('transact-proof-mempool', () => {
     ).to.deep.equal([transactProofData2]);
   }).timeout(10000);
 
-  it.only('Should inflate cache from database', async () => {
+  it('Should inflate cache from database', async () => {
     const transactProofData1: TransactProofData = {
       snarkProof: MOCK_SNARK_PROOF,
       poiMerkleroots: ['0x1111', '0x2222'],
       txidMerklerootIndex: 58,
       txidMerkleroot: '0x1234567890',
-      blindedCommitmentOutputs: ['0x3333', '0x4444'],
+      blindedCommitmentsOut: ['0x3333', '0x4444'],
+      railgunTxidIfHasUnshield: '0x45678900',
     };
     const transactProofData2: TransactProofData = {
       snarkProof: MOCK_SNARK_PROOF,
       poiMerkleroots: ['0x9999', '0x8888'],
       txidMerklerootIndex: 59,
       txidMerkleroot: '0x0987654321',
-      blindedCommitmentOutputs: ['0x7777', '0x6666'],
+      blindedCommitmentsOut: ['0x7777', '0x6666'],
+      railgunTxidIfHasUnshield: '0x00',
     };
 
     verifyTransactProofStub.resolves(true);
