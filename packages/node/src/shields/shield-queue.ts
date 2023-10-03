@@ -19,7 +19,7 @@ export const getShieldQueueStatus = async (
   const blocked = await db.getCount(ShieldStatus.Blocked);
   const addedPOI = await db.getCount(ShieldStatus.AddedPOI);
 
-  const latestShield = await db.getLatestUnknownOrPendingShield();
+  const latestShield = await db.getLatestShield();
   const latestShieldTime = latestShield
     ? `${getFormattedTimeAgo(new Date(latestShield.timestamp * 1000))}`
     : undefined;

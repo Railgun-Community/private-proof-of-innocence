@@ -176,10 +176,14 @@ export class POIMerkletreeManager {
           txidVersion,
         );
         const transactProofExists =
-          await transactProofMempoolDB.proofExistsContainingBlindedCommitment(
+          (await transactProofMempoolDB.proofExistsContainingBlindedCommitment(
             listKey,
             blindedCommitment,
-          );
+          )) ||
+          (await transactProofMempoolDB.proofExistsContainingRailgunTxidForUnshield(
+            listKey,
+            blindedCommitment,
+          ));
         if (transactProofExists) {
           return POIStatus.TransactProofSubmitted;
         }

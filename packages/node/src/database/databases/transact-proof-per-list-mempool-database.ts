@@ -63,6 +63,17 @@ export class TransactProofPerListMempoolDatabase extends AbstractDatabase<Transa
     return this.exists(filter);
   }
 
+  async proofExistsContainingRailgunTxidForUnshield(
+    listKey: string,
+    blindedCommitment: string,
+  ): Promise<boolean> {
+    const filter: Filter<TransactProofMempoolDBItem> = {
+      listKey,
+      railgunTxidIfHasUnshield: blindedCommitment,
+    };
+    return this.exists(filter);
+  }
+
   async deleteProof(
     listKey: string,
     firstBlindedCommitment: string,

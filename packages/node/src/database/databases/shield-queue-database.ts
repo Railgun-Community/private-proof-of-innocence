@@ -125,11 +125,9 @@ export class ShieldQueueDatabase extends AbstractDatabase<ShieldQueueDBItem> {
     return this.stream(filter);
   }
 
-  async getLatestUnknownOrPendingShield(): Promise<
-    Optional<ShieldQueueDBItem>
-  > {
+  async getLatestShield(): Promise<Optional<ShieldQueueDBItem>> {
     const filter: Filter<ShieldQueueDBItem> = {
-      status: { $in: [ShieldStatus.Pending, ShieldStatus.Unknown] },
+      // No filter
     };
     const sort: DBSort<ShieldQueueDBItem> = {
       timestamp: 'descending',

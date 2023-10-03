@@ -250,7 +250,7 @@ describe('shield-queue-database', () => {
 
     // Get the latest shield
     const latestShield: Optional<ShieldQueueDBItem> =
-      await db.getLatestUnknownOrPendingShield();
+      await db.getLatestShield();
 
     // Validate returned shield is latest one based on timestamp
     expect(latestShield?.txid).to.equal(pendingShield2.txid);
@@ -263,8 +263,7 @@ describe('shield-queue-database', () => {
     await db.deleteAllItems_DANGEROUS();
 
     // Validate latestShield now returns undefined
-    const latestShieldAfterDeletion =
-      await db.getLatestUnknownOrPendingShield();
+    const latestShieldAfterDeletion = await db.getLatestShield();
     expect(latestShieldAfterDeletion).to.be.undefined;
   });
 });

@@ -215,7 +215,7 @@ export class POIMerkletree {
     if (!isValidIndex) {
       this.isUpdating = false;
       throw new Error(
-        `Invalid blindedCommitmentStartingIndex for POI merkletree insert`,
+        `[Warning] Invalid blindedCommitmentStartingIndex for POI merkletree insert`,
       );
     }
 
@@ -242,7 +242,7 @@ export class POIMerkletree {
     if (!isValidIndex) {
       this.isUpdating = false;
       throw new Error(
-        `Invalid blindedCommitmentStartingIndex for POI merkletree insert`,
+        `[Warning] Invalid blindedCommitmentStartingIndex for POI merkletree insert`,
       );
     }
 
