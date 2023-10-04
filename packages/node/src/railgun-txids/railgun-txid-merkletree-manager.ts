@@ -271,13 +271,13 @@ export class RailgunTxidMerkletreeManager {
     );
 
     // Invalid. Clear the merkletree after validatedTxidIndexA, and re-sync.
-    // This could cause infinite reloads if another node is invalid.
-    // const clearFromTxidIndex = validatedTxidIndexA ?? -1;
-    // await this.resetRailgunTxidsAfterTxidIndex(
-    //   networkName,
-    //   txidVersion,
-    //   clearFromTxidIndex,
-    // );
+    // WARNING: This could cause infinite reloads if another node is invalid.
+    const clearFromTxidIndex = validatedTxidIndexA ?? -1;
+    await this.resetRailgunTxidsAfterTxidIndex(
+      networkName,
+      txidVersion,
+      clearFromTxidIndex,
+    );
   }
 
   static async checkValidatedTxidIndexAgainstEngine(
