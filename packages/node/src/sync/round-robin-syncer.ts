@@ -77,6 +77,8 @@ export class RoundRobinSyncer {
       dbg('');
 
       this.pollStatus = PollStatus.POLLING;
+    } catch (err) {
+      dbg(`Error polling node ${nodeURL}: ${err.message}`);
     } finally {
       this.incrementNodeIndex();
 
