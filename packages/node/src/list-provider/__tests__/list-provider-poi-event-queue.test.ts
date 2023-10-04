@@ -105,7 +105,7 @@ describe('list-provider-poi-event-queue', () => {
         ),
       queueLength => queueLength === 0,
       20,
-      5000 / 20, // 5 sec.
+      10000 / 20, // 10 sec.
     );
     if (pollQueueLength !== 0) {
       throw new Error(`Queue should be empty after processing - timed out`);

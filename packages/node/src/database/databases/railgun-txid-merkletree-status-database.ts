@@ -32,4 +32,9 @@ export class RailgunTxidMerkletreeStatusDatabase extends AbstractDatabase<Railgu
     };
     await this.upsertOne(filter, replacement);
   }
+
+  async clearValidatedTxidStatus(): Promise<void> {
+    const filter: DBFilter<RailgunTxidMerkletreeStatusDBItem> = {};
+    await this.deleteOne(filter);
+  }
 }

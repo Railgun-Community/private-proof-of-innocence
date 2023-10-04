@@ -12,12 +12,11 @@ import { configNetworks } from '../config/config-networks';
 import { Config } from '../config/config';
 import { networkForName } from '../config/general';
 
-const dbg = debug('relayer:networks');
+const dbg = debug('poi:networks');
 
 const activeNetworkProviders: Partial<Record<NetworkName, FallbackProvider>> =
   {};
 
-// eslint-disable-next-line require-await
 export const initNetworkProviders = async (networkNames?: NetworkName[]) => {
   const initChains = networkNames ?? Config.NETWORK_NAMES;
   await Promise.all(

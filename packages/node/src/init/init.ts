@@ -1,26 +1,57 @@
 import debug from 'debug';
-import { startEngine, stopEngine } from '../engine/engine-init';
+import { startEngine } from '../engine/engine-init';
 import { initNetworkProviders } from '../rpc-providers/active-network-providers';
-import { setOnMerkletreeScanCallback } from '@railgun-community/wallet';
+import {
+  getEngine,
+  setOnMerkletreeScanCallback,
+} from '@railgun-community/wallet';
 import { onMerkletreeScanCallback } from '../status/merkletree-scan-callback';
 import { DatabaseClient } from '../database/database-client-init';
 import { TransactProofMempool } from '../proof-mempool/transact-proof-mempool';
 import { POIMerkletreeManager } from '../poi-events/poi-merkletree-manager';
 import { BlockedShieldsSyncer } from '../shields/blocked-shields-syncer';
+import { Config } from '../config/config';
+import { chainForNetwork } from '../config/general';
+import { RailgunTxidMerkletreeManager } from '../railgun-txids/railgun-txid-merkletree-manager';
 
 const dbg = debug('poi:init');
 
-export const initModules = async (listKeys: string[]) => {
+export const initDatabases = async () => {
+  dbg('Setting up databases...');
+  await DatabaseClient.init();
+  await DatabaseClient.ensureDBIndicesAllChains();
+};
+
+export const initEngineAndScanTXIDs = async () => {
   // Init engine and RPCs
   dbg('Initializing Engine and RPCs...');
   startEngine();
   await initNetworkProviders();
   setOnMerkletreeScanCallback(onMerkletreeScanCallback);
 
-  dbg('Setting up databases...');
-  await DatabaseClient.init();
-  await DatabaseClient.ensureDBIndicesAllChains();
+  // Make sure TXID trees are fully scanned for each chain.
+  await Promise.all(
+    Config.NETWORK_NAMES.map(async networkName => {
+      const chain = chainForNetwork(networkName);
+      await Promise.all(
+        Config.TXID_VERSIONS.map(async txidVersion => {
+          await getEngine().syncRailgunTransactionsForTXIDVersion(
+            txidVersion,
+            chain,
+          );
 
+          // Ensures that validated txid index is correct after TXID scan.
+          await RailgunTxidMerkletreeManager.checkValidatedTxidIndexAgainstEngine(
+            networkName,
+            txidVersion,
+          );
+        }),
+      );
+    }),
+  );
+};
+
+export const initModules = async (listKeys: string[]) => {
   dbg('Inflating Transact Proof mempool cache...');
   await TransactProofMempool.inflateCacheFromDatabase(listKeys);
 
@@ -31,8 +62,4 @@ export const initModules = async (listKeys: string[]) => {
   POIMerkletreeManager.initListMerkletrees(listKeys);
 
   dbg('Node init successful.');
-};
-
-export const uninitModules = async () => {
-  await stopEngine();
 };

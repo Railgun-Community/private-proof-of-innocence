@@ -123,15 +123,15 @@ describe('transact-proof-per-list-mempool-database', () => {
 
     // Check that the proof exists
     expect(
-      await db.proofExists(listKey, transactProofItem.blindedCommitmentsOut[0]),
+      await db.proofExists(listKey, transactProofItem.firstBlindedCommitment),
     ).to.equal(true);
 
     // Delete the proof
-    await db.deleteProof(listKey, transactProofItem.blindedCommitmentsOut[0]);
+    await db.deleteProof(listKey, transactProofItem.firstBlindedCommitment);
 
     // Check that the proof no longer exists
     expect(
-      await db.proofExists(listKey, transactProofItem.blindedCommitmentsOut[0]),
+      await db.proofExists(listKey, transactProofItem.firstBlindedCommitment),
     ).to.equal(false);
   });
 });

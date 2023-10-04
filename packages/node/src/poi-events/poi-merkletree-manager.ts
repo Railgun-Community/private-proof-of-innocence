@@ -149,12 +149,13 @@ export class POIMerkletreeManager {
 
     switch (type) {
       case BlindedCommitmentType.Shield: {
-        const shieldQueueDB = new ShieldQueueDatabase(networkName, txidVersion);
-        const shieldExists =
-          await shieldQueueDB.blindedCommitmentExists(blindedCommitment);
-        if (shieldExists) {
-          return POIStatus.ShieldPending;
-        }
+        // This logic doesn't really make sense to run on an aggregator.
+        // const shieldQueueDB = new ShieldQueueDatabase(networkName, txidVersion);
+        // const shieldExists =
+        //   await shieldQueueDB.blindedCommitmentExists(blindedCommitment);
+        // if (shieldExists) {
+        //   return POIStatus.ShieldPending;
+        // }
 
         const shieldBlockedDB = new BlockedShieldsPerListDatabase(
           networkName,

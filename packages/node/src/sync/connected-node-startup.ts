@@ -1,5 +1,5 @@
 import debug from 'debug';
-import { NodeConfig, PollStatus } from '../models/general-types';
+import { NodeConfig } from '../models/general-types';
 import { POINodeRequest } from '../api/poi-node-request';
 import { Config } from '../config/config';
 import { NetworkName } from '@railgun-community/shared-models';
@@ -12,8 +12,6 @@ export class ConnectedNodeStartup {
   private readonly nodeConfigs: NodeConfig[];
 
   private readonly listKeys: string[];
-
-  private pollStatus = PollStatus.IDLE;
 
   constructor(nodeConfigs: NodeConfig[]) {
     this.nodeConfigs = nodeConfigs;

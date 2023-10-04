@@ -1,11 +1,16 @@
 import debug from 'debug';
-import { initModules } from './init/init';
+import {
+  initDatabases,
+  initEngineAndScanTXIDs,
+  initModules,
+} from './init/init';
 import { ListProvider } from './list-provider/list-provider';
 import { API } from './api/api';
 import { RoundRobinSyncer } from './sync/round-robin-syncer';
 import { ConnectedNodeStartup } from './sync/connected-node-startup';
 import { NodeConfig } from './models/general-types';
 import { getListKeysFromNodeConfigs } from './config/general';
+import { stopEngine } from './engine/engine-init';
 
 const dbg = debug('poi:node');
 
@@ -53,8 +58,10 @@ export class ProofOfInnocenceNode {
 
     this.running = true;
 
+    // Must proceed in this order:
+    await initDatabases();
+    await initEngineAndScanTXIDs();
     await this.connectedNodeStartup.start();
-
     await initModules(this.listKeys);
 
     this.listProvider?.startPolling();
@@ -68,6 +75,7 @@ export class ProofOfInnocenceNode {
 
   async stop() {
     this.api.stop();
+    await stopEngine();
   }
 
   getPollStatus() {

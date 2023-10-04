@@ -278,4 +278,41 @@ export class RailgunTxidMerkletreeManager {
       clearFromTxidIndex,
     );
   }
+
+  static async checkValidatedTxidIndexAgainstEngine(
+    networkName: NetworkName,
+    txidVersion: TXIDVersion,
+  ) {
+    const { validatedMerkleroot, validatedTxidIndex } =
+      await this.getValidatedRailgunTxidStatus(networkName, txidVersion);
+    if (!isDefined(validatedTxidIndex)) {
+      return;
+    }
+
+    const { tree, index } =
+      this.getTreeAndIndexFromTxidIndex(validatedTxidIndex);
+
+    const historicalMerkleroot =
+      await RailgunTxidMerkletreeManager.getHistoricalTxidMerkleroot(
+        networkName,
+        txidVersion,
+        tree,
+        index,
+      );
+
+    if (
+      isDefined(historicalMerkleroot) &&
+      historicalMerkleroot === validatedMerkleroot
+    ) {
+      // Validated txid index is correct.
+      return;
+    }
+
+    // Remove validated status.
+    const db = new RailgunTxidMerkletreeStatusDatabase(
+      networkName,
+      txidVersion,
+    );
+    await db.clearValidatedTxidStatus();
+  }
 }
