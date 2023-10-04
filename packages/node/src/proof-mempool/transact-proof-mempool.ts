@@ -15,10 +15,7 @@ import { QueryLimits } from '../config/query-limits';
 import { ListProviderPOIEventQueue } from '../list-provider/list-provider-poi-event-queue';
 import { Config } from '../config/config';
 import { networkForName, nodeURLForListKey } from '../config/general';
-import {
-  hexToBigInt,
-  validateRailgunTxidOccurredBeforeBlockNumber,
-} from '@railgun-community/wallet';
+import { hexToBigInt } from '@railgun-community/wallet';
 import { POINodeRequest } from '../api/poi-node-request';
 import debug from 'debug';
 import { PushSync } from '../sync/push-sync';
