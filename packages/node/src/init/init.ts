@@ -3,9 +3,13 @@ import { startEngine } from '../engine/engine-init';
 import { initNetworkProviders } from '../rpc-providers/active-network-providers';
 import {
   getEngine,
-  setOnMerkletreeScanCallback,
+  setOnTXIDMerkletreeScanCallback,
+  setOnUTXOMerkletreeScanCallback,
 } from '@railgun-community/wallet';
-import { onMerkletreeScanCallback } from '../status/merkletree-scan-callback';
+import {
+  onUTXOMerkletreeScanCallback,
+  onTXIDMerkletreeScanCallback,
+} from '../status/merkletree-scan-callback';
 import { DatabaseClient } from '../database/database-client-init';
 import { TransactProofMempool } from '../proof-mempool/transact-proof-mempool';
 import { POIMerkletreeManager } from '../poi-events/poi-merkletree-manager';
@@ -26,8 +30,10 @@ export const initEngineAndScanTXIDs = async () => {
   // Init engine and RPCs
   dbg('Initializing Engine and RPCs...');
   startEngine();
+  setOnUTXOMerkletreeScanCallback(onUTXOMerkletreeScanCallback);
+  setOnTXIDMerkletreeScanCallback(onTXIDMerkletreeScanCallback);
+
   await initNetworkProviders();
-  setOnMerkletreeScanCallback(onMerkletreeScanCallback);
 
   // Make sure TXID trees are fully scanned for each chain.
   await Promise.all(
