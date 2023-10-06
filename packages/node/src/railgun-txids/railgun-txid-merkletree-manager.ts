@@ -161,17 +161,21 @@ export class RailgunTxidMerkletreeManager {
       return;
     }
 
-    return RailgunTxidMerkletreeManager.updateValidatedRailgunTxidStatus(
-      nodeURL,
-      networkName,
-      txidVersion,
-      {
-        currentMerkleroot: merkleroot,
-        currentTxidIndex: txidIndex,
-        validatedMerkleroot: merkleroot,
-        validatedTxidIndex: txidIndex,
-      },
-    );
+    try {
+      return await RailgunTxidMerkletreeManager.updateValidatedRailgunTxidStatus(
+        nodeURL,
+        networkName,
+        txidVersion,
+        {
+          currentMerkleroot: merkleroot,
+          currentTxidIndex: txidIndex,
+          validatedMerkleroot: merkleroot,
+          validatedTxidIndex: txidIndex,
+        },
+      );
+    } catch {
+      // no op
+    }
   }
 
   static async updateValidatedRailgunTxidStatus(
