@@ -9,7 +9,10 @@ import {
   AllowedSchema,
 } from 'express-json-validator-middleware';
 import { POIEventList } from '../poi-events/poi-event-list';
-import { networkNameForSerializedChain } from '../config/general';
+import {
+  networkNameForSerializedChain,
+  nodeURLForListKey,
+} from '../config/general';
 import { TransactProofMempool } from '../proof-mempool/transact-proof-mempool';
 import { POIMerkletreeManager } from '../poi-events/poi-merkletree-manager';
 import { RailgunTxidMerkletreeManager } from '../railgun-txids/railgun-txid-merkletree-manager';
@@ -53,6 +56,7 @@ import {
   SubmitValidatedTxidAndMerklerootParams,
 } from '../models/poi-types';
 import { BlockedShieldsSyncer } from '../shields/blocked-shields-syncer';
+import { POINodeRequest } from './poi-node-request';
 
 const dbg = debug('poi:api');
 
@@ -255,6 +259,19 @@ export class API {
         TXIDVersion.V2_PoseidonMerkle,
       );
     });
+
+    this.safeGet<NodeStatusAllNetworks>(
+      '/node-status-v2/:listKey',
+      async (req: Request) => {
+        const { listKey } = req.params;
+        req.body as GetPOIListEventRangeParams;
+        const nodeURL = nodeURLForListKey(listKey);
+        if (!isDefined(nodeURL)) {
+          throw new Error('Cannot connect to listKey');
+        }
+        return POINodeRequest.getNodeStatusAllNetworks(nodeURL);
+      },
+    );
 
     // TODO:
     // this.safePost<NodeStatusAllNetworks>(
