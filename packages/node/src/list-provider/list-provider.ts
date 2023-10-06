@@ -103,13 +103,6 @@ export abstract class ListProvider {
   }
 
   private async runQueueNewUnknownShieldsPoller() {
-    // TODO: REMOVE
-    const dbStatus = new StatusDatabase(
-      NetworkName.EthereumGoerli,
-      TXIDVersion.V2_PoseidonMerkle,
-    );
-    await dbStatus.clearStatus();
-
     // Run for each network in series.
     for (const networkName of Config.NETWORK_NAMES) {
       for (const txidVersion of Config.TXID_VERSIONS) {
