@@ -114,30 +114,38 @@ export class TransactProofMempool {
         )
       : false;
 
+    dbg(
+      isLegacyTransaction
+        ? 'Adding transact proof (LEGACY)...'
+        : 'Adding transact proof...',
+    );
+
     if (!isLegacyTransaction) {
       // Verify all POI Merkleroots exist
       const poiMerklerootDb = new POIHistoricalMerklerootDatabase(
         networkName,
         txidVersion,
       );
-      const allMerklerootsExist = await poiMerklerootDb.allMerklerootsExist(
+      const allPOIMerklerootsExist = await poiMerklerootDb.allMerklerootsExist(
         listKey,
         transactProofData.poiMerkleroots,
       );
-      if (!allMerklerootsExist) {
+      if (!allPOIMerklerootsExist) {
+        dbg('Cannot add proof - POI merkleroots must all exist');
         return;
       }
     }
 
     // Verify historical Railgun Txid Merkleroot exists
-    const isValidTxMerkleroot =
+    const isValidTxidMerkleroot =
       await RailgunTxidMerkletreeManager.checkIfMerklerootExistsByTxidIndex(
         networkName,
         txidVersion,
         transactProofData.txidMerklerootIndex,
         transactProofData.txidMerkleroot,
       );
-    if (!isValidTxMerkleroot) {
+    if (!isValidTxidMerkleroot) {
+      dbg('Cannot add proof - Invalid txid merkleroot');
       return;
     }
 

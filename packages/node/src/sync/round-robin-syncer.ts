@@ -78,6 +78,7 @@ export class RoundRobinSyncer {
 
       this.pollStatus = PollStatus.POLLING;
     } catch (err) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       dbg(`Error polling node ${nodeURL}: ${err.message}`);
     } finally {
       this.incrementNodeIndex();
