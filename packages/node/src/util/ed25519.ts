@@ -12,9 +12,7 @@ import { utf8ToBytes } from '@noble/hashes/utils';
 const getPKey = (): Uint8Array => {
   const pkey = process.env.pkey;
   if (!isDefined(pkey)) {
-    throw new Error(
-      'You must configure ed25519 pkey in .env file. Copy settings from .env.example to start.',
-    );
+    throw new Error('You must configure ed25519 "pkey" variable in .env file.');
   }
   return hexStringToBytes(pkey);
 };

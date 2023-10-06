@@ -13,9 +13,8 @@ const dbg = debug('poi:main');
   Config.MONGODB_URL = 'mongodb://localhost:27017';
 
   const isListProvider = process.env.LIST_PROVIDER === '1';
-  const listKey = await getListPublicKey();
   const listProvider = isListProvider
-    ? new LocalListProvider(listKey)
+    ? new LocalListProvider(await getListPublicKey())
     : undefined;
 
   const host = process.env.HOST ?? '0.0.0.0';
