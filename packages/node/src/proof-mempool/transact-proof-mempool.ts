@@ -132,6 +132,12 @@ export class TransactProofMempool {
       );
       if (!allPOIMerklerootsExist) {
         dbg('Cannot add proof - POI merkleroots must all exist');
+        await this.removeProof(
+          listKey,
+          networkName,
+          txidVersion,
+          transactProofData,
+        );
         return;
       }
     }
@@ -146,6 +152,12 @@ export class TransactProofMempool {
       );
     if (!isValidTxidMerkleroot) {
       dbg('Cannot add proof - Invalid txid merkleroot');
+      await this.removeProof(
+        listKey,
+        networkName,
+        txidVersion,
+        transactProofData,
+      );
       return;
     }
 
@@ -154,6 +166,33 @@ export class TransactProofMempool {
       txidVersion,
       transactProofData,
     );
+  }
+
+  private static async removeProof(
+    listKey: string,
+    networkName: NetworkName,
+    txidVersion: TXIDVersion,
+    transactProofData: TransactProofData,
+  ) {
+    const firstBlindedCommitment =
+      TransactProofMempool.getTransactFirstBlindedCommitment(transactProofData);
+
+    await TransactProofMempoolPruner.removeProof(
+      listKey,
+      networkName,
+      txidVersion,
+      firstBlindedCommitment,
+    );
+
+    await PushSync.sendNodeRequestToAllNodes(async nodeURL => {
+      await POINodeRequest.removeTransactProof(
+        nodeURL,
+        networkName,
+        txidVersion,
+        listKey,
+        firstBlindedCommitment,
+      );
+    });
   }
 
   private static async shouldAdd(
@@ -195,7 +234,7 @@ export class TransactProofMempool {
     return true;
   }
 
-  private static getTransactFirstBlindedCommitment(
+  static getTransactFirstBlindedCommitment(
     transactProofData: TransactProofData,
   ) {
     if (transactProofData.blindedCommitmentsOut.length === 0) {

@@ -4,6 +4,9 @@ import {
   getAllShields,
   validateRailgunTxidOccurredBeforeBlockNumber,
 } from '@railgun-community/wallet';
+import debug from 'debug';
+
+const dbg = debug('poi:wallet');
 
 export const getNewShieldsFromWallet = (
   networkName: NetworkName,
@@ -12,18 +15,26 @@ export const getNewShieldsFromWallet = (
   return getAllShields(networkName, startingBlock);
 };
 
-export const tryValidateRailgunTxidOccurredBeforeBlockNumber = (
+export const tryValidateRailgunTxidOccurredBeforeBlockNumber = async (
   txidVersion: TXIDVersion,
   networkName: NetworkName,
   tree: number,
   index: number,
   launchBlock: number,
-) => {
-  return validateRailgunTxidOccurredBeforeBlockNumber(
-    txidVersion,
-    networkName,
-    tree,
-    index,
-    launchBlock,
-  );
+): Promise<boolean> => {
+  try {
+    return await validateRailgunTxidOccurredBeforeBlockNumber(
+      txidVersion,
+      networkName,
+      tree,
+      index,
+      launchBlock,
+    );
+  } catch (err) {
+    dbg(
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      `Could not validated txid occurred before blockNumber - ${err.message}`,
+    );
+    return false;
+  }
 };

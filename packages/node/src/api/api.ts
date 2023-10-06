@@ -46,10 +46,12 @@ import {
   SharedChainTypeIDParamsSchema,
   SubmitPOIEventBodySchema,
   SubmitValidatedTxidBodySchema,
+  RemoveTransactProofBodySchema,
 } from './schemas';
 import 'dotenv/config';
 import {
   GetPOIListEventRangeParams,
+  RemoveTransactProofParams,
   SignedBlockedShield,
   SignedPOIEvent,
   SubmitPOIEventParams,
@@ -57,6 +59,7 @@ import {
 } from '../models/poi-types';
 import { BlockedShieldsSyncer } from '../shields/blocked-shields-syncer';
 import { POINodeRequest } from './poi-node-request';
+import { TransactProofMempoolPruner } from '../proof-mempool/transact-proof-mempool-pruner';
 
 const dbg = debug('poi:api');
 
@@ -418,6 +421,34 @@ export class API {
       SharedChainTypeIDParamsSchema,
       SubmitValidatedTxidBodySchema,
     );
+
+    this.safePost<void>(
+      '/remove-transact-proof/:chainType/:chainID',
+      async (req: Request) => {
+        const { chainType, chainID } = req.params;
+        const { txidVersion, listKey, firstBlindedCommitment, signature } =
+          req.body as RemoveTransactProofParams;
+        if (!this.hasListKey(listKey)) {
+          return;
+        }
+
+        const networkName = networkNameForSerializedChain(chainType, chainID);
+
+        dbg(
+          `REQUEST: Remove Transact Proof: ${listKey}, ${firstBlindedCommitment}`,
+        );
+
+        await TransactProofMempoolPruner.removeProofSigned(
+          listKey,
+          networkName,
+          txidVersion,
+          firstBlindedCommitment,
+          signature,
+        );
+      },
+      SharedChainTypeIDParamsSchema,
+      RemoveTransactProofBodySchema,
+    );
   }
 
   private addClientRoutes() {
@@ -434,7 +465,9 @@ export class API {
         const networkName = networkNameForSerializedChain(chainType, chainID);
 
         dbg(
-          `REQUEST: Submit Transact Proof: ${listKey}, ${transactProofData.blindedCommitmentsOut[0]}`,
+          `REQUEST: Submit Transact Proof: ${listKey}, ${TransactProofMempool.getTransactFirstBlindedCommitment(
+            transactProofData,
+          )}`,
         );
 
         // Submit and verify the proof

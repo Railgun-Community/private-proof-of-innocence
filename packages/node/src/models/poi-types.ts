@@ -1,4 +1,8 @@
-import { SnarkProof, TXIDVersion } from '@railgun-community/shared-models';
+import {
+  SnarkProof,
+  TXIDVersion,
+  TransactProofData,
+} from '@railgun-community/shared-models';
 
 export enum POIEventType {
   Shield = 'Shield',
@@ -46,6 +50,13 @@ export type SubmitValidatedTxidAndMerklerootParams = {
   txidVersion: TXIDVersion;
   txidIndex: number;
   merkleroot: string;
+  signature: string;
+  listKey: string;
+};
+
+export type RemoveTransactProofParams = {
+  txidVersion: TXIDVersion;
+  firstBlindedCommitment: string;
   signature: string;
   listKey: string;
 };

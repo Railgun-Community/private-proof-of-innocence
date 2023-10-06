@@ -98,6 +98,17 @@ export const SubmitTransactProofBodySchema: AllowedSchema = {
   required: ['txidVersion', 'listKey', 'transactProofData'],
 };
 
+export const RemoveTransactProofBodySchema: AllowedSchema = {
+  type: 'object',
+  properties: {
+    txidVersion: { type: 'string' },
+    listKey: { type: 'string' },
+    firstBlindedCommitment: { type: 'string' },
+    signature: { type: 'string' },
+  },
+  required: ['txidVersion', 'listKey', 'firstBlindedCommitment', 'signature'],
+};
+
 export const SubmitPOIEventBodySchema: AllowedSchema = {
   type: 'object',
   properties: {

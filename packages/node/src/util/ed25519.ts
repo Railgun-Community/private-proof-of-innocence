@@ -98,6 +98,13 @@ export const signBlockedShield = async (
   return signMessage(message);
 };
 
+export const signRemoveProof = async (
+  firstBlindedCommitment: string,
+): Promise<string> => {
+  const message = getRemoveProofMessage(firstBlindedCommitment);
+  return signMessage(message);
+};
+
 const getBlockedShieldMessage = (
   commitmentHash: string,
   blindedCommitment: string,
@@ -114,6 +121,13 @@ const getBlockedShieldMessage = (
   return utf8ToBytes(JSON.stringify(data));
 };
 
+const getRemoveProofMessage = (firstBlindedCommitment: string): Uint8Array => {
+  const data = {
+    firstBlindedCommitment,
+  };
+  return utf8ToBytes(JSON.stringify(data));
+};
+
 export const verifyBlockedShield = async (
   blockedShield: SignedBlockedShield,
   publicKey: string,
@@ -125,6 +139,19 @@ export const verifyBlockedShield = async (
       blockedShield.blockReason,
     );
     return await verify(blockedShield.signature, message, publicKey);
+  } catch (err) {
+    return false;
+  }
+};
+
+export const verifyRemoveProof = async (
+  firstBlindedCommitment: string,
+  publicKey: string,
+  signature: string,
+): Promise<boolean> => {
+  try {
+    const message = getRemoveProofMessage(firstBlindedCommitment);
+    return await verify(signature, message, publicKey);
   } catch (err) {
     return false;
   }

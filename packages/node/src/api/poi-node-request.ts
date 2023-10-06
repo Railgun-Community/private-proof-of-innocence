@@ -12,13 +12,18 @@ import {
 import axios, { AxiosError } from 'axios';
 import {
   GetPOIListEventRangeParams,
+  RemoveTransactProofParams,
   SignedBlockedShield,
   SignedPOIEvent,
   SubmitPOIEventParams,
   SubmitValidatedTxidAndMerklerootParams,
 } from '../models/poi-types';
 import debug from 'debug';
-import { getListPublicKey, signValidatedTxidMerkleroot } from '../util/ed25519';
+import {
+  getListPublicKey,
+  signRemoveProof,
+  signValidatedTxidMerkleroot,
+} from '../util/ed25519';
 
 const dbg = debug('poi:request');
 
@@ -177,6 +182,26 @@ export class POINodeRequest {
       txidVersion,
       listKey,
       transactProofData,
+    });
+  };
+
+  static removeTransactProof = async (
+    nodeURL: string,
+    networkName: NetworkName,
+    txidVersion: TXIDVersion,
+    listKey: string,
+    firstBlindedCommitment: string,
+  ) => {
+    const chain = NETWORK_CONFIG[networkName].chain;
+    const route = `remove-transact-proof/${chain.type}/${chain.id}`;
+    const url = POINodeRequest.getNodeRouteURL(nodeURL, route);
+    const signature = await signRemoveProof(firstBlindedCommitment);
+
+    await POINodeRequest.postRequest<RemoveTransactProofParams, void>(url, {
+      txidVersion,
+      listKey,
+      firstBlindedCommitment,
+      signature,
     });
   };
 
