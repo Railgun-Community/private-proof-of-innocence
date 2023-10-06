@@ -1,10 +1,12 @@
 import { ProofOfInnocenceNode } from './proof-of-innocence-node';
 import { LocalListProvider } from './local-list-provider';
 import { Config } from './config/config';
-
 import 'dotenv/config';
 import { getListPublicKey } from './util/ed25519';
 import { NodeConfig } from './models/general-types';
+import debug from 'debug';
+
+const dbg = debug('poi:main');
 
 // eslint-disable-next-line @typescript-eslint/no-floating-promises
 (async () => {
@@ -28,3 +30,12 @@ import { NodeConfig } from './models/general-types';
   const node = new ProofOfInnocenceNode(host, port, nodeConfigs, listProvider);
   await node.start();
 })();
+
+process.on('unhandledRejection', (err: Error | string) => {
+  dbg('unhandledRejection');
+  dbg(err);
+});
+process.on('uncaughtException', (err: Error | string) => {
+  dbg('uncaughtException');
+  dbg(err);
+});
