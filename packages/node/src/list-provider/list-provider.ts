@@ -103,6 +103,13 @@ export abstract class ListProvider {
   }
 
   private async runQueueNewUnknownShieldsPoller() {
+    // TODO: REMOVE
+    const dbStatus = new StatusDatabase(
+      NetworkName.EthereumGoerli,
+      TXIDVersion.V2_PoseidonMerkle,
+    );
+    await dbStatus.clearStatus();
+
     // Run for each network in series.
     for (const networkName of Config.NETWORK_NAMES) {
       for (const txidVersion of Config.TXID_VERSIONS) {
@@ -205,16 +212,19 @@ export abstract class ListProvider {
     );
 
     await Promise.all(
-      newShields.map(shieldData =>
-        this.queueShieldSafe(networkName, txidVersion, shieldData),
-      ),
+      newShields.map(async shieldData => {
+        const queued = await this.queueShieldSafe(
+          networkName,
+          txidVersion,
+          shieldData,
+        );
+        if (queued) {
+          const lastShieldScanned = newShields[newShields.length - 1];
+          const latestBlockScanned = lastShieldScanned.blockNumber;
+          await statusDB.saveStatus(latestBlockScanned);
+        }
+      }),
     );
-
-    if (newShields.length > 0) {
-      const lastShieldScanned = newShields[newShields.length - 1];
-      const latestBlockScanned = lastShieldScanned.blockNumber;
-      await statusDB.saveStatus(latestBlockScanned);
-    }
   }
 
   async categorizeUnknownShields(
@@ -378,16 +388,30 @@ export abstract class ListProvider {
     networkName: NetworkName,
     txidVersion: TXIDVersion,
     shieldData: ShieldData,
-  ) {
+  ): Promise<boolean> {
     try {
+      if (!isDefined(shieldData.timestamp)) {
+        const txReceipt = await getTransactionReceipt(
+          networkName,
+          shieldData.txid,
+        );
+        const timestamp = await getTimestampFromTransactionReceipt(
+          networkName,
+          txReceipt,
+        );
+        shieldData.timestamp = timestamp;
+      }
+
       const shieldQueueDB = new ShieldQueueDatabase(networkName, txidVersion);
       await shieldQueueDB.insertUnknownShield(shieldData);
+      return true;
     } catch (err) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       dbg(
         `[${networkName}] Error queuing shield on ${networkName}: ${err.message}`,
       );
       dbg(shieldData);
+      return false;
     }
   }
 

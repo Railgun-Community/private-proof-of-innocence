@@ -28,4 +28,9 @@ export class StatusDatabase extends AbstractDatabase<StatusDBItem> {
     };
     await this.upsertOne(filter, replacement);
   }
+
+  async clearStatus(): Promise<void> {
+    const filter: DBFilter<StatusDBItem> = {};
+    await this.deleteOne(filter);
+  }
 }
