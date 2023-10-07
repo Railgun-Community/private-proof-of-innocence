@@ -63,7 +63,7 @@ describe('api', function () {
 
     const listProvider = new LocalListProvider(listKey);
 
-    const host = '0.0.0.0';
+    const host = 'localhost';
 
     node3011 = new ProofOfInnocenceNode(host, '3011', [], listProvider);
     await node3011.start();
@@ -76,7 +76,7 @@ describe('api', function () {
     );
     await node3010.start();
 
-    apiUrl = `http://${host}:3010`;
+    apiUrl = node3011.getURL();
 
     // Import admin and password from .env file
     const username = process.env.BASIC_AUTH_USERNAME;
@@ -92,7 +92,7 @@ describe('api', function () {
     await node3011.stop();
   });
 
-  it.only('Should return status ok for GET /', async () => {
+  it('Should return status ok for GET /', async () => {
     const response = await axios.get(`${apiUrl}/`);
 
     expect(response.status).to.equal(200);

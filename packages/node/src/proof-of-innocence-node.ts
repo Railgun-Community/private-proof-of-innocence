@@ -11,6 +11,7 @@ import { ConnectedNodeStartup } from './sync/connected-node-startup';
 import { NodeConfig } from './models/general-types';
 import { getListKeysFromNodeConfigs } from './config/general';
 import { stopEngine } from './engine/engine-init';
+import axios from 'axios';
 
 const dbg = debug('poi:node');
 
@@ -50,6 +51,10 @@ export class ProofOfInnocenceNode {
     this.api = new API(this.listKeys);
   }
 
+  getURL() {
+    return `http://${this.host}:${this.port}`;
+  }
+
   async start() {
     if (this.running) {
       return;
@@ -69,6 +74,10 @@ export class ProofOfInnocenceNode {
     this.api.serve(this.host, this.port);
 
     this.roundRobinSyncer.startPolling();
+
+    const url = this.getURL();
+
+    await axios.get(url, { timeout: 500 });
 
     dbg(`Proof of Innocence node running...`);
   }
