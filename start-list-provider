@@ -22,7 +22,24 @@ if [[ $? -eq 0 ]]; then
 fi
 
 pushd packages/node
-yarn && yarn build && yarn setup-env && pm2 start
+yarn && yarn build
+
+# Check if the .env file exists
+if [ ! -f "./.env" ]; then
+    echo ".env file does not exist. Setting up environment..."
+    yarn setup-env
+else
+    # Check if the .env file contains the required variables
+    for var in NODE_CONFIGS pkey PORT; do
+        if ! grep -q "^$var=" ./.env; then
+            echo "Missing $var in .env. Setting up environment..."
+            yarn setup-env
+            break
+        fi
+    done
+fi
+
+pm2 start pm2-list-provider.config.js
 if [[ $? -ne 0 ]]; then exit 1; fi
 popd
 
