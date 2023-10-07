@@ -8,6 +8,15 @@ import debug from 'debug';
 
 const dbg = debug('poi:main');
 
+process.on('unhandledRejection', (err: Error | string) => {
+  dbg('unhandledRejection');
+  dbg(err);
+});
+process.on('uncaughtException', (err: Error | string) => {
+  dbg('uncaughtException');
+  dbg(err);
+});
+
 // eslint-disable-next-line @typescript-eslint/no-floating-promises
 (async () => {
   Config.MONGODB_URL = 'mongodb://localhost:27017';
@@ -29,12 +38,3 @@ const dbg = debug('poi:main');
   const node = new ProofOfInnocenceNode(host, port, nodeConfigs, listProvider);
   await node.start();
 })();
-
-process.on('unhandledRejection', (err: Error | string) => {
-  dbg('unhandledRejection');
-  dbg(err);
-});
-process.on('uncaughtException', (err: Error | string) => {
-  dbg('uncaughtException');
-  dbg(err);
-});
