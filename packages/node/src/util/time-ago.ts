@@ -1,5 +1,6 @@
 import TimeAgo from 'javascript-time-ago';
 import en from 'javascript-time-ago/locale/en';
+import { currentTimestampSec, validateTimestamp } from './timestamp';
 
 TimeAgo.addDefaultLocale(en);
 
@@ -18,5 +19,5 @@ export const hoursAgo = (hours: number) => {
 };
 
 export const minutesAgo = (minutes: number) => {
-  return Date.now() - minutes * 60 * 1000;
+  return validateTimestamp(currentTimestampSec() - minutes * 60);
 };

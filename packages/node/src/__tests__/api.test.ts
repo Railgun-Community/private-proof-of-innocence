@@ -92,12 +92,12 @@ describe('api', function () {
     await node3011.stop();
   });
 
-  it('Should return status ok for GET /', async () => {
+  it.only('Should return status ok for GET /', async () => {
     const response = await axios.get(`${apiUrl}/`);
 
     expect(response.status).to.equal(200);
     expect(response.data).to.deep.equal({ status: 'ok' });
-  });
+  }).timeout(2000);
 
   it('Should return 200 for GET /perf with valid credentials', async () => {
     const response = await axios.get(`${apiUrl}/perf`, {

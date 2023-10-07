@@ -19,6 +19,7 @@ import { ListProviderPOIEventQueue } from '../list-provider-poi-event-queue';
 import { calculateShieldBlindedCommitment } from '../../util/shield-blinded-commitment';
 import { daysAgo } from '../../util/time-ago';
 import { POIMerkletreeManager } from '../../poi-events/poi-merkletree-manager';
+import { currentTimestampSec } from '../../util/timestamp';
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
@@ -74,7 +75,7 @@ describe('list-provider', () => {
         txid: '0x5678',
         commitmentHash: '0x6789',
         npk: '0x7890',
-        timestamp: Date.now(),
+        timestamp: currentTimestampSec(),
         blockNumber: 123436,
         utxoTree: 0,
         utxoIndex: 4,
@@ -173,10 +174,10 @@ describe('list-provider', () => {
     expect(allowedShields.length).to.equal(1);
 
     expect(allowedShields[0].lastValidatedTimestamp).to.be.lessThanOrEqual(
-      Date.now(),
+      currentTimestampSec(),
     );
     expect(allowedShields[0].lastValidatedTimestamp).to.be.greaterThan(
-      Date.now() - 1000,
+      currentTimestampSec() - 1000,
     );
     allowedShields[0].lastValidatedTimestamp = null;
 

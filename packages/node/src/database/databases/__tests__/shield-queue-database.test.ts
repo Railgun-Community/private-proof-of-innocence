@@ -12,6 +12,7 @@ import {
 import { getShieldQueueStatus } from '../../../shields/shield-queue';
 import { calculateShieldBlindedCommitment } from '../../../util/shield-blinded-commitment';
 import { daysAgo } from '../../../util/time-ago';
+import { currentTimestampSec } from '../../../util/timestamp';
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
@@ -75,7 +76,7 @@ describe('shield-queue-database', () => {
   });
 
   it('Should insert items and query from shield queue database', async () => {
-    const now = Date.now();
+    const now = currentTimestampSec();
 
     // No shields in queue to begin
     await expect(
@@ -156,7 +157,7 @@ describe('shield-queue-database', () => {
   });
 
   it('Should update unknown shield status', async () => {
-    const now = Date.now();
+    const now = currentTimestampSec();
 
     // No shields in queue to begin
     await expect(
@@ -202,10 +203,10 @@ describe('shield-queue-database', () => {
     expect(allowedShields.length).to.equal(1);
 
     expect(allowedShields[0].lastValidatedTimestamp).to.be.lessThanOrEqual(
-      Date.now(),
+      currentTimestampSec(),
     );
     expect(allowedShields[0].lastValidatedTimestamp).to.be.greaterThan(
-      Date.now() - 1000,
+      currentTimestampSec() - 1,
     );
     allowedShields[0].lastValidatedTimestamp = null;
 
@@ -232,7 +233,7 @@ describe('shield-queue-database', () => {
       npk: '0x0000',
       utxoTree: 0,
       utxoIndex: 5,
-      timestamp: Date.now() - 2000, // 2 seconds ago
+      timestamp: currentTimestampSec() - 2, // 2 seconds ago
       blockNumber: 123456,
     };
     await db.insertUnknownShield(pendingShield1);
@@ -243,7 +244,7 @@ describe('shield-queue-database', () => {
       npk: '0x0000',
       utxoTree: 0,
       utxoIndex: 6,
-      timestamp: Date.now() - 1000, // 1 second ago
+      timestamp: currentTimestampSec() - 1, // 1 second ago
       blockNumber: 123456,
     };
     await db.insertUnknownShield(pendingShield2);

@@ -9,7 +9,7 @@ chai.use(chaiAsPromised);
 describe('init', () => {
   before(async () => {});
 
-  it.only('Should run init scripts', async () => {
+  it('Should run init scripts', async () => {
     await initDatabases();
     await initEngineAndScanTXIDs();
     await initModules(MOCK_LIST_KEYS);

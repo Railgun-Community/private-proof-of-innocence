@@ -16,6 +16,7 @@ import { AbstractDatabase } from '../abstract-database';
 import { ShieldData } from '@railgun-community/wallet';
 import { calculateShieldBlindedCommitment } from '../../util/shield-blinded-commitment';
 import { Filter } from 'mongodb';
+import { currentTimestampSec } from '../../util/timestamp';
 
 export class ShieldQueueDatabase extends AbstractDatabase<ShieldQueueDBItem> {
   constructor(networkName: NetworkName, txidVersion: TXIDVersion) {
@@ -80,7 +81,7 @@ export class ShieldQueueDatabase extends AbstractDatabase<ShieldQueueDBItem> {
     const replacement: ShieldQueueDBItem = {
       ...shieldQueueDBItem,
       status,
-      lastValidatedTimestamp: Date.now(),
+      lastValidatedTimestamp: currentTimestampSec(),
     };
     return this.upsertOne(filter, replacement);
   }

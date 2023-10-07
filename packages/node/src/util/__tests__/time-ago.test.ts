@@ -9,6 +9,6 @@ describe('time-ago', () => {
   it('Should validate days/hours/min ago', async () => {
     expect(daysAgo(1)).to.be.lessThan(Date.now());
     expect(daysAgo(1)).to.be.lessThanOrEqual(hoursAgo(24));
-    expect(daysAgo(1)).to.be.greaterThan(1695764141924);
+    expect(daysAgo(1)).to.be.greaterThan(1695764141);
   });
 });

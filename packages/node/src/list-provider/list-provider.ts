@@ -32,7 +32,7 @@ import { POIEventShield, POIEventType } from '../models/poi-types';
 import { ListProviderBlocklist } from './list-provider-blocklist';
 import { hoursAgo, minutesAgo } from '../util/time-ago';
 import { POIMerkletreeManager } from '../poi-events/poi-merkletree-manager';
-import {} from '../database/databases/blocked-shields-per-list-database';
+import { validateTimestamp } from '../util/timestamp';
 
 export type ListProviderConfig = {
   name: string;
@@ -230,9 +230,6 @@ export abstract class ListProvider {
         ShieldStatus.Unknown,
       );
 
-      // const db = new BlockedShieldsPerListDatabase(networkName, txidVersion);
-      // const blocked = await db.getBlockedShields(this.listKey);
-
       dbg(
         `[${networkName}] Attempting to categorize ${unknownShields.length} unknown shields...`,
       );
@@ -260,7 +257,7 @@ export abstract class ListProvider {
     const { txid } = shieldQueueDBItem;
 
     if (
-      shieldQueueDBItem.timestamp <
+      validateTimestamp(shieldQueueDBItem.timestamp) <
       this.getMaxTimestampForValidation(networkName)
     ) {
       // Automatically mark pending if it's an old shield.
@@ -349,7 +346,7 @@ export abstract class ListProvider {
 
     if (anyStatusIsPending) {
       // If shield is >60 min old, mark as pending.
-      if (shieldQueueDBItem.timestamp < hoursAgo(1)) {
+      if (validateTimestamp(shieldQueueDBItem.timestamp) < hoursAgo(1)) {
         await this.markShieldPending(
           networkName,
           txidVersion,
@@ -395,13 +392,15 @@ export abstract class ListProvider {
         shieldData.timestamp = timestamp;
       }
 
+      validateTimestamp(shieldData.timestamp);
+
       const shieldQueueDB = new ShieldQueueDatabase(networkName, txidVersion);
       await shieldQueueDB.insertUnknownShield(shieldData);
       return true;
     } catch (err) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       dbg(
-        `[${networkName}] Error queuing shield on ${networkName}: ${err.message}`,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        `[${networkName}] Error queuing shield: ${err.message}`,
       );
       dbg(shieldData);
       return false;
@@ -463,7 +462,7 @@ export abstract class ListProvider {
         networkName,
         txReceipt,
       );
-      if (timestamp > endTimestamp) {
+      if (endTimestamp < validateTimestamp(timestamp)) {
         // Shield is too new to validate
         throw new Error('Invalid timestamp');
       }

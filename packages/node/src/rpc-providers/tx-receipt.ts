@@ -24,5 +24,5 @@ export const getTimestampFromTransactionReceipt = async (
     throw new Error(`Block data not found for ${txReceipt.blockNumber}`);
   }
   const timestamp = block.timestamp;
-  return timestamp * 1000;
+  return timestamp;
 };
