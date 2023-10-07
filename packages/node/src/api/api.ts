@@ -120,6 +120,9 @@ export class API {
     this.server = this.app.listen(Number(port), host, () => {
       dbg(`Listening at http://${host}:${port}`);
     });
+    this.server.on('error', err => {
+      dbg(err);
+    });
   }
 
   stop() {

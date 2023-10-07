@@ -16,7 +16,7 @@ import { AbstractDatabase } from '../abstract-database';
 import { ShieldData } from '@railgun-community/wallet';
 import { calculateShieldBlindedCommitment } from '../../util/shield-blinded-commitment';
 import { Filter } from 'mongodb';
-import { currentTimestampSec } from '../../util/timestamp';
+import { currentTimestampSec, validateTimestamp } from '../../util/timestamp';
 
 export class ShieldQueueDatabase extends AbstractDatabase<ShieldQueueDBItem> {
   constructor(networkName: NetworkName, txidVersion: TXIDVersion) {
@@ -34,8 +34,10 @@ export class ShieldQueueDatabase extends AbstractDatabase<ShieldQueueDBItem> {
 
   async insertUnknownShield(shieldData: ShieldData): Promise<void> {
     if (!isDefined(shieldData.timestamp)) {
-      return;
+      throw new Error('ShieldData timestamp is undefined');
     }
+    validateTimestamp(shieldData.timestamp);
+
     const blindedCommitment = calculateShieldBlindedCommitment(shieldData);
     const storedData: ShieldQueueDBItem = {
       txid: shieldData.txid.toLowerCase(),

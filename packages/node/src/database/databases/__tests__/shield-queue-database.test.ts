@@ -116,7 +116,9 @@ describe('shield-queue-database', () => {
       utxoTree: 0,
       utxoIndex: 7,
     };
-    await db.insertUnknownShield(pendingShield3);
+    await expect(
+      db.insertUnknownShield(pendingShield3),
+    ).to.eventually.be.rejectedWith('ShieldData timestamp is undefined');
 
     const shieldQueueItem2: ShieldQueueDBItem = {
       ...pendingShield2,
