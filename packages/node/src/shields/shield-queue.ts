@@ -26,7 +26,6 @@ export const getShieldQueueStatus = async (
   const latestShieldTime = latestShield
     ? `${getFormattedTimeAgo(new Date(latestShield.timestamp * 1000))}`
     : undefined;
-  dbg(latestShield);
 
   return {
     pending,
