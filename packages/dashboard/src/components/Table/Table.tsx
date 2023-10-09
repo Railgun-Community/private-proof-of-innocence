@@ -7,15 +7,31 @@ import styles from './Table.module.scss';
 type Props = {
   data: any[];
   columns: any[];
-  title: string;
 };
 
 // TODO: Fix this component when you have all the data, lots of improvements to be made
-export const Table = ({ data, columns, title }: Props) => {
+export const Table = ({ data, columns }: Props) => {
+  const [key, dataToDisplay] = data;
+  const dataArray = Object.entries(dataToDisplay ?? []);
+
+  const renderValueWithLoading =
+    (isOdd: boolean) => (value: string | number, index: number) => {
+      return (
+        <td
+          key={index}
+          className={cn(styles.tableKeyCell, {
+            [styles.tableCellOdd]: isOdd,
+          })}
+        >
+          {!isDefined(value) ? <Spinner size={20} /> : <>{`${value}`}</>}
+        </td>
+      );
+    };
+
   return (
     <>
       <Text style={{ color: 'black', width: '100%', paddingLeft: 5 }}>
-        {title}
+        {key}
       </Text>
       <table className={styles.table}>
         <thead>
@@ -29,51 +45,21 @@ export const Table = ({ data, columns, title }: Props) => {
           </tr>
         </thead>
         <tbody>
-          {data.map((item, index) => {
+          {dataArray.map((item: any, index) => {
             const isOdd = index % 2 === 0;
+            const keyName = item[0];
+            const values = item[1];
 
             return (
-              <tr key={item.key}>
+              <tr key={index}>
                 <td
                   className={cn(styles.tableKeyCell, {
                     [styles.tableCellOdd]: isOdd,
                   })}
                 >
-                  {item.key}
+                  {keyName}
                 </td>
-                <td
-                  className={cn(styles.tableCell, {
-                    [styles.tableCellOdd]: isOdd,
-                  })}
-                >
-                  {!isDefined(item.nodeName1) ? (
-                    <Spinner size={15} />
-                  ) : (
-                    item.nodeName1
-                  )}
-                </td>
-                <td
-                  className={cn(styles.tableCell, {
-                    [styles.tableCellOdd]: isOdd,
-                  })}
-                >
-                  {!isDefined(item.nodeName2) ? (
-                    <Spinner size={15} />
-                  ) : (
-                    item.nodeName2
-                  )}
-                </td>
-                <td
-                  className={cn(styles.tableCell, {
-                    [styles.tableCellOdd]: isOdd,
-                  })}
-                >
-                  {!isDefined(item.nodeName3) ? (
-                    <Spinner size={15} />
-                  ) : (
-                    item.nodeName3
-                  )}
-                </td>
+                {values.map(renderValueWithLoading(isOdd))}
               </tr>
             );
           })}

@@ -6,18 +6,17 @@ import { List } from './components/List/List';
 import { OverallStatus } from './components/OverallStatus/OverallStatus';
 import styles from './NodeStatus.module.scss';
 
-const currentNetwork = 'Ethereum_Goerli'; //TODO: Change this.
-
 export const NodeStatus = () => {
   const {
     getNodeStatusForAllNetworks,
     nodeStatusForAllNetworks,
     loadingNodeStatusForAllNetworks,
+    currentNetwork,
   } = useNodeStore();
 
   const nodeStatusForCurrentNetwork = useMemo(
     () => nodeStatusForAllNetworks?.forNetwork[currentNetwork],
-    [nodeStatusForAllNetworks],
+    [currentNetwork, nodeStatusForAllNetworks?.forNetwork],
   );
   const listKeys = useMemo(
     () => nodeStatusForAllNetworks?.listKeys,

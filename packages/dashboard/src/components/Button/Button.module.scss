@@ -35,3 +35,10 @@
 .title {
   @include label;
 }
+
+.spinnerContainer {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+}

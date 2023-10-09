@@ -23,9 +23,9 @@ type EventListStatus = {
 
 export const OverallStatus = ({ nodeStatus }: Props) => {
   const {
-    getNodeStatusForAllNetworks,
+    refreshNode,
     lastRefreshedNodeStatusForAllNetworks,
-    loadingNodeStatusForAllNetworks,
+    refreshingNode,
     nodeIp,
   } = useNodeStore();
   const listStatuses = nodeStatus?.listStatuses ?? undefined;
@@ -38,7 +38,7 @@ export const OverallStatus = ({ nodeStatus }: Props) => {
     : [];
 
   const handleRefresh = () => {
-    getNodeStatusForAllNetworks();
+    refreshNode();
   };
 
   const currentDate = new Date();
@@ -85,7 +85,8 @@ export const OverallStatus = ({ nodeStatus }: Props) => {
           title={refreshButtonTitle}
           rightIcon={IconType.Refresh}
           iconColor={colors.black}
-          disabled={loadingNodeStatusForAllNetworks}
+          disabled={refreshingNode}
+          className={styles.refreshButton}
         />
       </div>
       <div className={styles.connectionContainer}>

@@ -36,9 +36,9 @@ export class POINodeRequest {
   ): Promise<NodeStatusAllNetworks> => {
     let route = `node-status-v2`;
 
-    if (nodeURL === AvailableNodes.Local) {
-      route = 'node-status';
-    }
+    // if (nodeURL === AvailableNodes.Local) {
+    //   route = 'node-status';
+    // }
 
     const url = POINodeRequest.getNodeRouteURL(nodeURL, route);
 
