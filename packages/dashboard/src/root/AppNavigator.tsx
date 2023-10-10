@@ -9,7 +9,7 @@ import styles from './AppNavigator.module.scss';
 export const AppNavigator = () => {
   return (
     <div className={styles.appNavigatorContainer}>
-      <BrowserRouter>
+      <BrowserRouter basename="/dashboard">
         <Header />
         <Drawer variant={SlideDirection.SLIDE_FROM_LEFT} />
         <Routes>
