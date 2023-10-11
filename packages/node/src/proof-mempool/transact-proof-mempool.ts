@@ -243,6 +243,7 @@ export class TransactProofMempool {
       this.getTransactFirstBlindedCommitment(transactProofData);
     const exists = await db.proofExists(listKey, firstBlindedCommitment);
     if (exists) {
+      dbg('Proof already exists for first blinded commitment');
       return false;
     }
 
@@ -255,12 +256,14 @@ export class TransactProofMempool {
         transactProofData,
       );
     if (orderedEventExists) {
+      dbg('Event already exists for first blinded commitment');
       return false;
     }
 
     // 3. Verify snark proof
     const verifiedProof = await verifyTransactProof(transactProofData);
     if (!verifiedProof) {
+      dbg('Invalid snark proof');
       throw new Error('Invalid proof');
     }
 
