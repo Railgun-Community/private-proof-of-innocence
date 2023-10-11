@@ -12,6 +12,7 @@ import { NodeConfig } from './models/general-types';
 import { getListKeysFromNodeConfigs } from './config/general';
 import { stopEngine } from './engine/engine-init';
 import axios from 'axios';
+import { TransactProofPushSyncer } from './sync/transact-proof-push-syncer';
 
 const dbg = debug('poi:node');
 
@@ -75,9 +76,18 @@ export class ProofOfInnocenceNode {
 
     this.roundRobinSyncer.startPolling();
 
-    const url = this.getURL();
+    const transactProofPushSyncer = new TransactProofPushSyncer(this.listKeys);
+    transactProofPushSyncer.startPolling();
 
-    await axios.get(url, { timeout: 500 });
+    // Check if node API is running
+    try {
+      const url = this.getURL();
+      await axios.get(url, { timeout: 500 });
+    } catch (err) {
+      throw new Error(
+        `Node API is not running - check port ${this.port} for existing process`,
+      );
+    }
 
     dbg(`Proof of Innocence node running...`);
   }

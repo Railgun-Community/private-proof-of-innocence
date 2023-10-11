@@ -27,7 +27,6 @@ import {
 } from '../rpc-providers/tx-receipt';
 import { Constants } from '../config/constants';
 import { ListProviderPOIEventQueue } from './list-provider-poi-event-queue';
-import { ListProviderPOIEventUpdater } from './list-provider-poi-event-updater';
 import { POIEventShield, POIEventType } from '../models/poi-types';
 import { ListProviderBlocklist } from './list-provider-blocklist';
 import { hoursAgo, minutesAgo } from '../util/time-ago';
@@ -68,7 +67,6 @@ export abstract class ListProvider {
     this.listKey = listKey;
 
     ListProviderPOIEventQueue.init(listKey);
-    ListProviderPOIEventUpdater.init(listKey);
     ListProviderBlocklist.init(listKey);
   }
 
@@ -99,7 +97,6 @@ export abstract class ListProvider {
     this.runRescanHistoryPoller();
 
     ListProviderPOIEventQueue.startPolling();
-    ListProviderPOIEventUpdater.startPolling();
   }
 
   private async runQueueNewUnknownShieldsPoller() {
