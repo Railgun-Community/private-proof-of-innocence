@@ -17,12 +17,15 @@ export class PushSync {
   static sendNodeRequest = async (
     nodeURL: string,
     nodeRequest: (nodeURL: string) => Promise<void>,
+    shouldThrow = false,
   ) => {
     try {
       await nodeRequest(nodeURL);
     } catch (err) {
       dbg(err);
-      return;
+      if (shouldThrow) {
+        throw err;
+      }
     }
   };
 }

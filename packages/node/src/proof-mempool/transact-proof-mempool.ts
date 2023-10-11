@@ -83,15 +83,19 @@ export class TransactProofMempool {
       return;
     }
     try {
-      await PushSync.sendNodeRequest(nodeURL, async nodeURL => {
-        await POINodeRequest.submitTransactProof(
-          nodeURL,
-          networkName,
-          txidVersion,
-          listKey,
-          transactProofData,
-        );
-      });
+      await PushSync.sendNodeRequest(
+        nodeURL,
+        async nodeURL => {
+          await POINodeRequest.submitTransactProof(
+            nodeURL,
+            networkName,
+            txidVersion,
+            listKey,
+            transactProofData,
+          );
+        },
+        true, // shouldThrow
+      );
     } catch (err) {
       dbg(err);
       if (!(err instanceof Error)) {
