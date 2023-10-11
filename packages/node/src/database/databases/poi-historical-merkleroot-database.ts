@@ -31,11 +31,11 @@ export class POIHistoricalMerklerootDatabase extends AbstractDatabase<POIHistori
     listKey: string,
     rootHashes: string[],
   ): Promise<boolean> {
-    const filter: Filter<POIHistoricalMerklerootDBItem> = {
-      listKey,
-      rootHash: { $in: rootHashes },
-    };
-    const count = await this.count(filter);
-    return count === rootHashes.length;
+    for (const rootHash of rootHashes) {
+      if (!(await this.merklerootExists(listKey, rootHash))) {
+        return false;
+      }
+    }
+    return true;
   }
 }
