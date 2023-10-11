@@ -10,6 +10,7 @@ import {
 } from 'express-json-validator-middleware';
 import { POIEventList } from '../poi-events/poi-event-list';
 import {
+  isListProvider,
   networkNameForSerializedChain,
   nodeURLForListKey,
 } from '../config/general';
@@ -179,8 +180,13 @@ export class API {
 
           dbg(err);
 
-          return res.status(500).send();
-
+          if (isListProvider()) {
+            // Show the error message to aggregator nodes
+            return res.status(500).json(err.message);
+          } else {
+            // Hide the error message
+            return res.status(500).send();
+          }
           // return next(err);
         }
       },
@@ -225,8 +231,13 @@ export class API {
 
           dbg(err);
 
-          return res.status(500).send();
-
+          if (isListProvider()) {
+            // Show the error message to aggregator nodes
+            return res.status(500).json(err.message);
+          } else {
+            // Hide the error message
+            return res.status(500).send();
+          }
           // return next(err);
         }
       },
