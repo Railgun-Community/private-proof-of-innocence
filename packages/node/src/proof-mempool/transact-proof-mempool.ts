@@ -24,6 +24,8 @@ import { tryValidateRailgunTxidOccurredBeforeBlockNumber } from '../engine/walle
 
 const dbg = debug('poi:transact-proof-mempool');
 
+const VALIDATION_ERROR_TEXT = 'Validation error';
+
 export class TransactProofMempool {
   static async submitProof(
     listKey: string,
@@ -92,6 +94,13 @@ export class TransactProofMempool {
       });
     } catch (err) {
       dbg(err);
+      if (!(err instanceof Error)) {
+        return;
+      }
+      if (err.message.startsWith(VALIDATION_ERROR_TEXT)) {
+        // This will throw error for the client, when submitting proof.
+        throw err;
+      }
     }
   }
 
@@ -155,7 +164,9 @@ export class TransactProofMempool {
           txidVersion,
           transactProofData,
         );
-        throw new Error('Cannot add proof - POI merkleroots must all exist.');
+        throw new Error(
+          `${VALIDATION_ERROR_TEXT}: POI merkleroots must all exist.`,
+        );
       }
     }
 
@@ -176,7 +187,7 @@ export class TransactProofMempool {
         txidVersion,
         transactProofData,
       );
-      throw new Error('Cannot add proof - Invalid txid merkleroot');
+      throw new Error(`${VALIDATION_ERROR_TEXT}: Invalid txid merkleroot.`);
     }
 
     ListProviderPOIEventQueue.queueUnsignedPOITransactEvent(
