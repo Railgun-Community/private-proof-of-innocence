@@ -143,7 +143,9 @@ export class TransactProofMempool {
             transactProofData.poiMerkleroots,
           );
         if (!allPOIMerklerootsExist) {
-          dbg('Cannot add proof - POI merkleroots must all exist');
+          dbg(
+            `Cannot add proof - POI merkleroots must all exist. Is this a legacy transaction? ${networkName} TXID tree:index ${tree}:${index}.`,
+          );
           await this.removeProof(
             listKey,
             networkName,
