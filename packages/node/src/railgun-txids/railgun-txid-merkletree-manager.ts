@@ -17,7 +17,7 @@ import { POINodeRequest } from '../api/poi-node-request';
 import debug from 'debug';
 import { PushSync } from '../sync/push-sync';
 import { verifyTxidMerkleroot } from '../util/ed25519';
-import { nodeURLForListKey } from '../config/general';
+import { isListProvider, nodeURLForListKey } from '../config/general';
 import { ListProviderPOIEventQueue } from '../list-provider/list-provider-poi-event-queue';
 
 const dbg = debug('poi:railgun-txid-merkletree');
