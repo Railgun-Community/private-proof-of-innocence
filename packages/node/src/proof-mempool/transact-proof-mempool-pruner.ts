@@ -14,18 +14,18 @@ export class TransactProofMempoolPruner {
     firstBlindedCommitment: string,
   ) {
     try {
-      const db = new TransactProofPerListMempoolDatabase(
-        networkName,
-        txidVersion,
-      );
-      await db.deleteProof(listKey, firstBlindedCommitment);
-
       TransactProofMempoolCache.removeFromCache(
         listKey,
         networkName,
         txidVersion,
         firstBlindedCommitment,
       );
+
+      const db = new TransactProofPerListMempoolDatabase(
+        networkName,
+        txidVersion,
+      );
+      await db.deleteProof(listKey, firstBlindedCommitment);
     } catch (err) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       dbg(`Error removing from transact proof mempool: ${err.message}`);

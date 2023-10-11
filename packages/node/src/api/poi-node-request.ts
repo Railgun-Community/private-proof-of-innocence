@@ -24,6 +24,7 @@ import {
   signRemoveProof,
   signValidatedTxidMerkleroot,
 } from '../util/ed25519';
+import { isListProvider } from '../config/general';
 
 const dbg = debug('poi:request');
 
@@ -195,6 +196,12 @@ export class POINodeRequest {
     const chain = NETWORK_CONFIG[networkName].chain;
     const route = `remove-transact-proof/${chain.type}/${chain.id}`;
     const url = POINodeRequest.getNodeRouteURL(nodeURL, route);
+
+    if (!isListProvider()) {
+      // Cannot sign without list.
+      return;
+    }
+
     const signature = await signRemoveProof(firstBlindedCommitment);
 
     await POINodeRequest.postRequest<RemoveTransactProofParams, void>(url, {
@@ -235,6 +242,12 @@ export class POINodeRequest {
     const url = POINodeRequest.getNodeRouteURL(nodeURL, route);
 
     const listKey = await getListPublicKey();
+
+    if (!isListProvider()) {
+      // Cannot sign without list.
+      return;
+    }
+
     const signature = await signValidatedTxidMerkleroot(txidIndex, merkleroot);
 
     await POINodeRequest.postRequest<
