@@ -28,7 +28,7 @@ export const createNodesSlice: StateCreator<NodesSlice, [], [], NodesSlice> = (
   set,
   get,
 ) => ({
-  nodeIp: AvailableNodes.Blank, //TODO: Change this if needed
+  nodeIp: AvailableNodes.Aggregator, //TODO: Change this if needed
   nodeStatusForAllNetworks: null,
   currentNetwork: NetworkName.EthereumGoerli, //TODO: Change this.
   allNodesData: null,

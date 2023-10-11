@@ -11,13 +11,6 @@ const dbg = debug('poi:request');
 */
 
 export class POINodeRequest {
-  private static getNodeRouteURL = (
-    url: AvailableNodes,
-    route: string,
-  ): string => {
-    return `${url}/${route}`;
-  };
-
   private static async getRequest<ResponseData>(
     url: string,
   ): Promise<ResponseData> {
@@ -34,16 +27,8 @@ export class POINodeRequest {
   static getNodeStatusAllNetworks = async (
     nodeURL: AvailableNodes,
   ): Promise<NodeStatusAllNetworks> => {
-    let route = `node-status-v2`;
-
-    // if (nodeURL === AvailableNodes.Local) {
-    //   route = 'node-status';
-    // }
-
-    const url = POINodeRequest.getNodeRouteURL(nodeURL, route);
-
     const nodeStatusAllNetworks =
-      await POINodeRequest.getRequest<NodeStatusAllNetworks>(url);
+      await POINodeRequest.getRequest<NodeStatusAllNetworks>(nodeURL);
     return nodeStatusAllNetworks;
   };
 }
