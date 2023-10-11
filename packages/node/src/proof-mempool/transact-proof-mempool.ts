@@ -97,76 +97,53 @@ export class TransactProofMempool {
     txidVersion: TXIDVersion,
     transactProofData: TransactProofData,
   ) {
-    try {
-      if (ListProviderPOIEventQueue.listKey !== listKey) {
-        // Immediately push to destination node, by its listKey
-        await this.pushProofToDestinationNode(
-          listKey,
-          networkName,
-          txidVersion,
-          transactProofData,
-        );
-        return;
-      }
+    if (ListProviderPOIEventQueue.listKey !== listKey) {
+      // Immediately push to destination node, by its listKey
+      await this.pushProofToDestinationNode(
+        listKey,
+        networkName,
+        txidVersion,
+        transactProofData,
+      );
+      return;
+    }
 
-      const { tree, index } =
-        RailgunTxidMerkletreeManager.getTreeAndIndexFromTxidIndex(
-          transactProofData.txidMerklerootIndex,
-        );
-
-      const networkPOISettings = networkForName(networkName).poi;
-      const isLegacyTransaction = isDefined(networkPOISettings)
-        ? await tryValidateRailgunTxidOccurredBeforeBlockNumber(
-            txidVersion,
-            networkName,
-            tree,
-            index,
-            networkPOISettings.launchBlock,
-          )
-        : false;
-
-      dbg(
-        isLegacyTransaction
-          ? 'Adding transact proof (LEGACY)...'
-          : 'Adding transact proof...',
+    const { tree, index } =
+      RailgunTxidMerkletreeManager.getTreeAndIndexFromTxidIndex(
+        transactProofData.txidMerklerootIndex,
       );
 
-      if (!isLegacyTransaction) {
-        // Verify all POI Merkleroots exist
-        const poiMerklerootDb = new POIHistoricalMerklerootDatabase(
-          networkName,
+    const networkPOISettings = networkForName(networkName).poi;
+    const isLegacyTransaction = isDefined(networkPOISettings)
+      ? await tryValidateRailgunTxidOccurredBeforeBlockNumber(
           txidVersion,
-        );
-        const allPOIMerklerootsExist =
-          await poiMerklerootDb.allMerklerootsExist(
-            listKey,
-            transactProofData.poiMerkleroots,
-          );
-        if (!allPOIMerklerootsExist) {
-          dbg(
-            `Cannot add proof - POI merkleroots must all exist. Is this a legacy transaction? ${networkName} TXID tree:index ${tree}:${index}.`,
-          );
-          dbg(transactProofData);
-          await this.removeProof(
-            listKey,
-            networkName,
-            txidVersion,
-            transactProofData,
-          );
-          return;
-        }
-      }
+          networkName,
+          tree,
+          index,
+          networkPOISettings.launchBlock,
+        )
+      : false;
 
-      // Verify historical Railgun Txid Merkleroot exists
-      const isValidTxidMerkleroot =
-        await RailgunTxidMerkletreeManager.checkIfMerklerootExistsByTxidIndex(
-          networkName,
-          txidVersion,
-          transactProofData.txidMerklerootIndex,
-          transactProofData.txidMerkleroot,
+    dbg(
+      isLegacyTransaction
+        ? 'Adding transact proof (LEGACY)...'
+        : 'Adding transact proof...',
+    );
+
+    if (!isLegacyTransaction) {
+      // Verify all POI Merkleroots exist
+      const poiMerklerootDb = new POIHistoricalMerklerootDatabase(
+        networkName,
+        txidVersion,
+      );
+      const allPOIMerklerootsExist = await poiMerklerootDb.allMerklerootsExist(
+        listKey,
+        transactProofData.poiMerkleroots,
+      );
+      if (!allPOIMerklerootsExist) {
+        dbg(
+          `Cannot add proof - POI merkleroots must all exist. Is this a legacy transaction? ${networkName} TXID tree:index ${tree}:${index}.`,
         );
-      if (!isValidTxidMerkleroot) {
-        dbg('Cannot add proof - Invalid txid merkleroot');
         dbg(transactProofData);
         await this.removeProof(
           listKey,
@@ -174,18 +151,35 @@ export class TransactProofMempool {
           txidVersion,
           transactProofData,
         );
-        return;
+        throw new Error('Cannot add proof - POI merkleroots must all exist.');
       }
+    }
 
-      ListProviderPOIEventQueue.queueUnsignedPOITransactEvent(
+    // Verify historical Railgun Txid Merkleroot exists
+    const isValidTxidMerkleroot =
+      await RailgunTxidMerkletreeManager.checkIfMerklerootExistsByTxidIndex(
+        networkName,
+        txidVersion,
+        transactProofData.txidMerklerootIndex,
+        transactProofData.txidMerkleroot,
+      );
+    if (!isValidTxidMerkleroot) {
+      dbg('Cannot add proof - Invalid txid merkleroot');
+      dbg(transactProofData);
+      await this.removeProof(
+        listKey,
         networkName,
         txidVersion,
         transactProofData,
       );
-    } catch (err) {
-      dbg(err);
-      return;
+      throw new Error('Cannot add proof - Invalid txid merkleroot');
     }
+
+    ListProviderPOIEventQueue.queueUnsignedPOITransactEvent(
+      networkName,
+      txidVersion,
+      transactProofData,
+    );
   }
 
   private static async removeProof(
