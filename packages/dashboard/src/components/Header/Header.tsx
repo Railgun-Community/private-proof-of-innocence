@@ -13,7 +13,12 @@ type NodeOption = {
 };
 
 const getNodeLabel = (nodeIp: AvailableNodes) => {
-  return `Node IP: ${nodeIp}`;
+  console.log(availableNodesArray);
+
+  if (nodeIp === AvailableNodes.Aggregator) return 'aggregator-node';
+  if (nodeIp === AvailableNodes.Blank) return 'blank-node';
+  if (nodeIp === AvailableNodes.OFAC) return 'ofac-node';
+  else return 'unknown';
 };
 
 export const Header = () => {
