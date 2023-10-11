@@ -101,7 +101,7 @@ export class TransactProofMempool {
       if (!(err instanceof Error)) {
         return;
       }
-      if (err.message.startsWith(VALIDATION_ERROR_TEXT)) {
+      if (err.message.includes(VALIDATION_ERROR_TEXT)) {
         // This will throw error for the client, when submitting proof.
         throw err;
       }
