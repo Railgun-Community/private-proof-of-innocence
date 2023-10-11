@@ -40,7 +40,7 @@ const tryVerifyProof = async (
       maxInputs,
       maxOutputs,
     );
-    return prover.verifyPOIProof(
+    return await prover.verifyPOIProof(
       publicInputs,
       transactProofData.snarkProof,
       maxInputs,
