@@ -18,6 +18,7 @@ import debug from 'debug';
 import { PushSync } from '../sync/push-sync';
 import { verifyTxidMerkleroot } from '../util/ed25519';
 import { nodeURLForListKey } from '../config/general';
+import { ListProviderPOIEventQueue } from '../list-provider/list-provider-poi-event-queue';
 
 const dbg = debug('poi:railgun-txid-merkletree');
 
@@ -257,8 +258,11 @@ export class RailgunTxidMerkletreeManager {
         ) {
           return;
         }
-        // TODO: We shouldn't send from nodes without lists.
-        // The receiving nodes will dismiss the request.
+        if (!isListProvider()) {
+          // List providers can sign validated txid requests.
+          // Aggregators can not.
+          return;
+        }
         await POINodeRequest.submitValidatedTxidAndMerkleroot(
           nodeURLToSend,
           networkName,

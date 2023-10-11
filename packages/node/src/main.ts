@@ -4,6 +4,7 @@ import { Config } from './config/config';
 import 'dotenv/config';
 import { getListPublicKey } from './util/ed25519';
 import { NodeConfig } from './models/general-types';
+import { isListProvider } from './config/general';
 import debug from 'debug';
 
 const dbg = debug('poi:main');
@@ -21,8 +22,8 @@ process.on('uncaughtException', (err: Error | string) => {
 (async () => {
   Config.MONGODB_URL = 'mongodb://localhost:27017';
 
-  const isListProvider = process.env.LIST_PROVIDER === '1';
-  const listProvider = isListProvider
+  // Set env "LIST_PROVIDER=1" and "pkey=0xXXXX" to load a list provider.
+  const listProvider = isListProvider()
     ? new LocalListProvider(await getListPublicKey())
     : undefined;
 

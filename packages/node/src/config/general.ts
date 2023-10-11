@@ -10,6 +10,11 @@ import {
 import { Config } from './config';
 import { NodeConfig } from '../models/general-types';
 
+export const isListProvider = () => {
+  const isListProvider = process.env.LIST_PROVIDER === '1';
+  return isListProvider;
+};
+
 export const networkForName = (networkName: NetworkName): Network => {
   const network = NETWORK_CONFIG[networkName];
   if (!isDefined(network)) {
