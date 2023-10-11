@@ -146,6 +146,7 @@ export class TransactProofMempool {
           dbg(
             `Cannot add proof - POI merkleroots must all exist. Is this a legacy transaction? ${networkName} TXID tree:index ${tree}:${index}.`,
           );
+          dbg(transactProofData);
           await this.removeProof(
             listKey,
             networkName,
@@ -166,6 +167,7 @@ export class TransactProofMempool {
         );
       if (!isValidTxidMerkleroot) {
         dbg('Cannot add proof - Invalid txid merkleroot');
+        dbg(transactProofData);
         await this.removeProof(
           listKey,
           networkName,
