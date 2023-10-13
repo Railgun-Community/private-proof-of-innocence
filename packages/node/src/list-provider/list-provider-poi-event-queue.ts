@@ -4,16 +4,22 @@ import {
   isDefined,
   TransactProofData,
   TXIDVersion,
+  LegacyTransactProofData,
 } from '@railgun-community/shared-models';
 import {
   POIEvent,
+  POIEventLegacyTransact,
   POIEventShield,
   POIEventTransact,
   POIEventType,
   SignedPOIEvent,
 } from '../models/poi-types';
 import { POIOrderedEventsDatabase } from '../database/databases/poi-ordered-events-database';
-import { signPOIEventShield, signPOIEventTransact } from '../util/ed25519';
+import {
+  signPOIEventLegacyTransact,
+  signPOIEventShield,
+  signPOIEventTransact,
+} from '../util/ed25519';
 import { POIEventList } from '../poi-events/poi-event-list';
 import { Config } from '../config/config';
 import { ShieldQueueDatabase } from '../database/databases/shield-queue-database';
@@ -108,8 +114,25 @@ export class ListProviderPOIEventQueue {
     );
   }
 
+  static queueUnsignedPOILegacyTransactEvent(
+    networkName: NetworkName,
+    txidVersion: TXIDVersion,
+    legacyTransactProofData: LegacyTransactProofData,
+  ) {
+    const poiEvent: POIEventLegacyTransact = {
+      type: POIEventType.LegacyTransact,
+      blindedCommitment: legacyTransactProofData.blindedCommitment,
+    };
+    return ListProviderPOIEventQueue.queuePOIEvent(
+      networkName,
+      txidVersion,
+      poiEvent,
+    );
+  }
+
   private static getPOIEventFirstBlindedCommitment(poiEvent: POIEvent) {
     switch (poiEvent.type) {
+      case POIEventType.LegacyTransact:
       case POIEventType.Shield:
         return poiEvent.blindedCommitment;
       case POIEventType.Transact:
@@ -181,6 +204,12 @@ export class ListProviderPOIEventQueue {
           blindedCommitmentStartingIndex,
           poiEvent,
         );
+      case POIEventType.LegacyTransact:
+        return ListProviderPOIEventQueue.createSignedPOILegacyTransactEvent(
+          index,
+          blindedCommitmentStartingIndex,
+          poiEvent,
+        );
     }
   }
 
@@ -218,6 +247,25 @@ export class ListProviderPOIEventQueue {
       blindedCommitmentStartingIndex,
       blindedCommitments: poiEventTransact.blindedCommitments,
       proof: poiEventTransact.proof,
+      signature,
+    };
+  }
+
+  static async createSignedPOILegacyTransactEvent(
+    index: number,
+    blindedCommitmentStartingIndex: number,
+    poiEventLegacyTransact: POIEventLegacyTransact,
+  ): Promise<SignedPOIEvent> {
+    const signature = await signPOIEventLegacyTransact(
+      index,
+      blindedCommitmentStartingIndex,
+      poiEventLegacyTransact,
+    );
+    return {
+      index,
+      blindedCommitmentStartingIndex,
+      blindedCommitments: [poiEventLegacyTransact.blindedCommitment],
+      proof: undefined,
       signature,
     };
   }

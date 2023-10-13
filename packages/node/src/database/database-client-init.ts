@@ -18,6 +18,7 @@ import { TestDatabase } from './databases/test-database';
 import { DatabaseClientStorage } from './database-client-storage';
 import { RailgunTxidMerkletreeStatusDatabase } from './databases/railgun-txid-merkletree-status-database';
 import { BlockedShieldsPerListDatabase } from './databases/blocked-shields-per-list-database';
+import { LegacyTransactProofMempoolDatabase } from './databases/legacy-transact-proof-mempool-database';
 
 export class DatabaseClient {
   static async init() {
@@ -75,6 +76,12 @@ export class DatabaseClient {
             break;
           case CollectionName.TransactProofPerListMempool:
             db = new TransactProofPerListMempoolDatabase(
+              networkName,
+              txidVersion,
+            );
+            break;
+          case CollectionName.LegacyTransactProofMempool:
+            db = new LegacyTransactProofMempoolDatabase(
               networkName,
               txidVersion,
             );

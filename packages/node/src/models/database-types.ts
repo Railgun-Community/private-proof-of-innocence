@@ -24,6 +24,7 @@ export enum CollectionName {
 
   // Proof mempools
   TransactProofPerListMempool = 'TransactProofPerListMempool',
+  LegacyTransactProofMempool = 'LegacyTransactProofMempool',
 
   // POI databases
   POIOrderedEvents = 'POIOrderedEvents',
@@ -92,6 +93,15 @@ export type TransactProofMempoolDBItem = {
   blindedCommitmentsOut: string[];
   firstBlindedCommitment: string;
   railgunTxidIfHasUnshield: string;
+};
+
+// DO NOT CHANGE FIELDS WITHOUT CLEARING OR MIGRATING THE DB.
+export type LegacyTransactProofMempoolDBItem = {
+  txidIndex: string;
+  npk: string;
+  value: string;
+  tokenHash: string;
+  blindedCommitment: string;
 };
 
 // DO NOT CHANGE FIELDS WITHOUT CLEARING OR MIGRATING THE DB.

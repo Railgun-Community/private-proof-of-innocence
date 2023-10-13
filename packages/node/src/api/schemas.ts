@@ -32,6 +32,15 @@ export const GetTransactProofsBodySchema: AllowedSchema = {
   required: ['txidVersion', 'bloomFilterSerialized', 'listKey'],
 };
 
+export const GetLegacyTransactProofsBodySchema: AllowedSchema = {
+  type: 'object',
+  properties: {
+    txidVersion: { type: 'string' },
+    bloomFilterSerialized: { type: 'string' },
+  },
+  required: ['txidVersion', 'bloomFilterSerialized'],
+};
+
 export const GetBlockedShieldsBodySchema: AllowedSchema = {
   type: 'object',
   properties: {

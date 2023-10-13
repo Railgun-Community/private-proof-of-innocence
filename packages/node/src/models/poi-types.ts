@@ -1,12 +1,9 @@
-import {
-  SnarkProof,
-  TXIDVersion,
-  TransactProofData,
-} from '@railgun-community/shared-models';
+import { SnarkProof, TXIDVersion } from '@railgun-community/shared-models';
 
 export enum POIEventType {
   Shield = 'Shield',
   Transact = 'Transact',
+  LegacyTransact = 'LegacyTransact',
 }
 
 export type POIEventShield = {
@@ -21,7 +18,15 @@ export type POIEventTransact = {
   proof: SnarkProof;
 };
 
-export type POIEvent = POIEventShield | POIEventTransact;
+export type POIEventLegacyTransact = {
+  type: POIEventType.LegacyTransact;
+  blindedCommitment: string;
+};
+
+export type POIEvent =
+  | POIEventShield
+  | POIEventTransact
+  | POIEventLegacyTransact;
 
 export type SignedPOIEvent = {
   index: number;
@@ -29,7 +34,7 @@ export type SignedPOIEvent = {
   blindedCommitments: string[];
   signature: string;
 
-  // Only for Transact events
+  // Only for Transact non-legacy events
   proof: Optional<SnarkProof>;
 };
 
@@ -59,6 +64,11 @@ export type RemoveTransactProofParams = {
   firstBlindedCommitment: string;
   signature: string;
   listKey: string;
+};
+
+export type GetLegacyTransactProofsParams = {
+  txidVersion: TXIDVersion;
+  bloomFilterSerialized: string;
 };
 
 export type GetPOIListEventRangeParams = {

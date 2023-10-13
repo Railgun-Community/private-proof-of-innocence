@@ -17,6 +17,7 @@ import { BlockedShieldsSyncer } from '../shields/blocked-shields-syncer';
 import { Config } from '../config/config';
 import { chainForNetwork } from '../config/general';
 import { RailgunTxidMerkletreeManager } from '../railgun-txids/railgun-txid-merkletree-manager';
+import { LegacyTransactProofMempool } from '../proof-mempool/legacy/legacy-transact-proof-mempool';
 
 const dbg = debug('poi:init');
 
@@ -60,6 +61,9 @@ export const initEngineAndScanTXIDs = async () => {
 export const initModules = async (listKeys: string[]) => {
   dbg('Inflating Transact Proof mempool cache...');
   await TransactProofMempool.inflateCacheFromDatabase(listKeys);
+
+  dbg('Inflating Legacy Transact Proof mempool cache...');
+  await LegacyTransactProofMempool.inflateCacheFromDatabase();
 
   dbg('Inflating Blocked Shields cache...');
   await BlockedShieldsSyncer.inflateCacheFromDatabase(listKeys);

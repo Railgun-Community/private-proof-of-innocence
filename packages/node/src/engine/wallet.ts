@@ -3,6 +3,7 @@ import {
   ShieldData,
   getAllShields,
   validateRailgunTxidOccurredBeforeBlockNumber,
+  getGlobalUTXOTreePositionForRailgunTransactionCommitment,
 } from '@railgun-community/wallet';
 import debug from 'debug';
 
@@ -38,3 +39,28 @@ export const tryValidateRailgunTxidOccurredBeforeBlockNumber = async (
     return false;
   }
 };
+
+export const tryGetGlobalUTXOTreePositionForRailgunTransactionCommitment =
+  async (
+    txidVersion: TXIDVersion,
+    networkName: NetworkName,
+    tree: number,
+    index: number,
+    commitmentHash: string,
+  ): Promise<number> => {
+    try {
+      return await getGlobalUTXOTreePositionForRailgunTransactionCommitment(
+        txidVersion,
+        networkName,
+        tree,
+        index,
+        commitmentHash,
+      );
+    } catch (err) {
+      dbg(
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        `Could not get global utxo tree position for commitment - ${err.message}`,
+      );
+      throw err;
+    }
+  };

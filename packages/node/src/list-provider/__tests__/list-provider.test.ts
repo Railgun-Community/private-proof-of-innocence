@@ -16,10 +16,10 @@ import {
   MOCK_LIST_KEYS,
 } from '../../tests/mocks.test';
 import { ListProviderPOIEventQueue } from '../list-provider-poi-event-queue';
-import { calculateShieldBlindedCommitment } from '../../util/shield-blinded-commitment';
 import { daysAgo } from '../../util/time-ago';
 import { POIMerkletreeManager } from '../../poi-events/poi-merkletree-manager';
 import { currentTimestampSec } from '../../util/timestamp';
+import { calculateShieldBlindedCommitment } from '../../util/shield-blinded-commitment';
 
 chai.use(chaiAsPromised);
 const { expect } = chai;

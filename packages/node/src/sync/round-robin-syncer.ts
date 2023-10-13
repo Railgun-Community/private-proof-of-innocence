@@ -17,6 +17,8 @@ import { TransactProofMempoolCache } from '../proof-mempool/transact-proof-mempo
 import { BlockedShieldsCache } from '../shields/blocked-shields-cache';
 import { BlockedShieldsSyncer } from '../shields/blocked-shields-syncer';
 import { getListKeysFromNodeConfigs } from '../config/general';
+import { LegacyTransactProofMempoolCache } from '../proof-mempool/legacy/legacy-transact-proof-mempool-cache';
+import { LegacyTransactProofMempool } from '../proof-mempool/legacy/legacy-transact-proof-mempool';
 
 const dbg = debug('poi:sync');
 
@@ -28,6 +30,8 @@ export class RoundRobinSyncer {
   private pollStatus = PollStatus.IDLE;
 
   private listKeys: string[];
+
+  private syncCount = 0;
 
   constructor(nodeConfigs: NodeConfig[]) {
     this.nodeConfigs = nodeConfigs;
@@ -74,6 +78,15 @@ export class RoundRobinSyncer {
         nodeURL,
         nodeStatusAllNetworks,
       );
+
+      if (this.syncCount % 47) {
+        // Every 11.5 min or so...
+        // It will be very rare for this to have an un-synced update.
+        await this.updateLegacyTransactProofMempoolsAllNetworks(
+          nodeURL,
+          nodeStatusAllNetworks,
+        );
+      }
       dbg('');
 
       this.pollStatus = PollStatus.POLLING;
@@ -82,6 +95,7 @@ export class RoundRobinSyncer {
       dbg(`Error polling node ${nodeURL}: ${err.message}`);
     } finally {
       this.incrementNodeIndex();
+      this.syncCount += 1;
 
       // 15 second delay before next poll
       await delay(15 * 1000);
@@ -277,6 +291,72 @@ export class RoundRobinSyncer {
         dbg(
           // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
           `Error submitting transact proof to mempool for list ${listKey} on network ${networkName}: ${err.message}`,
+        );
+      }
+    }
+  }
+
+  async updateLegacyTransactProofMempoolsAllNetworks(
+    nodeURL: string,
+    nodeStatusAllNetworks: NodeStatusAllNetworks,
+  ) {
+    for (const networkName of Config.NETWORK_NAMES) {
+      const nodeStatus = nodeStatusAllNetworks.forNetwork[networkName];
+      if (!nodeStatus) {
+        continue;
+      }
+
+      for (const txidVersion of Config.TXID_VERSIONS) {
+        try {
+          await this.updateLegacyTransactProofMempool(
+            nodeURL,
+            networkName,
+            txidVersion,
+          );
+        } catch (err) {
+          dbg(
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+            `Error syncing legacy transact proofs on network ${networkName}: ${err.message}`,
+          );
+        }
+      }
+    }
+  }
+
+  private async updateLegacyTransactProofMempool(
+    nodeURL: string,
+    networkName: NetworkName,
+    txidVersion: TXIDVersion,
+  ) {
+    const serializedBloomFilter =
+      LegacyTransactProofMempoolCache.serializeBloomFilter(
+        networkName,
+        txidVersion,
+      );
+    const legacyTransactProofs =
+      await POINodeRequest.getFilteredLegacyTransactProofs(
+        nodeURL,
+        networkName,
+        txidVersion,
+        serializedBloomFilter,
+      );
+
+    dbg(
+      `Syncing ${legacyTransactProofs.length} legacy transact proofs for network ${networkName}`,
+    );
+
+    for (const legacyTransactProof of legacyTransactProofs) {
+      try {
+        await LegacyTransactProofMempool.submitLegacyProof(
+          networkName,
+          txidVersion,
+          legacyTransactProof,
+          [], // listKeysForPush
+        );
+      } catch (err) {
+        dbg(
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+          `Error submitting legacy transact proof to mempool on network ${networkName}: ${err.message}`,
         );
       }
     }

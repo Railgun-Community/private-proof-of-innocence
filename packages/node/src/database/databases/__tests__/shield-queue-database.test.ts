@@ -10,9 +10,9 @@ import {
   ShieldStatus,
 } from '../../../models/database-types';
 import { getShieldQueueStatus } from '../../../shields/shield-queue';
-import { calculateShieldBlindedCommitment } from '../../../util/shield-blinded-commitment';
 import { daysAgo } from '../../../util/time-ago';
 import { currentTimestampSec } from '../../../util/timestamp';
+import { calculateShieldBlindedCommitment } from '../../../util/shield-blinded-commitment';
 
 chai.use(chaiAsPromised);
 const { expect } = chai;

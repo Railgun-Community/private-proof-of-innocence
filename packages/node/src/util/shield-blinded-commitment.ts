@@ -14,7 +14,7 @@ export const calculateShieldBlindedCommitment = (
       shieldData.commitmentHash,
       shieldData.npk,
       bitwiseMerge(shieldData.utxoTree, shieldData.utxoIndex),
-    ].map((x) => BigInt(x)),
+    ].map(x => BigInt(x)),
   );
   return `0x${nToHex(hash, ByteLength.UINT_256)}`;
 };

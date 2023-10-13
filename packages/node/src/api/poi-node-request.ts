@@ -8,9 +8,12 @@ import {
   ValidateTxidMerklerootParams,
   SubmitTransactProofParams,
   TXIDVersion,
+  SubmitLegacyTransactProofParams,
+  LegacyTransactProofData,
 } from '@railgun-community/shared-models';
 import axios, { AxiosError } from 'axios';
 import {
+  GetLegacyTransactProofsParams,
   GetPOIListEventRangeParams,
   RemoveTransactProofParams,
   SignedBlockedShield,
@@ -146,6 +149,26 @@ export class POINodeRequest {
     return transactProofs;
   };
 
+  static getFilteredLegacyTransactProofs = async (
+    nodeURL: string,
+    networkName: NetworkName,
+    txidVersion: TXIDVersion,
+    bloomFilterSerialized: string,
+  ) => {
+    const chain = NETWORK_CONFIG[networkName].chain;
+    const route = `legacy-transact-proofs/${chain.type}/${chain.id}`;
+    const url = POINodeRequest.getNodeRouteURL(nodeURL, route);
+
+    const transactProofs = await POINodeRequest.postRequest<
+      GetLegacyTransactProofsParams,
+      LegacyTransactProofData[]
+    >(url, {
+      txidVersion,
+      bloomFilterSerialized,
+    });
+    return transactProofs;
+  };
+
   static getFilteredBlockedShields = async (
     nodeURL: string,
     networkName: NetworkName,
@@ -184,6 +207,26 @@ export class POINodeRequest {
       listKey,
       transactProofData,
     });
+  };
+
+  static submitLegacyTransactProof = async (
+    nodeURL: string,
+    networkName: NetworkName,
+    txidVersion: TXIDVersion,
+    legacyTransactProofData: LegacyTransactProofData,
+  ) => {
+    const chain = NETWORK_CONFIG[networkName].chain;
+    const route = `submit-legacy-transact-proof/${chain.type}/${chain.id}`;
+    const url = POINodeRequest.getNodeRouteURL(nodeURL, route);
+
+    await POINodeRequest.postRequest<SubmitLegacyTransactProofParams, void>(
+      url,
+      {
+        txidVersion,
+        listKeys: [],
+        legacyTransactProofDatas: [legacyTransactProofData],
+      },
+    );
   };
 
   static removeTransactProof = async (

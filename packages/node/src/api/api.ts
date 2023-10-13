@@ -34,6 +34,8 @@ import {
   POIsPerListMap,
   isDefined,
   TransactProofData,
+  SubmitLegacyTransactProofParams,
+  LegacyTransactProofData,
 } from '@railgun-community/shared-models';
 import {
   GetTransactProofsBodySchema,
@@ -48,9 +50,11 @@ import {
   SubmitPOIEventBodySchema,
   SubmitValidatedTxidBodySchema,
   RemoveTransactProofBodySchema,
+  GetLegacyTransactProofsBodySchema,
 } from './schemas';
 import 'dotenv/config';
 import {
+  GetLegacyTransactProofsParams,
   GetPOIListEventRangeParams,
   RemoveTransactProofParams,
   SignedBlockedShield,
@@ -61,6 +65,7 @@ import {
 import { BlockedShieldsSyncer } from '../shields/blocked-shields-syncer';
 import { POINodeRequest } from './poi-node-request';
 import { TransactProofMempoolPruner } from '../proof-mempool/transact-proof-mempool-pruner';
+import { LegacyTransactProofMempool } from '../proof-mempool/legacy/legacy-transact-proof-mempool';
 
 const dbg = debug('poi:api');
 
@@ -358,6 +363,26 @@ export class API {
       GetTransactProofsBodySchema,
     );
 
+    this.safePost<LegacyTransactProofData[]>(
+      '/legacy-transact-proofs/:chainType/:chainID',
+      async (req: Request) => {
+        const { chainType, chainID } = req.params;
+        const { txidVersion, bloomFilterSerialized } =
+          req.body as GetLegacyTransactProofsParams;
+
+        const networkName = networkNameForSerializedChain(chainType, chainID);
+
+        const proofs = LegacyTransactProofMempool.getFilteredProofs(
+          networkName,
+          txidVersion,
+          bloomFilterSerialized,
+        );
+        return proofs;
+      },
+      SharedChainTypeIDParamsSchema,
+      GetLegacyTransactProofsBodySchema,
+    );
+
     this.safePost<SignedBlockedShield[]>(
       '/blocked-shields/:chainType/:chainID',
       async (req: Request) => {
@@ -490,6 +515,40 @@ export class API {
           networkName,
           txidVersion,
           transactProofData,
+        );
+      },
+      SharedChainTypeIDParamsSchema,
+      SubmitTransactProofBodySchema,
+    );
+
+    this.safePost<void>(
+      '/submit-legacy-transact-proofs/:chainType/:chainID',
+      async (req: Request) => {
+        const { chainType, chainID } = req.params;
+        const { txidVersion, listKeys, legacyTransactProofDatas } =
+          req.body as SubmitLegacyTransactProofParams;
+
+        const filteredListKeys = listKeys.filter(this.hasListKey);
+        const networkName = networkNameForSerializedChain(chainType, chainID);
+
+        dbg(
+          `REQUEST: Submit Legacy Transact Proof: ${listKeys.join(
+            ', ',
+          )}, ${legacyTransactProofDatas
+            .map(d => d.blindedCommitment)
+            .join(', ')}`,
+        );
+
+        // Submit and verify the proofs
+        await Promise.all(
+          legacyTransactProofDatas.map(async legacyTransactProofData => {
+            await LegacyTransactProofMempool.submitLegacyProof(
+              networkName,
+              txidVersion,
+              legacyTransactProofData,
+              filteredListKeys,
+            );
+          }),
         );
       },
       SharedChainTypeIDParamsSchema,

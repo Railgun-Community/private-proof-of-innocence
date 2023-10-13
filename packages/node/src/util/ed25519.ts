@@ -2,6 +2,7 @@ import { getPublicKey, sign, verify } from '@noble/ed25519';
 import { SnarkProof, isDefined } from '@railgun-community/shared-models';
 import { bytesToHex, hexStringToBytes } from '@railgun-community/wallet';
 import {
+  POIEventLegacyTransact,
   POIEventShield,
   POIEventTransact,
   SignedBlockedShield,
@@ -23,6 +24,17 @@ export const signMessage = async (message: Uint8Array): Promise<string> => {
   return bytesToHex(signatureUint8Array);
 };
 
+export const signPOIEventShield = async (
+  index: number,
+  blindedCommitmentStartingIndex: number,
+  poiEventShield: POIEventShield,
+): Promise<string> => {
+  const message = getPOIEventMessage(index, blindedCommitmentStartingIndex, [
+    poiEventShield.blindedCommitment,
+  ]);
+  return signMessage(message);
+};
+
 export const signPOIEventTransact = async (
   index: number,
   blindedCommitmentStartingIndex: number,
@@ -37,13 +49,13 @@ export const signPOIEventTransact = async (
   return signMessage(message);
 };
 
-export const signPOIEventShield = async (
+export const signPOIEventLegacyTransact = async (
   index: number,
   blindedCommitmentStartingIndex: number,
-  poiEventShield: POIEventShield,
+  poiEventTransact: POIEventLegacyTransact,
 ): Promise<string> => {
   const message = getPOIEventMessage(index, blindedCommitmentStartingIndex, [
-    poiEventShield.blindedCommitment,
+    poiEventTransact.blindedCommitment,
   ]);
   return signMessage(message);
 };

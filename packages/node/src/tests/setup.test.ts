@@ -2,11 +2,7 @@
 import fs from 'fs';
 import { MONGOOSE_DB_URL, setUpMongoose } from './mongoose.test';
 import { Config } from '../config/config';
-import {
-  NETWORK_CONFIG,
-  NetworkName,
-  promiseTimeout,
-} from '@railgun-community/shared-models';
+import { NetworkName, promiseTimeout } from '@railgun-community/shared-models';
 import { API } from '../api/api';
 
 const TEST_DB_DIR = 'test.db';
@@ -24,9 +20,6 @@ before(async function run() {
 
   API.debug = true;
 
-  // TODO: Remove after launched via shared-models.
-  // NETWORK_CONFIG[NetworkName.Ethereum].poi = { launchBlock: 100 };
-
   Config.NETWORK_NAMES = [NetworkName.EthereumGoerli];
 
   await promiseTimeout(
@@ -41,9 +34,6 @@ before(async function run() {
 
 after(async () => {
   const { warn } = console;
-  fs.rm(TEST_DB_DIR, { recursive: true }, () => {
-    warn('Error removing test db.');
-  });
   fs.rm(TEST_MONGO_DB_DIR, { recursive: true }, () => {
     warn('Error removing mongo test db.');
   });

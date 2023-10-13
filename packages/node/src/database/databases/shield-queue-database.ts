@@ -14,9 +14,9 @@ import {
 } from '../../models/database-types';
 import { AbstractDatabase } from '../abstract-database';
 import { ShieldData } from '@railgun-community/wallet';
-import { calculateShieldBlindedCommitment } from '../../util/shield-blinded-commitment';
 import { Filter } from 'mongodb';
 import { currentTimestampSec, validateTimestamp } from '../../util/timestamp';
+import { calculateShieldBlindedCommitment } from '../../util/shield-blinded-commitment';
 
 export class ShieldQueueDatabase extends AbstractDatabase<ShieldQueueDBItem> {
   constructor(networkName: NetworkName, txidVersion: TXIDVersion) {

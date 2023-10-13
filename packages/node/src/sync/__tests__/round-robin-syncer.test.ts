@@ -6,7 +6,9 @@ import {
   NodeStatusAllNetworks,
   ShieldQueueStatus,
   TXIDVersion,
+  LegacyTransactProofData,
 } from '@railgun-community/shared-models';
+import * as WalletModule from '../../engine/wallet';
 import { DatabaseClient } from '../../database/database-client-init';
 import { RoundRobinSyncer } from '../round-robin-syncer';
 import { POIMerkletreeDatabase } from '../../database/databases/poi-merkletree-database';
@@ -26,6 +28,8 @@ import { POIMerkletreeManager } from '../../poi-events/poi-merkletree-manager';
 import { TransactProofPerListMempoolDatabase } from '../../database/databases/transact-proof-per-list-mempool-database';
 import * as SnarkProofVerifyModule from '../../util/snark-proof-verify';
 import { BlockedShieldsPerListDatabase } from '../../database/databases/blocked-shields-per-list-database';
+import { LegacyTransactProofMempoolDatabase } from '../../database/databases/legacy-transact-proof-mempool-database';
+import { LegacyTransactProofMempool } from '../../proof-mempool/legacy/legacy-transact-proof-mempool';
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
@@ -37,6 +41,7 @@ let merkletreeDB: POIMerkletreeDatabase;
 let merklerootDB: POIHistoricalMerklerootDatabase;
 let orderedEventsDB: POIOrderedEventsDatabase;
 let transactProofMempoolDB: TransactProofPerListMempoolDatabase;
+let legacyTransactProofMempoolDB: LegacyTransactProofMempoolDatabase;
 let blockedShieldsDB: BlockedShieldsPerListDatabase;
 
 let roundRobinSyncer: RoundRobinSyncer;
@@ -44,6 +49,8 @@ let roundRobinSyncer: RoundRobinSyncer;
 let listKey: string;
 
 let verifyTransactProofStub: SinonStub;
+let tryValidateRailgunTxidOccurredBeforeBlockNumberStub: SinonStub;
+let legacyTransactProofMempoolVerifyBlindedCommitmentStub: SinonStub;
 
 const nodeURL = 'mock-node-url';
 
@@ -85,6 +92,10 @@ describe('round-robin-syncer', () => {
       networkName,
       txidVersion,
     );
+    legacyTransactProofMempoolDB = new LegacyTransactProofMempoolDatabase(
+      networkName,
+      txidVersion,
+    );
     blockedShieldsDB = new BlockedShieldsPerListDatabase(
       networkName,
       txidVersion,
@@ -99,10 +110,18 @@ describe('round-robin-syncer', () => {
     verifyTransactProofStub = sinon
       .stub(SnarkProofVerifyModule, 'verifyTransactProof')
       .resolves(true);
+    tryValidateRailgunTxidOccurredBeforeBlockNumberStub = sinon
+      .stub(WalletModule, 'tryValidateRailgunTxidOccurredBeforeBlockNumber')
+      .resolves(true);
+    legacyTransactProofMempoolVerifyBlindedCommitmentStub = sinon
+      .stub(LegacyTransactProofMempool, 'verifyBlindedCommitment')
+      .resolves(true);
   });
 
   after(() => {
     verifyTransactProofStub.restore();
+    tryValidateRailgunTxidOccurredBeforeBlockNumberStub.restore();
+    legacyTransactProofMempoolVerifyBlindedCommitmentStub.restore();
   });
 
   beforeEach(async () => {
@@ -205,6 +224,46 @@ describe('round-robin-syncer', () => {
       await transactProofMempoolDB.proofExists(
         listKey,
         transactProofData2.railgunTxidIfHasUnshield,
+      ),
+    ).to.equal(true);
+
+    getFilteredTransactProofsStub.restore();
+  });
+
+  it('Should update legacy transact proof mempools', async () => {
+    const legacyTransactProofData1: LegacyTransactProofData = {
+      txidIndex: '1',
+      npk: '0x6789',
+      value: '10',
+      tokenHash: '0x1234',
+      blindedCommitment: '0xabcd',
+    };
+    const legacyTransactProofData2: LegacyTransactProofData = {
+      txidIndex: '2',
+      npk: '0x7890',
+      value: '11',
+      tokenHash: '0x1234',
+      blindedCommitment: '0x6666',
+    };
+
+    const getFilteredTransactProofsStub = sinon
+      .stub(POINodeRequest, 'getFilteredLegacyTransactProofs')
+      .resolves([legacyTransactProofData1, legacyTransactProofData2]);
+
+    await roundRobinSyncer.updateLegacyTransactProofMempoolsAllNetworks(
+      nodeURL,
+      getNodeStatus(),
+    );
+
+    // Make sure all transact proofs sync
+    expect(
+      await legacyTransactProofMempoolDB.legacyProofExists(
+        legacyTransactProofData1.blindedCommitment,
+      ),
+    ).to.equal(true);
+    expect(
+      await legacyTransactProofMempoolDB.legacyProofExists(
+        legacyTransactProofData2.blindedCommitment,
       ),
     ).to.equal(true);
 
