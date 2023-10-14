@@ -529,7 +529,9 @@ export class API {
         const { txidVersion, listKeys, legacyTransactProofDatas } =
           req.body as SubmitLegacyTransactProofParams;
 
-        const filteredListKeys = listKeys.filter(this.hasListKey);
+        const filteredListKeys = listKeys.filter(listKey =>
+          this.hasListKey(listKey),
+        );
         const networkName = networkNameForSerializedChain(chainType, chainID);
 
         dbg(
