@@ -51,6 +51,7 @@ import {
   SubmitValidatedTxidBodySchema,
   RemoveTransactProofBodySchema,
   GetLegacyTransactProofsBodySchema,
+  SubmitLegacyTransactProofsBodySchema,
 } from './schemas';
 import 'dotenv/config';
 import {
@@ -552,7 +553,7 @@ export class API {
         );
       },
       SharedChainTypeIDParamsSchema,
-      SubmitTransactProofBodySchema,
+      SubmitLegacyTransactProofsBodySchema,
     );
 
     this.safePost<POIsPerListMap>(

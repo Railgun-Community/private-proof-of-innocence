@@ -107,6 +107,31 @@ export const SubmitTransactProofBodySchema: AllowedSchema = {
   required: ['txidVersion', 'listKey', 'transactProofData'],
 };
 
+export const SubmitLegacyTransactProofsBodySchema: AllowedSchema = {
+  type: 'object',
+  properties: {
+    txidVersion: { type: 'string' },
+    listKeys: { type: 'array', items: { type: 'string' } },
+    legacyTransactProofDatas: {
+      type: 'object',
+      properties: {
+        txidIndex: { type: 'string' },
+        npk: { type: 'string' },
+        value: { type: 'string' },
+        tokenHash: { type: 'string' },
+        blindedCommitment: { type: 'string' },
+      },
+      required: [
+        'txidVersion',
+        'listKey',
+        'firstBlindedCommitment',
+        'signature',
+      ],
+    },
+  },
+  required: ['txidVersion'],
+};
+
 export const RemoveTransactProofBodySchema: AllowedSchema = {
   type: 'object',
   properties: {

@@ -216,7 +216,7 @@ export class POINodeRequest {
     legacyTransactProofData: LegacyTransactProofData,
   ) => {
     const chain = NETWORK_CONFIG[networkName].chain;
-    const route = `submit-legacy-transact-proof/${chain.type}/${chain.id}`;
+    const route = `submit-legacy-transact-proofs/${chain.type}/${chain.id}`;
     const url = POINodeRequest.getNodeRouteURL(nodeURL, route);
 
     await POINodeRequest.postRequest<SubmitLegacyTransactProofParams, void>(
