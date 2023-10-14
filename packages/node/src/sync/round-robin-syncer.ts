@@ -301,8 +301,9 @@ export class RoundRobinSyncer {
     nodeStatusAllNetworks: NodeStatusAllNetworks,
   ) {
     for (const networkName of Config.NETWORK_NAMES) {
-      const nodeStatus = nodeStatusAllNetworks.forNetwork[networkName];
-      if (!nodeStatus) {
+      const nodeStatusForNetwork =
+        nodeStatusAllNetworks.forNetwork[networkName];
+      if (!nodeStatusForNetwork) {
         continue;
       }
 
@@ -312,6 +313,7 @@ export class RoundRobinSyncer {
             nodeURL,
             networkName,
             txidVersion,
+            nodeStatusForNetwork.legacyTransactProofs,
           );
         } catch (err) {
           dbg(
@@ -327,7 +329,14 @@ export class RoundRobinSyncer {
     nodeURL: string,
     networkName: NetworkName,
     txidVersion: TXIDVersion,
+    nodeLegacyTransactProofsLength: number,
   ) {
+    const currentLegacyTransactProofsLength =
+      LegacyTransactProofMempoolCache.getCacheSize(networkName, txidVersion);
+    if (nodeLegacyTransactProofsLength <= currentLegacyTransactProofsLength) {
+      return;
+    }
+
     const serializedBloomFilter =
       LegacyTransactProofMempoolCache.serializeBloomFilter(
         networkName,

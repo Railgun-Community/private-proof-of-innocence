@@ -6,9 +6,6 @@ import {
 import { ShieldQueueDatabase } from '../database/databases/shield-queue-database';
 import { ShieldStatus } from '../models/database-types';
 import { getFormattedTimeAgo } from '../util/time-ago';
-import debug from 'debug';
-
-const dbg = debug('poi:shield-queue');
 
 export const getShieldQueueStatus = async (
   networkName: NetworkName,

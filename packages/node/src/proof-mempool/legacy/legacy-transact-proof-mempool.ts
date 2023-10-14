@@ -329,4 +329,14 @@ export class LegacyTransactProofMempool {
       });
     return filteredProofs.slice(0, QueryLimits.PROOF_MEMPOOL_SYNCED_ITEMS);
   }
+
+  static getLegacyTransactProofsCount(
+    networkName: NetworkName,
+    txidVersion: TXIDVersion,
+  ) {
+    return LegacyTransactProofMempoolCache.getCacheSize(
+      networkName,
+      txidVersion,
+    );
+  }
 }

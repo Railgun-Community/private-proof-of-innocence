@@ -72,6 +72,7 @@ const getNodeStatus = (): NodeStatusAllNetworks => ({
         },
       },
       shieldQueueStatus: {} as ShieldQueueStatus,
+      legacyTransactProofs: 1,
     },
   },
 });

@@ -11,6 +11,7 @@ import { POIEventList } from '../poi-events/poi-event-list';
 import { TransactProofMempoolCache } from '../proof-mempool/transact-proof-mempool-cache';
 import { BlockedShieldsCache } from '../shields/blocked-shields-cache';
 import { getShieldQueueStatus } from '../shields/shield-queue';
+import { LegacyTransactProofMempool } from '../proof-mempool/legacy/legacy-transact-proof-mempool';
 
 export class NodeStatus {
   static async getNodeStatusAllNetworks(
@@ -51,6 +52,11 @@ export class NodeStatus {
         listKeys,
       ),
       shieldQueueStatus: await getShieldQueueStatus(networkName, txidVersion),
+      legacyTransactProofs:
+        await LegacyTransactProofMempool.getLegacyTransactProofsCount(
+          networkName,
+          txidVersion,
+        ),
     };
   }
 
