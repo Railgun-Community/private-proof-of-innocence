@@ -248,15 +248,15 @@ export class TransactProofMempool {
     }
 
     // 2. Verify that OrderedEvent for this list doesn't exist.
-    const orderedEventExists =
-      await this.hasOrderedEventForFirstBlindedCommitment(
+    const orderedEventsExist =
+      await this.hasOrderedEventForEveryBlindedCommitment(
         listKey,
         networkName,
         txidVersion,
         transactProofData,
       );
-    if (orderedEventExists) {
-      dbg('Event already exists for first blinded commitment');
+    if (orderedEventsExist) {
+      dbg('Event already exists for every blinded commitment');
       return false;
     }
 
@@ -284,23 +284,35 @@ export class TransactProofMempool {
     return transactProofData.railgunTxidIfHasUnshield;
   }
 
-  private static async hasOrderedEventForFirstBlindedCommitment(
+  private static async hasOrderedEventForEveryBlindedCommitment(
     listKey: string,
     networkName: NetworkName,
     txidVersion: TXIDVersion,
     transactProofData: TransactProofData,
   ): Promise<boolean> {
+    const blindedCommitmentsOut =
+      transactProofData.blindedCommitmentsOut.filter(blindedCommitment => {
+        return hexToBigInt(blindedCommitment) !== 0n;
+      });
+    if (hexToBigInt(transactProofData.railgunTxidIfHasUnshield) !== 0n) {
+      blindedCommitmentsOut.push(transactProofData.railgunTxidIfHasUnshield);
+    }
+
     const orderedEventsDB = new POIOrderedEventsDatabase(
       networkName,
       txidVersion,
     );
-    const firstBlindedCommitment =
-      this.getTransactFirstBlindedCommitment(transactProofData);
-    const orderedEventExists = await orderedEventsDB.eventExists(
-      listKey,
-      firstBlindedCommitment,
-    );
-    return orderedEventExists;
+
+    for (const blindedCommitment of blindedCommitmentsOut) {
+      const orderedEventExists = await orderedEventsDB.eventExists(
+        listKey,
+        blindedCommitment,
+      );
+      if (!orderedEventExists) {
+        return false;
+      }
+    }
+    return true;
   }
 
   static async inflateCacheFromDatabase(listKeys: string[]) {
@@ -325,7 +337,7 @@ export class TransactProofMempool {
                 transactProofDBItem.railgunTxidIfHasUnshield,
             };
             const orderedEventExists =
-              await this.hasOrderedEventForFirstBlindedCommitment(
+              await this.hasOrderedEventForEveryBlindedCommitment(
                 listKey,
                 networkName,
                 txidVersion,
