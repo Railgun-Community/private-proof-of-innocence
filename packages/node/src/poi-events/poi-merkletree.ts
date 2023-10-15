@@ -217,10 +217,9 @@ export class POIMerkletree {
     );
     if (!isValidIndex) {
       this.isUpdating = false;
-      dbg(
+      throw new Error(
         `[Warning] Invalid blindedCommitmentStartingIndex ${blindedCommitmentStartingIndex} for POI merkletree insert`,
       );
-      return;
     }
 
     await this.insertLeavesInTree(tree, index, [nodeHash]);
