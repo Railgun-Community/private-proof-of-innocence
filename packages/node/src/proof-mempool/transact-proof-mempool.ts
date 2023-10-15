@@ -273,15 +273,15 @@ export class TransactProofMempool {
   static getTransactFirstBlindedCommitment(
     transactProofData: TransactProofData,
   ) {
-    if (transactProofData.blindedCommitmentsOut.length === 0) {
-      if (hexToBigInt(transactProofData.railgunTxidIfHasUnshield) === 0n) {
-        throw new Error(
-          'Must have at least one commitment, including unshield',
-        );
+    for (const blindedCommitment of transactProofData.blindedCommitmentsOut) {
+      if (hexToBigInt(blindedCommitment) !== 0n) {
+        return blindedCommitment;
       }
-      return transactProofData.railgunTxidIfHasUnshield;
     }
-    return transactProofData.blindedCommitmentsOut[0];
+    if (hexToBigInt(transactProofData.railgunTxidIfHasUnshield) === 0n) {
+      throw new Error('Must have at least one commitment, including unshield');
+    }
+    return transactProofData.railgunTxidIfHasUnshield;
   }
 
   private static async hasOrderedEventForFirstBlindedCommitment(
