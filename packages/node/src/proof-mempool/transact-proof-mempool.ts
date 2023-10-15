@@ -246,7 +246,9 @@ export class TransactProofMempool {
       this.getTransactFirstBlindedCommitment(transactProofData);
     const exists = await db.proofExists(listKey, firstBlindedCommitment);
     if (exists) {
-      dbg('Proof already exists for first blinded commitment');
+      dbg(
+        `Proof already exists for first blinded commitment: ${firstBlindedCommitment}`,
+      );
       return false;
     }
 
@@ -339,7 +341,7 @@ export class TransactProofMempool {
               railgunTxidIfHasUnshield:
                 transactProofDBItem.railgunTxidIfHasUnshield,
             };
-            const orderedEventExists =
+            const orderedEventsExist =
               await this.hasOrderedEventForEveryBlindedCommitment(
                 listKey,
                 networkName,
@@ -348,7 +350,7 @@ export class TransactProofMempool {
               );
             const firstBlindedCommitment =
               this.getTransactFirstBlindedCommitment(transactProofData);
-            if (orderedEventExists) {
+            if (orderedEventsExist) {
               // Remove item from the database.
               await TransactProofMempoolPruner.removeProof(
                 listKey,

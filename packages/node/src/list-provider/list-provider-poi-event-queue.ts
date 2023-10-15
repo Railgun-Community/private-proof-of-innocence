@@ -85,6 +85,9 @@ export class ListProviderPOIEventQueue {
     txidVersion: TXIDVersion,
     poiEventShield: POIEventShield,
   ) {
+    dbg(
+      `Queue shield event - blinded commitment ${poiEventShield.blindedCommitment}`,
+    );
     return ListProviderPOIEventQueue.queuePOIEvent(
       networkName,
       txidVersion,
@@ -105,6 +108,10 @@ export class ListProviderPOIEventQueue {
       blindedCommitmentsOut.push(transactProofData.railgunTxidIfHasUnshield);
     }
 
+    dbg(
+      `Queue transact event - first blinded commitment ${blindedCommitmentsOut[0]}`,
+    );
+
     const poiEvent: POIEventTransact = {
       type: POIEventType.Transact,
       blindedCommitments: blindedCommitmentsOut,
@@ -122,6 +129,10 @@ export class ListProviderPOIEventQueue {
     txidVersion: TXIDVersion,
     legacyTransactProofData: LegacyTransactProofData,
   ) {
+    dbg(
+      `Queue legacy transact event - blinded commitment ${legacyTransactProofData.blindedCommitment}`,
+    );
+
     const poiEvent: POIEventLegacyTransact = {
       type: POIEventType.LegacyTransact,
       blindedCommitment: legacyTransactProofData.blindedCommitment,
@@ -162,6 +173,7 @@ export class ListProviderPOIEventQueue {
       );
     });
     if (isDefined(existingEvent)) {
+      dbg(`Event exists in queue... ignore`);
       return;
     }
 
@@ -285,6 +297,7 @@ export class ListProviderPOIEventQueue {
     if (
       ListProviderPOIEventQueue.isAddingPOIEventForNetwork[networkName] === true
     ) {
+      dbg(`Warning: Already adding events from queue`);
       return;
     }
 
