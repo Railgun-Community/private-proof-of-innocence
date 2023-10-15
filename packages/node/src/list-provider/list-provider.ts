@@ -420,7 +420,7 @@ export abstract class ListProvider {
     let pendingShields: ShieldQueueDBItem[];
     try {
       const shieldQueueDB = new ShieldQueueDatabase(networkName, txidVersion);
-      const limit = 100;
+      const limit = 1000;
       pendingShields = await shieldQueueDB.getShields(
         ShieldStatus.Pending,
         endTimestamp,
