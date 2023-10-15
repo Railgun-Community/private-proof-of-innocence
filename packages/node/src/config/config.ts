@@ -1,4 +1,9 @@
-import { NetworkName, TXIDVersion } from '@railgun-community/shared-models';
+import {
+  NETWORK_CONFIG,
+  NetworkName,
+  TXIDVersion,
+  isDefined,
+} from '@railgun-community/shared-models';
 import { NodeConfig } from '../models/general-types';
 
 export class Config {
@@ -6,7 +11,11 @@ export class Config {
 
   static MONGODB_URL = process.env.MONGODB_URL;
 
-  static NETWORK_NAMES: NetworkName[] = [NetworkName.EthereumGoerli];
+  static NETWORK_NAMES: NetworkName[] = Object.values(NetworkName).filter(
+    networkName => {
+      return isDefined(NETWORK_CONFIG[networkName].poi);
+    },
+  );
 
   static TXID_VERSIONS: TXIDVersion[] = Object.values(TXIDVersion);
 
