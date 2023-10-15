@@ -57,12 +57,20 @@ export class TransactProofPushSyncer {
           railgunTxidIfHasUnshield:
             transactProofDBItem.railgunTxidIfHasUnshield,
         };
-        await TransactProofMempool.tryAddToList(
+        const success = await TransactProofMempool.tryAddToList(
           listKey,
           networkName,
           txidVersion,
           transactProofData,
         );
+        if (success) {
+          await TransactProofMempool.removeProof(
+            listKey,
+            networkName,
+            txidVersion,
+            transactProofData,
+          );
+        }
       }
     }
   }

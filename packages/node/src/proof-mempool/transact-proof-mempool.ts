@@ -77,10 +77,10 @@ export class TransactProofMempool {
     networkName: NetworkName,
     txidVersion: TXIDVersion,
     transactProofData: TransactProofData,
-  ) {
+  ): Promise<boolean> {
     const nodeURL = nodeURLForListKey(listKey);
     if (!isDefined(nodeURL)) {
-      return;
+      return false;
     }
     try {
       await PushSync.sendNodeRequest(
@@ -96,18 +96,20 @@ export class TransactProofMempool {
         },
         true, // shouldThrow
       );
+      return true;
     } catch (err) {
       dbg(
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         `Error submitting transact proof to destination node: ${err.message}`,
       );
       if (!(err instanceof Error)) {
-        return;
+        return false;
       }
       if (err.message.includes(VALIDATION_ERROR_TEXT)) {
         // This will throw error for the client, when submitting proof.
         throw err;
       }
+      return false;
     }
   }
 
@@ -116,16 +118,16 @@ export class TransactProofMempool {
     networkName: NetworkName,
     txidVersion: TXIDVersion,
     transactProofData: TransactProofData,
-  ) {
+  ): Promise<boolean> {
     if (ListProviderPOIEventQueue.listKey !== listKey) {
       // Immediately push to destination node, by its listKey
-      await this.pushProofToDestinationNode(
+      const success = await this.pushProofToDestinationNode(
         listKey,
         networkName,
         txidVersion,
         transactProofData,
       );
-      return;
+      return success;
     }
 
     const { tree, index } =
@@ -202,9 +204,10 @@ export class TransactProofMempool {
       txidVersion,
       transactProofData,
     );
+    return true;
   }
 
-  private static async removeProof(
+  static async removeProof(
     listKey: string,
     networkName: NetworkName,
     txidVersion: TXIDVersion,
@@ -308,16 +311,35 @@ export class TransactProofMempool {
       txidVersion,
     );
 
+    const existingEvents: string[] = [];
+
     for (const blindedCommitment of blindedCommitmentsOut) {
       const orderedEventExists = await orderedEventsDB.eventExists(
         listKey,
         blindedCommitment,
       );
-      if (!orderedEventExists) {
-        return false;
+      if (orderedEventExists) {
+        existingEvents.push(blindedCommitment);
       }
     }
-    return true;
+
+    // Just for logging...
+    if (
+      existingEvents.length > 0 &&
+      existingEvents.length < blindedCommitmentsOut.length
+    ) {
+      dbg(
+        `DANGER: ${
+          existingEvents.length
+        } transact events already exist for ${existingEvents.join(
+          ', ',
+        )}, but not for all blinded commitments (${
+          blindedCommitmentsOut.length
+        }): ${blindedCommitmentsOut.join(', ')}`,
+      );
+    }
+
+    return existingEvents.length === blindedCommitmentsOut.length;
   }
 
   static async inflateCacheFromDatabase(listKeys: string[]) {
