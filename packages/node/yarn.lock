@@ -960,6 +960,11 @@
   resolved "https://registry.yarnpkg.com/@railgun-community/shared-models/-/shared-models-5.6.13.tgz#846944f38cf2cc5ff52f908568012cfd542263e1"
   integrity sha512-iWvJPyNBq9fERBSL4mD3A9FY9GJBr8P10F9XTW6v+pTA85EEZz2C9Q+l/yCXhtV+tlEYrpKkYOU4wit/TdAVTw==
 
+"@railgun-community/shared-models@5.7.0":
+  version "5.7.0"
+  resolved "https://registry.yarnpkg.com/@railgun-community/shared-models/-/shared-models-5.7.0.tgz#07f8f8573bb6fd41249948b1bd0beda54bcaa4db"
+  integrity sha512-R+jfTAr66IIzJtcEtlN1uh0j1/03ouhbT14+WNaEsqv6a1WPLh3Zjl/NioHaqg/R3GJOGkTl6tmglYwRdJ98UQ==
+
 "@railgun-community/wallet@5.10.52":
   version "5.10.52"
   resolved "https://registry.yarnpkg.com/@railgun-community/wallet/-/wallet-5.10.52.tgz#e7491965a580cd054bb5e6b5d6a032bd5d92ebf6"

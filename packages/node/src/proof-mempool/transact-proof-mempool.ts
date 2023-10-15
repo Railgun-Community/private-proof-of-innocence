@@ -323,15 +323,14 @@ export class TransactProofMempool {
       }
     }
 
-    // Just for logging...
     if (
       existingEvents.length > 0 &&
       existingEvents.length < blindedCommitmentsOut.length
     ) {
       dbg(
-        `DANGER: ${
+        `DANGER: some transact events (${
           existingEvents.length
-        } transact events already exist for ${existingEvents.join(
+        }) already exist for ${existingEvents.join(
           ', ',
         )}, but not for all blinded commitments (${
           blindedCommitmentsOut.length
