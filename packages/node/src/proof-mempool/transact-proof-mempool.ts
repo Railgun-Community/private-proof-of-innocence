@@ -97,7 +97,10 @@ export class TransactProofMempool {
         true, // shouldThrow
       );
     } catch (err) {
-      dbg(err);
+      dbg(
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        `Error submitting transact proof to destination node: ${err.message}`,
+      );
       if (!(err instanceof Error)) {
         return;
       }
