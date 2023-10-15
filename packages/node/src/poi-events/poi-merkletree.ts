@@ -15,6 +15,7 @@ import { POIMerkletreeDatabase } from '../database/databases/poi-merkletree-data
 import { poseidon } from 'circomlibjs';
 import { POIMerkletreeDBItem } from '../models/database-types';
 import { POIHistoricalMerklerootDatabase } from '../database/databases/poi-historical-merkleroot-database';
+import debug from 'debug';
 
 // Static value from calculation in RAILGUN Engine SDK.
 const MERKLE_ZERO_VALUE: string =
@@ -22,6 +23,8 @@ const MERKLE_ZERO_VALUE: string =
 
 const TREE_DEPTH = 16;
 const TREE_MAX_ITEMS = 65_536;
+
+const dbg = debug('poi:poi-merkletree');
 
 export class POIMerkletree {
   private readonly merkletreeDB: POIMerkletreeDatabase;
@@ -214,9 +217,10 @@ export class POIMerkletree {
     );
     if (!isValidIndex) {
       this.isUpdating = false;
-      throw new Error(
-        `[Warning] Invalid blindedCommitmentStartingIndex for POI merkletree insert`,
+      dbg(
+        `[Warning] Invalid blindedCommitmentStartingIndex ${blindedCommitmentStartingIndex} for POI merkletree insert`,
       );
+      return;
     }
 
     await this.insertLeavesInTree(tree, index, [nodeHash]);
