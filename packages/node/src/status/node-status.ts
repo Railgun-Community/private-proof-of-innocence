@@ -53,7 +53,7 @@ export class NodeStatus {
       ),
       shieldQueueStatus: await getShieldQueueStatus(networkName, txidVersion),
       legacyTransactProofs:
-        await LegacyTransactProofMempool.getLegacyTransactProofsCount(
+        LegacyTransactProofMempool.getLegacyTransactProofsCount(
           networkName,
           txidVersion,
         ),

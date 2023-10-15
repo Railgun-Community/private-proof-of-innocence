@@ -97,7 +97,10 @@ export class ListProviderPOIEventQueue {
     txidVersion: TXIDVersion,
     transactProofData: TransactProofData,
   ) {
-    const blindedCommitmentsOut = [...transactProofData.blindedCommitmentsOut];
+    const blindedCommitmentsOut =
+      transactProofData.blindedCommitmentsOut.filter(blindedCommitment => {
+        return hexToBigInt(blindedCommitment) !== 0n;
+      });
     if (hexToBigInt(transactProofData.railgunTxidIfHasUnshield) !== 0n) {
       blindedCommitmentsOut.push(transactProofData.railgunTxidIfHasUnshield);
     }
