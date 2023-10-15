@@ -16,6 +16,8 @@ import { ListProviderPOIEventQueue } from '../../../list-provider/list-provider-
 import { LegacyTransactProofMempoolDatabase } from '../../../database/databases/legacy-transact-proof-mempool-database';
 import { POIMerkletreeManager } from '../../../poi-events/poi-merkletree-manager';
 import { POIOrderedEventsDatabase } from '../../../database/databases/poi-ordered-events-database';
+import { startEngine } from '../../../engine/engine-init';
+import { initNetworkProviders } from '../../../rpc-providers/active-network-providers';
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
@@ -32,7 +34,10 @@ let legacyTransactProofMempoolVerifyBlindedCommitmentStub: SinonStub;
 
 describe('legacy-transact-proof-mempool', () => {
   before(async function run() {
+    this.timeout(10000);
     await DatabaseClient.init();
+    startEngine();
+    await initNetworkProviders([networkName]);
     POIMerkletreeManager.initListMerkletrees([listKey]);
     legacyTransactProofMempoolDB = new LegacyTransactProofMempoolDatabase(
       networkName,
@@ -43,16 +48,17 @@ describe('legacy-transact-proof-mempool', () => {
       WalletModule,
       'tryValidateRailgunTxidOccurredBeforeBlockNumber',
     ).resolves(true);
-    legacyTransactProofMempoolVerifyBlindedCommitmentStub = Sinon.stub(
-      LegacyTransactProofMempool,
-      'verifyBlindedCommitment',
-    ).resolves(true);
   });
 
   beforeEach(async () => {
     await legacyTransactProofMempoolDB.deleteAllItems_DANGEROUS();
     await orderedEventDB.deleteAllItems_DANGEROUS();
     LegacyTransactProofMempoolCache.clearCache_FOR_TEST_ONLY();
+
+    legacyTransactProofMempoolVerifyBlindedCommitmentStub = Sinon.stub(
+      LegacyTransactProofMempool,
+      'verifyBlindedCommitment',
+    ).resolves(true);
   });
 
   afterEach(async () => {
@@ -197,4 +203,32 @@ describe('legacy-transact-proof-mempool', () => {
       LegacyTransactProofMempoolCache.getCacheSize(networkName, txidVersion),
     ).to.equal(2);
   }).timeout(10000);
+
+  it('Should verify blinded commitment in legacy transact proof', async () => {
+    const legacyTransactProofData: LegacyTransactProofData = {
+      txidIndex: '6',
+      blindedCommitment:
+        '0x182b3141eae2354d9b9e1b238f4ad94fbf13262edf0c87c144bdc30b839cf9d5',
+      npk: '0x2700ce11be3b7e9bd7153b312c6b64fc4aaea73d353fb1d69e3fbc6720090f54',
+      value: '125000000000000000',
+      tokenHash:
+        '000000000000000000000000b4fbf271143f4fbf7b91a5ded31805e42b2208d6',
+    };
+
+    const tryGetGlobalUTXOTreePositionForRailgunTransactionCommitmentStub =
+      Sinon.stub(
+        WalletModule,
+        'tryGetGlobalUTXOTreePositionForRailgunTransactionCommitment',
+      ).resolves(22);
+
+    expect(
+      await LegacyTransactProofMempool.verifyBlindedCommitment(
+        networkName,
+        txidVersion,
+        legacyTransactProofData,
+      ),
+    ).to.equal(true);
+
+    tryGetGlobalUTXOTreePositionForRailgunTransactionCommitmentStub.restore();
+  });
 });

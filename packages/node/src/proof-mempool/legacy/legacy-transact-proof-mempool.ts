@@ -186,7 +186,7 @@ export class LegacyTransactProofMempool {
         BigInt(legacyTransactProofData.npk),
         BigInt(utxoGlobalPosition),
       );
-      if (blindedCommitment === legacyTransactProofData.blindedCommitment) {
+      if (blindedCommitment !== legacyTransactProofData.blindedCommitment) {
         throw new Error('Invalid blinded commitment');
       }
 
@@ -253,7 +253,7 @@ export class LegacyTransactProofMempool {
       legacyTransactProofData,
     );
     if (!verified) {
-      dbg('Invalid blinded commitment');
+      dbg('Could not verify blinded commitment');
       return false;
     }
 
