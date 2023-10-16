@@ -118,16 +118,15 @@ export class TransactProofMempool {
     networkName: NetworkName,
     txidVersion: TXIDVersion,
     transactProofData: TransactProofData,
-  ): Promise<boolean> {
+  ): Promise<void> {
     if (ListProviderPOIEventQueue.listKey !== listKey) {
       // Immediately push to destination node, by its listKey
-      const success = await this.pushProofToDestinationNode(
+      await this.pushProofToDestinationNode(
         listKey,
         networkName,
         txidVersion,
         transactProofData,
       );
-      return success;
     }
 
     const { tree, index } =
@@ -204,7 +203,6 @@ export class TransactProofMempool {
       txidVersion,
       transactProofData,
     );
-    return true;
   }
 
   static async removeProof(
