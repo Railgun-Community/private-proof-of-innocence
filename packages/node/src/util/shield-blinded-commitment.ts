@@ -1,20 +1,22 @@
-import { ByteLength, ShieldData, nToHex } from '@railgun-community/wallet';
-import { poseidon } from 'circomlibjs';
+import {
+  ShieldData,
+  getBlindedCommitmentForShieldOrTransact,
+  hexToBigInt,
+} from '@railgun-community/wallet';
 
-const TREE_DEPTH = 16;
-const bitwiseMerge = (tree: number, index: number) => {
-  return (tree << TREE_DEPTH) + index;
+// 2^16
+const MAX_ITEMS = 65_536;
+
+const getGlobalTreePosition = (utxoTree: number, utxoIndex: number) => {
+  return utxoTree * MAX_ITEMS + utxoIndex;
 };
 
 export const calculateShieldBlindedCommitment = (
   shieldData: ShieldData,
 ): string => {
-  const hash = poseidon(
-    [
-      shieldData.commitmentHash,
-      shieldData.npk,
-      bitwiseMerge(shieldData.utxoTree, shieldData.utxoIndex),
-    ].map(x => BigInt(x)),
+  return getBlindedCommitmentForShieldOrTransact(
+    shieldData.commitmentHash,
+    hexToBigInt(shieldData.npk),
+    BigInt(getGlobalTreePosition(shieldData.utxoTree, shieldData.utxoIndex)),
   );
-  return `0x${nToHex(hash, ByteLength.UINT_256)}`;
 };
