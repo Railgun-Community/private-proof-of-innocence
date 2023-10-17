@@ -118,6 +118,7 @@ export class TransactProofMempool {
         txidVersion,
         transactProofData,
       );
+      return;
     }
 
     const { tree, index } =
@@ -194,6 +195,7 @@ export class TransactProofMempool {
     }
 
     ListProviderPOIEventQueue.queueUnsignedPOITransactEvent(
+      listKey,
       networkName,
       txidVersion,
       transactProofData,

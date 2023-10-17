@@ -144,4 +144,11 @@ export class ShieldQueueDatabase extends AbstractDatabase<ShieldQueueDBItem> {
     };
     return this.count(filter);
   }
+
+  async streamAddedPOIShields(): Promise<DBStream<ShieldQueueDBItem>> {
+    const filter: DBFilter<ShieldQueueDBItem> = {
+      status: ShieldStatus.AddedPOI,
+    };
+    return this.stream(filter);
+  }
 }

@@ -41,6 +41,7 @@ export type ListProviderConfig = {
   categorizeUnknownShieldsOverrideDelayMsec?: number;
   validateShieldsOverrideDelayMsec?: number;
   addAllowedShieldsOverrideDelayMsec?: number;
+  ensureAddedShieldsHaveEventsOverrideDelayMsec?: number;
   rescanHistoryOverrideDelayMsec?: number;
 };
 
@@ -52,6 +53,8 @@ const CATEGORIZE_UNKNOWN_SHIELDS_DELAY_MSEC = 30 * 1000;
 const DEFAULT_VALIDATE_SHIELDS_DELAY_MSEC = 60 * 1000;
 // 30 seconds
 const DEFAULT_ADD_ALLOWED_SHIELDS_DELAY_MSEC = 30 * 1000;
+// 30 seconds
+const DEFAULT_ENSURE_ADDED_SHIELDS_HAVE_EVENTS_DELAY_MSEC = 10 * 60 * 1000;
 // 5 minutes
 const DEFAULT_RESCAN_HISTORY_DELAY_MSEC = 5 * 60 * 1000;
 
@@ -94,6 +97,8 @@ export abstract class ListProvider {
     this.runValidatePendingShieldsPoller();
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.runAddAllowedShieldsPoller();
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    this.runEnsureAddedShieldsHaveEventsPoller();
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.runRescanHistoryPoller();
 
@@ -166,6 +171,23 @@ export abstract class ListProvider {
 
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.runAddAllowedShieldsPoller();
+  }
+
+  private async runEnsureAddedShieldsHaveEventsPoller() {
+    // Run for each network in series.
+    for (const networkName of Config.NETWORK_NAMES) {
+      for (const txidVersion of Config.TXID_VERSIONS) {
+        await this.ensureAddedShieldsHaveEvents(networkName, txidVersion);
+      }
+    }
+
+    await delay(
+      this.config.ensureAddedShieldsHaveEventsOverrideDelayMsec ??
+        DEFAULT_ENSURE_ADDED_SHIELDS_HAVE_EVENTS_DELAY_MSEC,
+    );
+
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    this.runEnsureAddedShieldsHaveEventsPoller();
   }
 
   private async runRescanHistoryPoller() {
@@ -536,12 +558,44 @@ export abstract class ListProvider {
           blindedCommitment: shieldDBItem.blindedCommitment,
         };
         ListProviderPOIEventQueue.queueUnsignedPOIShieldEvent(
+          this.listKey,
           networkName,
           txidVersion,
           poiEventShield,
         );
       }),
     );
+  }
+
+  async ensureAddedShieldsHaveEvents(
+    networkName: NetworkName,
+    txidVersion: TXIDVersion,
+  ) {
+    const shieldQueueDB = new ShieldQueueDatabase(networkName, txidVersion);
+    const addedPOIShieldsStream = await shieldQueueDB.streamAddedPOIShields();
+
+    for await (const addedPOIShield of addedPOIShieldsStream) {
+      const orderedEventsDB = new POIOrderedEventsDatabase(
+        networkName,
+        txidVersion,
+      );
+      if (
+        !(await orderedEventsDB.eventExists(
+          this.listKey,
+          addedPOIShield.blindedCommitment,
+        ))
+      ) {
+        // const shieldQueueDB = new ShieldQueueDatabase(networkName, txidVersion);
+        // await shieldQueueDB.updateShieldStatus(
+        //   addedPOIShield,
+        //   ShieldStatus.Allowed,
+        // );
+        dbg(
+          `ADDED POI SHIELD is missing POI event: ${addedPOIShield.blindedCommitment}`,
+        );
+        dbg(addedPOIShield);
+      }
+    }
   }
 
   private async allowShield(

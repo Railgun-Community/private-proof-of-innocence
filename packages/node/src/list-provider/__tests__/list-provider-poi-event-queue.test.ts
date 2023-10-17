@@ -89,11 +89,13 @@ describe('list-provider-poi-event-queue', () => {
 
     // Queue proofs serially - they should process in order
     ListProviderPOIEventQueue.queueUnsignedPOIShieldEvent(
+      listKey,
       networkName,
       txidVersion,
       poiEventShield,
     );
     ListProviderPOIEventQueue.queueUnsignedPOITransactEvent(
+      listKey,
       networkName,
       txidVersion,
       transactProofData,

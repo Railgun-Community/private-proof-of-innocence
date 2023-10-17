@@ -77,10 +77,15 @@ export class ListProviderPOIEventQueue {
   }
 
   static queueUnsignedPOIShieldEvent(
+    listKey: string,
     networkName: NetworkName,
     txidVersion: TXIDVersion,
     poiEventShield: POIEventShield,
   ) {
+    if (ListProviderPOIEventQueue.listKey !== listKey) {
+      return;
+    }
+
     dbg(
       `Queue shield event - blinded commitment ${poiEventShield.blindedCommitment}`,
     );
@@ -92,10 +97,15 @@ export class ListProviderPOIEventQueue {
   }
 
   static queueUnsignedPOITransactEvent(
+    listKey: string,
     networkName: NetworkName,
     txidVersion: TXIDVersion,
     transactProofData: TransactProofData,
   ) {
+    if (ListProviderPOIEventQueue.listKey !== listKey) {
+      return;
+    }
+
     const blindedCommitmentsOut =
       transactProofData.blindedCommitmentsOut.filter(blindedCommitment => {
         return hexToBigInt(blindedCommitment) !== 0n;
@@ -120,10 +130,15 @@ export class ListProviderPOIEventQueue {
   }
 
   static queueUnsignedPOILegacyTransactEvent(
+    listKey: string,
     networkName: NetworkName,
     txidVersion: TXIDVersion,
     legacyTransactProofData: LegacyTransactProofData,
   ) {
+    if (ListProviderPOIEventQueue.listKey !== listKey) {
+      return;
+    }
+
     dbg(
       `Queue legacy transact event - blinded commitment ${legacyTransactProofData.blindedCommitment}`,
     );
@@ -144,10 +159,6 @@ export class ListProviderPOIEventQueue {
     txidVersion: TXIDVersion,
     poiEvent: POIEvent,
   ) {
-    if (!ListProviderPOIEventQueue.listKey) {
-      return;
-    }
-
     ListProviderPOIEventQueue.poiEventQueue[networkName] ??= {
       [TXIDVersion.V2_PoseidonMerkle]: [],
     };
