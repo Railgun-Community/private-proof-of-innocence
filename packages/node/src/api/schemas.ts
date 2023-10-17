@@ -201,7 +201,7 @@ export const GetPOIsPerListBodySchema: AllowedSchema = {
           blindedCommitment: { type: 'string' },
           type: {
             type: 'string',
-            enum: ['Shield', 'Transact'],
+            enum: ['Shield', 'Transact', 'Unshield'],
           },
         },
         required: ['blindedCommitment', 'type'],
