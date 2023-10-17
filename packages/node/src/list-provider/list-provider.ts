@@ -32,6 +32,7 @@ import { ListProviderBlocklist } from './list-provider-blocklist';
 import { hoursAgo, minutesAgo } from '../util/time-ago';
 import { POIMerkletreeManager } from '../poi-events/poi-merkletree-manager';
 import { validateTimestamp } from '../util/timestamp';
+import { POIOrderedEventsDatabase } from '../database/databases/poi-ordered-events-database';
 
 export type ListProviderConfig = {
   name: string;
@@ -505,19 +506,42 @@ export abstract class ListProvider {
       `[${networkName}] Attempting to queue POI events for ${allowedShields.length} allowed shields...`,
     );
 
-    allowedShields.forEach(shieldDBItem => {
-      // Allow - add POIEvent
-      const poiEventShield: POIEventShield = {
-        type: POIEventType.Shield,
-        commitmentHash: shieldDBItem.commitmentHash,
-        blindedCommitment: shieldDBItem.blindedCommitment,
-      };
-      ListProviderPOIEventQueue.queueUnsignedPOIShieldEvent(
-        networkName,
-        txidVersion,
-        poiEventShield,
-      );
-    });
+    await Promise.all(
+      allowedShields.map(async shieldDBItem => {
+        const orderedEventsDB = new POIOrderedEventsDatabase(
+          networkName,
+          txidVersion,
+        );
+        if (
+          await orderedEventsDB.eventExists(
+            this.listKey,
+            shieldDBItem.blindedCommitment,
+          )
+        ) {
+          const shieldQueueDB = new ShieldQueueDatabase(
+            networkName,
+            txidVersion,
+          );
+          await shieldQueueDB.updateShieldStatus(
+            shieldDBItem,
+            ShieldStatus.AddedPOI,
+          );
+          return;
+        }
+
+        // Allow - add POIEvent
+        const poiEventShield: POIEventShield = {
+          type: POIEventType.Shield,
+          commitmentHash: shieldDBItem.commitmentHash,
+          blindedCommitment: shieldDBItem.blindedCommitment,
+        };
+        ListProviderPOIEventQueue.queueUnsignedPOIShieldEvent(
+          networkName,
+          txidVersion,
+          poiEventShield,
+        );
+      }),
+    );
   }
 
   private async allowShield(
