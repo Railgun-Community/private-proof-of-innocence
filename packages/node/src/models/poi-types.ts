@@ -24,6 +24,7 @@ export type POIEventLegacyTransact = {
 export type POIEvent =
   | POIEventShield
   | POIEventTransact
+  | POIEventUnshield
   | POIEventLegacyTransact;
 
 export type SignedPOIEvent = {

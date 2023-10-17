@@ -12,6 +12,7 @@ import {
   POIEventLegacyTransact,
   POIEventShield,
   POIEventTransact,
+  POIEventUnshield,
   SignedPOIEvent,
 } from '../models/poi-types';
 import { POIOrderedEventsDatabase } from '../database/databases/poi-ordered-events-database';
@@ -106,27 +107,37 @@ export class ListProviderPOIEventQueue {
       return;
     }
 
-    const blindedCommitmentsOut =
-      transactProofData.blindedCommitmentsOut.filter(blindedCommitment => {
+    // Add transact proofs
+    transactProofData.blindedCommitmentsOut
+      .filter(blindedCommitment => {
         return hexToBigInt(blindedCommitment) !== 0n;
+      })
+      .forEach(blindedCommitment => {
+        dbg(`Queue transact event - blinded commitment ${blindedCommitment}`);
+
+        const poiEvent: POIEventTransact = {
+          type: POIEventType.Transact,
+          blindedCommitment,
+        };
+        return ListProviderPOIEventQueue.queuePOIEvent(
+          networkName,
+          txidVersion,
+          poiEvent,
+        );
       });
+
+    // Add unshield proof if it exists. Blinded commitment === railgunTxidIfHasUnshield.
     if (hexToBigInt(transactProofData.railgunTxidIfHasUnshield) !== 0n) {
-      blindedCommitmentsOut.push(transactProofData.railgunTxidIfHasUnshield);
-    }
-
-    blindedCommitmentsOut.forEach(blindedCommitment => {
-      dbg(`Queue transact event - blinded commitment ${blindedCommitment}`);
-
-      const poiEvent: POIEventTransact = {
-        type: POIEventType.Transact,
-        blindedCommitment,
+      const poiEvent: POIEventUnshield = {
+        type: POIEventType.Unshield,
+        blindedCommitment: transactProofData.railgunTxidIfHasUnshield,
       };
       return ListProviderPOIEventQueue.queuePOIEvent(
         networkName,
         txidVersion,
         poiEvent,
       );
-    });
+    }
   }
 
   static queueUnsignedPOILegacyTransactEvent(
