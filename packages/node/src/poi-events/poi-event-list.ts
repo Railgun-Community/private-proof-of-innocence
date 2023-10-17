@@ -62,21 +62,26 @@ export class POIEventList {
     listKey: string,
     signedPOIEvent: SignedPOIEvent,
   ) {
-    await POIMerkletreeManager.addPOIEvent(
-      listKey,
-      networkName,
-      txidVersion,
-      signedPOIEvent,
-    );
+    try {
+      await POIMerkletreeManager.addPOIEvent(
+        listKey,
+        networkName,
+        txidVersion,
+        signedPOIEvent,
+      );
 
-    const db = new POIOrderedEventsDatabase(networkName, txidVersion);
-    await db.insertValidSignedPOIEvent(listKey, signedPOIEvent);
+      const db = new POIOrderedEventsDatabase(networkName, txidVersion);
+      await db.insertValidSignedPOIEvent(listKey, signedPOIEvent);
 
-    await TransactProofMempoolPruner.removeProofIfAllOtherBlindedCommitmentsAdded(
-      listKey,
-      networkName,
-      txidVersion,
-      signedPOIEvent.blindedCommitment,
-    );
+      await TransactProofMempoolPruner.removeProofIfAllOtherBlindedCommitmentsAdded(
+        listKey,
+        networkName,
+        txidVersion,
+        signedPOIEvent.blindedCommitment,
+      );
+    } catch {
+      // no op
+      return;
+    }
   }
 }
