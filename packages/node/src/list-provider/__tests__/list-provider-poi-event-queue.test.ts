@@ -7,6 +7,7 @@ import {
   BlindedCommitmentType,
   poll,
   TXIDVersion,
+  POIEventType,
 } from '@railgun-community/shared-models';
 import { DatabaseClient } from '../../database/database-client-init';
 import { ListProviderPOIEventQueue } from '../list-provider-poi-event-queue';
@@ -15,7 +16,7 @@ import { TransactProofPerListMempoolDatabase } from '../../database/databases/tr
 import { POIOrderedEventsDatabase } from '../../database/databases/poi-ordered-events-database';
 import { POIMerkletreeDatabase } from '../../database/databases/poi-merkletree-database';
 import { MOCK_LIST_KEYS, MOCK_SNARK_PROOF } from '../../tests/mocks.test';
-import { POIEventShield, POIEventType } from '../../models/poi-types';
+import { POIEventShield } from '../../models/poi-types';
 
 chai.use(chaiAsPromised);
 const { expect } = chai;

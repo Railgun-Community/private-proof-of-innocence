@@ -1,10 +1,4 @@
-import { TXIDVersion } from '@railgun-community/shared-models';
-
-export enum POIEventType {
-  Shield = 'Shield',
-  Transact = 'Transact',
-  LegacyTransact = 'LegacyTransact',
-}
+import { POIEventType, TXIDVersion } from '@railgun-community/shared-models';
 
 export type POIEventShield = {
   type: POIEventType.Shield;
@@ -14,6 +8,11 @@ export type POIEventShield = {
 
 export type POIEventTransact = {
   type: POIEventType.Transact;
+  blindedCommitment: string;
+};
+
+export type POIEventUnshield = {
+  type: POIEventType.Unshield;
   blindedCommitment: string;
 };
 
@@ -31,6 +30,7 @@ export type SignedPOIEvent = {
   index: number;
   blindedCommitment: string;
   signature: string;
+  type: POIEventType;
 };
 
 export type SignedBlockedShield = {

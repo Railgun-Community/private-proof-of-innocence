@@ -1,5 +1,5 @@
 import { getPublicKey, sign, verify } from '@noble/ed25519';
-import { isDefined } from '@railgun-community/shared-models';
+import { POIEventType, isDefined } from '@railgun-community/shared-models';
 import { bytesToHex, hexStringToBytes } from '@railgun-community/wallet';
 import {
   POIEvent,
@@ -26,17 +26,23 @@ export const signPOIEvent = async (
   index: number,
   poiEvent: POIEvent,
 ): Promise<string> => {
-  const message = getPOIEventMessage(index, poiEvent.blindedCommitment);
+  const message = getPOIEventMessage(
+    index,
+    poiEvent.blindedCommitment,
+    poiEvent.type,
+  );
   return signMessage(message);
 };
 
 export const getPOIEventMessage = (
   index: number,
   blindedCommitment: string,
+  type: POIEventType,
 ): Uint8Array => {
   const data = {
     index,
     blindedCommitment,
+    type,
   };
   return utf8ToBytes(JSON.stringify(data));
 };
@@ -49,6 +55,7 @@ export const verifyPOIEvent = async (
     const message = getPOIEventMessage(
       signedPOIEvent.index,
       signedPOIEvent.blindedCommitment,
+      signedPOIEvent.type,
     );
     return await verify(signedPOIEvent.signature, message, publicKey);
   } catch (err) {

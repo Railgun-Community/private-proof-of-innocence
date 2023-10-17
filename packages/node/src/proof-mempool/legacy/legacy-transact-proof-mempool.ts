@@ -107,11 +107,16 @@ export class LegacyTransactProofMempool {
     });
   }
 
-  static async tryAddToList(
+  private static async tryAddToList(
     networkName: NetworkName,
     txidVersion: TXIDVersion,
     legacyTransactProofData: LegacyTransactProofData,
   ) {
+    const listKey = ListProviderPOIEventQueue.listKey;
+    if (!listKey) {
+      return;
+    }
+
     const isLegacyTransaction = await this.isLegacyTransaction(
       networkName,
       txidVersion,
@@ -125,6 +130,7 @@ export class LegacyTransactProofMempool {
     dbg('Adding legacy transact event');
 
     ListProviderPOIEventQueue.queueUnsignedPOILegacyTransactEvent(
+      listKey,
       networkName,
       txidVersion,
       legacyTransactProofData,

@@ -5,6 +5,7 @@ import { Config } from '../config/config';
 import { NetworkName } from '@railgun-community/shared-models';
 import { ListProviderPOIEventQueue } from '../list-provider/list-provider-poi-event-queue';
 import { getListKeysFromNodeConfigs } from '../config/general';
+import { POIEventList } from '../poi-events/poi-event-list';
 
 const dbg = debug('poi:connected-node-startup');
 
@@ -66,10 +67,13 @@ export class ConnectedNodeStartup {
           // If they do, this node will wait to add new events until it's synced.
           for (const networkName of Config.NETWORK_NAMES) {
             for (const listKey of this.listKeys) {
-              const eventListLength =
+              const poiEventLengths =
                 nodeStatusAllNetworks.forNetwork[networkName]?.listStatuses?.[
                   listKey
-                ]?.poiEvents ?? 0;
+                ]?.poiEventLengths;
+              const eventListLength = poiEventLengths
+                ? POIEventList.getTotalEventsLength(poiEventLengths)
+                : 0;
               const syncedIndex = eventListLength - 1;
               ListProviderPOIEventQueue.tryUpdateMinimumNextAddIndex(
                 listKey,

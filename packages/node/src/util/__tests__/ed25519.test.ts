@@ -7,11 +7,8 @@ import {
   verifyBlockedShield,
   verifyPOIEvent,
 } from '../ed25519';
-import {
-  POIEventType,
-  SignedBlockedShield,
-  SignedPOIEvent,
-} from '../../models/poi-types';
+import { SignedBlockedShield, SignedPOIEvent } from '../../models/poi-types';
+import { POIEventType } from '@railgun-community/shared-models';
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
@@ -27,7 +24,7 @@ describe('ed25519', () => {
       commitmentHash: '0x5678',
     });
     expect(signature).to.equal(
-      '7ca14510fa257ed4f4aaf71e89bc80545c5fa67c70a643aef412595afa5be396a9f6ac1a36f7d683ee90e1054af613161317f11de0b44b4b3d8c8cf3147c360d',
+      '0f15f110320b402670e7ff03035942a50e9bdbe75aadb4d072fa4558b00fa9df40cec69a8613f1bd75b1f271f74061c573e1e139b96ea448fc7dd1e37dbe430f',
     );
 
     const publicKey = await getListPublicKey();
@@ -36,6 +33,7 @@ describe('ed25519', () => {
       index,
       blindedCommitment: '0x1234',
       signature,
+      type: POIEventType.Shield,
     };
     const verified = await verifyPOIEvent(signedPOIEvent, publicKey);
     expect(verified).to.equal(true);
@@ -52,7 +50,7 @@ describe('ed25519', () => {
       blindedCommitment: '0x1234',
     });
     expect(signature).to.equal(
-      '7ca14510fa257ed4f4aaf71e89bc80545c5fa67c70a643aef412595afa5be396a9f6ac1a36f7d683ee90e1054af613161317f11de0b44b4b3d8c8cf3147c360d',
+      '5a5222704715fd3ef0fc5b9d91afccd95d64998b31a11e9df8364ffa7bf4ba3e5474da9051a99b360c8651f766496b58786d7a09707487bb5c5bfcdcf88d9702',
     );
 
     const publicKey = await getListPublicKey();
@@ -61,6 +59,7 @@ describe('ed25519', () => {
       index,
       blindedCommitment: '0x1234',
       signature,
+      type: POIEventType.Transact,
     };
     const verified = await verifyPOIEvent(signedPOIEvent, publicKey);
     expect(verified).to.equal(true);

@@ -1,4 +1,4 @@
-import { SnarkProof } from '@railgun-community/shared-models';
+import { POIEventType, SnarkProof } from '@railgun-community/shared-models';
 import { SortDirection } from 'mongodb';
 import { Readable } from 'stream';
 
@@ -109,6 +109,7 @@ export type POIOrderedEventDBItem = {
   index: number;
   blindedCommitment: string;
   signature: string;
+  type: POIEventType;
 };
 
 // DO NOT CHANGE FIELDS WITHOUT CLEARING OR MIGRATING THE DB.

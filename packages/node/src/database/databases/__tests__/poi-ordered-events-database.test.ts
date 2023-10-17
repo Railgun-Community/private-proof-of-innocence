@@ -1,7 +1,11 @@
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { POIOrderedEventsDatabase } from '../poi-ordered-events-database';
-import { NetworkName, TXIDVersion } from '@railgun-community/shared-models';
+import {
+  NetworkName,
+  POIEventType,
+  TXIDVersion,
+} from '@railgun-community/shared-models';
 import { DatabaseClient } from '../../database-client-init';
 import { SignedPOIEvent } from '../../../models/poi-types';
 import { POIEventList } from '../../../poi-events/poi-event-list';
@@ -60,6 +64,7 @@ describe('poi-ordered-events-database', () => {
       index: 0,
       blindedCommitment: 'commitment_1',
       signature: 'someSignature',
+      type: POIEventType.Shield,
     };
 
     await db.insertValidSignedPOIEvent(listKey, signedPOIEvent);
@@ -73,7 +78,7 @@ describe('poi-ordered-events-database', () => {
     expect(retrievedEvent.signature).to.equal(signedPOIEvent.signature);
 
     // Call getCount and check the returned value
-    const count = await db.getCount(listKey);
+    const count = await db.getCount(listKey, POIEventType.Shield);
     expect(count).to.equal(1);
   });
 
@@ -91,16 +96,19 @@ describe('poi-ordered-events-database', () => {
       index: 0,
       blindedCommitment: 'commitment_1',
       signature: 'someSignature',
+      type: POIEventType.Shield,
     };
     const signedPOIEvent2: SignedPOIEvent = {
       index: 1,
       blindedCommitment: 'commitment_2',
       signature: 'someSignature',
+      type: POIEventType.Shield,
     };
     const signedPOIEvent3: SignedPOIEvent = {
       index: 2,
       blindedCommitment: 'commitment_3',
       signature: 'someSignature',
+      type: POIEventType.Shield,
     };
 
     // Insert three events into the database
@@ -113,9 +121,9 @@ describe('poi-ordered-events-database', () => {
 
     // Retrieve only the 2nd event
     const eventRange = await POIEventList.getPOIListEventRange(
+      listKey,
       networkName,
       txidVersion,
-      listKey,
       1,
       2,
     );
@@ -130,11 +138,13 @@ describe('poi-ordered-events-database', () => {
       index: 0,
       blindedCommitment: 'commitment_1',
       signature: 'someSignature',
+      type: POIEventType.Shield,
     };
     const signedPOIEvent2: SignedPOIEvent = {
       index: 1,
       blindedCommitment: 'commitment_2',
       signature: 'someSignature',
+      type: POIEventType.Transact,
     };
 
     // Insert two events into the database

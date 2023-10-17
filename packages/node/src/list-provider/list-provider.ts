@@ -3,6 +3,7 @@ import {
   BlindedCommitmentType,
   NETWORK_CONFIG,
   NetworkName,
+  POIEventType,
   POIStatus,
   TXIDVersion,
   delay,
@@ -27,7 +28,7 @@ import {
 } from '../rpc-providers/tx-receipt';
 import { Constants } from '../config/constants';
 import { ListProviderPOIEventQueue } from './list-provider-poi-event-queue';
-import { POIEventShield, POIEventType } from '../models/poi-types';
+import { POIEventShield } from '../models/poi-types';
 import { ListProviderBlocklist } from './list-provider-blocklist';
 import { hoursAgo, minutesAgo } from '../util/time-ago';
 import { POIMerkletreeManager } from '../poi-events/poi-merkletree-manager';
@@ -338,7 +339,7 @@ export abstract class ListProvider {
         const blindedCommitment = unshieldRailgunTxid;
         const blindedCommitmentData: BlindedCommitmentData = {
           blindedCommitment,
-          type: BlindedCommitmentType.Transact,
+          type: BlindedCommitmentType.Unshield,
         };
         return POIMerkletreeManager.getPOIStatus(
           this.listKey,
@@ -360,8 +361,7 @@ export abstract class ListProvider {
     const anyStatusIsPending =
       poiStatuses.find(
         status =>
-          status === POIStatus.TransactProofSubmitted ||
-          status === POIStatus.Missing,
+          status === POIStatus.ProofSubmitted || status === POIStatus.Missing,
       ) != null;
 
     if (anyStatusIsPending) {
@@ -571,7 +571,25 @@ export abstract class ListProvider {
     networkName: NetworkName,
     txidVersion: TXIDVersion,
   ) {
+    const orderedEventsDB = new POIOrderedEventsDatabase(
+      networkName,
+      txidVersion,
+    );
+    const countShieldEvents = await orderedEventsDB.getCount(
+      this.listKey,
+      POIEventType.Shield,
+    );
     const shieldQueueDB = new ShieldQueueDatabase(networkName, txidVersion);
+    const countAddedPOIShields = await shieldQueueDB.getCount(
+      ShieldStatus.AddedPOI,
+    );
+    if (countShieldEvents === countAddedPOIShields) {
+      return;
+    }
+
+    dbg(
+      'DANGER: Missing some POI events for added shields. Automatically trying to add the missing events.',
+    );
     const addedPOIShieldsStream = await shieldQueueDB.streamAddedPOIShields();
 
     for await (const addedPOIShield of addedPOIShieldsStream) {
@@ -585,14 +603,12 @@ export abstract class ListProvider {
           addedPOIShield.blindedCommitment,
         ))
       ) {
-        // const shieldQueueDB = new ShieldQueueDatabase(networkName, txidVersion);
-        // await shieldQueueDB.updateShieldStatus(
-        //   addedPOIShield,
-        //   ShieldStatus.Allowed,
-        // );
-        dbg(
-          `ADDED POI SHIELD is missing POI event: ${addedPOIShield.blindedCommitment}`,
+        const shieldQueueDB = new ShieldQueueDatabase(networkName, txidVersion);
+        await shieldQueueDB.updateShieldStatus(
+          addedPOIShield,
+          ShieldStatus.Allowed,
         );
+        dbg(`ADDED MISSING shield POI event:`);
         dbg(addedPOIShield);
       }
     }

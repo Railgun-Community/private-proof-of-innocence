@@ -329,9 +329,9 @@ export class API {
         }
 
         const events = await POIEventList.getPOIListEventRange(
+          listKey,
           networkName,
           txidVersion,
-          listKey,
           startIndex,
           endIndex,
         );
@@ -426,9 +426,9 @@ export class API {
 
         // Submit and verify the proof
         await POIEventList.verifyAndAddSignedPOIEvents(
+          listKey,
           networkName,
           txidVersion,
-          listKey,
           [signedPOIEvent],
         );
       },

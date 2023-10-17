@@ -5,13 +5,13 @@ import {
   TransactProofData,
   TXIDVersion,
   LegacyTransactProofData,
+  POIEventType,
 } from '@railgun-community/shared-models';
 import {
   POIEvent,
   POIEventLegacyTransact,
   POIEventShield,
   POIEventTransact,
-  POIEventType,
   SignedPOIEvent,
 } from '../models/poi-types';
 import { POIOrderedEventsDatabase } from '../database/databases/poi-ordered-events-database';
@@ -198,12 +198,16 @@ export class ListProviderPOIEventQueue {
     );
   }
 
-  static async createSignedPOIEvent(index: number, poiEvent: POIEvent) {
+  static async createSignedPOIEvent(
+    index: number,
+    poiEvent: POIEvent,
+  ): Promise<SignedPOIEvent> {
     const signature = await signPOIEvent(index, poiEvent);
     return {
       index,
       blindedCommitment: poiEvent.blindedCommitment,
       signature,
+      type: poiEvent.type,
     };
   }
 
@@ -262,9 +266,9 @@ export class ListProviderPOIEventQueue {
       );
 
       await POIEventList.addValidSignedPOIEvent(
+        ListProviderPOIEventQueue.listKey,
         networkName,
         txidVersion,
-        ListProviderPOIEventQueue.listKey,
         signedPOIEvent,
       );
 

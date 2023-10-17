@@ -167,12 +167,28 @@ export class POIMerkletreeManager {
           txidVersion,
         );
         const transactProofExists =
-          await transactProofMempoolDB.getProofContainingBlindedCommitmentOrRailgunTxidIfHasUnshield(
+          await transactProofMempoolDB.getProofContainingBlindedCommitmentOut(
             listKey,
             blindedCommitment,
           );
         if (isDefined(transactProofExists)) {
-          return POIStatus.TransactProofSubmitted;
+          return POIStatus.ProofSubmitted;
+        }
+        break;
+      }
+
+      case BlindedCommitmentType.Unshield: {
+        const transactProofMempoolDB = new TransactProofPerListMempoolDatabase(
+          networkName,
+          txidVersion,
+        );
+        const unshieldProofExists =
+          await transactProofMempoolDB.getProofContainingRailgunTxidIfHasUnshield(
+            listKey,
+            blindedCommitment, // railgunTxid for unshields
+          );
+        if (isDefined(unshieldProofExists)) {
+          return POIStatus.ProofSubmitted;
         }
         break;
       }

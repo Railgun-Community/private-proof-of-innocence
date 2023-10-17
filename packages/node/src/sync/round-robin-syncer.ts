@@ -4,6 +4,7 @@ import {
   isDefined,
   NodeStatusAllNetworks,
   TXIDVersion,
+  POIEventLengths,
 } from '@railgun-community/shared-models';
 import debug from 'debug';
 import { Config } from '../config/config';
@@ -155,7 +156,7 @@ export class RoundRobinSyncer {
               networkName,
               txidVersion,
               listKey,
-              listStatuses[listKey].poiEvents,
+              listStatuses[listKey].poiEventLengths,
             );
           } catch (err) {
             dbg(
@@ -173,18 +174,21 @@ export class RoundRobinSyncer {
     networkName: NetworkName,
     txidVersion: TXIDVersion,
     listKey: string,
-    nodePOIEventsLength: number,
+    nodePOIEventLengths: POIEventLengths,
   ) {
-    const currentListLength = await POIEventList.getPOIEventsLength(
+    const currentListLength = await POIEventList.getOverallEventsLength(
+      listKey,
       networkName,
       txidVersion,
-      listKey,
     );
-    if (nodePOIEventsLength <= currentListLength) {
+    if (
+      POIEventList.getTotalEventsLength(nodePOIEventLengths) <=
+      currentListLength
+    ) {
       return;
     }
 
-    // Update up to 100 events from this list.
+    // Update a range of events from this list.
     const startIndex = currentListLength;
     const endIndex = startIndex + QueryLimits.MAX_EVENT_QUERY_RANGE_LENGTH - 1;
 
@@ -202,9 +206,9 @@ export class RoundRobinSyncer {
     );
 
     await POIEventList.verifyAndAddSignedPOIEvents(
+      listKey,
       networkName,
       txidVersion,
-      listKey,
       signedPOIEvents,
     );
   }

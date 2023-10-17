@@ -7,6 +7,7 @@ import {
   ShieldQueueStatus,
   TXIDVersion,
   LegacyTransactProofData,
+  POIEventType,
 } from '@railgun-community/shared-models';
 import * as WalletModule from '../../engine/wallet';
 import { DatabaseClient } from '../../database/database-client-init';
@@ -17,11 +18,7 @@ import { MOCK_SNARK_PROOF } from '../../tests/mocks.test';
 import { POIOrderedEventsDatabase } from '../../database/databases/poi-ordered-events-database';
 import sinon, { SinonStub } from 'sinon';
 import { POINodeRequest } from '../../api/poi-node-request';
-import {
-  POIEventType,
-  SignedBlockedShield,
-  SignedPOIEvent,
-} from '../../models/poi-types';
+import { SignedBlockedShield, SignedPOIEvent } from '../../models/poi-types';
 import { ListProviderPOIEventQueue } from '../../list-provider/list-provider-poi-event-queue';
 import { getListPublicKey, signBlockedShield } from '../../util/ed25519';
 import { POIMerkletreeManager } from '../../poi-events/poi-merkletree-manager';
@@ -66,7 +63,12 @@ const getNodeStatus = (): NodeStatusAllNetworks => ({
       },
       listStatuses: {
         [listKey]: {
-          poiEvents: 2,
+          poiEventLengths: {
+            [POIEventType.Shield]: 2,
+            [POIEventType.Transact]: 0,
+            [POIEventType.Unshield]: 0,
+            [POIEventType.LegacyTransact]: 0,
+          },
           pendingTransactProofs: 2,
           blockedShields: 2,
         },
@@ -178,7 +180,12 @@ describe('round-robin-syncer', () => {
     );
 
     // Make sure all events sync
-    expect(await orderedEventsDB.getCount(listKey)).to.equal(3);
+    expect(
+      await orderedEventsDB.getCount(listKey, POIEventType.Shield),
+    ).to.equal(2);
+    expect(
+      await orderedEventsDB.getCount(listKey, POIEventType.Transact),
+    ).to.equal(1);
 
     getPOIListEventRangeStub.restore();
   });

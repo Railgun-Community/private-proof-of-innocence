@@ -1,5 +1,6 @@
 import {
   NetworkName,
+  POIEventType,
   TXIDVersion,
   isDefined,
 } from '@railgun-community/shared-models';
@@ -22,18 +23,20 @@ export class POIOrderedEventsDatabase extends AbstractDatabase<POIOrderedEventDB
     await this.createIndex(['index', 'listKey'], { unique: true });
     await this.createIndex(['index']);
     await this.createIndex(['listKey', 'blindedCommitment'], { unique: true });
+    await this.createIndex(['index']);
   }
 
   async insertValidSignedPOIEvent(
     listKey: string,
     signedPOIEvent: SignedPOIEvent,
   ): Promise<void> {
-    const { index, blindedCommitment, signature } = signedPOIEvent;
+    const { index, blindedCommitment, signature, type } = signedPOIEvent;
     const item: POIOrderedEventDBItem = {
       listKey,
       index,
       blindedCommitment,
       signature,
+      type,
     };
     await this.insertOne(item);
   }
@@ -64,10 +67,13 @@ export class POIOrderedEventsDatabase extends AbstractDatabase<POIOrderedEventDB
     return this.findAll(filter, sort, max, min);
   }
 
-  async getCount(listKey: string): Promise<number> {
+  async getCount(listKey: string, type?: POIEventType): Promise<number> {
     const filter: DBFilter<POIOrderedEventDBItem> = {
       listKey,
     };
+    if (isDefined(type)) {
+      filter.type = type;
+    }
     return this.count(filter);
   }
 

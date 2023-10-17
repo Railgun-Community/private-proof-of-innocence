@@ -68,13 +68,13 @@ export class NodeStatus {
     const allStatuses: Record<string, POIListStatus> = {};
     await Promise.all(
       listKeys.map(async listKey => {
-        const poiEvents = await POIEventList.getPOIEventsLength(
+        const poiEventLengths = await POIEventList.getPOIEventLengths(
+          listKey,
           networkName,
           txidVersion,
-          listKey,
         );
         allStatuses[listKey] = {
-          poiEvents,
+          poiEventLengths,
           pendingTransactProofs: TransactProofMempoolCache.getCacheSize(
             listKey,
             networkName,

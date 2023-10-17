@@ -61,7 +61,7 @@ export class TransactProofPerListMempoolDatabase extends AbstractDatabase<Transa
     return this.exists(filter);
   }
 
-  private async getProofContainingBlindedCommitmentOut(
+  async getProofContainingBlindedCommitmentOut(
     listKey: string,
     blindedCommitmentOut: string,
   ): Promise<Optional<TransactProofMempoolDBItem>> {
@@ -72,7 +72,7 @@ export class TransactProofPerListMempoolDatabase extends AbstractDatabase<Transa
     return this.findOne(filter);
   }
 
-  private async getProofContainingRailgunTxidIfHasUnshield(
+  async getProofContainingRailgunTxidIfHasUnshield(
     listKey: string,
     railgunTxidIfHasUnshield: string,
   ): Promise<Optional<TransactProofMempoolDBItem>> {
