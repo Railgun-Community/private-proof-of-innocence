@@ -114,7 +114,7 @@ describe('poi-merkletree', () => {
     await expect(
       merkletree.insertMultipleLeaves_TEST_ONLY(65536, []),
     ).to.eventually.be.rejectedWith(
-      '[Warning] Invalid blindedCommitmentStartingIndex for POI merkletree insert',
+      '[Warning] Invalid eventIndex 65536 for POI merkletree insert - next expected 65535',
     );
 
     await merkletree.insertMultipleLeaves_TEST_ONLY(65535, [

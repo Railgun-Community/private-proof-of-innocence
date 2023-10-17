@@ -144,7 +144,6 @@ describe('round-robin-syncer', () => {
     const signedEvent1: SignedPOIEvent =
       await ListProviderPOIEventQueue.createSignedPOIEvent(
         0, // index
-        0, // blindedCommitmentStartingIndex
         {
           type: POIEventType.Shield,
           blindedCommitment: '0x1111',
@@ -154,17 +153,14 @@ describe('round-robin-syncer', () => {
     const signedEvent2: SignedPOIEvent =
       await ListProviderPOIEventQueue.createSignedPOIEvent(
         1, // index
-        1, // blindedCommitmentStartingIndex
         {
           type: POIEventType.Transact,
-          blindedCommitments: ['0x2222', '0x3333'],
-          proof: MOCK_SNARK_PROOF,
+          blindedCommitment: '0x2222',
         },
       );
     const signedEvent3: SignedPOIEvent =
       await ListProviderPOIEventQueue.createSignedPOIEvent(
         2, // index
-        3, // blindedCommitmentStartingIndex
         {
           type: POIEventType.Shield,
           blindedCommitment: '0x4444',
@@ -201,7 +197,7 @@ describe('round-robin-syncer', () => {
       poiMerkleroots: ['0x9999', '0x8888'],
       txidMerklerootIndex: 59,
       txidMerkleroot: '0x0987654321',
-      blindedCommitmentsOut: [],
+      blindedCommitmentsOut: ['0x3333', '0x4444'],
       railgunTxidIfHasUnshield: '0x7777',
     };
 
@@ -218,18 +214,36 @@ describe('round-robin-syncer', () => {
     expect(
       await transactProofMempoolDB.proofExists(
         listKey,
-        transactProofData1.blindedCommitmentsOut[0],
+        transactProofData1.blindedCommitmentsOut,
+        transactProofData1.railgunTxidIfHasUnshield,
       ),
     ).to.equal(true);
+
+    // Proof 2 should only exist when including the unshield txid
     expect(
       await transactProofMempoolDB.proofExists(
         listKey,
+        transactProofData2.blindedCommitmentsOut,
+        '',
+      ),
+    ).to.equal(false);
+    expect(
+      await transactProofMempoolDB.proofExists(
+        listKey,
+        [],
+        transactProofData2.railgunTxidIfHasUnshield,
+      ),
+    ).to.equal(false);
+    expect(
+      await transactProofMempoolDB.proofExists(
+        listKey,
+        transactProofData2.blindedCommitmentsOut,
         transactProofData2.railgunTxidIfHasUnshield,
       ),
     ).to.equal(true);
 
     getFilteredTransactProofsStub.restore();
-  });
+  }).timeout(20000);
 
   it('Should update legacy transact proof mempools', async () => {
     const legacyTransactProofData1: LegacyTransactProofData = {

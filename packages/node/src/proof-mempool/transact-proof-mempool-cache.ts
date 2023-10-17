@@ -7,7 +7,7 @@ import { POINodeCountingBloomFilter } from '../util/poi-node-bloom-filters';
 import { CountingBloomFilter } from 'bloom-filters';
 
 type BlindedCommitmentMap = Map<string, TransactProofData>;
-// { listKey: {networkName: { txidVersion: {firstBlindedCommitment: TransactProofData} } } }
+// { listKey: {networkName: { txidVersion: {getBlindedCommitmentsCacheString: TransactProofData} } } }
 type TransactCacheType = Record<
   string,
   Partial<
@@ -60,22 +60,35 @@ export class TransactProofMempoolCache {
     return cacheForList[networkName]?.[txidVersion] as BlindedCommitmentMap;
   }
 
+  static getBlindedCommitmentsCacheString(
+    blindedCommitmentsOut: string[],
+    railgunTxidIfHasUnshield: string,
+  ) {
+    return [...blindedCommitmentsOut, railgunTxidIfHasUnshield].join('|');
+  }
+
   static addToCache(
     listKey: string,
     networkName: NetworkName,
     txidVersion: TXIDVersion,
     transactProofData: TransactProofData,
-    firstBlindedCommitment: string,
   ) {
     const cache = this.getCache(listKey, networkName, txidVersion);
 
-    cache.set(firstBlindedCommitment, transactProofData);
+    cache.set(
+      this.getBlindedCommitmentsCacheString(
+        transactProofData.blindedCommitmentsOut,
+        transactProofData.railgunTxidIfHasUnshield,
+      ),
+      transactProofData,
+    );
 
     this.addToBloomFilter(
       listKey,
       networkName,
       txidVersion,
-      firstBlindedCommitment,
+      transactProofData.blindedCommitmentsOut,
+      transactProofData.railgunTxidIfHasUnshield,
     );
   }
 
@@ -83,16 +96,23 @@ export class TransactProofMempoolCache {
     listKey: string,
     networkName: NetworkName,
     txidVersion: TXIDVersion,
-    firstBlindedCommitment: string,
+    blindedCommitmentsOut: string[],
+    railgunTxidIfHasUnshield: string,
   ) {
     const cache = this.getCache(listKey, networkName, txidVersion);
-    cache.delete(firstBlindedCommitment);
+    cache.delete(
+      this.getBlindedCommitmentsCacheString(
+        blindedCommitmentsOut,
+        railgunTxidIfHasUnshield,
+      ),
+    );
 
     this.removeFromBloomFilter(
       listKey,
       networkName,
       txidVersion,
-      firstBlindedCommitment,
+      blindedCommitmentsOut,
+      railgunTxidIfHasUnshield,
     );
   }
 
@@ -117,10 +137,14 @@ export class TransactProofMempoolCache {
     listKey: string,
     networkName: NetworkName,
     txidVersion: TXIDVersion,
-    firstBlindedCommitment: string,
+    blindedCommitmentsOut: string[],
+    railgunTxidIfHasUnshield: string,
   ) {
     this.getBloomFilter(listKey, networkName, txidVersion).add(
-      firstBlindedCommitment,
+      this.getBlindedCommitmentsCacheString(
+        blindedCommitmentsOut,
+        railgunTxidIfHasUnshield,
+      ),
     );
   }
 
@@ -128,10 +152,14 @@ export class TransactProofMempoolCache {
     listKey: string,
     networkName: NetworkName,
     txidVersion: TXIDVersion,
-    firstBlindedCommitment: string,
+    blindedCommitmentsOut: string[],
+    railgunTxidIfHasUnshield: string,
   ) {
     this.getBloomFilter(listKey, networkName, txidVersion).remove(
-      firstBlindedCommitment,
+      this.getBlindedCommitmentsCacheString(
+        blindedCommitmentsOut,
+        railgunTxidIfHasUnshield,
+      ),
     );
   }
 

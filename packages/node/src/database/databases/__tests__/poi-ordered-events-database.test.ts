@@ -58,16 +58,7 @@ describe('poi-ordered-events-database', () => {
   it('Should insert and get a valid POI signed event', async () => {
     const signedPOIEvent: SignedPOIEvent = {
       index: 0,
-      blindedCommitmentStartingIndex: 0,
-      blindedCommitments: ['commitment1', 'commitment2'],
-      proof: {
-        pi_a: ['somePi_a1', 'somePi_a2'],
-        pi_b: [
-          ['somePi_b11', 'somePi_b12'],
-          ['somePi_b21', 'somePi_b22'],
-        ],
-        pi_c: ['somePi_c1', 'somePi_c2'],
-      },
+      blindedCommitment: 'commitment_1',
       signature: 'someSignature',
     };
 
@@ -76,10 +67,9 @@ describe('poi-ordered-events-database', () => {
 
     // Check the POI event was inserted
     const retrievedEvent = events[0];
-    expect(retrievedEvent.blindedCommitments).to.deep.equal(
-      signedPOIEvent.blindedCommitments,
+    expect(retrievedEvent.blindedCommitment).to.equal(
+      signedPOIEvent.blindedCommitment,
     );
-    expect(retrievedEvent.proof).to.deep.equal(signedPOIEvent.proof);
     expect(retrievedEvent.signature).to.equal(signedPOIEvent.signature);
 
     // Call getCount and check the returned value
@@ -99,44 +89,17 @@ describe('poi-ordered-events-database', () => {
 
     const signedPOIEvent1: SignedPOIEvent = {
       index: 0,
-      blindedCommitmentStartingIndex: 0,
-      blindedCommitments: ['commitment1', 'commitment2'],
-      proof: {
-        pi_a: ['somePi_a1', 'somePi_a2'],
-        pi_b: [
-          ['somePi_b11', 'somePi_b12'],
-          ['somePi_b21', 'somePi_b22'],
-        ],
-        pi_c: ['somePi_c1', 'somePi_c2'],
-      },
+      blindedCommitment: 'commitment_1',
       signature: 'someSignature',
     };
     const signedPOIEvent2: SignedPOIEvent = {
       index: 1,
-      blindedCommitmentStartingIndex: 0,
-      blindedCommitments: ['commitment1', 'commitment2'],
-      proof: {
-        pi_a: ['somePi_a1', 'somePi_a2'],
-        pi_b: [
-          ['somePi_b11', 'somePi_b12'],
-          ['somePi_b21', 'somePi_b22'],
-        ],
-        pi_c: ['somePi_c1', 'somePi_c2'],
-      },
+      blindedCommitment: 'commitment_2',
       signature: 'someSignature',
     };
     const signedPOIEvent3: SignedPOIEvent = {
       index: 2,
-      blindedCommitmentStartingIndex: 0,
-      blindedCommitments: ['commitment1', 'commitment2'],
-      proof: {
-        pi_a: ['somePi_a1', 'somePi_a2'],
-        pi_b: [
-          ['somePi_b11', 'somePi_b12'],
-          ['somePi_b21', 'somePi_b22'],
-        ],
-        pi_c: ['somePi_c1', 'somePi_c2'],
-      },
+      blindedCommitment: 'commitment_3',
       signature: 'someSignature',
     };
 
@@ -165,30 +128,12 @@ describe('poi-ordered-events-database', () => {
   it('Should correctly fetch the last added item', async () => {
     const signedPOIEvent1: SignedPOIEvent = {
       index: 0,
-      blindedCommitmentStartingIndex: 0,
-      blindedCommitments: ['commitment1', 'commitment2'],
-      proof: {
-        pi_a: ['somePi_a1', 'somePi_a2'],
-        pi_b: [
-          ['somePi_b11', 'somePi_b12'],
-          ['somePi_b21', 'somePi_b22'],
-        ],
-        pi_c: ['somePi_c1', 'somePi_c2'],
-      },
+      blindedCommitment: 'commitment_1',
       signature: 'someSignature',
     };
     const signedPOIEvent2: SignedPOIEvent = {
       index: 1,
-      blindedCommitmentStartingIndex: 0,
-      blindedCommitments: ['commitment1', 'commitment2'],
-      proof: {
-        pi_a: ['somePi_a1', 'somePi_a2'],
-        pi_b: [
-          ['somePi_b11', 'somePi_b12'],
-          ['somePi_b21', 'somePi_b22'],
-        ],
-        pi_c: ['somePi_c1', 'somePi_c2'],
-      },
+      blindedCommitment: 'commitment_2',
       signature: 'someSignature',
     };
 
@@ -204,10 +149,9 @@ describe('poi-ordered-events-database', () => {
     expect(lastAddedItem).to.not.be.undefined;
     if (lastAddedItem !== null && lastAddedItem !== undefined) {
       expect(lastAddedItem.index).to.equal(signedPOIEvent2.index);
-      expect(lastAddedItem.blindedCommitments).to.deep.equal(
-        signedPOIEvent2.blindedCommitments,
+      expect(lastAddedItem.blindedCommitment).to.deep.equal(
+        signedPOIEvent2.blindedCommitment,
       );
-      expect(lastAddedItem.proof).to.deep.equal(signedPOIEvent2.proof);
       expect(lastAddedItem.signature).to.equal(signedPOIEvent2.signature);
     }
   });

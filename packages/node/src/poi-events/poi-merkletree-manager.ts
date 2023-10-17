@@ -11,7 +11,6 @@ import {
 import { Config } from '../config/config';
 import { POIMerkletree } from './poi-merkletree';
 import { SignedPOIEvent } from '../models/poi-types';
-import { ShieldQueueDatabase } from '../database/databases/shield-queue-database';
 import { TransactProofPerListMempoolDatabase } from '../database/databases/transact-proof-per-list-mempool-database';
 import { BlockedShieldsPerListDatabase } from '../database/databases/blocked-shields-per-list-database';
 
@@ -69,11 +68,10 @@ export class POIMerkletreeManager {
       networkName,
       txidVersion,
     );
-    const startIndex = signedPOIEvent.blindedCommitmentStartingIndex;
-    for (let i = 0; i < signedPOIEvent.blindedCommitments.length; i += 1) {
-      const blindedCommitment = signedPOIEvent.blindedCommitments[i];
-      await merkletree.insertLeaf(startIndex + i, blindedCommitment);
-    }
+    await merkletree.insertLeaf(
+      signedPOIEvent.index,
+      signedPOIEvent.blindedCommitment,
+    );
   }
 
   static async getMerkleProofs(
@@ -149,14 +147,6 @@ export class POIMerkletreeManager {
 
     switch (type) {
       case BlindedCommitmentType.Shield: {
-        // This logic doesn't really make sense to run on an aggregator.
-        // const shieldQueueDB = new ShieldQueueDatabase(networkName, txidVersion);
-        // const shieldExists =
-        //   await shieldQueueDB.blindedCommitmentExists(blindedCommitment);
-        // if (shieldExists) {
-        //   return POIStatus.ShieldPending;
-        // }
-
         const shieldBlockedDB = new BlockedShieldsPerListDatabase(
           networkName,
           txidVersion,
@@ -177,15 +167,11 @@ export class POIMerkletreeManager {
           txidVersion,
         );
         const transactProofExists =
-          (await transactProofMempoolDB.proofExistsContainingBlindedCommitment(
+          await transactProofMempoolDB.getProofContainingBlindedCommitmentOrRailgunTxidIfHasUnshield(
             listKey,
             blindedCommitment,
-          )) ||
-          (await transactProofMempoolDB.proofExistsContainingRailgunTxidForUnshield(
-            listKey,
-            blindedCommitment,
-          ));
-        if (transactProofExists) {
+          );
+        if (isDefined(transactProofExists)) {
           return POIStatus.TransactProofSubmitted;
         }
         break;

@@ -467,8 +467,13 @@ export class API {
       '/remove-transact-proof/:chainType/:chainID',
       async (req: Request) => {
         const { chainType, chainID } = req.params;
-        const { txidVersion, listKey, firstBlindedCommitment, signature } =
-          req.body as RemoveTransactProofParams;
+        const {
+          txidVersion,
+          listKey,
+          blindedCommitmentsOut,
+          railgunTxidIfHasUnshield,
+          signature,
+        } = req.body as RemoveTransactProofParams;
         if (!this.hasListKey(listKey)) {
           return;
         }
@@ -476,14 +481,17 @@ export class API {
         const networkName = networkNameForSerializedChain(chainType, chainID);
 
         dbg(
-          `REQUEST: Remove Transact Proof: ${listKey}, ${firstBlindedCommitment}`,
+          `REQUEST: Remove Transact Proof: ${listKey} - blindedCommitmentsOut ${blindedCommitmentsOut.join(
+            ',',
+          )} - railgunTxidIfHasUnshield ${railgunTxidIfHasUnshield}`,
         );
 
         await TransactProofMempoolPruner.removeProofSigned(
           listKey,
           networkName,
           txidVersion,
-          firstBlindedCommitment,
+          blindedCommitmentsOut,
+          railgunTxidIfHasUnshield,
           signature,
         );
       },
@@ -506,8 +514,8 @@ export class API {
         const networkName = networkNameForSerializedChain(chainType, chainID);
 
         dbg(
-          `REQUEST: Submit Transact Proof: ${listKey}, ${TransactProofMempool.getTransactFirstBlindedCommitment(
-            transactProofData,
+          `REQUEST: Submit Transact Proof: ${listKey} - ${transactProofData.blindedCommitmentsOut.join(
+            ', ',
           )}`,
         );
 
@@ -538,7 +546,7 @@ export class API {
         dbg(
           `REQUEST: Submit Legacy Transact Proof: ${listKeys.join(
             ', ',
-          )}, ${legacyTransactProofDatas
+          )} - ${legacyTransactProofDatas
             .map(d => d.blindedCommitment)
             .join(', ')}`,
         );

@@ -51,7 +51,7 @@ describe('blocked-shields-per-list-database', () => {
     expect(db).to.be.instanceOf(BlockedShieldsPerListDatabase);
   });
 
-  it('Should insert and get a valid transact proof', async () => {
+  it('Should insert and get a valid blocked shield', async () => {
     const blockedShieldData1 = {
       commitmentHash: '0x0000',
       blindedCommitment: '0x1111',

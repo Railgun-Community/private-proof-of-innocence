@@ -141,10 +141,17 @@ export const RemoveTransactProofBodySchema: AllowedSchema = {
   properties: {
     txidVersion: { type: 'string' },
     listKey: { type: 'string' },
-    firstBlindedCommitment: { type: 'string' },
+    blindedCommitmentsOut: { type: 'array', items: { type: 'string' } },
+    railgunTxidIfHasUnshield: { type: 'string' },
     signature: { type: 'string' },
   },
-  required: ['txidVersion', 'listKey', 'firstBlindedCommitment', 'signature'],
+  required: [
+    'txidVersion',
+    'listKey',
+    'blindedCommitmentsOut',
+    'railgunTxidIfHasUnshield',
+    'signature',
+  ],
 };
 
 export const SubmitPOIEventBodySchema: AllowedSchema = {
@@ -156,17 +163,10 @@ export const SubmitPOIEventBodySchema: AllowedSchema = {
       type: 'object',
       properties: {
         index: { type: 'number' },
-        blindedCommitmentStartingIndex: { type: 'number' },
-        blindedCommitments: { type: 'array', items: { type: 'string' } },
+        blindedCommitment: { type: 'string' },
         signature: { type: 'string' },
-        proof: SnarkProofSchema, // optional
       },
-      required: [
-        'index',
-        'blindedCommitmentStartingIndex',
-        'blindedCommitments',
-        'signature',
-      ],
+      required: ['index', 'blindedCommitment', 'signature'],
     },
   },
   required: ['txidVersion', 'listKey', 'signedPOIEvent'],

@@ -234,7 +234,8 @@ export class POINodeRequest {
     networkName: NetworkName,
     txidVersion: TXIDVersion,
     listKey: string,
-    firstBlindedCommitment: string,
+    blindedCommitmentsOut: string[],
+    railgunTxidIfHasUnshield: string,
   ) => {
     const chain = NETWORK_CONFIG[networkName].chain;
     const route = `remove-transact-proof/${chain.type}/${chain.id}`;
@@ -245,12 +246,16 @@ export class POINodeRequest {
       return;
     }
 
-    const signature = await signRemoveProof(firstBlindedCommitment);
+    const signature = await signRemoveProof(
+      blindedCommitmentsOut,
+      railgunTxidIfHasUnshield,
+    );
 
     await POINodeRequest.postRequest<RemoveTransactProofParams, void>(url, {
       txidVersion,
       listKey,
-      firstBlindedCommitment,
+      blindedCommitmentsOut,
+      railgunTxidIfHasUnshield,
       signature,
     });
   };

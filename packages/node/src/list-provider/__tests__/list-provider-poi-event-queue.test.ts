@@ -78,10 +78,13 @@ describe('list-provider-poi-event-queue', () => {
     await transactProofMempoolDB.insertTransactProof(
       listKey,
       transactProofData,
-      transactProofData.blindedCommitmentsOut[0],
     );
     expect(
-      await transactProofMempoolDB.proofExists(listKey, '0x1111'),
+      await transactProofMempoolDB.proofExists(
+        listKey,
+        transactProofData.blindedCommitmentsOut,
+        transactProofData.railgunTxidIfHasUnshield,
+      ),
     ).to.equal(true);
 
     // Queue proofs serially - they should process in order
@@ -144,7 +147,11 @@ describe('list-provider-poi-event-queue', () => {
 
     // Expect transact proof to be removed
     expect(
-      await transactProofMempoolDB.proofExists(listKey, '0x1111'),
+      await transactProofMempoolDB.proofExists(
+        listKey,
+        transactProofData.blindedCommitmentsOut,
+        transactProofData.railgunTxidIfHasUnshield,
+      ),
     ).to.equal(false);
   }).timeout(20000);
 });

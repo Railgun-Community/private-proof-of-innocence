@@ -27,18 +27,10 @@ export class POIEventList {
     const dbEvents = await db.getPOIEvents(listKey, startIndex, endIndex);
 
     return dbEvents.map(dbEvent => {
-      const {
-        index,
-        blindedCommitmentStartingIndex,
-        blindedCommitments,
-        proof,
-        signature,
-      } = dbEvent;
+      const { index, blindedCommitment, signature } = dbEvent;
       return {
         index,
-        blindedCommitmentStartingIndex,
-        blindedCommitments,
-        proof: proof ?? undefined,
+        blindedCommitment,
         signature,
       };
     });
@@ -80,11 +72,11 @@ export class POIEventList {
     const db = new POIOrderedEventsDatabase(networkName, txidVersion);
     await db.insertValidSignedPOIEvent(listKey, signedPOIEvent);
 
-    await TransactProofMempoolPruner.removeProof(
+    await TransactProofMempoolPruner.removeProofIfAllOtherBlindedCommitmentsAdded(
       listKey,
       networkName,
       txidVersion,
-      signedPOIEvent.blindedCommitments[0],
+      signedPOIEvent.blindedCommitment,
     );
   }
 }

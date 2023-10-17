@@ -9,18 +9,17 @@ import { POIHistoricalMerklerootDatabase } from '../database/databases/poi-histo
 import { TransactProofMempoolCache } from './transact-proof-mempool-cache';
 import { verifyTransactProof } from '../util/snark-proof-verify';
 import { POINodeCountingBloomFilter } from '../util/poi-node-bloom-filters';
-import { POIOrderedEventsDatabase } from '../database/databases/poi-ordered-events-database';
 import { RailgunTxidMerkletreeManager } from '../railgun-txids/railgun-txid-merkletree-manager';
 import { QueryLimits } from '../config/query-limits';
 import { ListProviderPOIEventQueue } from '../list-provider/list-provider-poi-event-queue';
 import { Config } from '../config/config';
 import { networkForName, nodeURLForListKey } from '../config/general';
-import { hexToBigInt } from '@railgun-community/wallet';
 import { POINodeRequest } from '../api/poi-node-request';
 import debug from 'debug';
 import { PushSync } from '../sync/push-sync';
 import { TransactProofMempoolPruner } from './transact-proof-mempool-pruner';
 import { tryValidateRailgunTxidOccurredBeforeBlockNumber } from '../engine/wallet';
+import { TransactProofEventMatcher } from './transact-proof-event-matcher';
 
 const dbg = debug('poi:transact-proof-mempool');
 
@@ -43,25 +42,17 @@ export class TransactProofMempool {
       return;
     }
 
-    const firstBlindedCommitment =
-      this.getTransactFirstBlindedCommitment(transactProofData);
-
     const db = new TransactProofPerListMempoolDatabase(
       networkName,
       txidVersion,
     );
-    await db.insertTransactProof(
-      listKey,
-      transactProofData,
-      firstBlindedCommitment,
-    );
+    await db.insertTransactProof(listKey, transactProofData);
 
     TransactProofMempoolCache.addToCache(
       listKey,
       networkName,
       txidVersion,
       transactProofData,
-      firstBlindedCommitment,
     );
 
     await TransactProofMempool.tryAddToList(
@@ -166,11 +157,13 @@ export class TransactProofMempool {
           `Cannot add proof - POI merkleroots must all exist. Is this a legacy transaction? ${networkName} TXID tree:index ${tree}:${index}.`,
         );
         dbg(transactProofData);
-        await this.removeProof(
+        await TransactProofMempoolPruner.removeProof(
           listKey,
           networkName,
           txidVersion,
-          transactProofData,
+          transactProofData.blindedCommitmentsOut,
+          transactProofData.railgunTxidIfHasUnshield,
+          true, // shouldSendNodeRequest
         );
         throw new Error(
           `${VALIDATION_ERROR_TEXT}: POI merkleroots must all exist.`,
@@ -189,11 +182,13 @@ export class TransactProofMempool {
     if (!isValidTxidMerkleroot) {
       dbg('Cannot add proof - Invalid txid merkleroot');
       dbg(transactProofData);
-      await this.removeProof(
+      await TransactProofMempoolPruner.removeProof(
         listKey,
         networkName,
         txidVersion,
-        transactProofData,
+        transactProofData.blindedCommitmentsOut,
+        transactProofData.railgunTxidIfHasUnshield,
+        true, // shouldSendNodeRequest
       );
       throw new Error(`${VALIDATION_ERROR_TEXT}: Invalid txid merkleroot.`);
     }
@@ -203,33 +198,6 @@ export class TransactProofMempool {
       txidVersion,
       transactProofData,
     );
-  }
-
-  static async removeProof(
-    listKey: string,
-    networkName: NetworkName,
-    txidVersion: TXIDVersion,
-    transactProofData: TransactProofData,
-  ) {
-    const firstBlindedCommitment =
-      TransactProofMempool.getTransactFirstBlindedCommitment(transactProofData);
-
-    await TransactProofMempoolPruner.removeProof(
-      listKey,
-      networkName,
-      txidVersion,
-      firstBlindedCommitment,
-    );
-
-    await PushSync.sendNodeRequestToAllNodes(async nodeURL => {
-      await POINodeRequest.removeTransactProof(
-        nodeURL,
-        networkName,
-        txidVersion,
-        listKey,
-        firstBlindedCommitment,
-      );
-    });
   }
 
   private static async shouldAdd(
@@ -243,23 +211,29 @@ export class TransactProofMempool {
       networkName,
       txidVersion,
     );
-    const firstBlindedCommitment =
-      this.getTransactFirstBlindedCommitment(transactProofData);
-    const exists = await db.proofExists(listKey, firstBlindedCommitment);
+
+    const exists = await db.proofExists(
+      listKey,
+      transactProofData.blindedCommitmentsOut,
+      transactProofData.railgunTxidIfHasUnshield,
+    );
     if (exists) {
       dbg(
-        `Proof already exists for first blinded commitment: ${firstBlindedCommitment}`,
+        `Transact proof already exists for blinded commitments: ${transactProofData.blindedCommitmentsOut.join(
+          ', ',
+        )}`,
       );
       return false;
     }
 
     // 2. Verify that OrderedEvent for this list doesn't exist.
     const orderedEventsExist =
-      await this.hasOrderedEventForEveryBlindedCommitment(
+      await TransactProofEventMatcher.hasOrderedEventForEveryBlindedCommitment(
         listKey,
         networkName,
         txidVersion,
-        transactProofData,
+        transactProofData.blindedCommitmentsOut,
+        transactProofData.railgunTxidIfHasUnshield,
       );
     if (orderedEventsExist) {
       dbg('Event already exists for every blinded commitment');
@@ -274,69 +248,6 @@ export class TransactProofMempool {
     }
 
     return true;
-  }
-
-  static getTransactFirstBlindedCommitment(
-    transactProofData: TransactProofData,
-  ) {
-    for (const blindedCommitment of transactProofData.blindedCommitmentsOut) {
-      if (hexToBigInt(blindedCommitment) !== 0n) {
-        return blindedCommitment;
-      }
-    }
-    if (hexToBigInt(transactProofData.railgunTxidIfHasUnshield) === 0n) {
-      throw new Error('Must have at least one commitment, including unshield');
-    }
-    return transactProofData.railgunTxidIfHasUnshield;
-  }
-
-  private static async hasOrderedEventForEveryBlindedCommitment(
-    listKey: string,
-    networkName: NetworkName,
-    txidVersion: TXIDVersion,
-    transactProofData: TransactProofData,
-  ): Promise<boolean> {
-    const blindedCommitmentsOut =
-      transactProofData.blindedCommitmentsOut.filter(blindedCommitment => {
-        return hexToBigInt(blindedCommitment) !== 0n;
-      });
-    if (hexToBigInt(transactProofData.railgunTxidIfHasUnshield) !== 0n) {
-      blindedCommitmentsOut.push(transactProofData.railgunTxidIfHasUnshield);
-    }
-
-    const orderedEventsDB = new POIOrderedEventsDatabase(
-      networkName,
-      txidVersion,
-    );
-
-    const existingEvents: string[] = [];
-
-    for (const blindedCommitment of blindedCommitmentsOut) {
-      const orderedEventExists = await orderedEventsDB.eventExists(
-        listKey,
-        blindedCommitment,
-      );
-      if (orderedEventExists) {
-        existingEvents.push(blindedCommitment);
-      }
-    }
-
-    if (
-      existingEvents.length > 0 &&
-      existingEvents.length < blindedCommitmentsOut.length
-    ) {
-      dbg(
-        `DANGER: some transact events (${
-          existingEvents.length
-        }) already exist for ${existingEvents.join(
-          ', ',
-        )}, but not for all blinded commitments (${
-          blindedCommitmentsOut.length
-        }): ${blindedCommitmentsOut.join(', ')}`,
-      );
-    }
-
-    return existingEvents.length === blindedCommitmentsOut.length;
   }
 
   static async inflateCacheFromDatabase(listKeys: string[]) {
@@ -361,21 +272,22 @@ export class TransactProofMempool {
                 transactProofDBItem.railgunTxidIfHasUnshield,
             };
             const orderedEventsExist =
-              await this.hasOrderedEventForEveryBlindedCommitment(
+              await TransactProofEventMatcher.hasOrderedEventForEveryBlindedCommitment(
                 listKey,
                 networkName,
                 txidVersion,
-                transactProofData,
+                transactProofData.blindedCommitmentsOut,
+                transactProofData.railgunTxidIfHasUnshield,
               );
-            const firstBlindedCommitment =
-              this.getTransactFirstBlindedCommitment(transactProofData);
             if (orderedEventsExist) {
               // Remove item from the database.
               await TransactProofMempoolPruner.removeProof(
                 listKey,
                 networkName,
                 txidVersion,
-                firstBlindedCommitment,
+                transactProofData.blindedCommitmentsOut,
+                transactProofData.railgunTxidIfHasUnshield,
+                true, // shouldSendNodeRequest
               );
               return;
             }
@@ -384,7 +296,6 @@ export class TransactProofMempool {
               networkName,
               txidVersion,
               transactProofData,
-              firstBlindedCommitment,
             );
           }
         }
@@ -411,9 +322,12 @@ export class TransactProofMempool {
 
     const filteredProofs: TransactProofData[] = transactProofDatas.filter(
       transactProofData => {
-        const firstBlindedCommitment =
-          this.getTransactFirstBlindedCommitment(transactProofData);
-        return !bloomFilter.has(firstBlindedCommitment);
+        return !bloomFilter.has(
+          TransactProofMempoolCache.getBlindedCommitmentsCacheString(
+            transactProofData.blindedCommitmentsOut,
+            transactProofData.railgunTxidIfHasUnshield,
+          ),
+        );
       },
     );
     return filteredProofs.slice(0, QueryLimits.PROOF_MEMPOOL_SYNCED_ITEMS);

@@ -1,10 +1,8 @@
 import { getPublicKey, sign, verify } from '@noble/ed25519';
-import { SnarkProof, isDefined } from '@railgun-community/shared-models';
+import { isDefined } from '@railgun-community/shared-models';
 import { bytesToHex, hexStringToBytes } from '@railgun-community/wallet';
 import {
-  POIEventLegacyTransact,
-  POIEventShield,
-  POIEventTransact,
+  POIEvent,
   SignedBlockedShield,
   SignedPOIEvent,
 } from '../models/poi-types';
@@ -24,57 +22,22 @@ export const signMessage = async (message: Uint8Array): Promise<string> => {
   return bytesToHex(signatureUint8Array);
 };
 
-export const signPOIEventShield = async (
+export const signPOIEvent = async (
   index: number,
-  blindedCommitmentStartingIndex: number,
-  poiEventShield: POIEventShield,
+  poiEvent: POIEvent,
 ): Promise<string> => {
-  const message = getPOIEventMessage(index, blindedCommitmentStartingIndex, [
-    poiEventShield.blindedCommitment,
-  ]);
+  const message = getPOIEventMessage(index, poiEvent.blindedCommitment);
   return signMessage(message);
 };
 
-export const signPOIEventTransact = async (
+export const getPOIEventMessage = (
   index: number,
-  blindedCommitmentStartingIndex: number,
-  poiEventTransact: POIEventTransact,
-): Promise<string> => {
-  const message = getPOIEventMessage(
-    index,
-    blindedCommitmentStartingIndex,
-    poiEventTransact.blindedCommitments,
-    poiEventTransact.proof,
-  );
-  return signMessage(message);
-};
-
-export const signPOIEventLegacyTransact = async (
-  index: number,
-  blindedCommitmentStartingIndex: number,
-  poiEventTransact: POIEventLegacyTransact,
-): Promise<string> => {
-  const message = getPOIEventMessage(index, blindedCommitmentStartingIndex, [
-    poiEventTransact.blindedCommitment,
-  ]);
-  return signMessage(message);
-};
-
-const getPOIEventMessage = (
-  index: number,
-  blindedCommitmentStartingIndex: number,
-  blindedCommitments: string[],
-  proof?: SnarkProof,
+  blindedCommitment: string,
 ): Uint8Array => {
   const data = {
     index,
-    blindedCommitmentStartingIndex,
-    blindedCommitments,
+    blindedCommitment,
   };
-  if (proof) {
-    // @ts-expect-error
-    data.proof = proof;
-  }
   return utf8ToBytes(JSON.stringify(data));
 };
 
@@ -85,9 +48,7 @@ export const verifyPOIEvent = async (
   try {
     const message = getPOIEventMessage(
       signedPOIEvent.index,
-      signedPOIEvent.blindedCommitmentStartingIndex,
-      signedPOIEvent.blindedCommitments,
-      signedPOIEvent.proof,
+      signedPOIEvent.blindedCommitment,
     );
     return await verify(signedPOIEvent.signature, message, publicKey);
   } catch (err) {
@@ -109,9 +70,13 @@ export const signBlockedShield = async (
 };
 
 export const signRemoveProof = async (
-  firstBlindedCommitment: string,
+  blindedCommitmentsOut: string[],
+  railgunTxidIfHasUnshield: string,
 ): Promise<string> => {
-  const message = getRemoveProofMessage(firstBlindedCommitment);
+  const message = getRemoveProofMessage(
+    blindedCommitmentsOut,
+    railgunTxidIfHasUnshield,
+  );
   return signMessage(message);
 };
 
@@ -131,9 +96,13 @@ const getBlockedShieldMessage = (
   return utf8ToBytes(JSON.stringify(data));
 };
 
-const getRemoveProofMessage = (firstBlindedCommitment: string): Uint8Array => {
+const getRemoveProofMessage = (
+  blindedCommitmentsOut: string[],
+  railgunTxidIfHasUnshield: string,
+): Uint8Array => {
   const data = {
-    firstBlindedCommitment,
+    blindedCommitmentsOut,
+    railgunTxidIfHasUnshield,
   };
   return utf8ToBytes(JSON.stringify(data));
 };
@@ -155,12 +124,16 @@ export const verifyBlockedShield = async (
 };
 
 export const verifyRemoveProof = async (
-  firstBlindedCommitment: string,
+  blindedCommitmentsOut: string[],
+  railgunTxidIfHasUnshield: string,
   publicKey: string,
   signature: string,
 ): Promise<boolean> => {
   try {
-    const message = getRemoveProofMessage(firstBlindedCommitment);
+    const message = getRemoveProofMessage(
+      blindedCommitmentsOut,
+      railgunTxidIfHasUnshield,
+    );
     return await verify(signature, message, publicKey);
   } catch (err) {
     return false;

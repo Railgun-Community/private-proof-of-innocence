@@ -137,6 +137,7 @@ describe('api', function () {
     expect(body).to.have.keys(['listKeys', 'forNetwork']);
     expect(body.forNetwork).to.have.keys(['Ethereum_Goerli']);
     expect(body.forNetwork.Ethereum_Goerli).to.have.keys([
+      'legacyTransactProofs',
       'txidStatus',
       'listStatuses',
       'shieldQueueStatus',

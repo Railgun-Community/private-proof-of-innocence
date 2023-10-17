@@ -130,7 +130,8 @@ describe('transact-proof-mempool', () => {
     await expect(
       transactProofMempoolDB.proofExists(
         listKey,
-        transactProofData.blindedCommitmentsOut[0],
+        transactProofData.blindedCommitmentsOut,
+        transactProofData.railgunTxidIfHasUnshield,
       ),
     ).to.eventually.equal(true);
 
@@ -205,7 +206,12 @@ describe('transact-proof-mempool', () => {
       ),
     ).to.deep.equal([transactProofData1, transactProofData2]);
 
-    bloomFilter.add(transactProofData1.blindedCommitmentsOut[0]);
+    bloomFilter.add(
+      TransactProofMempoolCache.getBlindedCommitmentsCacheString(
+        transactProofData1.blindedCommitmentsOut,
+        transactProofData1.railgunTxidIfHasUnshield,
+      ),
+    );
     const bloomFilterSerializedWithProof1 =
       POINodeBloomFilter.serialize(bloomFilter);
     expect(
@@ -234,6 +240,14 @@ describe('transact-proof-mempool', () => {
       txidMerkleroot: '0x0987654321',
       blindedCommitmentsOut: ['0x7777', '0x6666'],
       railgunTxidIfHasUnshield: '0x00',
+    };
+    const transactProofData3: TransactProofData = {
+      snarkProof: MOCK_SNARK_PROOF,
+      poiMerkleroots: ['0x9999', '0x8888'],
+      txidMerklerootIndex: 59,
+      txidMerkleroot: '0x0987654321',
+      blindedCommitmentsOut: ['0x7777', '0x6666'],
+      railgunTxidIfHasUnshield: '0x45678900', // Same as #2 with a different railgunTxid - to test an edge case
     };
 
     verifyTransactProofStub.resolves(true);
@@ -268,10 +282,16 @@ describe('transact-proof-mempool', () => {
       txidVersion,
       transactProofData2,
     );
+    await TransactProofMempool.submitProof(
+      listKey,
+      networkName,
+      txidVersion,
+      transactProofData3,
+    );
 
     expect(
       TransactProofMempoolCache.getCacheSize(listKey, networkName, txidVersion),
-    ).to.equal(2);
+    ).to.equal(3);
 
     TransactProofMempoolCache.clearCache_FOR_TEST_ONLY();
     expect(
@@ -281,17 +301,19 @@ describe('transact-proof-mempool', () => {
     await TransactProofMempool.inflateCacheFromDatabase(MOCK_LIST_KEYS);
     expect(
       TransactProofMempoolCache.getCacheSize(listKey, networkName, txidVersion),
-    ).to.equal(2);
+    ).to.equal(3);
 
     // Remove a proof and check cache
     await TransactProofMempoolPruner.removeProof(
       listKey,
       networkName,
       txidVersion,
-      '0x3333',
+      transactProofData1.blindedCommitmentsOut,
+      transactProofData1.railgunTxidIfHasUnshield,
+      false, // shouldSendNodeRequest
     );
     expect(
       TransactProofMempoolCache.getCacheSize(listKey, networkName, txidVersion),
-    ).to.equal(1);
+    ).to.equal(2);
   }).timeout(10000);
 });

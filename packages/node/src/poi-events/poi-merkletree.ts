@@ -177,48 +177,32 @@ export class POIMerkletree {
     return { tree: latestTree, index: latestIndex + 1 };
   }
 
-  static getEventBlindedCommitmentIndex(tree: number, index: number): number {
+  static getGlobalIndex(tree: number, index: number): number {
     return tree * TREE_MAX_ITEMS + index;
   }
 
-  static getTreeAndIndexFromEventBlindedCommitmentIndex(
-    blindedCommitmentStartingIndex: number,
-  ): {
+  static getTreeAndIndexFromEventIndex(eventIndex: number): {
     tree: number;
     index: number;
   } {
     return {
-      tree: Math.floor(blindedCommitmentStartingIndex / TREE_MAX_ITEMS),
-      index: blindedCommitmentStartingIndex % TREE_MAX_ITEMS,
+      tree: Math.floor(eventIndex / TREE_MAX_ITEMS),
+      index: eventIndex % TREE_MAX_ITEMS,
     };
   }
 
-  private static validateBlindedCommitmentIndex(
-    blindedCommitmentStartingIndex: number,
-    tree: number,
-    index: number,
-  ): boolean {
-    const nextEventBlindedCommitmentIndex =
-      POIMerkletree.getEventBlindedCommitmentIndex(tree, index);
-    return nextEventBlindedCommitmentIndex === blindedCommitmentStartingIndex;
-  }
-
-  async insertLeaf(blindedCommitmentStartingIndex: number, nodeHash: string) {
+  async insertLeaf(eventIndex: number, nodeHash: string) {
     if (this.isUpdating) {
       throw new Error('POI merkletree is already updating');
     }
     this.isUpdating = true;
 
     const { tree, index } = await this.getNextTreeAndIndex();
-    const isValidIndex = POIMerkletree.validateBlindedCommitmentIndex(
-      blindedCommitmentStartingIndex,
-      tree,
-      index,
-    );
-    if (!isValidIndex) {
+    const nextEventCommitmentIndex = POIMerkletree.getGlobalIndex(tree, index);
+    if (eventIndex !== nextEventCommitmentIndex) {
       this.isUpdating = false;
       throw new Error(
-        `[Warning] Invalid blindedCommitmentStartingIndex ${blindedCommitmentStartingIndex} for POI merkletree insert`,
+        `[Warning] Invalid eventIndex ${eventIndex} for POI merkletree insert - next expected ${nextEventCommitmentIndex}`,
       );
     }
 
@@ -228,7 +212,7 @@ export class POIMerkletree {
   }
 
   async insertMultipleLeaves_TEST_ONLY(
-    blindedCommitmentStartingIndex: number,
+    eventIndex: number,
     nodeHashes: string[],
   ): Promise<void> {
     if (this.isUpdating) {
@@ -237,15 +221,11 @@ export class POIMerkletree {
     this.isUpdating = true;
 
     const { tree, index } = await this.getNextTreeAndIndex();
-    const isValidIndex = POIMerkletree.validateBlindedCommitmentIndex(
-      blindedCommitmentStartingIndex,
-      tree,
-      index,
-    );
-    if (!isValidIndex) {
+    const nextEventCommitmentIndex = POIMerkletree.getGlobalIndex(tree, index);
+    if (eventIndex !== nextEventCommitmentIndex) {
       this.isUpdating = false;
       throw new Error(
-        `[Warning] Invalid blindedCommitmentStartingIndex for POI merkletree insert`,
+        `[Warning] Invalid eventIndex ${eventIndex} for POI merkletree insert - next expected ${nextEventCommitmentIndex}`,
       );
     }
 

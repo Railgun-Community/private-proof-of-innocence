@@ -91,7 +91,6 @@ export type TransactProofMempoolDBItem = {
   txidMerkleroot: string;
   txidMerklerootIndex: number;
   blindedCommitmentsOut: string[];
-  firstBlindedCommitment: string;
   railgunTxidIfHasUnshield: string;
 };
 
@@ -108,10 +107,7 @@ export type LegacyTransactProofMempoolDBItem = {
 export type POIOrderedEventDBItem = {
   listKey: string;
   index: number;
-  blindedCommitmentStartingIndex: number;
-  blindedCommitments: string[];
-  firstBlindedCommitment: string;
-  proof: DBOptional<SnarkProof>;
+  blindedCommitment: string;
   signature: string;
 };
 

@@ -11,6 +11,7 @@ import {
 } from '../../models/database-types';
 import { AbstractDatabase } from '../abstract-database';
 import { Filter } from 'mongodb';
+import { hexToBigInt } from '@railgun-community/wallet';
 
 export class TransactProofPerListMempoolDatabase extends AbstractDatabase<TransactProofMempoolDBItem> {
   constructor(networkName: NetworkName, txidVersion: TXIDVersion) {
@@ -18,15 +19,19 @@ export class TransactProofPerListMempoolDatabase extends AbstractDatabase<Transa
   }
 
   async createCollectionIndices() {
-    await this.createIndex(['listKey', 'firstBlindedCommitment'], {
-      unique: true,
-    });
+    await this.createIndex(
+      ['listKey', 'blindedCommitmentsOut', 'railgunTxidIfHasUnshield'],
+      {
+        unique: true,
+      },
+    );
+    await this.createIndex(['listKey', 'blindedCommitmentsOut']);
+    await this.createIndex(['listKey', 'railgunTxidIfHasUnshield']);
   }
 
   async insertTransactProof(
     listKey: string,
     transactProofData: TransactProofData,
-    firstBlindedCommitment: string,
   ): Promise<void> {
     const item: TransactProofMempoolDBItem = {
       listKey,
@@ -36,51 +41,76 @@ export class TransactProofPerListMempoolDatabase extends AbstractDatabase<Transa
       txidMerklerootIndex: transactProofData.txidMerklerootIndex,
       blindedCommitmentsOut: transactProofData.blindedCommitmentsOut,
       railgunTxidIfHasUnshield: transactProofData.railgunTxidIfHasUnshield,
-      firstBlindedCommitment,
     };
     return this.insertOne(item);
   }
 
   async proofExists(
     listKey: string,
-    firstBlindedCommitment: string,
+    blindedCommitmentsOut: string[],
+    railgunTxidIfHasUnshield: string,
   ): Promise<boolean> {
-    const filter: DBFilter<TransactProofMempoolDBItem> = {
+    if (!blindedCommitmentsOut.length) {
+      return false;
+    }
+    const filter: Filter<TransactProofMempoolDBItem> = {
       listKey,
-      firstBlindedCommitment,
+      blindedCommitmentsOut, // find all - array compare in-order
+      railgunTxidIfHasUnshield,
     };
     return this.exists(filter);
   }
 
-  async proofExistsContainingBlindedCommitment(
+  private async getProofContainingBlindedCommitmentOut(
     listKey: string,
-    blindedCommitment: string,
-  ): Promise<boolean> {
+    blindedCommitmentOut: string,
+  ): Promise<Optional<TransactProofMempoolDBItem>> {
     const filter: Filter<TransactProofMempoolDBItem> = {
       listKey,
-      blindedCommitmentsOut: blindedCommitment,
+      blindedCommitmentsOut: blindedCommitmentOut, // single compare for find-in-array
     };
-    return this.exists(filter);
+    return this.findOne(filter);
   }
 
-  async proofExistsContainingRailgunTxidForUnshield(
+  private async getProofContainingRailgunTxidIfHasUnshield(
     listKey: string,
-    blindedCommitment: string,
-  ): Promise<boolean> {
+    railgunTxidIfHasUnshield: string,
+  ): Promise<Optional<TransactProofMempoolDBItem>> {
+    if (hexToBigInt(railgunTxidIfHasUnshield) === 0n) {
+      return undefined;
+    }
     const filter: Filter<TransactProofMempoolDBItem> = {
       listKey,
-      railgunTxidIfHasUnshield: blindedCommitment,
+      railgunTxidIfHasUnshield,
     };
-    return this.exists(filter);
+    return this.findOne(filter);
+  }
+
+  async getProofContainingBlindedCommitmentOrRailgunTxidIfHasUnshield(
+    listKey: string,
+    blindedCommitment: string,
+  ): Promise<Optional<TransactProofMempoolDBItem>> {
+    return (
+      (await this.getProofContainingBlindedCommitmentOut(
+        listKey,
+        blindedCommitment,
+      )) ??
+      (await this.getProofContainingRailgunTxidIfHasUnshield(
+        listKey,
+        blindedCommitment,
+      ))
+    );
   }
 
   async deleteProof(
     listKey: string,
-    firstBlindedCommitment: string,
+    blindedCommitmentsOut: string[],
+    railgunTxidIfHasUnshield: string,
   ): Promise<void> {
-    const filter: DBFilter<TransactProofMempoolDBItem> = {
+    const filter: Filter<TransactProofMempoolDBItem> = {
       listKey,
-      firstBlindedCommitment,
+      blindedCommitmentsOut: { $all: blindedCommitmentsOut },
+      railgunTxidIfHasUnshield,
     };
     return this.deleteOne(filter);
   }

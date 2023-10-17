@@ -48,17 +48,17 @@ describe('legacy-transact-proof-mempool', () => {
       WalletModule,
       'tryValidateRailgunTxidOccurredBeforeBlockNumber',
     ).resolves(true);
+
+    legacyTransactProofMempoolVerifyBlindedCommitmentStub = Sinon.stub(
+      LegacyTransactProofMempool,
+      'verifyBlindedCommitment',
+    ).resolves(true);
   });
 
   beforeEach(async () => {
     await legacyTransactProofMempoolDB.deleteAllItems_DANGEROUS();
     await orderedEventDB.deleteAllItems_DANGEROUS();
     LegacyTransactProofMempoolCache.clearCache_FOR_TEST_ONLY();
-
-    legacyTransactProofMempoolVerifyBlindedCommitmentStub = Sinon.stub(
-      LegacyTransactProofMempool,
-      'verifyBlindedCommitment',
-    ).resolves(true);
   });
 
   afterEach(async () => {
@@ -220,6 +220,8 @@ describe('legacy-transact-proof-mempool', () => {
         WalletModule,
         'tryGetGlobalUTXOTreePositionForRailgunTransactionCommitment',
       ).resolves(22);
+
+    legacyTransactProofMempoolVerifyBlindedCommitmentStub.restore();
 
     expect(
       await LegacyTransactProofMempool.verifyBlindedCommitment(

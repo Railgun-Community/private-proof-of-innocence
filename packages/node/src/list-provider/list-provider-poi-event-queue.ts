@@ -15,11 +15,7 @@ import {
   SignedPOIEvent,
 } from '../models/poi-types';
 import { POIOrderedEventsDatabase } from '../database/databases/poi-ordered-events-database';
-import {
-  signPOIEventLegacyTransact,
-  signPOIEventShield,
-  signPOIEventTransact,
-} from '../util/ed25519';
+import { signPOIEvent } from '../util/ed25519';
 import { POIEventList } from '../poi-events/poi-event-list';
 import { Config } from '../config/config';
 import { ShieldQueueDatabase } from '../database/databases/shield-queue-database';
@@ -108,20 +104,19 @@ export class ListProviderPOIEventQueue {
       blindedCommitmentsOut.push(transactProofData.railgunTxidIfHasUnshield);
     }
 
-    dbg(
-      `Queue transact event - first blinded commitment ${blindedCommitmentsOut[0]}`,
-    );
+    blindedCommitmentsOut.forEach(blindedCommitment => {
+      dbg(`Queue transact event - blinded commitment ${blindedCommitment}`);
 
-    const poiEvent: POIEventTransact = {
-      type: POIEventType.Transact,
-      blindedCommitments: blindedCommitmentsOut,
-      proof: transactProofData.snarkProof,
-    };
-    return ListProviderPOIEventQueue.queuePOIEvent(
-      networkName,
-      txidVersion,
-      poiEvent,
-    );
+      const poiEvent: POIEventTransact = {
+        type: POIEventType.Transact,
+        blindedCommitment,
+      };
+      return ListProviderPOIEventQueue.queuePOIEvent(
+        networkName,
+        txidVersion,
+        poiEvent,
+      );
+    });
   }
 
   static queueUnsignedPOILegacyTransactEvent(
@@ -144,21 +139,15 @@ export class ListProviderPOIEventQueue {
     );
   }
 
-  private static getPOIEventFirstBlindedCommitment(poiEvent: POIEvent) {
-    switch (poiEvent.type) {
-      case POIEventType.LegacyTransact:
-      case POIEventType.Shield:
-        return poiEvent.blindedCommitment;
-      case POIEventType.Transact:
-        return poiEvent.blindedCommitments[0];
-    }
-  }
-
   private static queuePOIEvent(
     networkName: NetworkName,
     txidVersion: TXIDVersion,
     poiEvent: POIEvent,
   ) {
+    if (!ListProviderPOIEventQueue.listKey) {
+      return;
+    }
+
     ListProviderPOIEventQueue.poiEventQueue[networkName] ??= {
       [TXIDVersion.V2_PoseidonMerkle]: [],
     };
@@ -167,10 +156,7 @@ export class ListProviderPOIEventQueue {
       ListProviderPOIEventQueue.poiEventQueue[networkName]?.[txidVersion];
 
     const existingEvent = queue?.find(e => {
-      return (
-        ListProviderPOIEventQueue.getPOIEventFirstBlindedCommitment(e) ===
-        ListProviderPOIEventQueue.getPOIEventFirstBlindedCommitment(poiEvent)
-      );
+      return e.blindedCommitment === poiEvent.blindedCommitment;
     });
     if (isDefined(existingEvent)) {
       dbg(`Event exists in queue... ignore`);
@@ -201,86 +187,11 @@ export class ListProviderPOIEventQueue {
     );
   }
 
-  static async createSignedPOIEvent(
-    index: number,
-    blindedCommitmentStartingIndex: number,
-    poiEvent: POIEvent,
-  ) {
-    switch (poiEvent.type) {
-      case POIEventType.Shield:
-        return ListProviderPOIEventQueue.createSignedPOIShieldEvent(
-          index,
-          blindedCommitmentStartingIndex,
-          poiEvent,
-        );
-      case POIEventType.Transact:
-        return ListProviderPOIEventQueue.createSignedPOITransactEvent(
-          index,
-          blindedCommitmentStartingIndex,
-          poiEvent,
-        );
-      case POIEventType.LegacyTransact:
-        return ListProviderPOIEventQueue.createSignedPOILegacyTransactEvent(
-          index,
-          blindedCommitmentStartingIndex,
-          poiEvent,
-        );
-    }
-  }
-
-  private static async createSignedPOIShieldEvent(
-    index: number,
-    blindedCommitmentStartingIndex: number,
-    poiEventShield: POIEventShield,
-  ): Promise<SignedPOIEvent> {
-    const signature = await signPOIEventShield(
-      index,
-      blindedCommitmentStartingIndex,
-      poiEventShield,
-    );
+  static async createSignedPOIEvent(index: number, poiEvent: POIEvent) {
+    const signature = await signPOIEvent(index, poiEvent);
     return {
       index,
-      blindedCommitmentStartingIndex,
-      blindedCommitments: [poiEventShield.blindedCommitment],
-      proof: undefined,
-      signature,
-    };
-  }
-
-  static async createSignedPOITransactEvent(
-    index: number,
-    blindedCommitmentStartingIndex: number,
-    poiEventTransact: POIEventTransact,
-  ): Promise<SignedPOIEvent> {
-    const signature = await signPOIEventTransact(
-      index,
-      blindedCommitmentStartingIndex,
-      poiEventTransact,
-    );
-    return {
-      index,
-      blindedCommitmentStartingIndex,
-      blindedCommitments: poiEventTransact.blindedCommitments,
-      proof: poiEventTransact.proof,
-      signature,
-    };
-  }
-
-  static async createSignedPOILegacyTransactEvent(
-    index: number,
-    blindedCommitmentStartingIndex: number,
-    poiEventLegacyTransact: POIEventLegacyTransact,
-  ): Promise<SignedPOIEvent> {
-    const signature = await signPOIEventLegacyTransact(
-      index,
-      blindedCommitmentStartingIndex,
-      poiEventLegacyTransact,
-    );
-    return {
-      index,
-      blindedCommitmentStartingIndex,
-      blindedCommitments: [poiEventLegacyTransact.blindedCommitment],
-      proof: undefined,
+      blindedCommitment: poiEvent.blindedCommitment,
       signature,
     };
   }
@@ -327,20 +238,15 @@ export class ListProviderPOIEventQueue {
       if (
         await orderedEventsDB.eventExists(
           ListProviderPOIEventQueue.listKey,
-          ListProviderPOIEventQueue.getPOIEventFirstBlindedCommitment(poiEvent),
+          poiEvent.blindedCommitment,
         )
       ) {
         queue.splice(0, 1);
         throw new Error('Event already exists in database');
       }
 
-      const blindedCommitmentStartingIndex = lastAddedItem
-        ? lastAddedItem.blindedCommitmentStartingIndex +
-          lastAddedItem.blindedCommitments.length
-        : 0;
       const signedPOIEvent: SignedPOIEvent = await this.createSignedPOIEvent(
         nextIndex,
-        blindedCommitmentStartingIndex,
         poiEvent,
       );
 

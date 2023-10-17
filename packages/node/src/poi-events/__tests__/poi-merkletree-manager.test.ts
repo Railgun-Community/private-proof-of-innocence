@@ -49,8 +49,13 @@ describe('poi-merkletree-manager', () => {
     );
 
     await POIMerkletreeManager.addPOIEvent(listKey, networkName, txidVersion, {
-      blindedCommitmentStartingIndex: 0,
-      blindedCommitments: ['0x1234', '0x5678'],
+      index: 0,
+      blindedCommitment: '0x1234',
+    } as SignedPOIEvent);
+
+    await POIMerkletreeManager.addPOIEvent(listKey, networkName, txidVersion, {
+      index: 1,
+      blindedCommitment: '0x5678',
     } as SignedPOIEvent);
 
     const merkleProofs = await POIMerkletreeManager.getMerkleProofs(
