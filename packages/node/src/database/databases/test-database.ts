@@ -12,6 +12,17 @@ export class TestDatabase extends AbstractDatabase<TestDBItem> {
     await this.createIndex(['test'], { unique: true });
   }
 
+  async createLongIndexForTest() {
+    await this.createIndex([
+      'veryBigAndLongIndexNameToForceFailurePart1',
+      'veryBigAndLongIndexNameToForceFailurePart2',
+    ]);
+  }
+
+  async createCustomNameIndexForTest() {
+    await this.createIndex(['test'], { name: 'customIndexName' });
+  }
+
   async getItem(
     filter: Partial<TestDBItem>,
   ): Promise<WithId<TestDBItem> | null | undefined> {

@@ -156,8 +156,10 @@ export abstract class AbstractDatabase<T extends Document> {
     let indexName: string;
 
     if (options !== undefined && options.name !== undefined) {
+      // If a custom name is provided, use it
       indexName = options.name;
     } else {
+      // Otherwise, derive the name from the fields in indexSpec
       indexName = indexSpec.join('_');
     }
 

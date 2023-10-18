@@ -23,7 +23,7 @@ export enum CollectionName {
   ShieldQueue = 'ShieldQueue',
 
   // Proof mempools
-  TransactProofPerListMempool = 'TxProofPerListPool',
+  TransactProofPerListMempool = 'TxPpLP', // shortened for collection+index name < 64 (documentDB limit)
   LegacyTransactProofMempool = 'LegacyTxProofPool',
 
   // POI databases
@@ -138,4 +138,6 @@ export type BlockedShieldsPerListDBItem = {
 
 export type TestDBItem = {
   test: string;
+  veryBigAndLongIndexNameToForceFailurePart1?: string;
+  veryBigAndLongIndexNameToForceFailurePart2?: string;
 };
