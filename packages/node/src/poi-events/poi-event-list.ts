@@ -9,6 +9,9 @@ import { SignedPOIEvent } from '../models/poi-types';
 import { verifyPOIEvent } from '../util/ed25519';
 import { POIMerkletreeManager } from './poi-merkletree-manager';
 import { TransactProofMempoolPruner } from '../proof-mempool/transact-proof-mempool-pruner';
+import debug from 'debug';
+
+const dbg = debug('poi:event-list');
 
 export class POIEventList {
   static getTotalEventsLength(eventLengths: POIEventLengths): number {
@@ -111,8 +114,9 @@ export class POIEventList {
         txidVersion,
         signedPOIEvent.blindedCommitment,
       );
-    } catch {
+    } catch (err) {
       // no op
+      dbg(err);
       return;
     }
   }

@@ -11,6 +11,7 @@ import {
   getLatestRailgunTxidData,
   getRailgunTxidMerkleroot,
   fullResetTXIDMerkletrees,
+  validateRailgunTxidExists,
 } from '@railgun-community/wallet';
 import { RailgunTxidMerkletreeStatusDatabase } from '../database/databases/railgun-txid-merkletree-status-database';
 import { POINodeRequest } from '../api/poi-node-request';
@@ -18,7 +19,6 @@ import debug from 'debug';
 import { PushSync } from '../sync/push-sync';
 import { verifyTxidMerkleroot } from '../util/ed25519';
 import { isListProvider, nodeURLForListKey } from '../config/general';
-import { ListProviderPOIEventQueue } from '../list-provider/list-provider-poi-event-queue';
 
 const dbg = debug('poi:railgun-txid-merkletree');
 
@@ -55,6 +55,14 @@ export class RailgunTxidMerkletreeManager {
       index,
       merkleroot,
     );
+  }
+
+  static async checkIfRailgunTxidExists(
+    txidVersion: TXIDVersion,
+    networkName: NetworkName,
+    railgunTxid: string,
+  ): Promise<boolean> {
+    return validateRailgunTxidExists(txidVersion, networkName, railgunTxid);
   }
 
   static async fullResetRailgunTxidMerkletrees(networkName: NetworkName) {

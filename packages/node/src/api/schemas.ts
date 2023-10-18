@@ -136,6 +136,38 @@ export const SubmitLegacyTransactProofsBodySchema: AllowedSchema = {
   required: ['txidVersion'],
 };
 
+export const SubmitSingleCommitmentProofsBodySchema: AllowedSchema = {
+  type: 'object',
+  properties: {
+    txidVersion: { type: 'string' },
+    singleCommitmentProofsData: {
+      type: 'object',
+      properties: {
+        commitment: { type: 'string' },
+        npk: { type: 'string' },
+        utxoTreeIn: { type: 'number' },
+        utxoTreeOut: { type: 'number' },
+        utxoPositionOut: { type: 'number' },
+        railgunTxid: { type: 'string' },
+        pois: {
+          type: 'object',
+          // Too many params to add here
+        },
+      },
+      required: [
+        'commitment',
+        'npk',
+        'utxoTreeIn',
+        'utxoTreeOut',
+        'utxoPositionOut',
+        'railgunTxid',
+        'pois',
+      ],
+    },
+  },
+  required: ['txidVersion', 'singleCommitmentProofsData'],
+};
+
 export const RemoveTransactProofBodySchema: AllowedSchema = {
   type: 'object',
   properties: {
@@ -238,4 +270,13 @@ export const ValidateTxidMerklerootBodySchema: AllowedSchema = {
     merkleroot: { type: 'string' },
   },
   required: ['txidVersion', 'tree', 'index', 'merkleroot'],
+};
+
+export const ValidatePOIMerklerootsBodySchema: AllowedSchema = {
+  type: 'object',
+  properties: {
+    txidVersion: { type: 'string' },
+    poiMerkleroots: { type: 'array', items: { type: 'string' } },
+  },
+  required: ['txidVersion', 'poiMerkleroots'],
 };

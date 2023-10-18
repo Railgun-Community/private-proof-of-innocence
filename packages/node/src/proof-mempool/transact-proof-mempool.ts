@@ -5,7 +5,6 @@ import {
   isDefined,
 } from '@railgun-community/shared-models';
 import { TransactProofPerListMempoolDatabase } from '../database/databases/transact-proof-per-list-mempool-database';
-import { POIHistoricalMerklerootDatabase } from '../database/databases/poi-historical-merkleroot-database';
 import { TransactProofMempoolCache } from './transact-proof-mempool-cache';
 import { verifyTransactProof } from '../util/snark-proof-verify';
 import { POINodeCountingBloomFilter } from '../util/poi-node-bloom-filters';
@@ -20,6 +19,7 @@ import { PushSync } from '../sync/push-sync';
 import { TransactProofMempoolPruner } from './transact-proof-mempool-pruner';
 import { tryValidateRailgunTxidOccurredBeforeBlockNumber } from '../engine/wallet';
 import { TransactProofEventMatcher } from './transact-proof-event-matcher';
+import { POIMerkletreeManager } from '../poi-events/poi-merkletree-manager';
 
 const dbg = debug('poi:transact-proof-mempool');
 
@@ -68,10 +68,10 @@ export class TransactProofMempool {
     networkName: NetworkName,
     txidVersion: TXIDVersion,
     transactProofData: TransactProofData,
-  ): Promise<boolean> {
+  ): Promise<void> {
     const nodeURL = nodeURLForListKey(listKey);
     if (!isDefined(nodeURL)) {
-      return false;
+      return;
     }
     try {
       await PushSync.sendNodeRequest(
@@ -87,20 +87,18 @@ export class TransactProofMempool {
         },
         true, // shouldThrow
       );
-      return true;
     } catch (err) {
       dbg(
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         `Error submitting transact proof to destination node: ${err.message}`,
       );
       if (!(err instanceof Error)) {
-        return false;
+        return;
       }
       if (err.message.includes(VALIDATION_ERROR_TEXT)) {
         // This will throw error for the client, when submitting proof.
         throw err;
       }
-      return false;
     }
   }
 
@@ -145,14 +143,13 @@ export class TransactProofMempool {
 
     if (!isLegacyTransaction) {
       // Verify all POI Merkleroots exist
-      const poiMerklerootDb = new POIHistoricalMerklerootDatabase(
-        networkName,
-        txidVersion,
-      );
-      const allPOIMerklerootsExist = await poiMerklerootDb.allMerklerootsExist(
-        listKey,
-        transactProofData.poiMerkleroots,
-      );
+      const allPOIMerklerootsExist =
+        await POIMerkletreeManager.validateAllPOIMerklerootsExist(
+          txidVersion,
+          networkName,
+          listKey,
+          transactProofData.poiMerkleroots,
+        );
       if (!allPOIMerklerootsExist) {
         dbg(
           `Cannot add proof - POI merkleroots must all exist. Is this a legacy transaction? ${networkName} TXID tree:index ${tree}:${index}.`,

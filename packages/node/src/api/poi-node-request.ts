@@ -10,6 +10,8 @@ import {
   TXIDVersion,
   SubmitLegacyTransactProofParams,
   LegacyTransactProofData,
+  SubmitSingleCommitmentProofsParams,
+  SingleCommitmentProofsData,
 } from '@railgun-community/shared-models';
 import axios, { AxiosError } from 'axios';
 import {
@@ -225,6 +227,25 @@ export class POINodeRequest {
         txidVersion,
         listKeys: [],
         legacyTransactProofDatas: [legacyTransactProofData],
+      },
+    );
+  };
+
+  static submitSingleCommitmentProof = async (
+    nodeURL: string,
+    networkName: NetworkName,
+    txidVersion: TXIDVersion,
+    singleCommitmentProofsData: SingleCommitmentProofsData,
+  ) => {
+    const chain = NETWORK_CONFIG[networkName].chain;
+    const route = `submit-single-commitment-proofs/${chain.type}/${chain.id}`;
+    const url = POINodeRequest.getNodeRouteURL(nodeURL, route);
+
+    await POINodeRequest.postRequest<SubmitSingleCommitmentProofsParams, void>(
+      url,
+      {
+        txidVersion,
+        singleCommitmentProofsData,
       },
     );
   };

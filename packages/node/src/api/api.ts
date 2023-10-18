@@ -37,6 +37,8 @@ import {
   TransactProofData,
   SubmitLegacyTransactProofParams,
   LegacyTransactProofData,
+  ValidatePOIMerklerootsParams,
+  SubmitSingleCommitmentProofsParams,
 } from '@railgun-community/shared-models';
 import {
   GetTransactProofsBodySchema,
@@ -53,6 +55,8 @@ import {
   RemoveTransactProofBodySchema,
   GetLegacyTransactProofsBodySchema,
   SubmitLegacyTransactProofsBodySchema,
+  ValidatePOIMerklerootsBodySchema,
+  SubmitSingleCommitmentProofsBodySchema,
 } from './schemas';
 import 'dotenv/config';
 import {
@@ -68,6 +72,7 @@ import { BlockedShieldsSyncer } from '../shields/blocked-shields-syncer';
 import { POINodeRequest } from './poi-node-request';
 import { TransactProofMempoolPruner } from '../proof-mempool/transact-proof-mempool-pruner';
 import { LegacyTransactProofMempool } from '../proof-mempool/legacy/legacy-transact-proof-mempool';
+import { SingleCommitmentProofManager } from '../single-commitment-proof/single-commitment-proof-manager';
 
 const dbg = debug('poi:api');
 
@@ -567,6 +572,30 @@ export class API {
       SubmitLegacyTransactProofsBodySchema,
     );
 
+    this.safePost<void>(
+      '/submit-single-commitment-proofs/:chainType/:chainID',
+      async (req: Request) => {
+        const { chainType, chainID } = req.params;
+        const { txidVersion, singleCommitmentProofsData } =
+          req.body as SubmitSingleCommitmentProofsParams;
+
+        const networkName = networkNameForSerializedChain(chainType, chainID);
+
+        dbg(
+          `REQUEST: Submit Single Commitment (Transact) Proof: railgun txid ${singleCommitmentProofsData.railgunTxid}`,
+        );
+
+        // Submit and verify the proofs
+        await SingleCommitmentProofManager.submitProof(
+          networkName,
+          txidVersion,
+          singleCommitmentProofsData,
+        );
+      },
+      SharedChainTypeIDParamsSchema,
+      SubmitSingleCommitmentProofsBodySchema,
+    );
+
     this.safePost<POIsPerListMap>(
       '/pois-per-list/:chainType/:chainID',
       async (req: Request) => {
@@ -663,6 +692,26 @@ export class API {
       },
       SharedChainTypeIDParamsSchema,
       ValidateTxidMerklerootBodySchema,
+    );
+
+    this.safePost<boolean>(
+      '/validate-poi-merkleroots/:chainType/:chainID',
+      async (req: Request) => {
+        const { chainType, chainID } = req.params;
+        const { txidVersion, listKey, poiMerkleroots } =
+          req.body as ValidatePOIMerklerootsParams;
+        const networkName = networkNameForSerializedChain(chainType, chainID);
+        const isValid =
+          await POIMerkletreeManager.validateAllPOIMerklerootsExist(
+            txidVersion,
+            networkName,
+            listKey,
+            poiMerkleroots,
+          );
+        return isValid;
+      },
+      SharedChainTypeIDParamsSchema,
+      ValidatePOIMerklerootsBodySchema,
     );
   }
 }

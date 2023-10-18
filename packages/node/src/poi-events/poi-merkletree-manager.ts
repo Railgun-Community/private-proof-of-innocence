@@ -7,12 +7,15 @@ import {
   BlindedCommitmentType,
   POIsPerListMap,
   TXIDVersion,
+  Chain,
+  networkForChain,
 } from '@railgun-community/shared-models';
 import { Config } from '../config/config';
 import { POIMerkletree } from './poi-merkletree';
 import { SignedPOIEvent } from '../models/poi-types';
 import { TransactProofPerListMempoolDatabase } from '../database/databases/transact-proof-per-list-mempool-database';
 import { BlockedShieldsPerListDatabase } from '../database/databases/blocked-shields-per-list-database';
+import { POIHistoricalMerklerootDatabase } from '../database/databases/poi-historical-merkleroot-database';
 
 export class POIMerkletreeManager {
   private static merkletrees: Record<
@@ -195,5 +198,40 @@ export class POIMerkletreeManager {
     }
 
     return POIStatus.Missing;
+  }
+
+  static async validateAllPOIMerklerootsExist(
+    txidVersion: TXIDVersion,
+    networkName: NetworkName,
+    listKey: string,
+    poiMerkleroots: string[],
+  ) {
+    const poiMerklerootDb = new POIHistoricalMerklerootDatabase(
+      networkName,
+      txidVersion,
+    );
+    const allPOIMerklerootsExist = await poiMerklerootDb.allMerklerootsExist(
+      listKey,
+      poiMerkleroots,
+    );
+    return allPOIMerklerootsExist;
+  }
+
+  static async validateAllPOIMerklerootsExistWithChain(
+    txidVersion: TXIDVersion,
+    chain: Chain,
+    listKey: string,
+    poiMerkleroots: string[],
+  ) {
+    const network = networkForChain(chain);
+    if (!network) {
+      throw new Error('Network not found for chain');
+    }
+    return POIMerkletreeManager.validateAllPOIMerklerootsExist(
+      txidVersion,
+      network.name,
+      listKey,
+      poiMerkleroots,
+    );
   }
 }

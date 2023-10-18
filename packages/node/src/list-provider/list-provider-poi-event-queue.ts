@@ -97,6 +97,31 @@ export class ListProviderPOIEventQueue {
     );
   }
 
+  static queueUnsignedPOISingleCommitmentEvent(
+    listKey: string,
+    networkName: NetworkName,
+    txidVersion: TXIDVersion,
+    blindedCommitment: string,
+  ) {
+    if (ListProviderPOIEventQueue.listKey !== listKey) {
+      return;
+    }
+
+    dbg(
+      `Queue single commitment event - blinded commitment ${blindedCommitment}`,
+    );
+
+    const poiEvent: POIEventTransact = {
+      type: POIEventType.Transact,
+      blindedCommitment,
+    };
+    return ListProviderPOIEventQueue.queuePOIEvent(
+      networkName,
+      txidVersion,
+      poiEvent,
+    );
+  }
+
   static queueUnsignedPOITransactEvent(
     listKey: string,
     networkName: NetworkName,
