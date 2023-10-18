@@ -151,6 +151,23 @@ export abstract class AbstractDatabase<T extends Document> {
     if (indexSpec.length === 0) {
       return;
     }
+
+    // Derive index name from options or from the fields in indexSpec
+    let indexName: string;
+
+    if (options !== undefined && options.name !== undefined) {
+      indexName = options.name;
+    } else {
+      indexName = indexSpec.join('_');
+    }
+
+    // Check for combined length, with an extra character representing the $
+    if (this.collection.collectionName.length + indexName.length + 1 > 64) {
+      throw new Error(
+        `Combined length of collection name and index name exceeds 64 characters (AWS documentDB limit): ${this.collection.collectionName}_${indexName}`,
+      );
+    }
+
     return this.collection.createIndex(indexSpec as string[], options);
   }
 
