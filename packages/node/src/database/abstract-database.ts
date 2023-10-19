@@ -152,25 +152,27 @@ export abstract class AbstractDatabase<T extends Document> {
       return;
     }
 
-    // Derive index name from options or from the fields in indexSpec
-    let indexName: string;
-
-    if (options !== undefined && options.name !== undefined) {
-      // If a custom name is provided, use it
-      indexName = options.name;
-    } else {
-      // Otherwise, derive the name from the fields in indexSpec
-      indexName = indexSpec.join('_');
-    }
-
-    // Check for combined length, with an extra character representing the $
-    if (this.collection.collectionName.length + indexName.length + 1 > 64) {
+    // Check that the combined length of the collection name and index name is less than 63 characters
+    const collectionName = this.collection.collectionName;
+    const indexName = options?.name ?? indexSpec.join('_');
+    const combinedLength = collectionName.length + indexName.length;
+    if (combinedLength > 63) {
       throw new Error(
-        `Combined length of collection name and index name exceeds 64 characters (AWS documentDB limit): ${this.collection.collectionName}_${indexName}`,
+        `Index name ${indexName} is too long for collection ${collectionName}`,
       );
     }
 
-    return this.collection.createIndex(indexSpec as string[], options);
+    try {
+      return await this.collection.createIndex(indexSpec as string[], options);
+    } catch (err) {
+      this.dbg(
+        `Error while creating index with spec: ${JSON.stringify(
+          indexSpec,
+        )} and options: ${JSON.stringify(options)}`,
+      );
+      this.dbg(err.message);
+      throw err;
+    }
   }
 
   private onInsertError(err: MongoError) {

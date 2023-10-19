@@ -23,6 +23,7 @@ export class TransactProofPerListMempoolDatabase extends AbstractDatabase<Transa
       ['listKey', 'blindedCommitmentsOut', 'railgunTxidIfHasUnshield'],
       {
         unique: true,
+        name: 'lBR',
       },
     );
     await this.createIndex(['listKey', 'blindedCommitmentsOut']);
