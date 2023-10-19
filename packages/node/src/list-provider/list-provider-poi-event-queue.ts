@@ -205,7 +205,7 @@ export class ListProviderPOIEventQueue {
     const existingEvent = queue?.find(e => {
       return e.blindedCommitment === poiEvent.blindedCommitment;
     });
-    if (!isDefined(existingEvent)) {
+    if (isDefined(existingEvent)) {
       dbg(
         `Event exists in queue... ignore new event, but retrigger add-from-queue`,
       );
