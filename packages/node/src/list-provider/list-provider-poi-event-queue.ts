@@ -25,6 +25,7 @@ import debug from 'debug';
 import { POINodeRequest } from '../api/poi-node-request';
 import { PushSync } from '../sync/push-sync';
 import { hexToBigInt } from '@railgun-community/wallet';
+import { POIMerkletreeManager } from '../poi-events/poi-merkletree-manager';
 
 const dbg = debug('poi:event-queue');
 

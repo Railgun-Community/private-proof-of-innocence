@@ -17,7 +17,6 @@ import { NodeConfig, PollStatus } from '../models/general-types';
 import { TransactProofMempoolCache } from '../proof-mempool/transact-proof-mempool-cache';
 import { BlockedShieldsCache } from '../shields/blocked-shields-cache';
 import { BlockedShieldsSyncer } from '../shields/blocked-shields-syncer';
-import { getListKeysFromNodeConfigs } from '../config/general';
 import { LegacyTransactProofMempoolCache } from '../proof-mempool/legacy/legacy-transact-proof-mempool-cache';
 import { LegacyTransactProofMempool } from '../proof-mempool/legacy/legacy-transact-proof-mempool';
 import { POIMerkletreeManager } from '../poi-events/poi-merkletree-manager';
@@ -35,9 +34,9 @@ export class RoundRobinSyncer {
 
   private syncCount = 0;
 
-  constructor(nodeConfigs: NodeConfig[]) {
+  constructor(nodeConfigs: NodeConfig[], listKeys: string[]) {
     this.nodeConfigs = nodeConfigs;
-    this.listKeys = getListKeysFromNodeConfigs(nodeConfigs);
+    this.listKeys = listKeys;
   }
 
   getPollStatus(): PollStatus {

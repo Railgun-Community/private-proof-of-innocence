@@ -43,12 +43,15 @@ export class ProofOfInnocenceNode {
     this.host = host;
     this.port = port;
     this.listProvider = listProvider;
-    this.connectedNodeStartup = new ConnectedNodeStartup(nodeConfigs);
-    this.roundRobinSyncer = new RoundRobinSyncer(nodeConfigs);
     this.listKeys = getListKeysFromNodeConfigs(nodeConfigs);
     if (listProvider) {
       this.listKeys.push(listProvider.listKey);
     }
+    this.connectedNodeStartup = new ConnectedNodeStartup(
+      nodeConfigs,
+      this.listKeys,
+    );
+    this.roundRobinSyncer = new RoundRobinSyncer(nodeConfigs, this.listKeys);
     this.api = new API(this.listKeys);
   }
 

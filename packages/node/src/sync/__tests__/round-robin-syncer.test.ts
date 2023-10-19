@@ -106,9 +106,10 @@ describe('round-robin-syncer', () => {
 
     POIMerkletreeManager.initListMerkletrees([listKey]);
 
-    roundRobinSyncer = new RoundRobinSyncer([
-      { name: 'test', nodeURL, listKey },
-    ]);
+    roundRobinSyncer = new RoundRobinSyncer(
+      [{ name: 'test', nodeURL, listKey }],
+      [listKey],
+    );
 
     verifyTransactProofStub = sinon
       .stub(SnarkProofVerifyModule, 'verifyTransactProof')

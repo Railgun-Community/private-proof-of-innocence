@@ -4,7 +4,6 @@ import { POINodeRequest } from '../api/poi-node-request';
 import { Config } from '../config/config';
 import { NetworkName } from '@railgun-community/shared-models';
 import { ListProviderPOIEventQueue } from '../list-provider/list-provider-poi-event-queue';
-import { getListKeysFromNodeConfigs } from '../config/general';
 import { POIEventList } from '../poi-events/poi-event-list';
 
 const dbg = debug('poi:connected-node-startup');
@@ -14,9 +13,9 @@ export class ConnectedNodeStartup {
 
   private readonly listKeys: string[];
 
-  constructor(nodeConfigs: NodeConfig[]) {
+  constructor(nodeConfigs: NodeConfig[], listKeys: string[]) {
     this.nodeConfigs = nodeConfigs;
-    this.listKeys = getListKeysFromNodeConfigs(nodeConfigs);
+    this.listKeys = listKeys;
   }
 
   async start() {
