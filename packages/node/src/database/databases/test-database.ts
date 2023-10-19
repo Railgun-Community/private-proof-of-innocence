@@ -20,7 +20,7 @@ export class TestDatabase extends AbstractDatabase<TestDBItem> {
   }
 
   async createCustomNameIndexForTest() {
-    await this.createIndex(['test'], { name: 'customIndexName' });
+    await this.createIndex(['test2'], { name: 'customIndexName' });
   }
 
   async getItem(
