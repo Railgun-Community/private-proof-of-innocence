@@ -21,9 +21,8 @@ process.on('uncaughtException', (err: Error | string) => {
 // eslint-disable-next-line @typescript-eslint/no-floating-promises
 (async () => {
   // List providers use a local mongo instance, while aggregators use AWS DocDB.
-  Config.MONGODB_URL = isListProvider()
-    ? 'mongodb://localhost:27017'
-    : process.env.DOCUMENT_DB_URL;
+  Config.MONGODB_URL =
+    process.env.DOCUMENT_DB_URL ?? 'mongodb://localhost:27017';
 
   // Set env "LIST_PROVIDER=1" and "pkey=0xXXXX" to load a list provider.
   const listProvider = isListProvider()
