@@ -117,6 +117,17 @@ export class LegacyTransactProofMempool {
       return;
     }
 
+    // Verify that OrderedEvent for this list doesn't exist.
+    const orderedEventExists = await this.hasOrderedEventForBlindedCommitment(
+      networkName,
+      txidVersion,
+      legacyTransactProofData.blindedCommitment,
+    );
+    if (orderedEventExists) {
+      dbg('Event already exists for legacy blinded commitment');
+      return false;
+    }
+
     const isLegacyTransaction = await this.isLegacyTransaction(
       networkName,
       txidVersion,
@@ -230,18 +241,7 @@ export class LegacyTransactProofMempool {
       return false;
     }
 
-    // 2. Verify that OrderedEvent for this list doesn't exist.
-    const orderedEventExists = await this.hasOrderedEventForBlindedCommitment(
-      networkName,
-      txidVersion,
-      blindedCommitment,
-    );
-    if (orderedEventExists) {
-      dbg('Event already exists for legacy blinded commitment');
-      return false;
-    }
-
-    // 3. Verify that it is a legacy transaction
+    // 2. Verify that it is a legacy transaction
     const isLegacyTransaction = await this.isLegacyTransaction(
       networkName,
       txidVersion,
@@ -252,7 +252,7 @@ export class LegacyTransactProofMempool {
       return false;
     }
 
-    // 4. Calculate and verify blinded commitment
+    // 3. Calculate and verify blinded commitment
     const verified = await this.verifyBlindedCommitment(
       networkName,
       txidVersion,
