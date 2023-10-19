@@ -56,6 +56,8 @@ export class RoundRobinSyncer {
   private async poll() {
     const { nodeURL } = this.nodeConfigs[this.currentNodeIndex];
 
+    let shouldDelayNextPoll = true;
+
     try {
       const nodeStatusAllNetworks =
         await POINodeRequest.getNodeStatusAllNetworks(nodeURL);
@@ -63,7 +65,13 @@ export class RoundRobinSyncer {
       dbg('');
       dbg(`-- Syncing with ${nodeURL} -- `);
 
-      await this.updatePOIEventListAllNetworks(nodeURL, nodeStatusAllNetworks);
+      const totalEventsSynced = await this.updatePOIEventListAllNetworks(
+        nodeURL,
+        nodeStatusAllNetworks,
+      );
+      if (totalEventsSynced > 200) {
+        shouldDelayNextPoll = false;
+      }
 
       await this.updateTransactProofMempoolsAllNetworks(
         nodeURL,
@@ -98,8 +106,10 @@ export class RoundRobinSyncer {
       this.incrementNodeIndex();
       this.syncCount += 1;
 
-      // 15 second delay before next poll
-      await delay(15 * 1000);
+      if (shouldDelayNextPoll) {
+        // 15 second delay before next poll
+        await delay(15 * 1000);
+      }
 
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
       this.poll();
@@ -137,7 +147,9 @@ export class RoundRobinSyncer {
   async updatePOIEventListAllNetworks(
     nodeURL: string,
     nodeStatusAllNetworks: NodeStatusAllNetworks,
-  ) {
+  ): Promise<number> {
+    let totalEventsSynced = 0;
+
     for (const networkName of Config.NETWORK_NAMES) {
       const nodeStatus = nodeStatusAllNetworks.forNetwork[networkName];
       if (!nodeStatus) {
@@ -151,13 +163,14 @@ export class RoundRobinSyncer {
             continue;
           }
           try {
-            await this.updatePOIEventList(
+            const eventsSynced = await this.updatePOIEventList(
               nodeURL,
               networkName,
               txidVersion,
               listKey,
               listStatuses[listKey].poiEventLengths,
             );
+            totalEventsSynced += eventsSynced;
           } catch (err) {
             dbg(
               // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -167,6 +180,8 @@ export class RoundRobinSyncer {
         }
       }
     }
+
+    return totalEventsSynced;
   }
 
   private async updatePOIEventList(
@@ -175,7 +190,7 @@ export class RoundRobinSyncer {
     txidVersion: TXIDVersion,
     listKey: string,
     nodePOIEventLengths: POIEventLengths,
-  ) {
+  ): Promise<number> {
     const currentListLength = await POIEventList.getOverallEventsLength(
       listKey,
       networkName,
@@ -185,12 +200,12 @@ export class RoundRobinSyncer {
       POIEventList.getTotalEventsLength(nodePOIEventLengths) <=
       currentListLength
     ) {
-      return;
+      return 0;
     }
 
     // Update a range of events from this list.
     const startIndex = currentListLength;
-    const endIndex = startIndex + QueryLimits.MAX_EVENT_QUERY_RANGE_LENGTH - 1;
+    const endIndex = startIndex + QueryLimits.MAX_EVENT_QUERY_RANGE_LENGTH;
 
     const signedPOIEvents = await POINodeRequest.getPOIListEventRange(
       nodeURL,
@@ -211,6 +226,7 @@ export class RoundRobinSyncer {
       txidVersion,
       signedPOIEvents,
     );
+    return signedPOIEvents.length;
   }
 
   async updateTransactProofMempoolsAllNetworks(
