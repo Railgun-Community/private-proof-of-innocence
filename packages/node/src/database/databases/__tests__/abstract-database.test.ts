@@ -48,7 +48,7 @@ describe('abstract-database', () => {
     expect(indexExists).to.be.true;
   });
 
-  it.only('Should create an index with a custom name', async () => {
+  it('Should create an index with a custom name', async () => {
     // Create an index with a custom name in the TestDatabase
     await db.createCustomNameIndexForTest();
 
