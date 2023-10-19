@@ -64,7 +64,7 @@ describe('single-commitment-proof-manager', () => {
     checkIfRailgunTxidExistsStub.restore();
   });
 
-  it.only('Should add valid single-commitment-proofs', async () => {
+  it('Should add valid single-commitment-proofs', async () => {
     const singleCommitmentProofsData: SingleCommitmentProofsData = {
       railgunTxid:
         '0fefd169291c1deec2affa8dcbfbee4a4bbeddfc3b5723c031665ba631725c62',
