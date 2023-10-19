@@ -3,3 +3,6 @@ node_modules
 package-lock.json
 yarn-error.log
 pnpm-lock.yaml
+
+# Mac browser
+.DS_Store
