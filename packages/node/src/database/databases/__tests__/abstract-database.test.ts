@@ -64,7 +64,7 @@ describe('abstract-database', () => {
   it('Should throw error if combined length of collection and index name exceeds 64 characters', async () => {
     // Attempt to create an index with a long name in the TestDatabase
     await expect(db.createLongIndexForTest()).to.be.rejectedWith(
-      `Combined length of collection name and index name exceeds 64 characters (AWS documentDB limit)`,
+      'Index name veryBigAndLongIndexNameToForceFailurePart1_veryBigAndLongIndexNameToForceFailurePart2 is too long for collection Test',
     );
   });
 
