@@ -45,6 +45,7 @@ export const initEngineAndScanTXIDs = async () => {
           await getEngine().syncRailgunTransactionsForTXIDVersion(
             txidVersion,
             chain,
+            'initEngineAndScanTXIDs',
           );
 
           // Ensures that validated txid index is correct after TXID scan.
