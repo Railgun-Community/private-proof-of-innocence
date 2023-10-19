@@ -64,22 +64,21 @@ export class ConnectedNodeStartup {
 
           // The "minimum next add index" ensures that no connected nodes have a more-updated list than this node.
           // If they do, this node will wait to add new events until it's synced.
+          const listKey = ListProviderPOIEventQueue.listKey;
           for (const networkName of Config.NETWORK_NAMES) {
-            for (const listKey of this.listKeys) {
-              const poiEventLengths =
-                nodeStatusAllNetworks.forNetwork[networkName]?.listStatuses?.[
-                  listKey
-                ]?.poiEventLengths;
-              const eventListLength = poiEventLengths
-                ? POIEventList.getTotalEventsLength(poiEventLengths)
-                : 0;
-              const syncedIndex = eventListLength - 1;
-              ListProviderPOIEventQueue.tryUpdateMinimumNextAddIndex(
-                listKey,
-                networkName,
-                syncedIndex,
-              );
-            }
+            const poiEventLengths =
+              nodeStatusAllNetworks.forNetwork[networkName]?.listStatuses?.[
+                listKey
+              ]?.poiEventLengths;
+            const eventListLength = poiEventLengths
+              ? POIEventList.getTotalEventsLength(poiEventLengths)
+              : 0;
+            const syncedIndex = eventListLength;
+            ListProviderPOIEventQueue.tryUpdateMinimumNextAddIndex(
+              listKey,
+              networkName,
+              syncedIndex,
+            );
           }
         } catch (err) {
           dbg(

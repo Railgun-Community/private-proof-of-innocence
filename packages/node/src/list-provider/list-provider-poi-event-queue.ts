@@ -277,7 +277,7 @@ export class ListProviderPOIEventQueue {
       const nextIndex = lastAddedItem ? lastAddedItem.index + 1 : 0;
       if (
         nextIndex > 0 &&
-        nextIndex <=
+        nextIndex <
           ListProviderPOIEventQueue.getMinimumNextAddIndex(networkName)
       ) {
         throw new Error(
