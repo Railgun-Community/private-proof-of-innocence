@@ -23,3 +23,6 @@ coverage/
 
 # Prover Artifacts
 artifacts-v*/
+
+# Amazon DB public credentials
+global-bundle.pem

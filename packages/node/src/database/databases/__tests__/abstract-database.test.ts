@@ -48,6 +48,26 @@ describe('abstract-database', () => {
     expect(indexExists).to.be.true;
   });
 
+  it('Should create an index with a custom name', async () => {
+    // Create an index with a custom name in the TestDatabase
+    await db.createCustomNameIndexForTest();
+
+    // List all indexes for the collection
+    const indexes = await db.listCollectionIndexes();
+
+    // Check if an index with the custom name exists
+    const indexExists = indexes.some(index => index.name === 'customIndexName');
+
+    expect(indexExists).to.be.true;
+  });
+
+  it('Should throw error if combined length of collection and index name exceeds 64 characters', async () => {
+    // Attempt to create an index with a long name in the TestDatabase
+    await expect(db.createLongIndexForTest()).to.be.rejectedWith(
+      `Combined length of collection name and index name exceeds 64 characters (AWS documentDB limit)`,
+    );
+  });
+
   it('Should throw error on insertOne', async () => {
     // Create a stub for the MongoDB collection's insertOne method
     const stub = sinon.stub(db['collection'], 'insertOne');

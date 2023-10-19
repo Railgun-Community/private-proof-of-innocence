@@ -1934,10 +1934,10 @@
   resolved "https://registry.yarnpkg.com/@popperjs/core/-/core-2.11.8.tgz#6b79032e760a0899cd4204710beede972a3a185f"
   integrity sha512-P1st0aksCrn9sGZhp8GMYwBnQsbvAWsZAX44oXNNvLHGqAOcoVxmjZiohstwQ7SqKnbR47akdNi+uleWD8+g6A==
 
-"@railgun-community/shared-models@5.7.0":
-  version "5.7.0"
-  resolved "https://registry.yarnpkg.com/@railgun-community/shared-models/-/shared-models-5.7.0.tgz#07f8f8573bb6fd41249948b1bd0beda54bcaa4db"
-  integrity sha512-R+jfTAr66IIzJtcEtlN1uh0j1/03ouhbT14+WNaEsqv6a1WPLh3Zjl/NioHaqg/R3GJOGkTl6tmglYwRdJ98UQ==
+"@railgun-community/shared-models@5.7.2":
+  version "5.7.2"
+  resolved "https://registry.yarnpkg.com/@railgun-community/shared-models/-/shared-models-5.7.2.tgz#a4f9f8c1478837e1be26d86fd0693496a29b71b8"
+  integrity sha512-dXEz+O1xP0U03x0RDa6CeqS+p80zam9Lq/oiJKpL7ZWCIoF6N1e+ZYlgRqhSeTMw5lkzw/nqb8zVvm9YDv28GQ==
 
 "@remix-run/router@1.6.1":
   version "1.6.1"

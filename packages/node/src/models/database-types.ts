@@ -17,19 +17,19 @@ export type DBStream<T> = Readable & AsyncIterable<T>;
 export enum CollectionName {
   // General
   Status = 'Status',
-  RailgunTxidMerkletreeStatus = 'RailgunTxidMerkletreeStatus',
+  RailgunTxidMerkletreeStatus = 'RailTxidTreeStatus',
 
   // Pending shields
   ShieldQueue = 'ShieldQueue',
 
   // Proof mempools
-  TransactProofPerListMempool = 'TransactProofPerListMempool',
-  LegacyTransactProofMempool = 'LegacyTransactProofMempool',
+  TransactProofPerListMempool = 'TxPpLP', // shortened for collection+index name < 64 (documentDB limit)
+  LegacyTransactProofMempool = 'LegacyTxProofPool',
 
   // POI databases
   POIOrderedEvents = 'POIOrderedEvents',
-  POIMerkletree = 'POIMerkletree',
-  POIHistoricalMerkleroots = 'POIHistoricalMerkleroots',
+  POIMerkletree = 'POITree',
+  POIHistoricalMerkleroots = 'POIHistRoots',
 
   // Blocked shields
   BlockedShieldsPerList = 'BlockedShieldsPerList',
@@ -138,4 +138,6 @@ export type BlockedShieldsPerListDBItem = {
 
 export type TestDBItem = {
   test: string;
+  veryBigAndLongIndexNameToForceFailurePart1?: string;
+  veryBigAndLongIndexNameToForceFailurePart2?: string;
 };
