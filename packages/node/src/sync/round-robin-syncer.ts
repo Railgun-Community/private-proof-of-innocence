@@ -205,7 +205,7 @@ export class RoundRobinSyncer {
 
     // Update a range of events from this list.
     const startIndex = currentListLength;
-    const endIndex = startIndex + QueryLimits.MAX_EVENT_QUERY_RANGE_LENGTH;
+    const endIndex = startIndex + QueryLimits.MAX_EVENT_QUERY_RANGE_LENGTH - 1;
 
     const signedPOIEvents = await POINodeRequest.getPOIListEventRange(
       nodeURL,
