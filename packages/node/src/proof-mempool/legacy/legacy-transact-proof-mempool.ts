@@ -125,7 +125,7 @@ export class LegacyTransactProofMempool {
     );
     if (orderedEventExists) {
       dbg('Event already exists for legacy blinded commitment');
-      return false;
+      return;
     }
 
     const isLegacyTransaction = await this.isLegacyTransaction(
