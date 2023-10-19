@@ -99,4 +99,14 @@ export class POIOrderedEventsDatabase extends AbstractDatabase<POIOrderedEventDB
     };
     return this.exists(filter);
   }
+
+  async streamOrdered(listKey: string) {
+    const filter: DBFilter<POIOrderedEventDBItem> = {
+      listKey,
+    };
+    const sort: DBSort<POIOrderedEventDBItem> = {
+      index: 'ascending',
+    };
+    return this.stream(filter, sort);
+  }
 }

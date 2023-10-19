@@ -132,10 +132,16 @@ export abstract class AbstractDatabase<T extends Document> {
     return cursor.project({ _id: 0 }).toArray() as Promise<T[]>;
   }
 
-  protected async stream(filter?: DBFilter<T>): Promise<DBStream<T>> {
+  protected async stream(
+    filter?: DBFilter<T>,
+    sort?: Sort,
+  ): Promise<DBStream<T>> {
     let cursor = this.collection.find();
     if (isDefined(filter)) {
       cursor = cursor.filter(filter);
+    }
+    if (isDefined(sort)) {
+      cursor = cursor.sort(sort);
     }
     return cursor.project({ _id: 0 }).stream();
   }

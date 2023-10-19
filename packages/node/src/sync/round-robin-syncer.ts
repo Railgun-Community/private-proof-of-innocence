@@ -20,6 +20,7 @@ import { BlockedShieldsSyncer } from '../shields/blocked-shields-syncer';
 import { getListKeysFromNodeConfigs } from '../config/general';
 import { LegacyTransactProofMempoolCache } from '../proof-mempool/legacy/legacy-transact-proof-mempool-cache';
 import { LegacyTransactProofMempool } from '../proof-mempool/legacy/legacy-transact-proof-mempool';
+import { POIMerkletreeManager } from '../poi-events/poi-merkletree-manager';
 
 const dbg = debug('poi:sync');
 
@@ -203,10 +204,54 @@ export class RoundRobinSyncer {
       return 0;
     }
 
+    const totalPOIMerkletreeEvents =
+      await POIMerkletreeManager.getTotalEventsAllPOIMerkletrees(
+        listKey,
+        networkName,
+        txidVersion,
+      );
+
+    if (currentListLength !== totalPOIMerkletreeEvents) {
+      // Check for any missing events that are already added to merkletree
+      const missingEventIndices = await POIEventList.getMissingEventIndices(
+        listKey,
+        networkName,
+        txidVersion,
+      );
+      for (const missingEventIndex of missingEventIndices) {
+        await this.addPOIListEventRange(
+          nodeURL,
+          networkName,
+          txidVersion,
+          listKey,
+          missingEventIndex, // startIndex
+          missingEventIndex, // endIndex
+        );
+      }
+    }
+
     // Update a range of events from this list.
     const startIndex = currentListLength;
     const endIndex = startIndex + QueryLimits.MAX_EVENT_QUERY_RANGE_LENGTH - 1;
 
+    return this.addPOIListEventRange(
+      nodeURL,
+      networkName,
+      txidVersion,
+      listKey,
+      startIndex,
+      endIndex,
+    );
+  }
+
+  async addPOIListEventRange(
+    nodeURL: string,
+    networkName: NetworkName,
+    txidVersion: TXIDVersion,
+    listKey: string,
+    startIndex: number,
+    endIndex: number,
+  ): Promise<number> {
     const signedPOIEvents = await POINodeRequest.getPOIListEventRange(
       nodeURL,
       networkName,

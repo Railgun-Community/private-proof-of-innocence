@@ -60,6 +60,19 @@ export class POIMerkletreeManager {
     return merkletree;
   }
 
+  static async getTotalEventsAllPOIMerkletrees(
+    listKey: string,
+    networkName: NetworkName,
+    txidVersion: TXIDVersion,
+  ) {
+    const merkletree = POIMerkletreeManager.getMerkletreeForListAndNetwork(
+      listKey,
+      networkName,
+      txidVersion,
+    );
+    return merkletree.getTotalEventsAllTrees();
+  }
+
   static async addPOIEvent(
     listKey: string,
     networkName: NetworkName,

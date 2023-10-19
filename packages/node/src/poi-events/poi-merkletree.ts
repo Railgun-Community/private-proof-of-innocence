@@ -149,6 +149,15 @@ export class POIMerkletree {
     return this.treeLengths[tree];
   }
 
+  async getTotalEventsAllTrees(): Promise<number> {
+    const latestTree = await this.latestTree();
+    let totalEvents = await this.getTreeLength(latestTree);
+    for (let tree = 0; tree < latestTree; tree += 1) {
+      totalEvents += TREE_MAX_ITEMS;
+    }
+    return totalEvents;
+  }
+
   private async latestTree(): Promise<number> {
     let latestTree = 0;
     while ((await this.getTreeLength(latestTree)) > 0) latestTree += 1;

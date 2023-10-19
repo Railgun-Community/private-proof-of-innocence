@@ -27,6 +27,29 @@ export class POIEventList {
     return db.getCount(listKey);
   }
 
+  static async getMissingEventIndices(
+    listKey: string,
+    networkName: NetworkName,
+    txidVersion: TXIDVersion,
+  ): Promise<number[]> {
+    const db = new POIOrderedEventsDatabase(networkName, txidVersion);
+    const stream = await db.streamOrdered(listKey);
+
+    const missingIndices: number[] = [];
+
+    let index = 0;
+
+    for await (const orderedEvent of stream) {
+      if (orderedEvent.index !== index) {
+        missingIndices.push(index);
+        index += 1;
+      }
+      index += 1;
+    }
+
+    return missingIndices;
+  }
+
   static async getPOIEventLengths(
     listKey: string,
     networkName: NetworkName,
