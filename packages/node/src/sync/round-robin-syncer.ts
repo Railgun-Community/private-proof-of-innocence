@@ -219,6 +219,7 @@ export class RoundRobinSyncer {
         txidVersion,
       );
       for (const missingEventIndex of missingEventIndices) {
+        dbg(`Syncing single missing event: index ${missingEventIndex}`);
         await this.addPOIListEventRange(
           nodeURL,
           networkName,
