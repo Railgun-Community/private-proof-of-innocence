@@ -25,7 +25,6 @@ import debug from 'debug';
 import { POINodeRequest } from '../api/poi-node-request';
 import { PushSync } from '../sync/push-sync';
 import { hexToBigInt } from '@railgun-community/wallet';
-import { POIMerkletreeManager } from '../poi-events/poi-merkletree-manager';
 
 const dbg = debug('poi:event-queue');
 
@@ -206,12 +205,13 @@ export class ListProviderPOIEventQueue {
     const existingEvent = queue?.find(e => {
       return e.blindedCommitment === poiEvent.blindedCommitment;
     });
-    if (isDefined(existingEvent)) {
-      dbg(`Event exists in queue... ignore`);
-      return;
+    if (!isDefined(existingEvent)) {
+      dbg(
+        `Event exists in queue... ignore new event, but retrigger add-from-queue`,
+      );
+    } else {
+      queue?.push(poiEvent);
     }
-
-    queue?.push(poiEvent);
 
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     ListProviderPOIEventQueue.addPOIEventsFromQueue(networkName, txidVersion);
