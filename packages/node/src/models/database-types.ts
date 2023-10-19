@@ -137,7 +137,8 @@ export type BlockedShieldsPerListDBItem = {
 };
 
 export type TestDBItem = {
-  test: string;
+  test?: string;
+  test2?: string;
   veryBigAndLongIndexNameToForceFailurePart1?: string;
   veryBigAndLongIndexNameToForceFailurePart2?: string;
 };
