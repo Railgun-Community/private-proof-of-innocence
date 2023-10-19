@@ -1,6 +1,11 @@
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import { NetworkName, TXIDVersion } from '@railgun-community/shared-models';
+import {
+  NetworkName,
+  POI_SHIELD_PENDING_SEC,
+  POI_SHIELD_PENDING_SEC_TEST_NET,
+  TXIDVersion,
+} from '@railgun-community/shared-models';
 import * as WalletModule from '../../engine/wallet';
 import * as TxReceiptModule from '../../rpc-providers/tx-receipt';
 import { ShieldData } from '@railgun-community/wallet';
@@ -20,6 +25,7 @@ import { daysAgo } from '../../util/time-ago';
 import { POIMerkletreeManager } from '../../poi-events/poi-merkletree-manager';
 import { currentTimestampSec } from '../../util/timestamp';
 import { calculateShieldBlindedCommitment } from '../../util/shield-blinded-commitment';
+import { Constants } from '../../config/constants';
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
@@ -58,6 +64,15 @@ describe('list-provider', () => {
 
   after(() => {
     POIMerkletreeManager.clearAllMerkletrees_TestOnly();
+  });
+
+  it('Should check pending period', () => {
+    expect(Constants.HOURS_SHIELD_PENDING_PERIOD * 60 * 60).to.equal(
+      POI_SHIELD_PENDING_SEC,
+    );
+    expect(Constants.MINUTES_SHIELD_PENDING_PERIOD_TESTNET * 60).to.equal(
+      POI_SHIELD_PENDING_SEC_TEST_NET,
+    );
   });
 
   it('Should add new shields to queue', async () => {
