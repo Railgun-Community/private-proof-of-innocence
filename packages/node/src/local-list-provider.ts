@@ -7,6 +7,12 @@ import {
 } from './list-provider/list-provider';
 import axios from 'axios';
 
+const TEST_BAD_ADDRESS_LIST = [
+  '0xD017c45b95BbD074AB9Ce0FC95086a59957C4bEd',
+  '0x6FcfE6a9c8f4906FAaD183f5eFdfECe9e7987479',
+  '0xC5271A4077962BEEd9035961b38cdcdEfFFce1a5',
+].map(a => a.toLowerCase());
+
 export class LocalListProvider extends ListProvider {
   protected config: ListProviderConfig = {
     name: 'Chainalysis OFAC Sanctions List',
