@@ -6,6 +6,7 @@ import { getListPublicKey } from './util/ed25519';
 import { NodeConfig } from './models/general-types';
 import { isListProvider } from './config/general';
 import debug from 'debug';
+import { isDefined } from '@railgun-community/shared-models';
 
 const dbg = debug('poi:main');
 
@@ -28,6 +29,10 @@ process.on('uncaughtException', (err: Error | string) => {
   const listProvider = isListProvider()
     ? new LocalListProvider(await getListPublicKey())
     : undefined;
+
+  if (!listProvider && isDefined(process.env.pkey)) {
+    throw new Error('Node with pkey must be run as a list provider');
+  }
 
   const host = process.env.HOST ?? '0.0.0.0';
   const port = process.env.PORT ?? '3010';
