@@ -124,7 +124,6 @@ export class LegacyTransactProofMempool {
       legacyTransactProofData.blindedCommitment,
     );
     if (orderedEventExists) {
-      dbg('Event already exists for legacy blinded commitment');
       return;
     }
 
