@@ -201,6 +201,11 @@ export class POIMerkletree {
     const nextEventCommitmentIndex = POIMerkletree.getGlobalIndex(tree, index);
     if (eventIndex !== nextEventCommitmentIndex) {
       this.isUpdating = false;
+      if ((await this.getNodeHash(tree, 0, eventIndex)) === nodeHash) {
+        // Event already exists in tree
+        dbg('POI event already exists in tree - skipping addition');
+        return;
+      }
       throw new Error(
         `[Warning] Invalid eventIndex ${eventIndex} for POI merkletree insert - next expected ${nextEventCommitmentIndex}`,
       );
