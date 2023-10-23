@@ -3,6 +3,7 @@ import {
   TXIDVersion,
   LegacyTransactProofData,
   isDefined,
+  POIEventType,
 } from '@railgun-community/shared-models';
 import { POINodeCountingBloomFilter } from '../../util/poi-node-bloom-filters';
 import { POIOrderedEventsDatabase } from '../../database/databases/poi-ordered-events-database';
@@ -305,6 +306,24 @@ export class LegacyTransactProofMempool {
             tokenHash: legacyTransactProofDBItem.tokenHash,
             blindedCommitment: legacyTransactProofDBItem.blindedCommitment,
           };
+          if (ListProviderPOIEventQueue.listKey) {
+            // Debug existing event
+            const existingEvent =
+              await this.getOrderedEventForBlindedCommitment(
+                networkName,
+                txidVersion,
+                legacyTransactProofData.blindedCommitment,
+              );
+            if (
+              existingEvent &&
+              existingEvent.type !== POIEventType.LegacyTransact
+            ) {
+              dbg(
+                `Note: LegacyTransact event - event exists with different type ${existingEvent.type}`,
+              );
+              dbg(existingEvent);
+            }
+          }
           LegacyTransactProofMempoolCache.addToCache(
             networkName,
             txidVersion,
