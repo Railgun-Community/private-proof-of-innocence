@@ -326,6 +326,13 @@ export class RailgunTxidMerkletreeManager {
     }
 
     // Remove validated status.
+    await this.clearValidatedStatus(networkName, txidVersion);
+  }
+
+  static async clearValidatedStatus(
+    networkName: NetworkName,
+    txidVersion: TXIDVersion,
+  ) {
     const db = new RailgunTxidMerkletreeStatusDatabase(
       networkName,
       txidVersion,

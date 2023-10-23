@@ -18,6 +18,7 @@ import { Config } from '../config/config';
 import { chainForNetwork } from '../config/general';
 import { RailgunTxidMerkletreeManager } from '../railgun-txids/railgun-txid-merkletree-manager';
 import { LegacyTransactProofMempool } from '../proof-mempool/legacy/legacy-transact-proof-mempool';
+import { TXIDVersion } from '@railgun-community/shared-models';
 
 const dbg = debug('poi:init');
 
@@ -71,6 +72,17 @@ export const initModules = async (listKeys: string[]) => {
 
   dbg('Generating POI Merkletrees for each list and network...');
   POIMerkletreeManager.initListMerkletrees(listKeys);
+
+  // Can safely remove this after TXID verificationHash is implemented.
+  dbg('Clearing TXID validated status for each network...');
+  Config.NETWORK_NAMES.map(async networkName => {
+    Config.TXID_VERSIONS.map(async txidVersion => {
+      await RailgunTxidMerkletreeManager.clearValidatedStatus(
+        networkName,
+        txidVersion,
+      );
+    });
+  });
 
   dbg('Node init successful.');
 };
