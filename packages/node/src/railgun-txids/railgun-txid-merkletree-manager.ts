@@ -215,12 +215,12 @@ export class RailgunTxidMerkletreeManager {
     }
 
     // Update validated txid if the other node has a current value > this node's validated value.
-    const shouldUpdateValidatedTxid =
-      !isDefined(validatedTxidIndexB) ||
-      currentTxidIndexB > (validatedTxidIndexA ?? -1);
-    if (!shouldUpdateValidatedTxid) {
-      throw new Error('Current node is already up to date');
-    }
+    // const shouldUpdateValidatedTxid =
+    //   !isDefined(validatedTxidIndexB) ||
+    //   currentTxidIndexB > (validatedTxidIndexA ?? -1);
+    // if (!shouldUpdateValidatedTxid) {
+    //   throw new Error('Current node is already up to date');
+    // }
 
     // Validate the smaller of the current indices on the two nodes
     const txidIndexToValidate = Math.min(currentTxidIndexA, currentTxidIndexB);
@@ -248,15 +248,20 @@ export class RailgunTxidMerkletreeManager {
         midpointTxidToValidate <= txidIndexToValidate &&
         midpointTxidToValidate !== validatedTxidIndexA
       ) {
-        await RailgunTxidMerkletreeManager.validateHistoricalMerkleroot(
-          nodeURL,
-          networkName,
-          txidVersion,
-          midpointTxidToValidate,
-          currentMerklerootB,
-          validatedTxidIndexB,
-        );
-        dbg(`Validated midpoint txidIndex: ${midpointTxidToValidate}`);
+        if (
+          await RailgunTxidMerkletreeManager.validateHistoricalMerkleroot(
+            nodeURL,
+            networkName,
+            txidVersion,
+            midpointTxidToValidate,
+            currentMerklerootB,
+            validatedTxidIndexB,
+          )
+        ) {
+          dbg(`Validated midpoint txidIndex: ${midpointTxidToValidate}`);
+        } else {
+          dbg(`Invalid midpoint txidIndex: ${midpointTxidToValidate}`);
+        }
       }
     }
 
@@ -265,16 +270,22 @@ export class RailgunTxidMerkletreeManager {
       await this.getRailgunTxidStatus(networkName, txidVersion);
 
     dbg(
-      `Merkleroot invalid: txidIndex ${txidIndexToValidate} with node ${nodeURL} - re-syncing txid tree from txidIndex ${currentValidatedTxidIndex}`,
+      `Merkleroot invalid: txidIndex ${txidIndexToValidate} with node ${nodeURL}`,
     );
+
+    const resyncTxidIndex = Math.min(
+      txidIndexToValidate,
+      currentValidatedTxidIndex ?? -1,
+    );
+
+    dbg(`Re-syncing txid tree from txidIndex ${resyncTxidIndex}`);
 
     // Invalid. Clear the merkletree after currentValidatedTxidIndex, and re-sync.
     // WARNING: This could cause infinite reloads if another node is invalid.
-    const clearFromTxidIndex = currentValidatedTxidIndex ?? -1;
     await this.resetRailgunTxidsAfterTxidIndex(
       networkName,
       txidVersion,
-      clearFromTxidIndex,
+      resyncTxidIndex,
     );
   }
 
