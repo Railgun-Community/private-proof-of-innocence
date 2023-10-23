@@ -80,6 +80,9 @@ export const initEngineAndScanTXIDs = async () => {
 };
 
 export const initModules = async (listKeys: string[]) => {
+  dbg('Generating POI Merkletrees for each list and network...');
+  POIMerkletreeManager.initListMerkletrees(listKeys);
+
   dbg('Inflating Transact Proof mempool cache...');
   await TransactProofMempool.inflateCacheFromDatabase(listKeys);
 
@@ -88,9 +91,6 @@ export const initModules = async (listKeys: string[]) => {
 
   dbg('Inflating Blocked Shields cache...');
   await BlockedShieldsSyncer.inflateCacheFromDatabase(listKeys);
-
-  dbg('Generating POI Merkletrees for each list and network...');
-  POIMerkletreeManager.initListMerkletrees(listKeys);
 
   dbg('Node init successful.');
 };
