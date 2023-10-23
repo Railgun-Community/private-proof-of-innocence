@@ -314,6 +314,10 @@ export class LegacyTransactProofMempool {
                 txidVersion,
                 legacyTransactProofData.blindedCommitment,
               );
+            if (!existingEvent) {
+              dbg('Note: LegacyTransact event missing');
+              dbg(legacyTransactProofData);
+            }
             if (
               existingEvent &&
               existingEvent.type !== POIEventType.LegacyTransact
