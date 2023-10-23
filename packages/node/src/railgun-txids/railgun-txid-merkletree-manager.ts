@@ -147,9 +147,9 @@ export class RailgunTxidMerkletreeManager {
     } catch (err) {
       // no op
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      dbg(
-        `Could not update validated railgun txid for ${networkName} - ${err.message}`,
-      );
+      // dbg(
+      //   `Could not update validated railgun txid for ${networkName} - ${err.message}`,
+      // );
       return;
     }
   }
