@@ -26,6 +26,7 @@ import {
   getBlindedCommitmentForShieldOrTransact,
   nToHex,
 } from '@railgun-community/wallet';
+import { POIOrderedEventDBItem } from '../../models/database-types';
 
 const dbg = debug('poi:transact-proof-mempool');
 
@@ -118,12 +119,14 @@ export class LegacyTransactProofMempool {
     }
 
     // Verify that OrderedEvent for this list doesn't exist.
-    const orderedEventExists = await this.hasOrderedEventForBlindedCommitment(
+    const orderedEvent = await this.getOrderedEventForBlindedCommitment(
       networkName,
       txidVersion,
       legacyTransactProofData.blindedCommitment,
     );
-    if (orderedEventExists) {
+    if (orderedEvent) {
+      dbg('Legacy transact event already exists for blinded commitment:');
+      dbg(orderedEvent);
       return;
     }
 
@@ -265,23 +268,22 @@ export class LegacyTransactProofMempool {
     return true;
   }
 
-  private static async hasOrderedEventForBlindedCommitment(
+  private static async getOrderedEventForBlindedCommitment(
     networkName: NetworkName,
     txidVersion: TXIDVersion,
     blindedCommitment: string,
-  ): Promise<boolean> {
+  ): Promise<Optional<POIOrderedEventDBItem>> {
     if (!ListProviderPOIEventQueue.listKey) {
-      return false;
+      return;
     }
     const orderedEventsDB = new POIOrderedEventsDatabase(
       networkName,
       txidVersion,
     );
-    const orderedEventExists = await orderedEventsDB.eventExists(
+    return orderedEventsDB.getEvent(
       ListProviderPOIEventQueue.listKey,
       blindedCommitment,
     );
-    return orderedEventExists;
   }
 
   static async inflateCacheFromDatabase() {

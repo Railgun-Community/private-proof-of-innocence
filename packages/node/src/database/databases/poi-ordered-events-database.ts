@@ -89,6 +89,17 @@ export class POIOrderedEventsDatabase extends AbstractDatabase<POIOrderedEventDB
     return this.findOne(filter, sort);
   }
 
+  async getEvent(
+    listKey: string,
+    blindedCommitment: string,
+  ): Promise<Optional<POIOrderedEventDBItem>> {
+    const filter: DBFilter<POIOrderedEventDBItem> = {
+      listKey,
+      blindedCommitment,
+    };
+    return this.findOne(filter);
+  }
+
   async eventExists(
     listKey: string,
     blindedCommitment: string,
