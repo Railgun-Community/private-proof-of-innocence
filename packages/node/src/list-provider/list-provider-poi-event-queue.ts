@@ -302,6 +302,8 @@ export class ListProviderPOIEventQueue {
         poiEvent,
       );
 
+      dbg(`Adding POI event to list from queue: ${nextIndex}`);
+
       await POIEventList.addValidSignedPOIEvent(
         ListProviderPOIEventQueue.listKey,
         networkName,
