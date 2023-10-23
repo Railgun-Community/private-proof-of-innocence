@@ -3,6 +3,7 @@ import { startEngine } from '../engine/engine-init';
 import { initNetworkProviders } from '../rpc-providers/active-network-providers';
 import {
   getEngine,
+  getTXIDMerkletreeForNetwork,
   resetFullTXIDMerkletrees,
   setOnTXIDMerkletreeScanCallback,
   setOnUTXOMerkletreeScanCallback,
@@ -54,8 +55,11 @@ export const initEngineAndScanTXIDs = async () => {
                   txidVersion,
                 );
               });
-              const chain = chainForNetwork(networkName);
-              await resetFullTXIDMerkletrees(chain);
+              const txidMerkletree = getTXIDMerkletreeForNetwork(
+                txidVersion,
+                networkName,
+              );
+              await txidMerkletree.clearDataForMerkletree();
             });
           }
 
