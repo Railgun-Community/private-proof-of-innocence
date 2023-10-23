@@ -3,6 +3,7 @@ import { startEngine } from '../engine/engine-init';
 import { initNetworkProviders } from '../rpc-providers/active-network-providers';
 import {
   getEngine,
+  resetFullTXIDMerkletrees,
   setOnTXIDMerkletreeScanCallback,
   setOnUTXOMerkletreeScanCallback,
 } from '@railgun-community/wallet';
@@ -43,6 +44,21 @@ export const initEngineAndScanTXIDs = async () => {
       const chain = chainForNetwork(networkName);
       await Promise.all(
         Config.TXID_VERSIONS.map(async txidVersion => {
+          if (process.env.CLEAR_TXIDS === '1') {
+            // Can safely remove this after TXID verificationHash is implemented.
+            dbg(`Clearing TXIDs for ${networkName}, ${txidVersion}...`);
+            Config.NETWORK_NAMES.map(async networkName => {
+              Config.TXID_VERSIONS.map(async txidVersion => {
+                await RailgunTxidMerkletreeManager.clearValidatedStatus(
+                  networkName,
+                  txidVersion,
+                );
+              });
+              const chain = chainForNetwork(networkName);
+              await resetFullTXIDMerkletrees(chain);
+            });
+          }
+
           await getEngine().syncRailgunTransactionsForTXIDVersion(
             txidVersion,
             chain,
@@ -72,17 +88,6 @@ export const initModules = async (listKeys: string[]) => {
 
   dbg('Generating POI Merkletrees for each list and network...');
   POIMerkletreeManager.initListMerkletrees(listKeys);
-
-  // Can safely remove this after TXID verificationHash is implemented.
-  dbg('Clearing TXID validated status for each network...');
-  Config.NETWORK_NAMES.map(async networkName => {
-    Config.TXID_VERSIONS.map(async txidVersion => {
-      await RailgunTxidMerkletreeManager.clearValidatedStatus(
-        networkName,
-        txidVersion,
-      );
-    });
-  });
 
   dbg('Node init successful.');
 };
