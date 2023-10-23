@@ -307,7 +307,6 @@ export class LegacyTransactProofMempool {
             blindedCommitment: legacyTransactProofDBItem.blindedCommitment,
           };
           if (ListProviderPOIEventQueue.listKey) {
-            // Debug existing event
             const existingEvent =
               await this.getOrderedEventForBlindedCommitment(
                 networkName,
@@ -315,17 +314,11 @@ export class LegacyTransactProofMempool {
                 legacyTransactProofData.blindedCommitment,
               );
             if (!existingEvent) {
-              dbg('Note: LegacyTransact event missing');
-              dbg(legacyTransactProofData);
-            }
-            if (
-              existingEvent &&
-              existingEvent.type !== POIEventType.LegacyTransact
-            ) {
-              dbg(
-                `Note: LegacyTransact event - event exists with different type ${existingEvent.type}`,
+              await LegacyTransactProofMempool.tryAddToList(
+                networkName,
+                txidVersion,
+                legacyTransactProofData,
               );
-              dbg(existingEvent);
             }
           }
           LegacyTransactProofMempoolCache.addToCache(
