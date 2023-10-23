@@ -215,12 +215,12 @@ export class RailgunTxidMerkletreeManager {
     }
 
     // Update validated txid if the other node has a current value > this node's validated value.
-    // const shouldUpdateValidatedTxid =
-    //   !isDefined(validatedTxidIndexB) ||
-    //   currentTxidIndexB > (validatedTxidIndexA ?? -1);
-    // if (!shouldUpdateValidatedTxid) {
-    //   throw new Error('Current node is already up to date');
-    // }
+    const shouldUpdateValidatedTxid =
+      !isDefined(validatedTxidIndexB) ||
+      currentTxidIndexB > (validatedTxidIndexA ?? -1);
+    if (!shouldUpdateValidatedTxid) {
+      throw new Error('Current node is already up to date');
+    }
 
     // Validate the smaller of the current indices on the two nodes
     const txidIndexToValidate = Math.min(currentTxidIndexA, currentTxidIndexB);
