@@ -231,6 +231,10 @@ export class RailgunTxidMerkletreeManager {
         validatedTxidIndexB,
       );
 
+    if (isValid) {
+      return;
+    }
+
     if (!isValid) {
       // Try the midpoint between validatedA and txidIndexToValidate.
       const midpointTxidToValidate = Math.floor(
