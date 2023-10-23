@@ -146,6 +146,10 @@ export class RailgunTxidMerkletreeManager {
       );
     } catch (err) {
       // no op
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      dbg(
+        `Could not update validated railgun txid for ${networkName} - ${err.message}`,
+      );
       return;
     }
   }
@@ -297,10 +301,6 @@ export class RailgunTxidMerkletreeManager {
     }
 
     const isPreValidated = prevalidatedMerkleroot === historicalMerkleroot;
-    if (isPreValidated) {
-      return true;
-    }
-
     const isValid: boolean =
       isPreValidated ||
       (await POINodeRequest.validateRailgunTxidMerkleroot(

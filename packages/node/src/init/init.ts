@@ -20,7 +20,6 @@ import { Config } from '../config/config';
 import { chainForNetwork } from '../config/general';
 import { RailgunTxidMerkletreeManager } from '../railgun-txids/railgun-txid-merkletree-manager';
 import { LegacyTransactProofMempool } from '../proof-mempool/legacy/legacy-transact-proof-mempool';
-import { TXIDVersion } from '@railgun-community/shared-models';
 
 const dbg = debug('poi:init');
 
