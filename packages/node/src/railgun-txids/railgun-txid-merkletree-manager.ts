@@ -308,7 +308,9 @@ export class RailgunTxidMerkletreeManager {
         index,
       );
     if (!isDefined(historicalMerkleroot)) {
-      throw new Error('Historical merkleroot does not exist');
+      throw new Error(
+        `Historical merkleroot for txidIndex ${txidIndexToValidate} does not exist`,
+      );
     }
 
     const isPreValidated = prevalidatedMerkleroot === historicalMerkleroot;

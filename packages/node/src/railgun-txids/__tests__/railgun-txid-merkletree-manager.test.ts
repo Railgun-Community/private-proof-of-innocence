@@ -52,6 +52,9 @@ describe('railgun-txid-merkletree-manager', () => {
       RailgunTxidMerkletreeManager,
       'getHistoricalTxidMerkleroot',
     ).callsFake(async (_networkName, _txidVersion, _tree, index) => {
+      if (index === 55) {
+        return '55';
+      }
       if (index === 60) {
         return '60';
       }
@@ -109,7 +112,9 @@ describe('railgun-txid-merkletree-manager', () => {
           validatedTxidIndex: undefined,
         },
       ),
-    ).to.eventually.be.rejectedWith('Historical merkleroot does not exist');
+    ).to.eventually.be.rejectedWith(
+      'Historical merkleroot for txidIndex 50 does not exist',
+    );
 
     await expect(
       RailgunTxidMerkletreeManager.updateValidatedRailgunTxidStatus(
@@ -123,7 +128,9 @@ describe('railgun-txid-merkletree-manager', () => {
           validatedTxidIndex: undefined,
         },
       ),
-    ).to.eventually.be.rejectedWith('Historical merkleroot does not exist');
+    ).to.eventually.be.rejectedWith(
+      'Historical merkleroot for txidIndex 61 does not exist',
+    );
 
     const statusPre = await txidMerkletreeStatusDB.getStatus();
     expect(statusPre).to.equal(undefined);
