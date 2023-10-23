@@ -71,7 +71,15 @@ export const OverallStatus = ({ nodeStatus }: Props) => {
           'Pending TransactProofs:',
           eventListStatus.value.pendingTransactProofs,
         )}
-        {renderListRow('POI Events:', eventListStatus.value.poiEvents)}
+
+        {/* Render each POI event type with its count */}
+        <div className={styles.poiEventsContainer}>
+          {Object.entries(eventListStatus.value.poiEventLengths).map(
+            ([eventType, count]) => (
+              <div key={eventType}>{renderListRow(`${eventType}:`, count)}</div>
+            ),
+          )}
+        </div>
       </div>
     );
   };
