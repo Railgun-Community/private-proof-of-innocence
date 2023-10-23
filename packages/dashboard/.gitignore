@@ -9,6 +9,9 @@ test.config.js
 build/
 dist/
 
+# Env
+.env
+
 # Logs
 logs
 *.log
