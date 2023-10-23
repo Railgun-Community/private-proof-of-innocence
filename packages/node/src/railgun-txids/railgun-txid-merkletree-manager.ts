@@ -240,7 +240,10 @@ export class RailgunTxidMerkletreeManager {
       const midpointTxidToValidate = Math.floor(
         (txidIndexToValidate + (validatedTxidIndexA ?? 0)) / 2,
       );
-      if (midpointTxidToValidate <= txidIndexToValidate) {
+      if (
+        midpointTxidToValidate <= txidIndexToValidate &&
+        midpointTxidToValidate !== validatedTxidIndexA
+      ) {
         await RailgunTxidMerkletreeManager.validateHistoricalMerkleroot(
           nodeURL,
           networkName,

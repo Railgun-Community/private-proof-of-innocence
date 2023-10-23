@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { MerkletreeScanUpdateEvent } from '@railgun-community/shared-models';
 import debug from 'debug';
 
@@ -8,7 +9,7 @@ export const onUTXOMerkletreeScanCallback = ({
   scanStatus,
   progress,
 }: MerkletreeScanUpdateEvent) => {
-  dbg(chain, scanStatus, progress);
+  // dbg(chain, scanStatus, progress);
 };
 
 export const onTXIDMerkletreeScanCallback = ({
@@ -16,5 +17,5 @@ export const onTXIDMerkletreeScanCallback = ({
   scanStatus,
   progress,
 }: MerkletreeScanUpdateEvent) => {
-  dbg(chain, scanStatus, progress);
+  // dbg(chain, scanStatus, progress);
 };
