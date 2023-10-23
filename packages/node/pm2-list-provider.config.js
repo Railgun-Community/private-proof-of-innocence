@@ -8,6 +8,7 @@ module.exports = {
     },
     {
       name: 'node-list-provider',
+      time: true,
       script: './dist/main.js',
       env: {
         DEBUG: 'poi:*',

@@ -3,6 +3,7 @@ module.exports = {
   apps: [
     {
       name: 'node-aggregator',
+      time: true,
       script: './dist/main.js',
       env: {
         DEBUG: 'poi:*',
