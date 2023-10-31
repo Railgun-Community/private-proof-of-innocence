@@ -932,10 +932,10 @@
   resolved "https://registry.yarnpkg.com/@railgun-community/curve25519-scalarmult-wasm/-/curve25519-scalarmult-wasm-0.1.5.tgz#edb5e40a8f1fdb7f7e0de1d04e8badabe41cb2a8"
   integrity sha512-Cur8uM/IdNW3WzUwdPloDG1CF0rpSBDWq2yGXJMZ7IMeBGdc4Jj0h9tnNMFRZ35ZuCVVbZ3yClmqSa4PsbpdGQ==
 
-"@railgun-community/engine@5.8.34":
-  version "5.8.34"
-  resolved "https://registry.yarnpkg.com/@railgun-community/engine/-/engine-5.8.34.tgz#6a67165254b23d2802a6d0aa4d147f80a5289dd1"
-  integrity sha512-avcXXLUzAUDjsWArlM3nxiy/j/4FnOvDL2b3Qm4lMQ1+j+ATM2Wg2+GTI843c7IgtjyJzii9qzMW8r0qzqDtQw==
+"@railgun-community/engine@5.8.40":
+  version "5.8.40"
+  resolved "https://registry.yarnpkg.com/@railgun-community/engine/-/engine-5.8.40.tgz#73eba363cd89d7c83dc49eb0b78c08f1f8fda7d2"
+  integrity sha512-VvvTo26GQdlhiVOblVjPni2HmNicqcSi3o4INgbJEXovnB8PLc5ZAm0w2D5FyiQvUtm4aKhHgHr1OphQ9fkqeA==
   dependencies:
     "@noble/ed25519" "^1.7.1"
     "@noble/hashes" "^1.3.0"
@@ -949,25 +949,20 @@
     circomlibjs hsg88/circomlibjs#ffjavascrip.0.1.0
     encoding-down "^7.1.0"
     ethereum-cryptography "^2.0.0"
-    ethers "github:Railgun-Community/ethers.js#v6.7.6"
+    ethers "github:Railgun-Community/ethers.js#v6.7.8"
     fast-text-encoding "^1.0.6"
     levelup "^5.1.1"
     msgpack-lite "^0.1.26"
 
-"@railgun-community/shared-models@5.8.1":
-  version "5.8.1"
-  resolved "https://registry.yarnpkg.com/@railgun-community/shared-models/-/shared-models-5.8.1.tgz#e1459d1150f618845ac63320cc19350a976acfb7"
-  integrity sha512-/c3MUfKqDYUlisbdvrXIMqu4ZRmb1HYUJkXIDaqnS7Ar2cmZNbBu9OQvVTrXNSXPPWelVf3//Lyf+9SDxF0o7Q==
+"@railgun-community/shared-models@5.8.5":
+  version "5.8.5"
+  resolved "https://registry.yarnpkg.com/@railgun-community/shared-models/-/shared-models-5.8.5.tgz#cf9371b70e36411c4d2fb850d4d2a0721a45859e"
+  integrity sha512-htKXxIQs4MxVYFd6tCm0UTL8vRptmZoirzs+MDZELgOLZUbwHLGlmKvgMrnr1j9avWiKPNaAE3Eq+1Vduplkjg==
 
-"@railgun-community/shared-models@5.8.3":
-  version "5.8.3"
-  resolved "https://registry.yarnpkg.com/@railgun-community/shared-models/-/shared-models-5.8.3.tgz#13c7eb0923265881d5ffe820b128b26078e781fb"
-  integrity sha512-x/IBQW7R2bV4zrF/x+vOYNBUdXWZBZ3tifQukKxD+D/FhPINCA4xua/nZhR5aPpvzLMUCiE1N3z2AEMSZY65jg==
-
-"@railgun-community/wallet@5.14.2":
-  version "5.14.2"
-  resolved "https://registry.yarnpkg.com/@railgun-community/wallet/-/wallet-5.14.2.tgz#6610ab4163135e9865439b964901d28484492c12"
-  integrity sha512-6W7ptkiWl5pnN9Y7blPo0U+KuL9F4DAAUw+qk2DZ31/7UzdoT+FHY+kHBUIHa2EoSYETQHKeT+6e0ld3mbYyCg==
+"@railgun-community/wallet@5.14.7":
+  version "5.14.7"
+  resolved "https://registry.yarnpkg.com/@railgun-community/wallet/-/wallet-5.14.7.tgz#f562ef6f6e63df3252cbc7c0f346ac1cd3650781"
+  integrity sha512-eozoL/0Xarsvai+ta2GbepFPRR98AFbYw8yniAELNxtl2heFjgH8UjozP1/T2M+zw4IgTyMoirDR2Y2kGXSnhA==
   dependencies:
     "@graphql-mesh/cache-localforage" "^0.7.20"
     "@graphql-mesh/cross-helpers" "^0.3.4"
@@ -979,8 +974,8 @@
     "@graphql-mesh/types" "^0.91.14"
     "@graphql-mesh/utils" "^0.43.22"
     "@noble/ed25519" "^1.7.1"
-    "@railgun-community/engine" "5.8.34"
-    "@railgun-community/shared-models" "5.8.1"
+    "@railgun-community/engine" "5.8.40"
+    "@railgun-community/shared-models" "5.8.5"
     "@whatwg-node/fetch" "^0.8.4"
     assert "2.0.0"
     axios "0.27.2"
@@ -988,7 +983,7 @@
     buffer "^6.0.3"
     crypto-browserify "3.12.0"
     ethereum-cryptography "^2.0.0"
-    ethers "github:Railgun-Community/ethers.js#v6.7.6"
+    ethers "github:Railgun-Community/ethers.js#v6.7.8"
     events "3.3.0"
     graphql "^16.6.0"
     stream-browserify "3.0.0"
@@ -3555,9 +3550,9 @@ ethereumjs-util@^7.1.1, ethereumjs-util@^7.1.2, ethereumjs-util@^7.1.5:
     ethereum-cryptography "^0.1.3"
     rlp "^2.2.4"
 
-"ethers@github:Railgun-Community/ethers.js#v6.7.6":
-  version "6.7.6"
-  resolved "https://codeload.github.com/Railgun-Community/ethers.js/tar.gz/8eee17db07ce57bcc453855d6aa9b945eb47dfa4"
+"ethers@github:Railgun-Community/ethers.js#v6.7.8":
+  version "6.7.8"
+  resolved "https://codeload.github.com/Railgun-Community/ethers.js/tar.gz/6a7c69d92d91bc34f42de79ad429e7a22352cf1a"
   dependencies:
     "@adraffy/ens-normalize" "1.9.2"
     "@noble/hashes" "1.1.2"
