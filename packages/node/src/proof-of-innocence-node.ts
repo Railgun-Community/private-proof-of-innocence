@@ -85,10 +85,11 @@ export class ProofOfInnocenceNode {
     // Check if node API is running
     try {
       const url = this.getURL();
-      await axios.get(url, { timeout: 500 });
+      await axios.get(url, { timeout: 1000 });
     } catch (err) {
-      throw new Error(
-        `Node API is not running - check port ${this.port} for existing process`,
+      dbg(
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        `Cannot connect to API - check port ${this.port} for existing process: ${err.message}`,
       );
     }
 
