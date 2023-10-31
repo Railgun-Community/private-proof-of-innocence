@@ -13,6 +13,7 @@ export type NodesSlice = {
   nodeStatusForAllNetworks: NodeStatusAllNetworks | null;
   allNodesData: NodeStatusForNetwork[] | null;
   setNodeIp: (ip: AvailableNodes) => void;
+  setCurrentNetwork: (network: NetworkName) => void;
   getNodeStatusForAllNetworks: () => void;
   getAllNodesData: () => void;
   refreshNode: () => void;
@@ -35,6 +36,9 @@ export const createNodesSlice: StateCreator<NodesSlice, [], [], NodesSlice> = (
   refreshingNode: false,
   loadingNodeStatusForAllNetworks: false,
   lastRefreshedNodeStatusForAllNetworks: null,
+  setCurrentNetwork: (network: NetworkName) => {
+    set(() => ({ currentNetwork: network }));
+  },
   getAllNodesData: async () => {
     let allNodesData: NodeStatusForNetwork[] = [];
     // This is for current network
