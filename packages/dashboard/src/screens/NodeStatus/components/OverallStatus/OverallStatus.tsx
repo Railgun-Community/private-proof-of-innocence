@@ -21,6 +21,11 @@ type EventListStatus = {
   value: POIListStatus;
 };
 
+type SyncProps = {
+  isInSync: boolean;
+  outOfSyncMessage?: string;
+};
+
 export const OverallStatus = ({ nodeStatus }: Props) => {
   const {
     refreshNode,
@@ -84,6 +89,39 @@ export const OverallStatus = ({ nodeStatus }: Props) => {
     );
   };
 
+  // Check if lists are in sync
+  const SyncCheck: React.FC<SyncProps> = ({ isInSync, outOfSyncMessage }) => (
+    <div className={styles.subtitle}>
+      {isInSync ? '✅ Synced ✅' : `❌ ${outOfSyncMessage} ❌`}
+    </div>
+  );
+
+  const legacyTransactValues = arrayOfEventListStatuses.map(
+    status => status.value.poiEventLengths.LegacyTransact,
+  );
+  const shieldValues = arrayOfEventListStatuses.map(
+    status => status.value.poiEventLengths.Shield,
+  );
+
+  const isTxIDTreeInSync =
+    nodeStatus?.txidStatus?.currentTxidIndex ===
+    nodeStatus?.txidStatus?.validatedTxidIndex;
+
+  const isLegacyTransactInSync = new Set(legacyTransactValues).size === 1;
+  const isShieldInSync = new Set(shieldValues).size === 1;
+  const isListInSync = isLegacyTransactInSync && isShieldInSync;
+
+  let listOutOfSyncMessage = 'Out of Sync';
+  if (!isLegacyTransactInSync) {
+    listOutOfSyncMessage = '[LegacyTransact] out of sync';
+  } else if (!isShieldInSync) {
+    listOutOfSyncMessage = '[Shield] out of sync';
+  }
+
+  let txOutOfSyncMessage = isTxIDTreeInSync
+    ? ''
+    : '[Current Tx ID and Validated Tx ID] out of sync';
+
   return (
     <div className={styles.overallStatusContainer}>
       <div className={styles.titleContainer}>
@@ -102,11 +140,19 @@ export const OverallStatus = ({ nodeStatus }: Props) => {
         <Text>{`Connected to ${nodeIp}`}</Text>
       </div>
       <div className={styles.sectionContainer}>
-        <Text className={styles.subtitle}>{'Lists:'}</Text>
+        <Text className={styles.subtitle}>{'Nodes:'}</Text>
+        <SyncCheck
+          isInSync={isListInSync}
+          outOfSyncMessage={listOutOfSyncMessage}
+        />
         {arrayOfEventListStatuses.map(renderList)}
       </div>
       <div className={styles.sectionContainer}>
         <Text className={styles.subtitle}>{'Tx ID Tree:'}</Text>
+        <SyncCheck
+          isInSync={isTxIDTreeInSync}
+          outOfSyncMessage={txOutOfSyncMessage}
+        />
         <div className={styles.listContainer}>
           {renderListRow(
             'Current Tx ID:',
