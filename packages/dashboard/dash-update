@@ -4,6 +4,6 @@ set -e
 git pull origin main && \
 git rebase origin/main && \
 yarn && \
-yarn build && \
+yarn build-prod && \
 pm2 restart dashboard && \
 pm2 logs;
