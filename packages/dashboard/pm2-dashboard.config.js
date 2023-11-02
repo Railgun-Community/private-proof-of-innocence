@@ -4,7 +4,8 @@ module.exports = {
     {
       name: 'dashboard',
       time: true,
-      script: './src/server.js',
+      script: 'npm',
+      args: 'start',
       interpreter: 'node',
     },
   ],
