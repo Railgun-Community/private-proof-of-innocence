@@ -61,7 +61,7 @@ module.exports = {
       config.optimization = {
         splitChunks: {
           chunks: isDev ? 'async' : 'initial',
-        }
+        },
       };
 
       return config;
