@@ -1,22 +1,16 @@
 const express = require('express');
 const path = require('path');
-
 const app = express();
 
-// Serve the static files
-app.use(express.static(path.join(__dirname, '../build')));
+// Serve the static files from the 'build' directory
+app.use('/dashboard', express.static(path.join(__dirname, '../build')));
 
-// Handle React routing, return all requests to React app
-app.get('/dashboard', (req, res) => {
-  res.sendFile(path.join(__dirname, '../build', 'index.html'));
-});
-
-// Handle React routing, return all requests to React app
+// Make sure that requests to /dashboard are handled by returning the index.html file
 app.get('/dashboard/*', (req, res) => {
   res.sendFile(path.join(__dirname, '../build', 'index.html'));
 });
 
-// Show the health status of the dashboard
+// Health check route
 app.get('/dashHealth', (req, res) => {
   res.json({ status: 'ok' });
 });
