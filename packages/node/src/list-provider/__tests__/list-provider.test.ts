@@ -217,7 +217,7 @@ describe('list-provider', () => {
 
     await listProvider.addAllowedShields(networkName, txidVersion);
 
-    expect(listProviderEventQueueSpy.calledOnce).to.equal(true);
+    expect(listProviderEventQueueSpy.callCount).to.equal(2);
     listProviderEventQueueSpy.restore();
   });
 });

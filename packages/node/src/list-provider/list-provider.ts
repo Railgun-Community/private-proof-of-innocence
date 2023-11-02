@@ -48,10 +48,10 @@ export type ListProviderConfig = {
 
 // 30 seconds
 const DEFAULT_QUEUE_SHIELDS_DELAY_MSEC = 30 * 1000;
-// 15 seconds
-const CATEGORIZE_UNKNOWN_SHIELDS_DELAY_MSEC = 30 * 1000;
-// 60 seconds
-const DEFAULT_VALIDATE_SHIELDS_DELAY_MSEC = 60 * 1000;
+// 10 seconds
+const CATEGORIZE_UNKNOWN_SHIELDS_DELAY_MSEC = 10 * 1000;
+// 10 seconds
+const DEFAULT_VALIDATE_SHIELDS_DELAY_MSEC = 10 * 1000;
 // 30 seconds
 const DEFAULT_ADD_ALLOWED_SHIELDS_DELAY_MSEC = 30 * 1000;
 // 30 seconds
@@ -622,6 +622,9 @@ export abstract class ListProvider {
     // Update status in DB
     const shieldQueueDB = new ShieldQueueDatabase(networkName, txidVersion);
     await shieldQueueDB.updateShieldStatus(shieldDBItem, ShieldStatus.Allowed);
+
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    this.addAllowedShields(networkName, txidVersion);
   }
 
   private async blockShield(
