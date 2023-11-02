@@ -622,9 +622,7 @@ export abstract class ListProvider {
     // Update status in DB
     const shieldQueueDB = new ShieldQueueDatabase(networkName, txidVersion);
     await shieldQueueDB.updateShieldStatus(shieldDBItem, ShieldStatus.Allowed);
-
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    this.addAllowedShields(networkName, txidVersion);
+    await this.addAllowedShields(networkName, txidVersion);
   }
 
   private async blockShield(
