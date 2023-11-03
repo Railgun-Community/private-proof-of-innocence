@@ -302,13 +302,13 @@ export class POIMerkletree {
     // Should not use cached treeLength value here because it can be stale.
     const treeLength = await this.getTreeLengthFromDBCount(tree);
 
-    const nodeFetcher = new Array<Promise<Optional<string>>>(treeLength);
+    const nodeFetcher = new Array<string>(treeLength);
 
     // Fetch each leaf we need to scan
     for (let index = 0; index < treeLength; index += 1) {
-      nodeFetcher[index] = this.getNodeHash(tree, 0, index);
+      nodeFetcher[index] = await this.getNodeHash(tree, 0, index);
     }
-    const leaves = await Promise.all(nodeFetcher);
+    const leaves = nodeFetcher;
 
     // Push values to leaves of write index
     leaves.forEach((hash, index) => {

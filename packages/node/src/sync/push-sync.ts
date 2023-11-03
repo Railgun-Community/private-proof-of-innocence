@@ -4,14 +4,14 @@ import { Config } from '../config/config';
 const dbg = debug('poi:push-sync');
 
 export class PushSync {
-  static sendNodeRequestToAllNodes = (
+  static sendNodeRequestToAllNodes = async (
     nodeRequest: (nodeURL: string) => Promise<void>,
   ) => {
-    return Promise.all(
-      Config.NODE_CONFIGS.map(async ({ nodeURL }) => {
-        await this.sendNodeRequest(nodeURL, nodeRequest);
-      }),
-    );
+    const requests = []
+    for (const { nodeURL } of Config.NODE_CONFIGS) {
+      requests.push(await this.sendNodeRequest(nodeURL, nodeRequest))
+    }
+    return requests;
   };
 
   static sendNodeRequest = async (

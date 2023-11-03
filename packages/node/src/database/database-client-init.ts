@@ -44,27 +44,21 @@ export class DatabaseClient {
   }
 
   static async ensureDBIndicesAllChains(): Promise<void> {
-    await Promise.all(
-      Config.NETWORK_NAMES.map(async (networkName: NetworkName) => {
-        await Promise.all(
-          Config.TXID_VERSIONS.map(async (txidVersion: TXIDVersion) => {
-            await this.createAllCollectionsWithIndices(
-              networkName,
-              txidVersion,
-            );
-          }),
+    for (const networkName of Config.NETWORK_NAMES) {
+      for (const txidVersion of Config.TXID_VERSIONS) {
+        await this.createAllCollectionsWithIndices(
+          networkName,
+          txidVersion,
         );
-      }),
-    );
+      }
+    }
   }
 
   static async createAllCollectionsWithIndices(
     networkName: NetworkName,
     txidVersion: TXIDVersion,
   ): Promise<void> {
-    await Promise.all(
-      Object.values(CollectionName).map(async collectionName => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    for (const collectionName of Object.values(CollectionName)) {
         let db: AbstractDatabase<any>;
 
         switch (collectionName) {
@@ -112,7 +106,6 @@ export class DatabaseClient {
         }
 
         await db.createCollectionIndices();
-      }),
-    );
+    }
   }
 }

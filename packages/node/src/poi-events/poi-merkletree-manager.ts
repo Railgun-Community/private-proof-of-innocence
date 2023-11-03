@@ -102,12 +102,11 @@ export class POIMerkletreeManager {
       txidVersion,
     );
 
-    const merkleProofs: MerkleProof[] = await Promise.all(
-      blindedCommitments.map(blindedCommitment => {
-        const nodeHash = blindedCommitment;
-        return merkletree.getMerkleProofFromNodeHash(nodeHash);
-      }),
-    );
+    const merkleProofs: MerkleProof[] = []
+    for (const blindedCommitment of blindedCommitments) {
+      const nodeHash = blindedCommitment;
+      merkleProofs.push(await merkletree.getMerkleProofFromNodeHash(nodeHash))
+    }
     return merkleProofs;
   }
 
@@ -119,26 +118,20 @@ export class POIMerkletreeManager {
   ): Promise<POIsPerListMap> {
     const poisPerListMap: POIsPerListMap = {};
 
-    await Promise.all(
-      listKeys.map(async listKey => {
-        if (!this.listKeys.includes(listKey)) {
-          return;
-        }
-        await Promise.all(
-          blindedCommitmentDatas.map(async blindedCommitmentData => {
-            const { blindedCommitment } = blindedCommitmentData;
-            poisPerListMap[blindedCommitment] ??= {};
-            poisPerListMap[blindedCommitment][listKey] =
-              await POIMerkletreeManager.getPOIStatus(
-                listKey,
-                networkName,
-                txidVersion,
-                blindedCommitmentData,
-              );
-          }),
-        );
-      }),
-    );
+    for (const listKey of listKeys) {
+      if (!this.listKeys.includes(listKey)) continue;
+      for (const blindedCommitmentData of blindedCommitmentDatas) {
+         const { blindedCommitment } = blindedCommitmentData;
+        poisPerListMap[blindedCommitment] ??= {};
+        poisPerListMap[blindedCommitment][listKey] =
+          await POIMerkletreeManager.getPOIStatus(
+            listKey,
+            networkName,
+            txidVersion,
+            blindedCommitmentData,
+          );
+      }
+    }
     return poisPerListMap;
   }
 

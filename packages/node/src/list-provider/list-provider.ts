@@ -225,20 +225,18 @@ export abstract class ListProvider {
       `[${networkName}] Attempting to insert ${newShields.length} unknown shields`,
     );
 
-    await Promise.all(
-      newShields.map(async shieldData => {
-        const queued = await this.queueShieldSafe(
-          networkName,
-          txidVersion,
-          shieldData,
-        );
-        if (queued) {
-          const lastShieldScanned = newShields[newShields.length - 1];
-          const latestBlockScanned = lastShieldScanned.blockNumber;
-          await statusDB.saveStatus(latestBlockScanned);
-        }
-      }),
-    );
+    for (const shieldData of newShields) {
+      const queued = await this.queueShieldSafe(
+        networkName,
+        txidVersion,
+        shieldData,
+      );
+      if (queued) {
+        const lastShieldScanned = newShields[newShields.length - 1];
+        const latestBlockScanned = lastShieldScanned.blockNumber;
+        await statusDB.saveStatus(latestBlockScanned);
+      }
+    }
   }
 
   async categorizeUnknownShields(
@@ -334,21 +332,20 @@ export abstract class ListProvider {
     }
 
     // 3. If any unshield exists, find POI Status for each unshield railgunTxid (by blindedCommitments).
-    const poiStatuses: POIStatus[] = await Promise.all(
-      unshieldRailgunTxids.map(async unshieldRailgunTxid => {
-        const blindedCommitment = unshieldRailgunTxid;
-        const blindedCommitmentData: BlindedCommitmentData = {
-          blindedCommitment,
-          type: BlindedCommitmentType.Unshield,
-        };
-        return POIMerkletreeManager.getPOIStatus(
-          this.listKey,
-          networkName,
-          txidVersion,
-          blindedCommitmentData,
-        );
-      }),
-    );
+    const poiStatuses: POIStatus[] = []
+    for (const unshieldRailgunTxid of unshieldRailgunTxids) {
+      const blindedCommitment = unshieldRailgunTxid;
+      const blindedCommitmentData: BlindedCommitmentData = {
+        blindedCommitment,
+        type: BlindedCommitmentType.Unshield,
+      };
+      poiStatuses.push(await POIMerkletreeManager.getPOIStatus(
+        this.listKey,
+        networkName,
+        txidVersion,
+        blindedCommitmentData,
+      ));
+    }
 
     // If all Unshield POI statuses are Valid, automatically Allow Relay Adapt Shield
     if (poiStatuses.every(status => status === POIStatus.Valid)) {
@@ -462,11 +459,9 @@ export abstract class ListProvider {
       `[${networkName}] Validating ${pendingShields.length} pending shields...`,
     );
 
-    await Promise.all(
-      pendingShields.map(shieldData =>
-        this.validateShield(networkName, txidVersion, shieldData, endTimestamp),
-      ),
-    );
+    for (const shieldData of pendingShields) {
+        await this.validateShield(networkName, txidVersion, shieldData, endTimestamp)
+    }
   }
 
   private async validateShield(
@@ -528,43 +523,41 @@ export abstract class ListProvider {
       `[${networkName}] Attempting to queue POI events for ${allowedShields.length} allowed shields...`,
     );
 
-    await Promise.all(
-      allowedShields.map(async shieldDBItem => {
-        const orderedEventsDB = new POIOrderedEventsDatabase(
-          networkName,
-          txidVersion,
-        );
-        if (
-          await orderedEventsDB.eventExists(
-            this.listKey,
-            shieldDBItem.blindedCommitment,
-          )
-        ) {
-          const shieldQueueDB = new ShieldQueueDatabase(
-            networkName,
-            txidVersion,
-          );
-          await shieldQueueDB.updateShieldStatus(
-            shieldDBItem,
-            ShieldStatus.AddedPOI,
-          );
-          return;
-        }
-
-        // Allow - add POIEvent
-        const poiEventShield: POIEventShield = {
-          type: POIEventType.Shield,
-          commitmentHash: shieldDBItem.commitmentHash,
-          blindedCommitment: shieldDBItem.blindedCommitment,
-        };
-        ListProviderPOIEventQueue.queueUnsignedPOIShieldEvent(
+    for (const shieldDBItem of allowedShields) {
+      const orderedEventsDB = new POIOrderedEventsDatabase(
+        networkName,
+        txidVersion,
+      );
+      if (
+        await orderedEventsDB.eventExists(
           this.listKey,
+          shieldDBItem.blindedCommitment,
+        )
+      ) {
+        const shieldQueueDB = new ShieldQueueDatabase(
           networkName,
           txidVersion,
-          poiEventShield,
         );
-      }),
-    );
+        await shieldQueueDB.updateShieldStatus(
+          shieldDBItem,
+          ShieldStatus.AddedPOI,
+        );
+        continue;
+      }
+
+      // Allow - add POIEvent
+      const poiEventShield: POIEventShield = {
+        type: POIEventType.Shield,
+        commitmentHash: shieldDBItem.commitmentHash,
+        blindedCommitment: shieldDBItem.blindedCommitment,
+      };
+      ListProviderPOIEventQueue.queueUnsignedPOIShieldEvent(
+        this.listKey,
+        networkName,
+        txidVersion,
+        poiEventShield,
+      );
+    }
   }
 
   async ensureAddedShieldsHaveEvents(

@@ -29,22 +29,19 @@ export class SingleCommitmentProofManager {
     singleCommitmentProofsData: SingleCommitmentProofsData,
   ) {
     const listKeys = Object.keys(singleCommitmentProofsData.pois);
+    for (const listKey of listKeys) {
+      const filteredSingleCommitmentProofsData: SingleCommitmentProofsData = {
+        ...singleCommitmentProofsData,
+        pois: { [listKey]: singleCommitmentProofsData.pois[listKey] },
+      };
 
-    await Promise.all(
-      listKeys.map(async listKey => {
-        const filteredSingleCommitmentProofsData: SingleCommitmentProofsData = {
-          ...singleCommitmentProofsData,
-          pois: { [listKey]: singleCommitmentProofsData.pois[listKey] },
-        };
-
-        await SingleCommitmentProofManager.tryAddToList(
-          listKey,
-          networkName,
-          txidVersion,
-          filteredSingleCommitmentProofsData,
-        );
-      }),
-    );
+      await SingleCommitmentProofManager.tryAddToList(
+        listKey,
+        networkName,
+        txidVersion,
+        filteredSingleCommitmentProofsData,
+      );
+    }
   }
 
   private static async pushProofToDestinationNode(

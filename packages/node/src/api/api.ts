@@ -557,16 +557,14 @@ export class API {
         );
 
         // Submit and verify the proofs
-        await Promise.all(
-          legacyTransactProofDatas.map(async legacyTransactProofData => {
-            await LegacyTransactProofMempool.submitLegacyProof(
-              networkName,
-              txidVersion,
-              legacyTransactProofData,
-              filteredListKeys,
-            );
-          }),
-        );
+        for (const legacyTransactProofData of legacyTransactProofDatas) {
+          await LegacyTransactProofMempool.submitLegacyProof(
+            networkName,
+            txidVersion,
+            legacyTransactProofData,
+            filteredListKeys,
+          );
+        }
       },
       SharedChainTypeIDParamsSchema,
       SubmitLegacyTransactProofsBodySchema,

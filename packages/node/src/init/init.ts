@@ -39,44 +39,38 @@ export const initEngineAndScanTXIDs = async () => {
   await initNetworkProviders();
 
   // Make sure TXID trees are fully scanned for each chain.
-  await Promise.all(
-    Config.NETWORK_NAMES.map(async networkName => {
-      const chain = chainForNetwork(networkName);
-      await Promise.all(
-        Config.TXID_VERSIONS.map(async txidVersion => {
-          if (process.env.CLEAR_TXIDS === '1') {
-            // Can safely remove this after TXID verificationHash is implemented.
-            dbg(`Clearing TXIDs for ${networkName}, ${txidVersion}...`);
-            Config.NETWORK_NAMES.map(async networkName => {
-              Config.TXID_VERSIONS.map(async txidVersion => {
-                await RailgunTxidMerkletreeManager.clearValidatedStatus(
-                  networkName,
-                  txidVersion,
-                );
-              });
-              const txidMerkletree = getTXIDMerkletreeForNetwork(
-                txidVersion,
-                networkName,
-              );
-              await txidMerkletree.clearDataForMerkletree();
-            });
-          }
-
-          await getEngine().syncRailgunTransactionsForTXIDVersion(
-            txidVersion,
-            chain,
-            'initEngineAndScanTXIDs',
-          );
-
-          // Ensures that validated txid index is correct after TXID scan.
-          await RailgunTxidMerkletreeManager.checkValidatedTxidIndexAgainstEngine(
+  for (const networkName of Config.NETWORK_NAMES) {
+    const chain = chainForNetwork(networkName);
+    for (const txidVersion of Config.TXID_VERSIONS) {
+  
+      //CLEAR_TXID WEIRD BLOCK HERE.
+      if (process.env.CLEAR_TXIDS === '1') {
+        // Can safely remove this after TXID verificationHash is implemented.
+        dbg(`Clearing TXIDs for ${networkName}, ${txidVersion}...`);
+          await RailgunTxidMerkletreeManager.clearValidatedStatus(
             networkName,
             txidVersion,
           );
-        }),
+          const txidMerkletree = getTXIDMerkletreeForNetwork(
+            txidVersion,
+            networkName,
+          );
+          await txidMerkletree.clearDataForMerkletree();
+      }
+      await getEngine().syncRailgunTransactionsForTXIDVersion(
+        txidVersion,
+        chain,
+        'initEngineAndScanTXIDs',
       );
-    }),
-  );
+  
+      // Ensures that validated txid index is correct after TXID scan.
+      await RailgunTxidMerkletreeManager.checkValidatedTxidIndexAgainstEngine(
+        networkName,
+        txidVersion,
+      );
+    }
+  }
+
 };
 
 export const initModules = async (listKeys: string[]) => {
