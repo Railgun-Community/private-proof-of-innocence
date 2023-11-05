@@ -12,7 +12,9 @@ import {
 } from '@railgun-community/shared-models';
 import { chainForNetwork, networkForName } from '../config/general';
 import {
+  ByteLength,
   ShieldData,
+  formatToByteLength,
   getRailgunTxidsForUnshields,
   scanUpdatesForMerkletreeAndWallets,
 } from '@railgun-community/wallet';
@@ -336,7 +338,11 @@ export abstract class ListProvider {
     // 3. If any unshield exists, find POI Status for each unshield railgunTxid (by blindedCommitments).
     const poiStatuses: POIStatus[] = await Promise.all(
       unshieldRailgunTxids.map(async unshieldRailgunTxid => {
-        const blindedCommitment = unshieldRailgunTxid;
+        const blindedCommitment = formatToByteLength(
+          unshieldRailgunTxid,
+          ByteLength.UINT_256,
+          true,
+        );
         const blindedCommitmentData: BlindedCommitmentData = {
           blindedCommitment,
           type: BlindedCommitmentType.Unshield,
