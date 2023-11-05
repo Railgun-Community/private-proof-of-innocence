@@ -107,8 +107,8 @@ export class RoundRobinSyncer {
       this.syncCount += 1;
 
       if (shouldDelayNextPoll) {
-        // 15 second delay before next poll
-        await delay(15 * 1000);
+        // 5 second delay before next poll
+        await delay(5 * 1000);
       }
 
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
