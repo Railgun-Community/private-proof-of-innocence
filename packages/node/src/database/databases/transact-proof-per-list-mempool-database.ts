@@ -51,9 +51,6 @@ export class TransactProofPerListMempoolDatabase extends AbstractDatabase<Transa
     blindedCommitmentsOut: string[],
     railgunTxidIfHasUnshield: string,
   ): Promise<boolean> {
-    if (!blindedCommitmentsOut.length) {
-      return false;
-    }
     const filter: Filter<TransactProofMempoolDBItem> = {
       listKey,
       blindedCommitmentsOut, // find all - array compare in-order
@@ -110,7 +107,7 @@ export class TransactProofPerListMempoolDatabase extends AbstractDatabase<Transa
   ): Promise<void> {
     const filter: Filter<TransactProofMempoolDBItem> = {
       listKey,
-      blindedCommitmentsOut: { $all: blindedCommitmentsOut },
+      blindedCommitmentsOut, // find all - array compare in-order
       railgunTxidIfHasUnshield,
     };
     return this.deleteOne(filter);

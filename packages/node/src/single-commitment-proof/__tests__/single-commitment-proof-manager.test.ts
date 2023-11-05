@@ -130,7 +130,7 @@ describe('single-commitment-proof-manager', () => {
     expect(
       await orderedEventDB.eventExists(
         listKey,
-        '0x0b95484bf02c80c14bac4696bbd73ab2f29ec142d47c674f62cad4c042a91b0c', // blinded commitment
+        '0x009496b785d48f34983bd248bbf0c0b12bba749689c017d9d016493b419f0571', // blinded commitment
       ),
     ).to.equal(true);
   }).timeout(10000);

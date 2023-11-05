@@ -24,7 +24,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "npm run eslint && tsc --noEmit && npm run check-circular-deps && tsc --noEmit -p tsconfig.test.json",
-    "tsc-test": "tsc -p tsconfig.test.json && tsc-alias -p tsconfig.test.json",
+    "tsc-test": "npx --node-options='--max-old-space-size=16000' tsc -p tsconfig.test.json && tsc-alias -p tsconfig.test.json",
     "compile-test": "npm run clean && npm run tsc-test",
     "test-coverage": "npm run compile-test && c8 mocha",
     "prod-db": "./run-mongodb-prod",
