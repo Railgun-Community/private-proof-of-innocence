@@ -49,12 +49,12 @@
   },
   "peerDependencies": {
     "@railgun-community/shared-models": "5.8.5",
-    "@railgun-community/wallet": "5.14.10",
+    "@railgun-community/wallet": "5.14.15",
     "ethers": "github:Railgun-Community/ethers.js#v6.7.8"
   },
   "devDependencies": {
     "@railgun-community/shared-models": "5.8.5",
-    "@railgun-community/wallet": "5.14.10",
+    "@railgun-community/wallet": "5.14.15",
     "@types/chai": "^4.3.5",
     "@types/chai-as-promised": "^7.1.5",
     "@types/cors": "^2.8.13",
