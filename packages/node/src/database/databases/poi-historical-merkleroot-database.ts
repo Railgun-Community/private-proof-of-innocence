@@ -38,4 +38,16 @@ export class POIHistoricalMerklerootDatabase extends AbstractDatabase<POIHistori
     }
     return true;
   }
+
+  async getTotalMerkleroots(listKey: string): Promise<number> {
+    return this.count({ listKey });
+  }
+
+  async getLatestMerkleroot(
+    listKey: string,
+  ): Promise<POIHistoricalMerklerootDBItem | undefined> {
+    // Sort by _id in descending order to get the latest document
+    const latestRoot = await this.findOne({ listKey }, { _id: -1 });
+    return latestRoot;
+  }
 }

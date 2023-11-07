@@ -213,6 +213,32 @@ export class POIMerkletreeManager {
     return POIStatus.Missing;
   }
 
+  static async getHistoricalPOIMerklerootsCount(
+    txidVersion: TXIDVersion,
+    networkName: NetworkName,
+    listKey: string,
+  ) {
+    const poiMerklerootDb = new POIHistoricalMerklerootDatabase(
+      networkName,
+      txidVersion,
+    );
+    const total = await poiMerklerootDb.getTotalMerkleroots(listKey);
+    return total;
+  }
+
+  static async getLatestPOIMerkleroot(
+    txidVersion: TXIDVersion,
+    networkName: NetworkName,
+    listKey: string,
+  ) {
+    const poiMerklerootDb = new POIHistoricalMerklerootDatabase(
+      networkName,
+      txidVersion,
+    );
+    const latestMerkleroot = await poiMerklerootDb.getLatestMerkleroot(listKey);
+    return latestMerkleroot;
+  }
+
   static async validateAllPOIMerklerootsExist(
     txidVersion: TXIDVersion,
     networkName: NetworkName,

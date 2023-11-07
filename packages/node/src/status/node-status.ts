@@ -12,6 +12,7 @@ import { TransactProofMempoolCache } from '../proof-mempool/transact-proof-mempo
 import { BlockedShieldsCache } from '../shields/blocked-shields-cache';
 import { getShieldQueueStatus } from '../shields/shield-queue';
 import { LegacyTransactProofMempool } from '../proof-mempool/legacy/legacy-transact-proof-mempool';
+import { POIMerkletreeManager } from 'poi-events/poi-merkletree-manager';
 
 export class NodeStatus {
   static async getNodeStatusAllNetworks(
@@ -85,6 +86,18 @@ export class NodeStatus {
             networkName,
             txidVersion,
           ),
+          historicalMerklerootsLength:
+            await POIMerkletreeManager.getHistoricalPOIMerklerootsCount(
+              txidVersion,
+              networkName,
+              listKey,
+            ),
+          latestHistoricalMerkleroot:
+            await POIMerkletreeManager.getLatestPOIMerkleroot(
+              txidVersion,
+              networkName,
+              listKey,
+            ),
         };
       }),
     );
