@@ -71,6 +71,8 @@ const getNodeStatus = (): NodeStatusAllNetworks => ({
           },
           pendingTransactProofs: 2,
           blockedShields: 2,
+          historicalMerklerootsLength: 2,
+          latestHistoricalMerkleroot: '0x1234',
         },
       },
       shieldQueueStatus: {} as ShieldQueueStatus,

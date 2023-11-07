@@ -93,11 +93,11 @@ export class NodeStatus {
               listKey,
             ),
           latestHistoricalMerkleroot:
-            await POIMerkletreeManager.getLatestPOIMerkleroot(
+            (await POIMerkletreeManager.getLatestPOIMerkleroot(
               txidVersion,
               networkName,
               listKey,
-            ),
+            )) ?? 'No merkleroot found',
         };
       }),
     );

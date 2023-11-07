@@ -230,13 +230,14 @@ export class POIMerkletreeManager {
     txidVersion: TXIDVersion,
     networkName: NetworkName,
     listKey: string,
-  ) {
+  ): Promise<Optional<string>> {
     const poiMerklerootDb = new POIHistoricalMerklerootDatabase(
       networkName,
       txidVersion,
     );
-    const latestMerkleroot = await poiMerklerootDb.getLatestMerkleroot(listKey);
-    return latestMerkleroot;
+    const latestMerklerootDbItem =
+      await poiMerklerootDb.getLatestMerkleroot(listKey);
+    return latestMerklerootDbItem?.rootHash;
   }
 
   static async validateAllPOIMerklerootsExist(
