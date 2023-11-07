@@ -12,6 +12,8 @@ import {
   LegacyTransactProofData,
   SubmitSingleCommitmentProofsParams,
   SingleCommitmentProofsData,
+  GetMerkleProofsParams,
+  MerkleProof,
 } from '@railgun-community/shared-models';
 import axios, { AxiosError } from 'axios';
 import {
@@ -297,6 +299,27 @@ export class POINodeRequest {
       listKey,
       signedPOIEvent,
     });
+  };
+
+  static getMerkleProofs = async (
+    nodeURL: string,
+    networkName: NetworkName,
+    txidVersion: TXIDVersion,
+    listKey: string,
+    blindedCommitments: string[],
+  ): Promise<MerkleProof[]> => {
+    const chain = NETWORK_CONFIG[networkName].chain;
+    const route = `merkle-proofs/${chain.type}/${chain.id}`;
+    const url = POINodeRequest.getNodeRouteURL(nodeURL, route);
+
+    return POINodeRequest.postRequest<GetMerkleProofsParams, MerkleProof[]>(
+      url,
+      {
+        txidVersion,
+        listKey,
+        blindedCommitments,
+      },
+    );
   };
 
   static submitValidatedTxidAndMerkleroot = async (

@@ -16,6 +16,12 @@ import { SignedPOIEvent } from '../models/poi-types';
 import { TransactProofPerListMempoolDatabase } from '../database/databases/transact-proof-per-list-mempool-database';
 import { BlockedShieldsPerListDatabase } from '../database/databases/blocked-shields-per-list-database';
 import { POIHistoricalMerklerootDatabase } from '../database/databases/poi-historical-merkleroot-database';
+import { ListProviderPOIEventQueue } from '../list-provider/list-provider-poi-event-queue';
+import { nodeURLForListKey } from '../config/general';
+import { POINodeRequest } from '../api/poi-node-request';
+import debug from 'debug';
+
+const dbg = debug('poi:merkletree-manager');
 
 export class POIMerkletreeManager {
   private static merkletrees: Record<
@@ -96,6 +102,40 @@ export class POIMerkletreeManager {
     txidVersion: TXIDVersion,
     blindedCommitments: string[],
   ): Promise<MerkleProof[]> {
+    if (listKey !== ListProviderPOIEventQueue.listKey) {
+      // Forward request to list provider directly
+      const nodeURL = nodeURLForListKey(listKey);
+      if (isDefined(nodeURL)) {
+        try {
+          return await POINodeRequest.getMerkleProofs(
+            nodeURL,
+            networkName,
+            txidVersion,
+            listKey,
+            blindedCommitments,
+          );
+        } catch (err) {
+          dbg(
+            `WARNING: Could not request merkleproofs from list provider. Using node's current DB instead.`,
+          );
+        }
+      }
+    }
+
+    return this.getMerkleProofsFromCurrentNode(
+      listKey,
+      networkName,
+      txidVersion,
+      blindedCommitments,
+    );
+  }
+
+  private static async getMerkleProofsFromCurrentNode(
+    listKey: string,
+    networkName: NetworkName,
+    txidVersion: TXIDVersion,
+    blindedCommitments: string[],
+  ) {
     const merkletree = POIMerkletreeManager.getMerkletreeForListAndNetwork(
       listKey,
       networkName,
