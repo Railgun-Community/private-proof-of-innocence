@@ -74,3 +74,10 @@ export type GetPOIListEventRangeParams = {
   startIndex: number;
   endIndex: number;
 };
+
+export type POISyncedListEvent = {
+  signedPOIEvent: SignedPOIEvent;
+
+  // TODO: Make required after Node DBs are migrated.
+  validatedMerkleroot: Optional<string>;
+};

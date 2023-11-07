@@ -48,15 +48,27 @@ describe('poi-merkletree-manager', () => {
       'No POI node for blinded commitment (node hash) 0x1234',
     );
 
-    await POIMerkletreeManager.addPOIEvent(listKey, networkName, txidVersion, {
-      index: 0,
-      blindedCommitment: '0x1234',
-    } as SignedPOIEvent);
+    await POIMerkletreeManager.addPOIEvent(
+      listKey,
+      networkName,
+      txidVersion,
+      {
+        index: 0,
+        blindedCommitment: '0x1234',
+      } as SignedPOIEvent,
+      undefined, // TODO: Add validatedMerkleroot
+    );
 
-    await POIMerkletreeManager.addPOIEvent(listKey, networkName, txidVersion, {
-      index: 1,
-      blindedCommitment: '0x5678',
-    } as SignedPOIEvent);
+    await POIMerkletreeManager.addPOIEvent(
+      listKey,
+      networkName,
+      txidVersion,
+      {
+        index: 1,
+        blindedCommitment: '0x5678',
+      } as SignedPOIEvent,
+      undefined, // TODO: Add validatedMerkleroot
+    );
 
     const merkleProofs = await POIMerkletreeManager.getMerkleProofs(
       listKey,

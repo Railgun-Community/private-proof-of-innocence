@@ -3,7 +3,6 @@ import {
   TXIDVersion,
   LegacyTransactProofData,
   isDefined,
-  POIEventType,
 } from '@railgun-community/shared-models';
 import { POINodeCountingBloomFilter } from '../../util/poi-node-bloom-filters';
 import { POIOrderedEventsDatabase } from '../../database/databases/poi-ordered-events-database';

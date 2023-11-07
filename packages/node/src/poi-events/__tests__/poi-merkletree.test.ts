@@ -73,7 +73,12 @@ describe('poi-merkletree', () => {
     await merkletree.insertLeaf(
       0,
       'ab2f9d1ebd74c3e1f1ccee452a80ae27a94f14a542a4fd8b0c9ad9a1b7f9ffe5',
+      '2b6de07658fdb3b15b7fd96fdcf59d44bdef9eb20dc8beb2b5ac6d8bf9f011b1', // validatedMerkleroot
     );
+    expect(await merkletree.getRoot(0)).to.equal(
+      '2b6de07658fdb3b15b7fd96fdcf59d44bdef9eb20dc8beb2b5ac6d8bf9f011b1',
+    );
+
     await merkletree.insertMultipleLeaves_TEST_ONLY(1, [
       '8902638fe6fc05e4f1cd7c06940d6217591a0ccb003ed45198782fbff38e9f2d',
       '19889087c2ff4c4a164060a832a3ba11cce0c2e2dbd42da10c57101efb966fcd',

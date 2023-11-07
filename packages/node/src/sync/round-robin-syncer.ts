@@ -252,7 +252,7 @@ export class RoundRobinSyncer {
     startIndex: number,
     endIndex: number,
   ): Promise<number> {
-    const signedPOIEvents = await POINodeRequest.getPOIListEventRange(
+    const poiSyncedListEvents = await POINodeRequest.getPOIListEventRange(
       nodeURL,
       networkName,
       txidVersion,
@@ -262,16 +262,16 @@ export class RoundRobinSyncer {
     );
 
     dbg(
-      `Syncing ${signedPOIEvents.length} POI events to list ${listKey} for network ${networkName}`,
+      `Syncing ${poiSyncedListEvents.length} POI events to list ${listKey} for network ${networkName}`,
     );
 
-    await POIEventList.verifyAndAddSignedPOIEvents(
+    await POIEventList.verifyAndAddSignedPOIEventsWithValidatedMerkleroots(
       listKey,
       networkName,
       txidVersion,
-      signedPOIEvents,
+      poiSyncedListEvents,
     );
-    return signedPOIEvents.length;
+    return poiSyncedListEvents.length;
   }
 
   async updateTransactProofMempoolsAllNetworks(

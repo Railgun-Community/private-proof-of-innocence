@@ -127,7 +127,9 @@ describe('poi-ordered-events-database', () => {
       1,
       2,
     );
-    expect(eventRange).to.deep.equal([signedPOIEvent2]);
+    expect(eventRange).to.deep.equal([
+      { signedPOIEvent: signedPOIEvent2, validatedMerkleroot: '0x5678' },
+    ]);
 
     // Check that the length of the events is as expected
     expect(events.length).to.equal(3);

@@ -115,6 +115,7 @@ describe('single-commitment-proof-manager', () => {
 
     await poiHistoricalMerklerootDB.insertMerkleroot(
       listKey,
+      0, // index
       '284d03b4f4e545a9bf5259162f0d5103c1598c98217b84ec51589610d94f7071',
     );
 

@@ -175,7 +175,11 @@ describe('round-robin-syncer', () => {
 
     const getPOIListEventRangeStub = sinon
       .stub(POINodeRequest, 'getPOIListEventRange')
-      .resolves([signedEvent1, signedEvent2, signedEvent3]);
+      .resolves([
+        { signedPOIEvent: signedEvent1, validatedMerkleroot: undefined },
+        { signedPOIEvent: signedEvent2, validatedMerkleroot: undefined },
+        { signedPOIEvent: signedEvent3, validatedMerkleroot: undefined }, // TODO: Add tests to validate these merkleroots in order.
+      ]);
 
     await roundRobinSyncer.updatePOIEventListAllNetworks(
       nodeURL,

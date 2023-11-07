@@ -62,9 +62,9 @@ import 'dotenv/config';
 import {
   GetLegacyTransactProofsParams,
   GetPOIListEventRangeParams,
+  POISyncedListEvent,
   RemoveTransactProofParams,
   SignedBlockedShield,
-  SignedPOIEvent,
   SubmitPOIEventParams,
   SubmitValidatedTxidAndMerklerootParams,
 } from '../models/poi-types';
@@ -312,7 +312,7 @@ export class API {
     //   },
     // );
 
-    this.safePost<SignedPOIEvent[]>(
+    this.safePost<POISyncedListEvent[]>(
       '/poi-events/:chainType/:chainID',
       async (req: Request) => {
         const { chainType, chainID } = req.params;
@@ -430,11 +430,11 @@ export class API {
         );
 
         // Submit and verify the proof
-        await POIEventList.verifyAndAddSignedPOIEvents(
+        await POIEventList.verifyAndAddSignedPOIEventsWithValidatedMerkleroots(
           listKey,
           networkName,
           txidVersion,
-          [signedPOIEvent],
+          [{ signedPOIEvent, validatedMerkleroot: undefined }], // TODO: Add validatedMerkleroot
         );
       },
       SharedChainTypeIDParamsSchema,

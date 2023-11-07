@@ -200,7 +200,11 @@ export class POIMerkletree {
     };
   }
 
-  async insertLeaf(eventIndex: number, nodeHash: string) {
+  async insertLeaf(
+    eventIndex: number,
+    nodeHash: string,
+    validatedMerkleroot: Optional<string>, // TODO: Make required after DB migration
+  ) {
     if (this.isUpdating) {
       throw new Error('POI merkletree is already updating');
     }
@@ -220,9 +224,18 @@ export class POIMerkletree {
       );
     }
 
-    await this.insertLeavesInTree(tree, index, [nodeHash]);
-
-    this.isUpdating = false;
+    try {
+      await this.insertLeavesInTree(
+        tree,
+        index,
+        [nodeHash],
+        validatedMerkleroot,
+      );
+      this.isUpdating = false;
+    } catch (err) {
+      this.isUpdating = false;
+      throw err;
+    }
   }
 
   async insertMultipleLeaves_TEST_ONLY(
@@ -248,30 +261,40 @@ export class POIMerkletree {
 
     let nodeHashesStartIndex = 0;
 
-    // Insert leaves into each tree.
-    // Iterate through trees once the MAX_ITEMS is reached.
-    while (nodeHashes.length > nodeHashesStartIndex) {
-      const remainingSpotsInTree = TREE_MAX_ITEMS - startIndex;
-      const endIndex = nodeHashesStartIndex + remainingSpotsInTree;
-      const nodeHashesForTree = nodeHashes.slice(
-        nodeHashesStartIndex,
-        endIndex,
-      );
+    try {
+      // Insert leaves into each tree.
+      // Iterate through trees once the MAX_ITEMS is reached.
+      while (nodeHashes.length > nodeHashesStartIndex) {
+        const remainingSpotsInTree = TREE_MAX_ITEMS - startIndex;
+        const endIndex = nodeHashesStartIndex + remainingSpotsInTree;
+        const nodeHashesForTree = nodeHashes.slice(
+          nodeHashesStartIndex,
+          endIndex,
+        );
 
-      await this.insertLeavesInTree(nextTree, startIndex, nodeHashesForTree);
+        await this.insertLeavesInTree(
+          nextTree,
+          startIndex,
+          nodeHashesForTree,
+          undefined,
+        );
 
-      nextTree += 1;
-      startIndex = 0;
-      nodeHashesStartIndex += nodeHashesForTree.length;
+        nextTree += 1;
+        startIndex = 0;
+        nodeHashesStartIndex += nodeHashesForTree.length;
+      }
+      this.isUpdating = false;
+    } catch (err) {
+      this.isUpdating = false;
+      throw err;
     }
-
-    this.isUpdating = false;
   }
 
   private async insertLeavesInTree(
     tree: number,
     startIndex: number,
     nodeHashes: string[],
+    validatedMerkleroot: Optional<string>, // TODO: Make required after DB migration
   ): Promise<void> {
     const firstLevelHashWriteGroup: string[][] = [];
     firstLevelHashWriteGroup[0] = [];
@@ -289,7 +312,14 @@ export class POIMerkletree {
       endIndex,
     );
 
-    await this.writeToDB(tree, hashWriteGroup);
+    const root = hashWriteGroup[TREE_DEPTH][0];
+    if (isDefined(validatedMerkleroot) && root !== validatedMerkleroot) {
+      throw new Error(
+        `Invalid merkleroot: got ${root}, expected ${validatedMerkleroot}`,
+      );
+    }
+
+    await this.writeToDB(tree, startIndex, hashWriteGroup);
 
     this.treeLengths[tree] += nodeHashes.length;
   }
@@ -407,7 +437,11 @@ export class POIMerkletree {
     return hashWriteGroup;
   }
 
-  private async writeToDB(tree: number, hashWriteGroup: string[][]) {
+  private async writeToDB(
+    tree: number,
+    index: number,
+    hashWriteGroup: string[][],
+  ) {
     const items: POIMerkletreeDBItem[] = [];
     hashWriteGroup.forEach((levelItems, level) => {
       levelItems.forEach((nodeHash, index) => {
@@ -425,7 +459,7 @@ export class POIMerkletree {
     await this.merkletreeDB.updatePOIMerkletreeNodes(items);
 
     const merkleroot = await this.getRoot(tree);
-    await this.merklerootDB.insertMerkleroot(this.listKey, merkleroot);
+    await this.merklerootDB.insertMerkleroot(this.listKey, index, merkleroot);
   }
 
   async getMerkleProofFromNodeHash(nodeHash: string): Promise<MerkleProof> {

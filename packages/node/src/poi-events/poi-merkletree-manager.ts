@@ -52,6 +52,24 @@ export class POIMerkletreeManager {
     this.merkletrees = {};
   }
 
+  static async getHistoricalMerkleroot(
+    listKey: string,
+    networkName: NetworkName,
+    txidVersion: TXIDVersion,
+    index: number,
+  ): Promise<Optional<string>> {
+    const historicalMerklerootDB = new POIHistoricalMerklerootDatabase(
+      networkName,
+      txidVersion,
+    );
+    const merklerootDBItem =
+      await historicalMerklerootDB.getMerklerootByGlobalLeafIndex(
+        listKey,
+        index,
+      );
+    return merklerootDBItem?.rootHash;
+  }
+
   private static getMerkletreeForListAndNetwork(
     listKey: string,
     networkName: NetworkName,
@@ -84,6 +102,7 @@ export class POIMerkletreeManager {
     networkName: NetworkName,
     txidVersion: TXIDVersion,
     signedPOIEvent: SignedPOIEvent,
+    validatedMerkleroot: Optional<string>, // TODO: Make required after DB migration
   ) {
     const merkletree = POIMerkletreeManager.getMerkletreeForListAndNetwork(
       listKey,
@@ -93,6 +112,7 @@ export class POIMerkletreeManager {
     await merkletree.insertLeaf(
       signedPOIEvent.index,
       signedPOIEvent.blindedCommitment,
+      validatedMerkleroot,
     );
   }
 

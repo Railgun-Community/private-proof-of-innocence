@@ -4,7 +4,6 @@ import {
   POIHistoricalMerklerootDBItem,
 } from '../../models/database-types';
 import { AbstractDatabase } from '../abstract-database';
-import { Filter } from 'mongodb';
 
 export class POIHistoricalMerklerootDatabase extends AbstractDatabase<POIHistoricalMerklerootDBItem> {
   constructor(networkName: NetworkName, txidVersion: TXIDVersion) {
@@ -12,13 +11,18 @@ export class POIHistoricalMerklerootDatabase extends AbstractDatabase<POIHistori
   }
 
   async createCollectionIndices() {
-    await this.createIndex(['rootHash', 'listKey'], { unique: true });
+    await this.createIndex(['rootHash', 'listKey', 'index'], { unique: true });
   }
 
-  async insertMerkleroot(listKey: string, rootHash: string): Promise<void> {
+  async insertMerkleroot(
+    listKey: string,
+    index: number,
+    rootHash: string,
+  ): Promise<void> {
     const item: POIHistoricalMerklerootDBItem = {
       listKey,
       rootHash,
+      index,
     };
     await this.insertOne(item);
   }
@@ -45,9 +49,17 @@ export class POIHistoricalMerklerootDatabase extends AbstractDatabase<POIHistori
 
   async getLatestMerkleroot(
     listKey: string,
-  ): Promise<POIHistoricalMerklerootDBItem | undefined> {
+  ): Promise<Optional<POIHistoricalMerklerootDBItem>> {
     // Sort by _id in descending order to get the latest document
     const latestRoot = await this.findOne({ listKey }, { _id: -1 });
     return latestRoot;
+  }
+
+  async getMerklerootByGlobalLeafIndex(
+    listKey: string,
+    index: number,
+  ): Promise<Optional<POIHistoricalMerklerootDBItem>> {
+    const rootDbItem = await this.findOne({ listKey, index });
+    return rootDbItem;
   }
 }

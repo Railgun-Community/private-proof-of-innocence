@@ -19,6 +19,7 @@ import axios, { AxiosError } from 'axios';
 import {
   GetLegacyTransactProofsParams,
   GetPOIListEventRangeParams,
+  POISyncedListEvent,
   RemoveTransactProofParams,
   SignedBlockedShield,
   SignedPOIEvent,
@@ -114,14 +115,14 @@ export class POINodeRequest {
     listKey: string,
     startIndex: number,
     endIndex: number,
-  ): Promise<SignedPOIEvent[]> => {
+  ): Promise<POISyncedListEvent[]> => {
     const chain = NETWORK_CONFIG[networkName].chain;
     const route = `poi-events/${chain.type}/${chain.id}`;
     const url = POINodeRequest.getNodeRouteURL(nodeURL, route);
 
     const poiEvents = await POINodeRequest.postRequest<
       GetPOIListEventRangeParams,
-      SignedPOIEvent[]
+      POISyncedListEvent[]
     >(url, {
       txidVersion,
       listKey,
@@ -137,7 +138,7 @@ export class POINodeRequest {
     txidVersion: TXIDVersion,
     listKey: string,
     bloomFilterSerialized: string,
-  ) => {
+  ): Promise<TransactProofData[]> => {
     const chain = NETWORK_CONFIG[networkName].chain;
     const route = `transact-proofs/${chain.type}/${chain.id}`;
     const url = POINodeRequest.getNodeRouteURL(nodeURL, route);
@@ -158,7 +159,7 @@ export class POINodeRequest {
     networkName: NetworkName,
     txidVersion: TXIDVersion,
     bloomFilterSerialized: string,
-  ) => {
+  ): Promise<LegacyTransactProofData[]> => {
     const chain = NETWORK_CONFIG[networkName].chain;
     const route = `legacy-transact-proofs/${chain.type}/${chain.id}`;
     const url = POINodeRequest.getNodeRouteURL(nodeURL, route);
@@ -179,7 +180,7 @@ export class POINodeRequest {
     txidVersion: TXIDVersion,
     listKey: string,
     bloomFilterSerialized: string,
-  ) => {
+  ): Promise<SignedBlockedShield[]> => {
     const chain = NETWORK_CONFIG[networkName].chain;
     const route = `blocked-shields/${chain.type}/${chain.id}`;
     const url = POINodeRequest.getNodeRouteURL(nodeURL, route);
@@ -201,7 +202,7 @@ export class POINodeRequest {
     txidVersion: TXIDVersion,
     listKey: string,
     transactProofData: TransactProofData,
-  ) => {
+  ): Promise<void> => {
     const chain = NETWORK_CONFIG[networkName].chain;
     const route = `submit-transact-proof/${chain.type}/${chain.id}`;
     const url = POINodeRequest.getNodeRouteURL(nodeURL, route);
@@ -218,7 +219,7 @@ export class POINodeRequest {
     networkName: NetworkName,
     txidVersion: TXIDVersion,
     legacyTransactProofData: LegacyTransactProofData,
-  ) => {
+  ): Promise<void> => {
     const chain = NETWORK_CONFIG[networkName].chain;
     const route = `submit-legacy-transact-proofs/${chain.type}/${chain.id}`;
     const url = POINodeRequest.getNodeRouteURL(nodeURL, route);
@@ -238,7 +239,7 @@ export class POINodeRequest {
     networkName: NetworkName,
     txidVersion: TXIDVersion,
     singleCommitmentProofsData: SingleCommitmentProofsData,
-  ) => {
+  ): Promise<void> => {
     const chain = NETWORK_CONFIG[networkName].chain;
     const route = `submit-single-commitment-proofs/${chain.type}/${chain.id}`;
     const url = POINodeRequest.getNodeRouteURL(nodeURL, route);
@@ -259,7 +260,7 @@ export class POINodeRequest {
     listKey: string,
     blindedCommitmentsOut: string[],
     railgunTxidIfHasUnshield: string,
-  ) => {
+  ): Promise<void> => {
     const chain = NETWORK_CONFIG[networkName].chain;
     const route = `remove-transact-proof/${chain.type}/${chain.id}`;
     const url = POINodeRequest.getNodeRouteURL(nodeURL, route);
@@ -289,7 +290,7 @@ export class POINodeRequest {
     txidVersion: TXIDVersion,
     listKey: string,
     signedPOIEvent: SignedPOIEvent,
-  ) => {
+  ): Promise<void> => {
     const chain = NETWORK_CONFIG[networkName].chain;
     const route = `submit-poi-event/${chain.type}/${chain.id}`;
     const url = POINodeRequest.getNodeRouteURL(nodeURL, route);

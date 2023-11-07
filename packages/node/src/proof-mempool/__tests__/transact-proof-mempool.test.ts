@@ -115,10 +115,12 @@ describe('transact-proof-mempool', () => {
     txidMerklerootExistsStub.resolves(true);
     await poiHistoricalMerklerootDB.insertMerkleroot(
       listKey,
+      0, // index
       transactProofData.poiMerkleroots[0],
     );
     await poiHistoricalMerklerootDB.insertMerkleroot(
       listKey,
+      1, // index
       transactProofData.poiMerkleroots[1],
     );
     await TransactProofMempool.submitProof(
@@ -162,18 +164,22 @@ describe('transact-proof-mempool', () => {
 
     await poiHistoricalMerklerootDB.insertMerkleroot(
       listKey,
+      0, // index
       transactProofData1.poiMerkleroots[0],
     );
     await poiHistoricalMerklerootDB.insertMerkleroot(
       listKey,
+      1, // index
       transactProofData1.poiMerkleroots[1],
     );
     await poiHistoricalMerklerootDB.insertMerkleroot(
       listKey,
+      2, // index
       transactProofData2.poiMerkleroots[0],
     );
     await poiHistoricalMerklerootDB.insertMerkleroot(
       listKey,
+      3, // index
       transactProofData2.poiMerkleroots[1],
     );
 
@@ -255,18 +261,22 @@ describe('transact-proof-mempool', () => {
 
     await poiHistoricalMerklerootDB.insertMerkleroot(
       listKey,
+      0, // index
       transactProofData1.poiMerkleroots[0],
     );
     await poiHistoricalMerklerootDB.insertMerkleroot(
       listKey,
+      1, // index
       transactProofData1.poiMerkleroots[1],
     );
     await poiHistoricalMerklerootDB.insertMerkleroot(
       listKey,
+      2, // index
       transactProofData2.poiMerkleroots[0],
     );
     await poiHistoricalMerklerootDB.insertMerkleroot(
       listKey,
+      3, // index
       transactProofData2.poiMerkleroots[1],
     );
 
