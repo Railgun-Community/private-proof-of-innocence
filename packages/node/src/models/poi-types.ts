@@ -45,6 +45,7 @@ export type SubmitPOIEventParams = {
   txidVersion: TXIDVersion;
   signedPOIEvent: SignedPOIEvent;
   listKey: string;
+  validatedMerkleroot: string;
 };
 
 export type SubmitValidatedTxidAndMerklerootParams = {

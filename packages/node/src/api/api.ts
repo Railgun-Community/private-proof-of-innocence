@@ -418,7 +418,7 @@ export class API {
       '/submit-poi-event/:chainType/:chainID',
       async (req: Request) => {
         const { chainType, chainID } = req.params;
-        const { txidVersion, listKey, signedPOIEvent } =
+        const { txidVersion, listKey, signedPOIEvent, validatedMerkleroot } =
           req.body as SubmitPOIEventParams;
         if (!this.hasListKey(listKey)) {
           return;
@@ -434,7 +434,7 @@ export class API {
           listKey,
           networkName,
           txidVersion,
-          [{ signedPOIEvent, validatedMerkleroot: undefined }], // TODO: Add validatedMerkleroot
+          [{ signedPOIEvent, validatedMerkleroot }],
         );
       },
       SharedChainTypeIDParamsSchema,

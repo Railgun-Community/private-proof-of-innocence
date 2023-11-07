@@ -25,6 +25,7 @@ import debug from 'debug';
 import { POINodeRequest } from '../api/poi-node-request';
 import { PushSync } from '../sync/push-sync';
 import { hexToBigInt } from '@railgun-community/wallet';
+import { POIMerkletreeManager } from '../poi-events/poi-merkletree-manager';
 
 const dbg = debug('poi:event-queue');
 
@@ -293,8 +294,19 @@ export class ListProviderPOIEventQueue {
           poiEvent.blindedCommitment,
         )
       ) {
+        // Remove item from queue.
         queue.splice(0, 1);
-        throw new Error('Event already exists in database');
+
+        // Continue with next event in the queue.
+        ListProviderPOIEventQueue.isAddingPOIEventForNetwork[networkName] =
+          false;
+        if (queue.length > 0) {
+          await ListProviderPOIEventQueue.addPOIEventsFromQueue(
+            networkName,
+            txidVersion,
+          );
+        }
+        return;
       }
 
       const signedPOIEvent: SignedPOIEvent = await this.createSignedPOIEvent(
@@ -328,19 +340,28 @@ export class ListProviderPOIEventQueue {
         }
       }
 
-      await PushSync.sendNodeRequestToAllNodes(async nodeURL => {
-        await POINodeRequest.submitPOIEvent(
-          nodeURL,
-          networkName,
-          txidVersion,
-          ListProviderPOIEventQueue.listKey,
-          signedPOIEvent,
-        );
-      });
+      const merkleroot = await POIMerkletreeManager.getHistoricalMerkleroot(
+        this.listKey,
+        networkName,
+        txidVersion,
+        signedPOIEvent.index,
+      );
+      if (isDefined(merkleroot)) {
+        await PushSync.sendNodeRequestToAllNodes(async nodeURL => {
+          await POINodeRequest.submitPOIEvent(
+            nodeURL,
+            networkName,
+            txidVersion,
+            ListProviderPOIEventQueue.listKey,
+            signedPOIEvent,
+            merkleroot, // validatedMerkleroot
+          );
+        });
+      }
 
       ListProviderPOIEventQueue.isAddingPOIEventForNetwork[networkName] = false;
-
       if (queue.length > 0) {
+        // Continue with next item in queue.
         return await ListProviderPOIEventQueue.addPOIEventsFromQueue(
           networkName,
           txidVersion,

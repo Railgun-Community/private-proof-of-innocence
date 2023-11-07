@@ -290,6 +290,7 @@ export class POINodeRequest {
     txidVersion: TXIDVersion,
     listKey: string,
     signedPOIEvent: SignedPOIEvent,
+    validatedMerkleroot: string,
   ): Promise<void> => {
     const chain = NETWORK_CONFIG[networkName].chain;
     const route = `submit-poi-event/${chain.type}/${chain.id}`;
@@ -299,6 +300,7 @@ export class POINodeRequest {
       txidVersion,
       listKey,
       signedPOIEvent,
+      validatedMerkleroot,
     });
   };
 
