@@ -14,6 +14,7 @@ import {
   SingleCommitmentProofsData,
   GetMerkleProofsParams,
   MerkleProof,
+  ValidatePOIMerklerootsParams,
 } from '@railgun-community/shared-models';
 import axios, { AxiosError } from 'axios';
 import {
@@ -321,6 +322,27 @@ export class POINodeRequest {
         txidVersion,
         listKey,
         blindedCommitments,
+      },
+    );
+  };
+
+  static validatePOIMerkleroots = async (
+    nodeURL: string,
+    networkName: NetworkName,
+    txidVersion: TXIDVersion,
+    listKey: string,
+    poiMerkleroots: string[],
+  ): Promise<boolean> => {
+    const chain = NETWORK_CONFIG[networkName].chain;
+    const route = `validate-poi-merkleroots/${chain.type}/${chain.id}`;
+    const url = POINodeRequest.getNodeRouteURL(nodeURL, route);
+
+    return POINodeRequest.postRequest<ValidatePOIMerklerootsParams, boolean>(
+      url,
+      {
+        txidVersion,
+        listKey,
+        poiMerkleroots,
       },
     );
   };

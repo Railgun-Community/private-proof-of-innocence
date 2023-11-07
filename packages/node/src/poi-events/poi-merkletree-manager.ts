@@ -122,7 +122,7 @@ export class POIMerkletreeManager {
     txidVersion: TXIDVersion,
     blindedCommitments: string[],
   ): Promise<MerkleProof[]> {
-    if (listKey !== ListProviderPOIEventQueue.listKey) {
+    if (ListProviderPOIEventQueue.listKey !== listKey) {
       // Forward request to list provider directly
       const nodeURL = nodeURLForListKey(listKey);
       if (isDefined(nodeURL)) {
@@ -305,7 +305,27 @@ export class POIMerkletreeManager {
     networkName: NetworkName,
     listKey: string,
     poiMerkleroots: string[],
-  ) {
+  ): Promise<boolean> {
+    if (ListProviderPOIEventQueue.listKey !== listKey) {
+      // Forward request to list provider directly
+      const nodeURL = nodeURLForListKey(listKey);
+      if (isDefined(nodeURL)) {
+        try {
+          return await POINodeRequest.validatePOIMerkleroots(
+            nodeURL,
+            networkName,
+            txidVersion,
+            listKey,
+            poiMerkleroots,
+          );
+        } catch (err) {
+          dbg(
+            `WARNING: Could not validate merkleroots from list provider. Using node's current DB instead.`,
+          );
+        }
+      }
+    }
+
     const poiMerklerootDb = new POIHistoricalMerklerootDatabase(
       networkName,
       txidVersion,
@@ -322,7 +342,7 @@ export class POIMerkletreeManager {
     chain: Chain,
     listKey: string,
     poiMerkleroots: string[],
-  ) {
+  ): Promise<boolean> {
     const network = networkForChain(chain);
     if (!network) {
       throw new Error('Network not found for chain');
