@@ -36,6 +36,10 @@ export class LocalListProvider extends ListProvider {
       };
     }
 
+    if (TEST_BAD_ADDRESS_LIST.includes(fromAddressLowercase)) {
+      return { shouldAllow: false, blockReason: 'Test address is blocked' };
+    }
+
     return { shouldAllow: true };
   }
 
