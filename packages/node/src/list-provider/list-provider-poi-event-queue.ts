@@ -297,16 +297,18 @@ export class ListProviderPOIEventQueue {
         // Remove item from queue.
         queue.splice(0, 1);
 
-        // Continue with next event in the queue.
-        ListProviderPOIEventQueue.isAddingPOIEventForNetwork[networkName] =
-          false;
-        if (queue.length > 0) {
-          await ListProviderPOIEventQueue.addPOIEventsFromQueue(
-            networkName,
-            txidVersion,
-          );
-        }
-        return;
+        throw new Error('Event already exists in database');
+
+        // TODO: Continue with next event in the queue.
+        // ListProviderPOIEventQueue.isAddingPOIEventForNetwork[networkName] =
+        //   false;
+        // if (queue.length > 0) {
+        //   await ListProviderPOIEventQueue.addPOIEventsFromQueue(
+        //     networkName,
+        //     txidVersion,
+        //   );
+        // }
+        // return;
       }
 
       const signedPOIEvent: SignedPOIEvent = await this.createSignedPOIEvent(

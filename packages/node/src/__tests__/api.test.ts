@@ -4,6 +4,7 @@ import { MOCK_LIST_KEYS } from '../tests/mocks.test';
 import {
   BlindedCommitmentData,
   BlindedCommitmentType,
+  NetworkName,
   NodeStatusAllNetworks,
   SingleCommitmentProofsData,
   TXIDVersion,
@@ -13,6 +14,7 @@ import axios, { AxiosError } from 'axios';
 import 'dotenv/config';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
+import { BlockedShieldsCache } from '../shields/blocked-shields-cache';
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
@@ -60,7 +62,7 @@ class AxiosTest {
 describe('api', function () {
   // Start services before all tests
   before(async function () {
-    this.timeout(30000);
+    this.timeout(10000);
 
     const listProvider = new LocalListProvider(listKey);
 
@@ -186,7 +188,11 @@ describe('api', function () {
   it('Should return 200 for POST /blocked-shields', async () => {
     const chainType = '0';
     const chainID = '5';
-    const bloomFilterSerialized = 'someValidSerializedData';
+    const bloomFilterSerialized = BlockedShieldsCache.serializeBloomFilter(
+      listKey,
+      NetworkName.EthereumGoerli,
+      txidVersion,
+    );
 
     const response = await AxiosTest.postRequest(
       `${apiUrl}/blocked-shields/${chainType}/${chainID}`,
