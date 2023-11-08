@@ -57,12 +57,15 @@ import {
   SubmitLegacyTransactProofsBodySchema,
   ValidatePOIMerklerootsBodySchema,
   SubmitSingleCommitmentProofsBodySchema,
+  GetPOIsPerBlindedCommitmentBodySchema,
 } from './schemas';
 import 'dotenv/config';
 import {
   GetLegacyTransactProofsParams,
   GetPOIListEventRangeParams,
+  GetPOIsPerBlindedCommitmentParams,
   POISyncedListEvent,
+  POIsPerBlindedCommitmentMap,
   RemoveTransactProofParams,
   SignedBlockedShield,
   SubmitPOIEventParams,
@@ -630,6 +633,35 @@ export class API {
       },
       SharedChainTypeIDParamsSchema,
       GetPOIsPerListBodySchema,
+    );
+
+    this.safePost<POIsPerBlindedCommitmentMap>(
+      '/pois-per-blinded-commitment/:chainType/:chainID',
+      async (req: Request) => {
+        const { chainType, chainID } = req.params;
+        const { txidVersion, listKey, blindedCommitmentDatas } =
+          req.body as GetPOIsPerBlindedCommitmentParams;
+
+        const networkName = networkNameForSerializedChain(chainType, chainID);
+
+        if (
+          blindedCommitmentDatas.length >
+          QueryLimits.GET_POI_EXISTENCE_MAX_BLINDED_COMMITMENTS
+        ) {
+          throw new Error(
+            `Too many blinded commitments: max ${QueryLimits.GET_POI_EXISTENCE_MAX_BLINDED_COMMITMENTS}`,
+          );
+        }
+
+        return POIMerkletreeManager.poiStatusPerBlindedCommitment(
+          listKey,
+          networkName,
+          txidVersion,
+          blindedCommitmentDatas,
+        );
+      },
+      SharedChainTypeIDParamsSchema,
+      GetPOIsPerBlindedCommitmentBodySchema,
     );
 
     this.safePost<MerkleProof[]>(

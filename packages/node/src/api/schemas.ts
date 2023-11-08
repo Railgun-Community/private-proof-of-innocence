@@ -217,6 +217,21 @@ export const SubmitValidatedTxidBodySchema: AllowedSchema = {
   required: ['txidVersion', 'txidIndex', 'merkleroot', 'signature', 'listKey'],
 };
 
+const blindedCommitmentDatasSchema: JSONSchema4 = {
+  type: 'array',
+  items: {
+    type: 'object',
+    properties: {
+      blindedCommitment: { type: 'string' },
+      type: {
+        type: 'string',
+        enum: ['Shield', 'Transact', 'Unshield'],
+      },
+    },
+    required: ['blindedCommitment', 'type'],
+  },
+};
+
 export const GetPOIsPerListBodySchema: AllowedSchema = {
   type: 'object',
   properties: {
@@ -225,22 +240,19 @@ export const GetPOIsPerListBodySchema: AllowedSchema = {
       type: 'array',
       items: { type: 'string' },
     },
-    blindedCommitmentDatas: {
-      type: 'array',
-      items: {
-        type: 'object',
-        properties: {
-          blindedCommitment: { type: 'string' },
-          type: {
-            type: 'string',
-            enum: ['Shield', 'Transact', 'Unshield'],
-          },
-        },
-        required: ['blindedCommitment', 'type'],
-      },
-    },
+    blindedCommitmentDatas: blindedCommitmentDatasSchema,
   },
   required: ['txidVersion', 'listKeys', 'blindedCommitmentDatas'],
+};
+
+export const GetPOIsPerBlindedCommitmentBodySchema: AllowedSchema = {
+  type: 'object',
+  properties: {
+    txidVersion: { type: 'string' },
+    listKey: { type: 'string' },
+    blindedCommitmentDatas: blindedCommitmentDatasSchema,
+  },
+  required: ['txidVersion', 'listKey', 'blindedCommitmentDatas'],
 };
 
 export const GetMerkleProofsBodySchema: AllowedSchema = {

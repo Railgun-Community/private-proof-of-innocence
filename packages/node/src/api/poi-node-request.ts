@@ -15,12 +15,15 @@ import {
   GetMerkleProofsParams,
   MerkleProof,
   ValidatePOIMerklerootsParams,
+  BlindedCommitmentData,
 } from '@railgun-community/shared-models';
 import axios, { AxiosError } from 'axios';
 import {
   GetLegacyTransactProofsParams,
   GetPOIListEventRangeParams,
+  GetPOIsPerBlindedCommitmentParams,
   POISyncedListEvent,
+  POIsPerBlindedCommitmentMap,
   RemoveTransactProofParams,
   SignedBlockedShield,
   SignedPOIEvent,
@@ -324,6 +327,27 @@ export class POINodeRequest {
         blindedCommitments,
       },
     );
+  };
+
+  static getPOIStatusPerBlindedCommitment = async (
+    nodeURL: string,
+    networkName: NetworkName,
+    txidVersion: TXIDVersion,
+    listKey: string,
+    blindedCommitmentDatas: BlindedCommitmentData[],
+  ): Promise<POIsPerBlindedCommitmentMap> => {
+    const chain = NETWORK_CONFIG[networkName].chain;
+    const route = `pois-per-blinded-commitment/${chain.type}/${chain.id}`;
+    const url = POINodeRequest.getNodeRouteURL(nodeURL, route);
+
+    return POINodeRequest.postRequest<
+      GetPOIsPerBlindedCommitmentParams,
+      POIsPerBlindedCommitmentMap
+    >(url, {
+      txidVersion,
+      listKey,
+      blindedCommitmentDatas,
+    });
   };
 
   static validatePOIMerkleroots = async (

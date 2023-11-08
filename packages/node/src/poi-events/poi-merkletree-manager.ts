@@ -12,7 +12,10 @@ import {
 } from '@railgun-community/shared-models';
 import { Config } from '../config/config';
 import { POIMerkletree } from './poi-merkletree';
-import { SignedPOIEvent } from '../models/poi-types';
+import {
+  POIsPerBlindedCommitmentMap,
+  SignedPOIEvent,
+} from '../models/poi-types';
 import { TransactProofPerListMempoolDatabase } from '../database/databases/transact-proof-per-list-mempool-database';
 import { BlockedShieldsPerListDatabase } from '../database/databases/blocked-shields-per-list-database';
 import { POIHistoricalMerklerootDatabase } from '../database/databases/poi-historical-merkleroot-database';
@@ -184,22 +187,68 @@ export class POIMerkletreeManager {
         if (!this.listKeys.includes(listKey)) {
           return;
         }
-        await Promise.all(
-          blindedCommitmentDatas.map(async blindedCommitmentData => {
-            const { blindedCommitment } = blindedCommitmentData;
+
+        const poiStatusPerBlindedCommitment =
+          await this.poiStatusPerBlindedCommitment(
+            listKey,
+            networkName,
+            txidVersion,
+            blindedCommitmentDatas,
+          );
+
+        Object.entries(poiStatusPerBlindedCommitment).forEach(
+          ([blindedCommitment, poiStatus]) => {
             poisPerListMap[blindedCommitment] ??= {};
-            poisPerListMap[blindedCommitment][listKey] =
-              await POIMerkletreeManager.getPOIStatus(
-                listKey,
-                networkName,
-                txidVersion,
-                blindedCommitmentData,
-              );
-          }),
+            poisPerListMap[blindedCommitment][listKey] = poiStatus;
+          },
         );
       }),
     );
     return poisPerListMap;
+  }
+
+  static async poiStatusPerBlindedCommitment(
+    listKey: string,
+    networkName: NetworkName,
+    txidVersion: TXIDVersion,
+    blindedCommitmentDatas: BlindedCommitmentData[],
+  ): Promise<POIsPerBlindedCommitmentMap> {
+    if (ListProviderPOIEventQueue.listKey !== listKey) {
+      // Forward request to list provider directly
+      const nodeURL = nodeURLForListKey(listKey);
+      if (isDefined(nodeURL)) {
+        try {
+          return await POINodeRequest.getPOIStatusPerBlindedCommitment(
+            nodeURL,
+            networkName,
+            txidVersion,
+            listKey,
+            blindedCommitmentDatas,
+          );
+        } catch (err) {
+          dbg(
+            `WARNING: Could not get poi status from list provider. Using node's current DB instead.`,
+          );
+        }
+      }
+    }
+
+    const poiStatusPerBlindedCommitmentMap: {
+      [blindedCommitment: string]: POIStatus;
+    } = {};
+    await Promise.all(
+      blindedCommitmentDatas.map(async blindedCommitmentData => {
+        const { blindedCommitment } = blindedCommitmentData;
+        poiStatusPerBlindedCommitmentMap[blindedCommitment] =
+          await POIMerkletreeManager.getPOIStatus(
+            listKey,
+            networkName,
+            txidVersion,
+            blindedCommitmentData,
+          );
+      }),
+    );
+    return poiStatusPerBlindedCommitmentMap;
   }
 
   static async getPOIStatus(

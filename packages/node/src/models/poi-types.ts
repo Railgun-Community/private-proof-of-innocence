@@ -1,4 +1,9 @@
-import { POIEventType, TXIDVersion } from '@railgun-community/shared-models';
+import {
+  BlindedCommitmentData,
+  POIEventType,
+  POIStatus,
+  TXIDVersion,
+} from '@railgun-community/shared-models';
 
 export type POIEventShield = {
   type: POIEventType.Shield;
@@ -81,4 +86,14 @@ export type POISyncedListEvent = {
 
   // TODO: Make required after Node DBs are migrated.
   validatedMerkleroot: Optional<string>;
+};
+
+export type GetPOIsPerBlindedCommitmentParams = {
+  txidVersion: TXIDVersion;
+  listKey: string;
+  blindedCommitmentDatas: BlindedCommitmentData[];
+};
+
+export type POIsPerBlindedCommitmentMap = {
+  [blindedCommitment: string]: POIStatus;
 };
