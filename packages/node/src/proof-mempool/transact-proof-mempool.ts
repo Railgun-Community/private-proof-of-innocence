@@ -20,12 +20,15 @@ import { TransactProofMempoolPruner } from './transact-proof-mempool-pruner';
 import { tryValidateRailgunTxidOccurredBeforeBlockNumber } from '../engine/wallet';
 import { TransactProofEventMatcher } from './transact-proof-event-matcher';
 import { POIMerkletreeManager } from '../poi-events/poi-merkletree-manager';
+import { sha256Hash } from '../util/hash';
 
 const dbg = debug('poi:transact-proof-mempool');
 
 const VALIDATION_ERROR_TEXT = 'Validation error';
 
 export class TransactProofMempool {
+  private static alreadyPushedProofs = new Map<string, boolean>();
+
   static async submitProof(
     listKey: string,
     networkName: NetworkName,
@@ -74,6 +77,18 @@ export class TransactProofMempool {
       return;
     }
     try {
+      const cacheHash = sha256Hash({
+        nodeURL,
+        networkName,
+        txidVersion,
+        listKey,
+        transactProofData,
+      });
+      if (this.alreadyPushedProofs.has(cacheHash)) {
+        dbg('Already pushed proof to destination node');
+        return;
+      }
+
       await PushSync.sendNodeRequest(
         nodeURL,
         async nodeURL => {
@@ -87,6 +102,9 @@ export class TransactProofMempool {
         },
         true, // shouldThrow
       );
+
+      // Cache sha hash of the transact proof contents, so that we don't push it again.
+      this.alreadyPushedProofs.set(cacheHash, true);
     } catch (err) {
       dbg(
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -110,6 +128,13 @@ export class TransactProofMempool {
   ): Promise<void> {
     if (ListProviderPOIEventQueue.listKey !== listKey) {
       // Immediately push to destination node, by its listKey
+      if (
+        transactProofData.txidMerklerootIndex === 9973 &&
+        networkName === NetworkName.Ethereum
+      ) {
+        dbg('NOT FORWARDING LEGACY PROOF TO OFAC NODE');
+        return;
+      }
       await this.pushProofToDestinationNode(
         listKey,
         networkName,
