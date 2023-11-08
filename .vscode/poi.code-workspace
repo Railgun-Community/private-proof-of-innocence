@@ -11,6 +11,10 @@
     {
       "name": "node",
       "path": "../packages/node"
+    },
+    {
+      "name": "api-test",
+      "path": "../packages/api-test"
     }
   ],
   "settings": {
@@ -22,7 +26,7 @@
       "**/.DS_Store": true,
       "**/Thumbs.db": true
     },
-    "jest.disabledWorkspaceFolders": ["dashboard", "node", "poi"]
+    "jest.disabledWorkspaceFolders": ["dashboard", "node", "poi", "api-test"]
   },
   "extensions": {
     "recommendations": [
