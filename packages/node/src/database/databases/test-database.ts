@@ -10,6 +10,7 @@ export class TestDatabase extends AbstractDatabase<TestDBItem> {
 
   async createCollectionIndices() {
     await this.createIndex(['test'], { unique: true });
+    await this.createIndex(['test', 'test2']);
   }
 
   async createLongIndexForTest() {

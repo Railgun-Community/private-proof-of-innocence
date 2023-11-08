@@ -21,9 +21,18 @@ export class POIOrderedEventsDatabase extends AbstractDatabase<POIOrderedEventDB
 
   async createCollectionIndices() {
     await this.createIndex(['index', 'listKey'], { unique: true });
-    await this.createIndex(['index']);
-    await this.createIndex(['listKey', 'blindedCommitment'], { unique: true });
-    await this.createIndex(['index']);
+
+    if (
+      await this.indexExists(
+        ['listKey', 'blindedCommitment'],
+        true, // unique
+      )
+    ) {
+      // Remove 'unique' index on next run.
+      await this.dropIndex(['listKey', 'blindedCommitment']);
+    }
+
+    await this.createIndex(['listKey', 'blindedCommitment']);
   }
 
   async insertValidSignedPOIEvent(

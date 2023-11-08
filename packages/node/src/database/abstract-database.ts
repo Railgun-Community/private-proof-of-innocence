@@ -16,6 +16,7 @@ import {
   WithId,
   IndexDescription,
   FindOptions,
+  DropIndexesOptions,
 } from 'mongodb';
 import { DatabaseClientStorage } from './database-client-storage';
 import {
@@ -175,6 +176,35 @@ export abstract class AbstractDatabase<T extends Document> {
         `Error while creating index with spec: ${JSON.stringify(
           indexSpec,
         )} and options: ${JSON.stringify(options)}`,
+      );
+      this.dbg(err.message);
+      throw err;
+    }
+  }
+
+  async indexExists(indexes: string[], unique: boolean): Promise<boolean> {
+    const existingIndexes = await this.listCollectionIndexes();
+    return isDefined(
+      existingIndexes.find(index => {
+        if (unique !== (index.unique ?? false)) {
+          return false;
+        }
+        if (Object.keys(index.key).length !== indexes.length) {
+          return false;
+        }
+        return indexes.every(indexName => {
+          return 'key' in index && indexName in index.key;
+        });
+      }),
+    );
+  }
+
+  protected async dropIndex(indexSpec: DBIndexSpec<T>) {
+    try {
+      return await this.collection.createIndex(indexSpec as string[]);
+    } catch (err) {
+      this.dbg(
+        `Error while dropping index with spec: ${JSON.stringify(indexSpec)}`,
       );
       this.dbg(err.message);
       throw err;

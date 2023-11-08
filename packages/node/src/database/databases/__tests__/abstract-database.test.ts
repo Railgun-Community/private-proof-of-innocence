@@ -21,6 +21,7 @@ describe('abstract-database', () => {
   before(async () => {
     await DatabaseClient.init();
     db = new TestDatabase(networkName, txidVersion);
+    await db.createCollectionIndices();
   });
 
   it('Should throw error if DatabaseClient is not initialized', async () => {
@@ -33,10 +34,9 @@ describe('abstract-database', () => {
 
   it('Should correctly initialize TestDatabase', async () => {
     expect(db).to.be.instanceOf(TestDatabase);
-    await db.createCollectionIndices();
   });
 
-  it('Should create collection indices', async () => {
+  it.only('Should create collection indices', async () => {
     // List all indexes for the collection
     const indexes = await db.listCollectionIndexes();
 
@@ -46,6 +46,11 @@ describe('abstract-database', () => {
     });
 
     expect(indexExists).to.be.true;
+
+    expect(await db.indexExists(['test'], false)).to.equal(false);
+    expect(await db.indexExists(['test'], true)).to.equal(true);
+    expect(await db.indexExists(['test', 'test2'], false)).to.equal(true);
+    expect(await db.indexExists(['test', 'test2'], true)).to.equal(false);
   });
 
   it('Should create an index with a custom name', async () => {
