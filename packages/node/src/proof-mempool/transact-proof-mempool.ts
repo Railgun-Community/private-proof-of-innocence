@@ -127,14 +127,6 @@ export class TransactProofMempool {
     transactProofData: TransactProofData,
   ): Promise<void> {
     if (ListProviderPOIEventQueue.listKey !== listKey) {
-      // Immediately push to destination node, by its listKey
-      if (
-        transactProofData.txidMerklerootIndex === 9973 &&
-        networkName === NetworkName.Ethereum
-      ) {
-        dbg('NOT FORWARDING LEGACY PROOF TO OFAC NODE');
-        return;
-      }
       await this.pushProofToDestinationNode(
         listKey,
         networkName,
