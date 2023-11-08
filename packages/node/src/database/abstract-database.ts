@@ -201,7 +201,8 @@ export abstract class AbstractDatabase<T extends Document> {
 
   protected async dropIndex(indexSpec: DBIndexSpec<T>) {
     try {
-      return await this.collection.createIndex(indexSpec as string[]);
+      const indexName = indexSpec.join('_');
+      return await this.collection.dropIndex(indexName);
     } catch (err) {
       this.dbg(
         `Error while dropping index with spec: ${JSON.stringify(indexSpec)}`,
