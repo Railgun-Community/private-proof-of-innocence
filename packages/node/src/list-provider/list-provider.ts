@@ -526,6 +526,43 @@ export abstract class ListProvider {
     }
   }
 
+  async addAllowedShield(
+    networkName: NetworkName,
+    txidVersion: TXIDVersion,
+    shieldDBItem: ShieldQueueDBItem,
+  ) {
+    const orderedEventsDB = new POIOrderedEventsDatabase(
+      networkName,
+      txidVersion,
+    );
+    if (
+      await orderedEventsDB.eventExists(
+        this.listKey,
+        shieldDBItem.blindedCommitment,
+      )
+    ) {
+      const shieldQueueDB = new ShieldQueueDatabase(networkName, txidVersion);
+      await shieldQueueDB.updateShieldStatus(
+        shieldDBItem,
+        ShieldStatus.AddedPOI,
+      );
+      return;
+    }
+
+    // Allow - add POIEvent
+    const poiEventShield: POIEventShield = {
+      type: POIEventType.Shield,
+      commitmentHash: shieldDBItem.commitmentHash,
+      blindedCommitment: shieldDBItem.blindedCommitment,
+    };
+    ListProviderPOIEventQueue.queueUnsignedPOIShieldEvent(
+      this.listKey,
+      networkName,
+      txidVersion,
+      poiEventShield,
+    );
+  }
+
   async addAllowedShields(networkName: NetworkName, txidVersion: TXIDVersion) {
     const shieldQueueDB = new ShieldQueueDatabase(networkName, txidVersion);
     const allowedShields = await shieldQueueDB.getShields(ShieldStatus.Allowed);
@@ -536,39 +573,7 @@ export abstract class ListProvider {
 
     await Promise.all(
       allowedShields.map(async shieldDBItem => {
-        const orderedEventsDB = new POIOrderedEventsDatabase(
-          networkName,
-          txidVersion,
-        );
-        if (
-          await orderedEventsDB.eventExists(
-            this.listKey,
-            shieldDBItem.blindedCommitment,
-          )
-        ) {
-          const shieldQueueDB = new ShieldQueueDatabase(
-            networkName,
-            txidVersion,
-          );
-          await shieldQueueDB.updateShieldStatus(
-            shieldDBItem,
-            ShieldStatus.AddedPOI,
-          );
-          return;
-        }
-
-        // Allow - add POIEvent
-        const poiEventShield: POIEventShield = {
-          type: POIEventType.Shield,
-          commitmentHash: shieldDBItem.commitmentHash,
-          blindedCommitment: shieldDBItem.blindedCommitment,
-        };
-        ListProviderPOIEventQueue.queueUnsignedPOIShieldEvent(
-          this.listKey,
-          networkName,
-          txidVersion,
-          poiEventShield,
-        );
+        await this.addAllowedShield(networkName, txidVersion, shieldDBItem);
       }),
     );
   }
@@ -628,7 +633,7 @@ export abstract class ListProvider {
     // Update status in DB
     const shieldQueueDB = new ShieldQueueDatabase(networkName, txidVersion);
     await shieldQueueDB.updateShieldStatus(shieldDBItem, ShieldStatus.Allowed);
-    await this.addAllowedShields(networkName, txidVersion);
+    await this.addAllowedShield(networkName, txidVersion, shieldDBItem);
   }
 
   private async blockShield(
