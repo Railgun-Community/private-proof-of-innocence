@@ -78,6 +78,21 @@ export class POIMerkletree {
     return this.getNodeHash(tree, TREE_DEPTH, 0);
   }
 
+  async getLeaves(startIndex: number, endIndex: number): Promise<string[]> {
+    const leaves: string[] = [];
+    for (let i = startIndex; i < endIndex; i += 1) {
+      leaves.push(await this.getTreeLeaf(i));
+    }
+    return leaves;
+  }
+
+  private async getTreeLeaf(eventIndex: number): Promise<string> {
+    const { tree, index } =
+      POIMerkletree.getTreeAndIndexFromEventIndex(eventIndex);
+    const level = 0;
+    return this.getNodeHash(tree, level, index);
+  }
+
   async deleteNodes_DANGEROUS(tree: number): Promise<void> {
     await this.merkletreeDB.deleteAllItems_DANGEROUS();
     await this.merklerootDB.deleteAllItems_DANGEROUS();

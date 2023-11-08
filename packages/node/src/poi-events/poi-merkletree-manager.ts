@@ -87,6 +87,21 @@ export class POIMerkletreeManager {
     return merkletree;
   }
 
+  static async getPOIMerkletreeLeaves(
+    listKey: string,
+    networkName: NetworkName,
+    txidVersion: TXIDVersion,
+    startIndex: number,
+    endIndex: number,
+  ): Promise<string[]> {
+    const merkletree = POIMerkletreeManager.getMerkletreeForListAndNetwork(
+      listKey,
+      networkName,
+      txidVersion,
+    );
+    return merkletree.getLeaves(startIndex, endIndex);
+  }
+
   static async getTotalEventsAllPOIMerkletrees(
     listKey: string,
     networkName: NetworkName,

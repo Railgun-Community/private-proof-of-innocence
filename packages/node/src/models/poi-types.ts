@@ -81,6 +81,13 @@ export type GetPOIListEventRangeParams = {
   endIndex: number;
 };
 
+export type GetPOIMerkletreeLeavesParams = {
+  txidVersion: TXIDVersion;
+  listKey: string;
+  startIndex: number;
+  endIndex: number;
+};
+
 export type POISyncedListEvent = {
   signedPOIEvent: SignedPOIEvent;
 

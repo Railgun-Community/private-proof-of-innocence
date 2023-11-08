@@ -22,6 +22,17 @@ export const GetPOIListEventRangeBodySchema: AllowedSchema = {
   required: ['txidVersion', 'startIndex', 'endIndex', 'listKey'],
 };
 
+export const GetPOIMerkletreeLeavesBodySchema: AllowedSchema = {
+  type: 'object',
+  properties: {
+    txidVersion: { type: 'string' },
+    startIndex: { type: 'number' },
+    endIndex: { type: 'number' },
+    listKey: { type: 'string' },
+  },
+  required: ['txidVersion', 'startIndex', 'endIndex', 'listKey'],
+};
+
 export const GetTransactProofsBodySchema: AllowedSchema = {
   type: 'object',
   properties: {

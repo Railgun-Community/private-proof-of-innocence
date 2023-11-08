@@ -58,11 +58,13 @@ import {
   ValidatePOIMerklerootsBodySchema,
   SubmitSingleCommitmentProofsBodySchema,
   GetPOIsPerBlindedCommitmentBodySchema,
+  GetPOIMerkletreeLeavesBodySchema,
 } from './schemas';
 import 'dotenv/config';
 import {
   GetLegacyTransactProofsParams,
   GetPOIListEventRangeParams,
+  GetPOIMerkletreeLeavesParams,
   GetPOIsPerBlindedCommitmentParams,
   POISyncedListEvent,
   POIsPerBlindedCommitmentMap,
@@ -354,6 +356,42 @@ export class API {
       },
       SharedChainTypeIDParamsSchema,
       GetPOIListEventRangeBodySchema,
+    );
+
+    this.safePost<string[]>(
+      '/poi-merkletree-leaves/:chainType/:chainID',
+      async (req: Request) => {
+        const { chainType, chainID } = req.params;
+        const { txidVersion, listKey, startIndex, endIndex } =
+          req.body as GetPOIMerkletreeLeavesParams;
+        if (!this.hasListKey(listKey)) {
+          return [];
+        }
+        const networkName = networkNameForSerializedChain(chainType, chainID);
+
+        const rangeLength = endIndex - startIndex;
+        if (
+          rangeLength > QueryLimits.MAX_POI_MERKLETREE_LEAVES_QUERY_RANGE_LENGTH
+        ) {
+          throw new Error(
+            `Max event query range length is ${QueryLimits.MAX_POI_MERKLETREE_LEAVES_QUERY_RANGE_LENGTH}`,
+          );
+        }
+        if (rangeLength < 0) {
+          throw new Error(`Invalid query range`);
+        }
+
+        const events = await POIMerkletreeManager.getPOIMerkletreeLeaves(
+          listKey,
+          networkName,
+          txidVersion,
+          startIndex,
+          endIndex,
+        );
+        return events;
+      },
+      SharedChainTypeIDParamsSchema,
+      GetPOIMerkletreeLeavesBodySchema,
     );
 
     this.safePost<TransactProofData[]>(

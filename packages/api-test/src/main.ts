@@ -2,7 +2,7 @@ import debug from 'debug';
 import { POINodeRequest } from './poi-node-request';
 import { NetworkName, TXIDVersion } from '@railgun-community/shared-models';
 
-const dbg = debug('test:main');
+const dbg = debug('api-test:main');
 
 const main = async () => {
   try {
@@ -12,8 +12,8 @@ const main = async () => {
       NetworkName.Ethereum,
       TXIDVersion.V2_PoseidonMerkle,
       'efc6ddb59c098a13fb2b618fdae94c1c3a807abc8fb1837c93620c9143ee9e88',
-      0,
-      10,
+      11638,
+      11643,
     );
     dbg(eventRange);
   } catch (err) {
