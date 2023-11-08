@@ -9,8 +9,10 @@
   },
   "dependencies": {
     "@railgun-community/shared-models": "^5.8.7",
+    "@railgun-community/wallet": "^5.14.18",
+    "axios": "^1.5.0",
     "ethers": "github:Railgun-Community/ethers.js#v6.7.8",
-    "axios": "^1.5.0"
+    "mongodb": "^6.2.0"
   },
   "peerDependencies": {},
   "devDependencies": {
