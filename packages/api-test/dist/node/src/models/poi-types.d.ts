@@ -59,6 +59,12 @@ export type GetPOIListEventRangeParams = {
     startIndex: number;
     endIndex: number;
 };
+export type GetPOIMerkletreeLeavesParams = {
+    txidVersion: TXIDVersion;
+    listKey: string;
+    startIndex: number;
+    endIndex: number;
+};
 export type POISyncedListEvent = {
     signedPOIEvent: SignedPOIEvent;
     validatedMerkleroot: Optional<string>;

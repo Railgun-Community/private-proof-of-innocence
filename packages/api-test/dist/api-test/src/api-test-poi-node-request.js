@@ -93,6 +93,18 @@ class POINodeRequest {
         });
         return poiEvents;
     };
+    static getPOIMerkletreeLeaves = async (nodeURL, networkName, txidVersion, listKey, startIndex, endIndex) => {
+        const chain = shared_models_1.NETWORK_CONFIG[networkName].chain;
+        const route = `poi-merkletree-leaves/${chain.type}/${chain.id}`;
+        const url = POINodeRequest.getNodeRouteURL(nodeURL, route);
+        const poiMerkletreeLeaves = await POINodeRequest.postRequest(url, {
+            txidVersion,
+            listKey,
+            startIndex,
+            endIndex,
+        });
+        return poiMerkletreeLeaves;
+    };
     static getFilteredTransactProofs = async (nodeURL, networkName, txidVersion, listKey, bloomFilterSerialized) => {
         const chain = shared_models_1.NETWORK_CONFIG[networkName].chain;
         const route = `transact-proofs/${chain.type}/${chain.id}`;
@@ -197,4 +209,4 @@ class POINodeRequest {
     };
 }
 exports.POINodeRequest = POINodeRequest;
-//# sourceMappingURL=poi-node-request.js.map
+//# sourceMappingURL=api-test-poi-node-request.js.map

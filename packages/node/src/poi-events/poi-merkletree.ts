@@ -225,6 +225,18 @@ export class POIMerkletree {
     }
     this.isUpdating = true;
 
+    const { tree: latestTree, index: latestIndex } =
+      await this.getLatestTreeAndIndex();
+    if (latestIndex >= 0) {
+      const latestLeaf = await this.getNodeHash(latestTree, 0, latestIndex);
+      if (latestLeaf === MERKLE_ZERO_VALUE) {
+        throw new Error('Previous leaf is ZERO');
+      }
+      if (latestLeaf === nodeHash) {
+        throw new Error('Previous leaf has the same node hash - invalid entry');
+      }
+    }
+
     const { tree, index } = await this.getNextTreeAndIndex();
     const nextEventCommitmentIndex = POIMerkletree.getGlobalIndex(tree, index);
     if (eventIndex !== nextEventCommitmentIndex) {

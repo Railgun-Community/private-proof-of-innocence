@@ -21,6 +21,7 @@ import axios, { AxiosError } from 'axios';
 import {
   GetLegacyTransactProofsParams,
   GetPOIListEventRangeParams,
+  GetPOIMerkletreeLeavesParams,
   GetPOIsPerBlindedCommitmentParams,
   POISyncedListEvent,
   POIsPerBlindedCommitmentMap,
@@ -134,6 +135,30 @@ export class POINodeRequest {
       endIndex,
     });
     return poiEvents;
+  };
+
+  static getPOIMerkletreeLeaves = async (
+    nodeURL: string,
+    networkName: NetworkName,
+    txidVersion: TXIDVersion,
+    listKey: string,
+    startIndex: number,
+    endIndex: number,
+  ): Promise<string[]> => {
+    const chain = NETWORK_CONFIG[networkName].chain;
+    const route = `poi-merkletree-leaves/${chain.type}/${chain.id}`;
+    const url = POINodeRequest.getNodeRouteURL(nodeURL, route);
+
+    const poiMerkletreeLeaves = await POINodeRequest.postRequest<
+      GetPOIMerkletreeLeavesParams,
+      string[]
+    >(url, {
+      txidVersion,
+      listKey,
+      startIndex,
+      endIndex,
+    });
+    return poiMerkletreeLeaves;
   };
 
   static getFilteredTransactProofs = async (

@@ -7,6 +7,7 @@ export declare class POINodeRequest {
     static validateRailgunTxidMerkleroot: (nodeURL: string, networkName: NetworkName, txidVersion: TXIDVersion, tree: number, index: number, merkleroot: string) => Promise<boolean>;
     static getNodeStatusAllNetworks: (nodeURL: string) => Promise<NodeStatusAllNetworks>;
     static getPOIListEventRange: (nodeURL: string, networkName: NetworkName, txidVersion: TXIDVersion, listKey: string, startIndex: number, endIndex: number) => Promise<POISyncedListEvent[]>;
+    static getPOIMerkletreeLeaves: (nodeURL: string, networkName: NetworkName, txidVersion: TXIDVersion, listKey: string, startIndex: number, endIndex: number) => Promise<string[]>;
     static getFilteredTransactProofs: (nodeURL: string, networkName: NetworkName, txidVersion: TXIDVersion, listKey: string, bloomFilterSerialized: string) => Promise<TransactProofData[]>;
     static getFilteredLegacyTransactProofs: (nodeURL: string, networkName: NetworkName, txidVersion: TXIDVersion, bloomFilterSerialized: string) => Promise<LegacyTransactProofData[]>;
     static getFilteredBlockedShields: (nodeURL: string, networkName: NetworkName, txidVersion: TXIDVersion, listKey: string, bloomFilterSerialized: string) => Promise<SignedBlockedShield[]>;

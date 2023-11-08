@@ -1,5 +1,5 @@
 import debug from 'debug';
-import { POINodeRequest } from './poi-node-request';
+import { POINodeRequest } from './api-test-poi-node-request';
 import { NetworkName, TXIDVersion } from '@railgun-community/shared-models';
 
 const dbg = debug('api-test:main');

@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "license": "MIT",
   "scripts": {
-    "start": "npm run build && env DEBUG=api-test:* node dist/api-test/src/main.js",
+    "start": "npm run build && env DEBUG=api-test:* node dist/api-test/src/api-test-main.js",
     "clean": "rm -rf dist",
     "build": "npm run clean && tsc"
   },
