@@ -151,6 +151,12 @@ export abstract class AbstractDatabase<T extends Document> {
     return this.collection.countDocuments(filter);
   }
 
+  private getIndexName(indexSpec: DBIndexSpec<T>) {
+    return indexSpec
+      .map((indexKey: keyof T) => `${indexKey as string}_1`)
+      .join('_');
+  }
+
   protected async createIndex(
     indexSpec: DBIndexSpec<T>,
     options?: CreateIndexesOptions,
@@ -161,7 +167,7 @@ export abstract class AbstractDatabase<T extends Document> {
 
     // Check that the combined length of the collection name and index name is less than 63 characters
     const collectionName = this.collection.collectionName;
-    const indexName = options?.name ?? indexSpec.join('_');
+    const indexName = options?.name ?? this.getIndexName(indexSpec);
     const combinedLength = collectionName.length + indexName.length;
     if (combinedLength > 63) {
       throw new Error(
@@ -170,7 +176,18 @@ export abstract class AbstractDatabase<T extends Document> {
     }
 
     try {
-      return await this.collection.createIndex(indexSpec as string[], options);
+      const createdIndexName = await this.collection.createIndex(
+        indexSpec as string[],
+        options,
+      );
+      if (createdIndexName !== indexName) {
+        this.dbg(
+          `Unexpected indexName: got ${createdIndexName}, expected ${indexName}`,
+        );
+        console.log(
+          `Unexpected indexName: got ${createdIndexName}, expected ${indexName}`,
+        );
+      }
     } catch (err) {
       this.dbg(
         `Error while creating index with spec: ${JSON.stringify(
@@ -199,9 +216,9 @@ export abstract class AbstractDatabase<T extends Document> {
     );
   }
 
-  protected async dropIndex(indexSpec: DBIndexSpec<T>) {
+  async dropIndex(indexSpec: DBIndexSpec<T>) {
     try {
-      const indexName = indexSpec.join('_');
+      const indexName = this.getIndexName(indexSpec);
       return await this.collection.dropIndex(indexName);
     } catch (err) {
       this.dbg(

@@ -36,7 +36,7 @@ describe('abstract-database', () => {
     expect(db).to.be.instanceOf(TestDatabase);
   });
 
-  it.only('Should create collection indices', async () => {
+  it('Should create collection indices', async () => {
     // List all indexes for the collection
     const indexes = await db.listCollectionIndexes();
 
@@ -51,6 +51,9 @@ describe('abstract-database', () => {
     expect(await db.indexExists(['test'], true)).to.equal(true);
     expect(await db.indexExists(['test', 'test2'], false)).to.equal(true);
     expect(await db.indexExists(['test', 'test2'], true)).to.equal(false);
+
+    await db.dropIndex(['test', 'test2']);
+    expect(await db.indexExists(['test', 'test2'], false)).to.equal(false);
   });
 
   it('Should create an index with a custom name', async () => {
