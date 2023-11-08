@@ -27,7 +27,8 @@ const dbg = debug('poi:transact-proof-mempool');
 const VALIDATION_ERROR_TEXT = 'Validation error';
 
 export class TransactProofMempool {
-  private static alreadyPushedProofs = new Map<string, boolean>();
+  private static doNotAddProofCache = new Map<string, boolean>();
+  private static alreadyAddedProofs = new Map<string, boolean>();
 
   static async submitProof(
     listKey: string,
@@ -35,6 +36,17 @@ export class TransactProofMempool {
     txidVersion: TXIDVersion,
     transactProofData: TransactProofData,
   ) {
+    const doNotAddProofCacheHash = sha256Hash({
+      listKey,
+      networkName,
+      txidVersion,
+      transactProofData,
+    });
+    if (this.doNotAddProofCache.has(doNotAddProofCacheHash)) {
+      dbg('Do not add transact proof - cache hit');
+      return;
+    }
+
     const shouldAdd = await this.shouldAdd(
       listKey,
       networkName,
@@ -42,6 +54,7 @@ export class TransactProofMempool {
       transactProofData,
     );
     if (!shouldAdd) {
+      this.doNotAddProofCache.set(doNotAddProofCacheHash, true);
       return;
     }
 
@@ -84,7 +97,7 @@ export class TransactProofMempool {
         listKey,
         transactProofData,
       });
-      if (this.alreadyPushedProofs.has(cacheHash)) {
+      if (this.alreadyAddedProofs.has(cacheHash)) {
         dbg('Already pushed proof to destination node');
         return;
       }
@@ -104,7 +117,7 @@ export class TransactProofMempool {
       );
 
       // Cache sha hash of the transact proof contents, so that we don't push it again.
-      this.alreadyPushedProofs.set(cacheHash, true);
+      this.alreadyAddedProofs.set(cacheHash, true);
     } catch (err) {
       dbg(
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
