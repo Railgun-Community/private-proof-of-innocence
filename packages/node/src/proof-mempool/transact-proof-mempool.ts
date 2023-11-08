@@ -28,7 +28,7 @@ const VALIDATION_ERROR_TEXT = 'Validation error';
 
 export class TransactProofMempool {
   private static doNotAddProofCache = new Map<string, boolean>();
-  private static alreadyAddedProofs = new Map<string, boolean>();
+  private static alreadyForwardedProofCache = new Map<string, boolean>();
 
   static async submitProof(
     listKey: string,
@@ -97,7 +97,7 @@ export class TransactProofMempool {
         listKey,
         transactProofData,
       });
-      if (this.alreadyAddedProofs.has(cacheHash)) {
+      if (this.alreadyForwardedProofCache.has(cacheHash)) {
         dbg('Already pushed proof to destination node');
         return;
       }
@@ -117,7 +117,7 @@ export class TransactProofMempool {
       );
 
       // Cache sha hash of the transact proof contents, so that we don't push it again.
-      this.alreadyAddedProofs.set(cacheHash, true);
+      this.alreadyForwardedProofCache.set(cacheHash, true);
     } catch (err) {
       dbg(
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -266,6 +266,16 @@ export class TransactProofMempool {
       );
     if (orderedEventsExist) {
       dbg('Event already exists for every blinded commitment');
+
+      // Remove proof from mempool.
+      await TransactProofMempoolPruner.removeProof(
+        listKey,
+        networkName,
+        txidVersion,
+        transactProofData.blindedCommitmentsOut,
+        transactProofData.railgunTxidIfHasUnshield,
+        true, // shouldSendNodeRequest
+      );
       return false;
     }
 
