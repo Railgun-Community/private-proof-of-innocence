@@ -184,7 +184,7 @@ export class API {
       async (req: Request, res: Response, next: NextFunction) => {
         if (shouldLogVerbose()) {
           dbg(`GET request ${route}`);
-          dbg(req.body);
+          dbg({ ...req.params, ...req.body });
         }
         try {
           const value: ReturnType = await handler(req);
@@ -235,7 +235,7 @@ export class API {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       async (req: Request, res: Response, next: NextFunction) => {
         dbg(`POST request ${route}`);
-        dbg(req.body);
+        dbg({ ...req.params, ...req.body });
         try {
           const value: ReturnType = await handler(req);
           if (isDefined(value)) {
