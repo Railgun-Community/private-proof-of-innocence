@@ -73,6 +73,7 @@ import { POINodeRequest } from './poi-node-request';
 import { TransactProofMempoolPruner } from '../proof-mempool/transact-proof-mempool-pruner';
 import { LegacyTransactProofMempool } from '../proof-mempool/legacy/legacy-transact-proof-mempool';
 import { SingleCommitmentProofManager } from '../single-commitment-proof/single-commitment-proof-manager';
+import { shouldLogVerbose } from '../util/logging';
 
 const dbg = debug('poi:api');
 
@@ -181,6 +182,10 @@ export class API {
       route,
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       async (req: Request, res: Response, next: NextFunction) => {
+        if (shouldLogVerbose()) {
+          dbg(`GET request ${route}`);
+          dbg(`body: ${req.body}`);
+        }
         try {
           const value: ReturnType = await handler(req);
           return res.status(200).json(value);
@@ -229,6 +234,8 @@ export class API {
       validate,
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       async (req: Request, res: Response, next: NextFunction) => {
+        dbg(`POST request ${route}`);
+        dbg(`body: ${req.body}`);
         try {
           const value: ReturnType = await handler(req);
           if (isDefined(value)) {
