@@ -196,10 +196,11 @@ export class RoundRobinSyncer {
       networkName,
       txidVersion,
     );
-    if (
-      POIEventList.getTotalEventsLength(nodePOIEventLengths) <=
-      currentListLength
-    ) {
+
+    const nodeTotalEventsLength =
+      POIEventList.getTotalEventsLength(nodePOIEventLengths);
+
+    if (nodeTotalEventsLength <= currentListLength) {
       return 0;
     }
 
@@ -232,7 +233,10 @@ export class RoundRobinSyncer {
 
     // Update a range of events from this list.
     const startIndex = currentListLength;
-    const endIndex = startIndex + QueryLimits.MAX_EVENT_QUERY_RANGE_LENGTH - 1;
+    const endIndex = Math.min(
+      startIndex + QueryLimits.MAX_EVENT_QUERY_RANGE_LENGTH,
+      nodeTotalEventsLength,
+    );
 
     return this.addPOIListEventRange(
       nodeURL,
