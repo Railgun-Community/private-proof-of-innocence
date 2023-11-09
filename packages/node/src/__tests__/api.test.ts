@@ -63,7 +63,7 @@ class AxiosTest {
   }
 }
 
-describe.only('api', function () {
+describe('api', function () {
   before(async function () {
     this.timeout(30000);
 
