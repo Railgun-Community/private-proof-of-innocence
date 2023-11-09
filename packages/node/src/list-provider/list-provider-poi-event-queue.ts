@@ -302,9 +302,8 @@ export class ListProviderPOIEventQueue {
       );
       const nextIndex = lastAddedItem ? lastAddedItem.index + 1 : 0;
       if (
-        nextIndex > 0 &&
         nextIndex <
-          ListProviderPOIEventQueue.getMinimumNextAddIndex(networkName)
+        ListProviderPOIEventQueue.getMinimumNextAddIndex(networkName)
       ) {
         throw new Error(
           'Tried to add POI event while unsynced - risk of duplicate indices. Skipping until synced.',
