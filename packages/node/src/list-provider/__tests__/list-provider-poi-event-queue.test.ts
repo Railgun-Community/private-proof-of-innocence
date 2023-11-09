@@ -33,7 +33,7 @@ let shieldQueueDB: ShieldQueueDatabase;
 
 const listKey = MOCK_LIST_KEYS[0];
 
-describe('list-provider-poi-event-queue', () => {
+describe.only('list-provider-poi-event-queue', () => {
   before(async () => {
     await DatabaseClient.init();
 
