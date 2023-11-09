@@ -104,7 +104,18 @@ export class POIEventList {
             dbg(
               `WARNING: No historical merkleroot for list ${listKey} network ${networkName}, index ${index}`,
             );
-            return undefined;
+            // return undefined;
+
+            // TODO: Return undefined because 'validatedMerkleroot' should be required.
+            return {
+              signedPOIEvent: {
+                index,
+                blindedCommitment,
+                signature,
+                type,
+              },
+              validatedMerkleroot: undefined,
+            };
           }
 
           return {
@@ -147,7 +158,7 @@ export class POIEventList {
     networkName: NetworkName,
     txidVersion: TXIDVersion,
     signedPOIEvent: SignedPOIEvent,
-    validatedMerkleroot: string,
+    validatedMerkleroot: Optional<string>, // TODO: Require this
   ) {
     return this.addValidSignedPOIEventOptionalValidatedMerkleroot(
       listKey,

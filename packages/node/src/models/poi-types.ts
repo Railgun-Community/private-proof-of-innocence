@@ -90,7 +90,7 @@ export type GetPOIMerkletreeLeavesParams = {
 
 export type POISyncedListEvent = {
   signedPOIEvent: SignedPOIEvent;
-  validatedMerkleroot: string;
+  validatedMerkleroot: Optional<string>; // TODO: Require this
 };
 
 export type GetPOIsPerBlindedCommitmentParams = {
