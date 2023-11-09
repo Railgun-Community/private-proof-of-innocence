@@ -13,6 +13,7 @@ import { getListKeysFromNodeConfigs } from './config/general';
 import { stopEngine } from './engine/engine-init';
 import axios from 'axios';
 import { TransactProofPushSyncer } from './sync/transact-proof-push-syncer';
+import { ListProviderPOIEventQueue } from './list-provider/list-provider-poi-event-queue';
 
 const dbg = debug('poi:node');
 
@@ -92,6 +93,8 @@ export class ProofOfInnocenceNode {
         `Cannot connect to API - check port ${this.port} for existing process: ${err.message}`,
       );
     }
+
+    ListProviderPOIEventQueue.ready = true;
 
     dbg(`Proof of Innocence node running...`);
   }

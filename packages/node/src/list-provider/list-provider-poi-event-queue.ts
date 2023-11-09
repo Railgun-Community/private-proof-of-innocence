@@ -43,6 +43,8 @@ export class ListProviderPOIEventQueue {
 
   static listKey: string;
 
+  static ready = false;
+
   static init(listKey: string) {
     ListProviderPOIEventQueue.listKey = listKey;
   }
@@ -279,6 +281,10 @@ export class ListProviderPOIEventQueue {
       )
     ) {
       dbg(`Warning: Already adding events from queue`);
+      return;
+    }
+    if (!this.ready) {
+      dbg(`Warning: Not ready to add events to list`);
       return;
     }
 
