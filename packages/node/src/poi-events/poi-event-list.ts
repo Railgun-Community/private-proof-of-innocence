@@ -199,9 +199,7 @@ export class POIEventList {
     } catch (err) {
       // no op
       dbg(err);
-      // eslint-disable-next-line no-console
-      console.error(err);
-      return;
+      throw err;
     }
   }
 }

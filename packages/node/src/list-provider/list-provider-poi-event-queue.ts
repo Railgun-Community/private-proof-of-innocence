@@ -71,6 +71,16 @@ export class ListProviderPOIEventQueue {
     ListProviderPOIEventQueue.poll();
   }
 
+  static clearEventQueue_TestOnly(
+    networkName: NetworkName,
+    txidVersion: TXIDVersion,
+  ) {
+    const eventQueueForNetwork = this.poiEventQueue[networkName];
+    if (eventQueueForNetwork) {
+      eventQueueForNetwork[txidVersion] = [];
+    }
+  }
+
   static getPOIEventQueueLength(
     networkName: NetworkName,
     txidVersion: TXIDVersion,
@@ -364,10 +374,11 @@ export class ListProviderPOIEventQueue {
       ListProviderPOIEventQueue.isAddingPOIEventForNetwork[networkName] = false;
       if (queue.length > 0) {
         // Continue with next item in queue.
-        return await ListProviderPOIEventQueue.addPOIEventsFromQueue(
+        await ListProviderPOIEventQueue.addPOIEventsFromQueue(
           networkName,
           txidVersion,
         );
+        return;
       }
     } catch (err) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access

@@ -17,6 +17,8 @@ import { POIOrderedEventsDatabase } from '../../database/databases/poi-ordered-e
 import { POIMerkletreeDatabase } from '../../database/databases/poi-merkletree-database';
 import { MOCK_LIST_KEYS, MOCK_SNARK_PROOF } from '../../tests/mocks.test';
 import { POIEventShield } from '../../models/poi-types';
+import { ShieldQueueDatabase } from '../../database/databases/shield-queue-database';
+import { TransactProofMempoolCache } from '../../proof-mempool/transact-proof-mempool-cache';
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
@@ -27,6 +29,7 @@ const txidVersion = TXIDVersion.V2_PoseidonMerkle;
 let orderedEventsDB: POIOrderedEventsDatabase;
 let transactProofMempoolDB: TransactProofPerListMempoolDatabase;
 let poiMerkletreeDB: POIMerkletreeDatabase;
+let shieldQueueDB: ShieldQueueDatabase;
 
 const listKey = MOCK_LIST_KEYS[0];
 
@@ -43,18 +46,23 @@ describe('list-provider-poi-event-queue', () => {
       txidVersion,
     );
     poiMerkletreeDB = new POIMerkletreeDatabase(networkName, txidVersion);
+    shieldQueueDB = new ShieldQueueDatabase(networkName, txidVersion);
   });
 
   afterEach(async () => {
     await orderedEventsDB.deleteAllItems_DANGEROUS();
     await transactProofMempoolDB.deleteAllItems_DANGEROUS();
+    TransactProofMempoolCache.clearCache_FOR_TEST_ONLY();
     await poiMerkletreeDB.deleteAllItems_DANGEROUS();
+    await shieldQueueDB.deleteAllItems_DANGEROUS();
   });
 
   beforeEach(async () => {
     await orderedEventsDB.deleteAllItems_DANGEROUS();
     await transactProofMempoolDB.deleteAllItems_DANGEROUS();
+    TransactProofMempoolCache.clearCache_FOR_TEST_ONLY();
     await poiMerkletreeDB.deleteAllItems_DANGEROUS();
+    await shieldQueueDB.deleteAllItems_DANGEROUS();
   });
 
   after(() => {
@@ -111,10 +119,15 @@ describe('list-provider-poi-event-queue', () => {
         ),
       queueLength => queueLength === 0,
       20,
-      10000 / 20, // 10 sec.
+      5000 / 20, // 5 sec.
     );
     if (pollQueueLength !== 0) {
-      throw new Error(`Queue should be empty after processing - timed out`);
+      throw new Error(
+        `Queue should be empty after processing - timed out. Still have events: ${ListProviderPOIEventQueue.getPOIEventQueueLength(
+          networkName,
+          txidVersion,
+        )}`,
+      );
     }
 
     // Expect all events to be added to merkletree

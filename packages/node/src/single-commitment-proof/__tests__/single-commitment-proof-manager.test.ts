@@ -52,6 +52,10 @@ describe('single-commitment-proof-manager', () => {
     await poiHistoricalMerklerootDB.deleteAllItems_DANGEROUS();
     await orderedEventDB.deleteAllItems_DANGEROUS();
     await poiMerkletreeDB.deleteAllItems_DANGEROUS();
+    ListProviderPOIEventQueue.clearEventQueue_TestOnly(
+      networkName,
+      txidVersion,
+    );
   });
 
   afterEach(async () => {
