@@ -63,6 +63,7 @@ describe('list-provider-poi-event-queue', () => {
     TransactProofMempoolCache.clearCache_FOR_TEST_ONLY();
     await poiMerkletreeDB.deleteAllItems_DANGEROUS();
     await shieldQueueDB.deleteAllItems_DANGEROUS();
+    ListProviderPOIEventQueue.clearMinimumNextAddIndex_TestOnly();
   });
 
   after(() => {

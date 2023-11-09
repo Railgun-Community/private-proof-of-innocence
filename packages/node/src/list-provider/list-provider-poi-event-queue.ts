@@ -81,6 +81,10 @@ export class ListProviderPOIEventQueue {
     }
   }
 
+  static clearMinimumNextAddIndex_TestOnly() {
+    this.minimumNextAddIndex = {};
+  }
+
   static getPOIEventQueueLength(
     networkName: NetworkName,
     txidVersion: TXIDVersion,
