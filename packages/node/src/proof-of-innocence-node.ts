@@ -61,10 +61,10 @@ export class ProofOfInnocenceNode {
 
   async start() {
     if (this.running) {
-      return;
+      throw new Error('Proof of Innocence node can only run once');
     }
-    dbg(`Starting Proof of Innocence node...`);
 
+    dbg(`Starting Proof of Innocence node...`);
     this.running = true;
 
     // Must proceed in this order:
