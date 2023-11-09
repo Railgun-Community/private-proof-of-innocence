@@ -40,6 +40,11 @@ describe('proof-of-innocence-node', () => {
     );
   });
 
+  after(async () => {
+    await nodeOnlyAggregator.stop();
+    await nodeWithListProvider.stop();
+  });
+
   it('Should start up a node with list provider', async () => {
     await nodeWithListProvider.start();
 

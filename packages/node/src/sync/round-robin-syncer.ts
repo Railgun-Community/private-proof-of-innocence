@@ -234,8 +234,8 @@ export class RoundRobinSyncer {
     // Update a range of events from this list.
     const startIndex = currentListLength;
     const endIndex = Math.min(
-      startIndex + QueryLimits.MAX_EVENT_QUERY_RANGE_LENGTH,
-      nodeTotalEventsLength,
+      startIndex + QueryLimits.MAX_EVENT_QUERY_RANGE_LENGTH - 1,
+      nodeTotalEventsLength - 1,
     );
 
     return this.addPOIListEventRange(

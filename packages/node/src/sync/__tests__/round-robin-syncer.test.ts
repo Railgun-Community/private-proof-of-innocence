@@ -146,7 +146,7 @@ describe('round-robin-syncer', () => {
   });
 
   it('Should update POI event list', async () => {
-    const signedEvent1: SignedPOIEvent =
+    const signedEvent0: SignedPOIEvent =
       await ListProviderPOIEventQueue.createSignedPOIEvent(
         0, // index
         {
@@ -155,7 +155,7 @@ describe('round-robin-syncer', () => {
           commitmentHash: '',
         },
       );
-    const signedEvent2: SignedPOIEvent =
+    const signedEvent1: SignedPOIEvent =
       await ListProviderPOIEventQueue.createSignedPOIEvent(
         1, // index
         {
@@ -163,7 +163,7 @@ describe('round-robin-syncer', () => {
           blindedCommitment: '0x2222',
         },
       );
-    const signedEvent3: SignedPOIEvent =
+    const signedEvent2: SignedPOIEvent =
       await ListProviderPOIEventQueue.createSignedPOIEvent(
         2, // index
         {
@@ -176,9 +176,21 @@ describe('round-robin-syncer', () => {
     const getPOIListEventRangeStub = sinon
       .stub(POINodeRequest, 'getPOIListEventRange')
       .resolves([
-        { signedPOIEvent: signedEvent1, validatedMerkleroot: undefined },
-        { signedPOIEvent: signedEvent2, validatedMerkleroot: undefined },
-        { signedPOIEvent: signedEvent3, validatedMerkleroot: undefined }, // TODO: Add tests to validate these merkleroots in order.
+        {
+          signedPOIEvent: signedEvent0,
+          validatedMerkleroot:
+            '026ce23444c0f0b880caee8779f8a567ad938495d22f2e5b3d5fbeb27b8780df',
+        },
+        {
+          signedPOIEvent: signedEvent1,
+          validatedMerkleroot:
+            '2064d1357da08a2ff6fc5bb88fb4bb4e972a9b9f9e5ae013cfcd58e1ee91c630',
+        },
+        {
+          signedPOIEvent: signedEvent2,
+          validatedMerkleroot:
+            '1babab2e24fe7c987a33112ba1976cd886b57563b9984387340312c66c70943b',
+        },
       ]);
 
     await roundRobinSyncer.updatePOIEventListAllNetworks(

@@ -56,7 +56,7 @@ describe('poi-merkletree-manager', () => {
         index: 0,
         blindedCommitment: '0x1234',
       } as SignedPOIEvent,
-      undefined, // TODO: Add validatedMerkleroot
+      '1f2d42f85a78e7eb8bf6906af2b23cde914f19567f703315824aaefeac67c991', // validatedMerkleroot
     );
 
     await POIMerkletreeManager.addPOIEvent(
@@ -67,7 +67,7 @@ describe('poi-merkletree-manager', () => {
         index: 1,
         blindedCommitment: '0x5678',
       } as SignedPOIEvent,
-      undefined, // TODO: Add validatedMerkleroot
+      '10667d409f91d8baec3b1532279a2343208030c0feb16bad86c6086a8c2907c6', // validatedMerkleroot
     );
 
     const merkleProofs = await POIMerkletreeManager.getMerkleProofs(

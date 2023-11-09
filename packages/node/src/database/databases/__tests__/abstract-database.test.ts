@@ -72,7 +72,7 @@ describe('abstract-database', () => {
   it('Should throw error if combined length of collection and index name exceeds 64 characters', async () => {
     // Attempt to create an index with a long name in the TestDatabase
     await expect(db.createLongIndexForTest()).to.be.rejectedWith(
-      'Index name veryBigAndLongIndexNameToForceFailurePart1_veryBigAndLongIndexNameToForceFailurePart2 is too long for collection Test',
+      'Index name veryBigAndLongIndexNameToForceFailurePart1_1_veryBigAndLongIndexNameToForceFailurePart2_1 is too long for collection Test',
     );
   });
 

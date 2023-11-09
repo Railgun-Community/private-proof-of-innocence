@@ -218,7 +218,7 @@ export class POIMerkletree {
   async insertLeaf(
     eventIndex: number,
     nodeHash: string,
-    validatedMerkleroot: Optional<string>, // TODO: Make required after DB migration
+    validatedMerkleroot: Optional<string>,
   ) {
     if (this.isUpdating) {
       throw new Error('POI merkletree is already updating');
@@ -321,7 +321,7 @@ export class POIMerkletree {
     tree: number,
     startIndex: number,
     nodeHashes: string[],
-    validatedMerkleroot: Optional<string>, // TODO: Make required after DB migration
+    validatedMerkleroot: Optional<string>,
   ): Promise<void> {
     const firstLevelHashWriteGroup: string[][] = [];
     firstLevelHashWriteGroup[0] = [];

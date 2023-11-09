@@ -7,12 +7,12 @@ import {
 import {
   CollectionName,
   DBFilter,
-  DBMaxMin,
   DBSort,
   POIOrderedEventDBItem,
 } from '../../models/database-types';
 import { AbstractDatabase } from '../abstract-database';
 import { SignedPOIEvent } from '../../models/poi-types';
+import { Filter } from 'mongodb';
 
 export class POIOrderedEventsDatabase extends AbstractDatabase<POIOrderedEventDBItem> {
   constructor(networkName: NetworkName, txidVersion: TXIDVersion) {
@@ -55,25 +55,16 @@ export class POIOrderedEventsDatabase extends AbstractDatabase<POIOrderedEventDB
     startIndex: number,
     endIndex?: number,
   ): Promise<POIOrderedEventDBItem[]> {
-    const filter: DBFilter<POIOrderedEventDBItem> = {
+    const filter: Filter<POIOrderedEventDBItem> = {
       listKey,
+      index: isDefined(endIndex)
+        ? { $gte: startIndex, $lte: endIndex }
+        : { $gte: startIndex },
     };
     const sort: DBSort<POIOrderedEventDBItem> = {
       index: 'ascending',
     };
-
-    // Set startIndex as the min index
-    const min: DBMaxMin<POIOrderedEventDBItem> = {
-      index: startIndex,
-    };
-
-    // If endIndex is defined, set it as the max index
-    const max: DBMaxMin<POIOrderedEventDBItem> = {};
-    if (isDefined(endIndex)) {
-      max.index = endIndex === startIndex ? endIndex + 1 : endIndex;
-    }
-
-    return this.findAll(filter, sort, max, min);
+    return this.findAll(filter, sort);
   }
 
   async getCount(listKey: string, type?: POIEventType): Promise<number> {

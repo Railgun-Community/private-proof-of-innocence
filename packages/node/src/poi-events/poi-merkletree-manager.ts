@@ -120,7 +120,7 @@ export class POIMerkletreeManager {
     networkName: NetworkName,
     txidVersion: TXIDVersion,
     signedPOIEvent: SignedPOIEvent,
-    validatedMerkleroot: Optional<string>, // TODO: Make required after DB migration
+    validatedMerkleroot: Optional<string>,
   ) {
     const merkletree = POIMerkletreeManager.getMerkletreeForListAndNetwork(
       listKey,

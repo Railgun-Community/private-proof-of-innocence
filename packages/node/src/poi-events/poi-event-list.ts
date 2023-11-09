@@ -3,6 +3,8 @@ import {
   POIEventLengths,
   POIEventType,
   TXIDVersion,
+  isDefined,
+  removeUndefineds,
 } from '@railgun-community/shared-models';
 import { POIOrderedEventsDatabase } from '../database/databases/poi-ordered-events-database';
 import { POISyncedListEvent, SignedPOIEvent } from '../models/poi-types';
@@ -83,40 +85,38 @@ export class POIEventList {
     const db = new POIOrderedEventsDatabase(networkName, txidVersion);
     const dbEvents = await db.getPOIEvents(listKey, startIndex, endIndex);
 
-    // TODO: See below (will be necessary when returning undefined in the map)
-    // return removeUndefineds(
-    return Promise.all(
-      dbEvents.map(async dbEvent => {
-        const { index, blindedCommitment, signature, type } = dbEvent;
+    return removeUndefineds(
+      await Promise.all(
+        dbEvents.map(async dbEvent => {
+          const { index, blindedCommitment, signature, type } = dbEvent;
 
-        const historicalMerkleroot =
-          await POIMerkletreeManager.getHistoricalMerkleroot(
-            listKey,
-            networkName,
-            txidVersion,
-            index,
-          );
+          const historicalMerkleroot =
+            await POIMerkletreeManager.getHistoricalMerkleroot(
+              listKey,
+              networkName,
+              txidVersion,
+              index,
+            );
 
-        // TODO: Add after all Node DBs are migrated (deleted and re-synced).
-        // if (!isDefined(historicalMerkleroot)) {
-        //   dbg(
-        //     `WARNING: No historical merkleroot for list ${listKey} network ${networkName}, index ${index}`,
-        //   );
-        //   return undefined;
-        // }
+          if (!isDefined(historicalMerkleroot)) {
+            dbg(
+              `WARNING: No historical merkleroot for list ${listKey} network ${networkName}, index ${index}`,
+            );
+            return undefined;
+          }
 
-        return {
-          signedPOIEvent: {
-            index,
-            blindedCommitment,
-            signature,
-            type,
-          },
-          validatedMerkleroot: historicalMerkleroot,
-        };
-      }),
+          return {
+            signedPOIEvent: {
+              index,
+              blindedCommitment,
+              signature,
+              type,
+            },
+            validatedMerkleroot: historicalMerkleroot,
+          };
+        }),
+      ),
     );
-    // );
   }
 
   static async verifyAndAddSignedPOIEventsWithValidatedMerkleroots(
@@ -145,7 +145,7 @@ export class POIEventList {
     networkName: NetworkName,
     txidVersion: TXIDVersion,
     signedPOIEvent: SignedPOIEvent,
-    validatedMerkleroot: Optional<string>, // TODO: Make required after DB migration
+    validatedMerkleroot: string,
   ) {
     return this.addValidSignedPOIEventOptionalValidatedMerkleroot(
       listKey,
@@ -199,6 +199,8 @@ export class POIEventList {
     } catch (err) {
       // no op
       dbg(err);
+      // eslint-disable-next-line no-console
+      console.error(err);
       return;
     }
   }
