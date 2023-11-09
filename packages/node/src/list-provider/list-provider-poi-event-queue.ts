@@ -282,7 +282,7 @@ export class ListProviderPOIEventQueue {
       return;
     }
 
-    const currentEventKey = '1';
+    const currentEventKey = generateKey();
     ListProviderPOIEventQueue.addingPOIEventKeyForNetwork[networkName] =
       currentEventKey;
 
