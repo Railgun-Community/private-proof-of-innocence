@@ -26,7 +26,7 @@ import { POINodeRequest } from '../api/poi-node-request';
 import { PushSync } from '../sync/push-sync';
 import { hexToBigInt } from '@railgun-community/wallet';
 import { POIMerkletreeManager } from '../poi-events/poi-merkletree-manager';
-import { generateKey } from 'util/util';
+import { generateKey } from '../util/util';
 
 const dbg = debug('poi:event-queue');
 
@@ -316,18 +316,15 @@ export class ListProviderPOIEventQueue {
         // Remove item from queue.
         queue.splice(0, 1);
 
-        throw new Error('Event already exists in database');
-
-        // TODO: Continue with next event in the queue.
-        // ListProviderPOIEventQueue.isAddingPOIEventForNetwork[networkName] =
-        //   false;
-        // if (queue.length > 0) {
-        //   await ListProviderPOIEventQueue.addPOIEventsFromQueue(
-        //     networkName,
-        //     txidVersion,
-        //   );
-        // }
-        // return;
+        ListProviderPOIEventQueue.addingPOIEventKeyForNetwork[networkName] =
+          undefined;
+        if (queue.length > 0) {
+          await ListProviderPOIEventQueue.addPOIEventsFromQueue(
+            networkName,
+            txidVersion,
+          );
+        }
+        return;
       }
 
       const signedPOIEvent: SignedPOIEvent = await this.createSignedPOIEvent(
@@ -335,7 +332,6 @@ export class ListProviderPOIEventQueue {
         poiEvent,
       );
 
-      // TODO-PETE: Should this be above signed POI event?
       if (
         currentEventKey !==
         ListProviderPOIEventQueue.addingPOIEventKeyForNetwork[networkName]
@@ -402,8 +398,13 @@ export class ListProviderPOIEventQueue {
     } catch (err) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       dbg('Error adding POI event from queue', err.message);
-      ListProviderPOIEventQueue.addingPOIEventKeyForNetwork[networkName] =
-        undefined;
+      if (
+        currentEventKey ===
+        ListProviderPOIEventQueue.addingPOIEventKeyForNetwork[networkName]
+      ) {
+        ListProviderPOIEventQueue.addingPOIEventKeyForNetwork[networkName] =
+          undefined;
+      }
     }
   }
 }

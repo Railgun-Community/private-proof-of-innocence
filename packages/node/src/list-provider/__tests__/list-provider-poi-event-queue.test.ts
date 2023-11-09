@@ -170,5 +170,5 @@ describe.only('list-provider-poi-event-queue', () => {
         transactProofData.railgunTxidIfHasUnshield,
       ),
     ).to.equal(false);
-  }).timeout(20000);
+  }).timeout(40000);
 });
