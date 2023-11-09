@@ -230,9 +230,11 @@ export class POIMerkletree {
     if (latestIndex >= 0) {
       const latestLeaf = await this.getNodeHash(latestTree, 0, latestIndex);
       if (latestLeaf === MERKLE_ZERO_VALUE) {
+        this.isUpdating = false;
         throw new Error('Previous leaf is ZERO');
       }
       if (latestLeaf === nodeHash) {
+        this.isUpdating = false;
         throw new Error('Previous leaf has the same node hash - invalid entry');
       }
     }
@@ -346,7 +348,7 @@ export class POIMerkletree {
       );
     }
 
-    await this.writeToDB(tree, startIndex, hashWriteGroup);
+    await this.writeToDB(tree, endIndex - 1, hashWriteGroup);
 
     this.treeLengths[tree] += nodeHashes.length;
   }
@@ -486,7 +488,12 @@ export class POIMerkletree {
     await this.merkletreeDB.updatePOIMerkletreeNodes(items);
 
     const merkleroot = await this.getRoot(tree);
-    await this.merklerootDB.insertMerkleroot(this.listKey, index, merkleroot);
+    const globalLeafIndex = POIMerkletree.getGlobalIndex(tree, index);
+    await this.merklerootDB.insertMerkleroot(
+      this.listKey,
+      globalLeafIndex,
+      merkleroot,
+    );
   }
 
   async getMerkleProofFromNodeHash(nodeHash: string): Promise<MerkleProof> {
