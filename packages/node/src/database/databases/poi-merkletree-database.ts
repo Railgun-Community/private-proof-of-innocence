@@ -23,6 +23,15 @@ export class POIMerkletreeDatabase extends AbstractDatabase<POIMerkletreeDBItem>
     );
   }
 
+  async deleteAllPOIMerkletreeNodesForList_DANGEROUS(
+    listKey: string,
+  ): Promise<void> {
+    const filter: DBFilter<POIMerkletreeDBItem> = {
+      listKey,
+    };
+    await this.deleteMany(filter);
+  }
+
   async deleteAllPOIMerkletreeNodesForTree(
     listKey: string,
     tree: number,

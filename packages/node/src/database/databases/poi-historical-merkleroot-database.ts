@@ -1,6 +1,7 @@
 import { NetworkName, TXIDVersion } from '@railgun-community/shared-models';
 import {
   CollectionName,
+  DBFilter,
   POIHistoricalMerklerootDBItem,
 } from '../../models/database-types';
 import { AbstractDatabase } from '../abstract-database';
@@ -61,5 +62,12 @@ export class POIHistoricalMerklerootDatabase extends AbstractDatabase<POIHistori
   ): Promise<Optional<POIHistoricalMerklerootDBItem>> {
     const rootDbItem = await this.findOne({ listKey, index });
     return rootDbItem;
+  }
+
+  async deleteAllPOIMerklerootsForList_DANGEROUS(listKey: string) {
+    const filter: DBFilter<POIHistoricalMerklerootDBItem> = {
+      listKey,
+    };
+    await this.deleteMany(filter);
   }
 }

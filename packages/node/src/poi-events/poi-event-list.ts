@@ -12,6 +12,8 @@ import { verifyPOIEvent } from '../util/ed25519';
 import { POIMerkletreeManager } from './poi-merkletree-manager';
 import { TransactProofMempoolPruner } from '../proof-mempool/transact-proof-mempool-pruner';
 import debug from 'debug';
+import { POIMerkletreeDatabase } from '../database/databases/poi-merkletree-database';
+import { POIHistoricalMerklerootDatabase } from '../database/databases/poi-historical-merkleroot-database';
 
 const dbg = debug('poi:event-list');
 
@@ -201,5 +203,23 @@ export class POIEventList {
       dbg(err);
       throw err;
     }
+  }
+
+  static async deleteAllPOIEventsForList_DANGEROUS(
+    listKey: string,
+    networkName: NetworkName,
+    txidVersion: TXIDVersion,
+  ) {
+    const eventsDB = new POIOrderedEventsDatabase(networkName, txidVersion);
+    await eventsDB.deleteAllEventsForList_DANGEROUS(listKey);
+
+    const poiMerkletreeDB = new POIMerkletreeDatabase(networkName, txidVersion);
+    await poiMerkletreeDB.deleteAllPOIMerkletreeNodesForList_DANGEROUS(listKey);
+
+    const poiMerklerootDB = new POIHistoricalMerklerootDatabase(
+      networkName,
+      txidVersion,
+    );
+    await poiMerklerootDB.deleteAllPOIMerklerootsForList_DANGEROUS(listKey);
   }
 }

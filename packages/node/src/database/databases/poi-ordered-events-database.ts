@@ -120,4 +120,11 @@ export class POIOrderedEventsDatabase extends AbstractDatabase<POIOrderedEventDB
     };
     return this.stream(filter, sort);
   }
+
+  async deleteAllEventsForList_DANGEROUS(listKey: string) {
+    const filter: DBFilter<POIOrderedEventDBItem> = {
+      listKey,
+    };
+    return this.deleteMany(filter);
+  }
 }
