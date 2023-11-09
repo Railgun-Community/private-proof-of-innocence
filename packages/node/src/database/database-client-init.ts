@@ -8,7 +8,7 @@ import { MongoClient } from 'mongodb';
 import { Config } from '../config/config';
 import { ShieldQueueDatabase } from './databases/shield-queue-database';
 import { StatusDatabase } from './databases/status-database';
-import { CollectionName } from '../models/database-types';
+import { CollectionName, TestDBItem } from '../models/database-types';
 import { AbstractDatabase } from './abstract-database';
 import { TransactProofPerListMempoolDatabase } from './databases/transact-proof-per-list-mempool-database';
 import { POIOrderedEventsDatabase } from './databases/poi-ordered-events-database';
@@ -26,6 +26,7 @@ export class DatabaseClient {
       return DatabaseClientStorage.client;
     }
 
+    // Ensure connection attempt does not take longer than 2 seconds
     await promiseTimeout(
       DatabaseClient.createClient(),
       2000,
@@ -41,6 +42,29 @@ export class DatabaseClient {
     }
     const client = await new MongoClient(Config.MONGODB_URL).connect();
     DatabaseClientStorage.client = client;
+
+    // Perform a health check using the TestDatabase
+    const testDb = new TestDatabase(
+      NetworkName.Ethereum,
+      TXIDVersion.V2_PoseidonMerkle,
+    );
+    const healthCheckDoc: TestDBItem = {
+      test: 'healthcheck',
+      test2: 'healthcheck',
+    };
+
+    try {
+      // Insert a document, read it back, and delete it
+      await testDb.insert(healthCheckDoc);
+      const insertedDoc = await testDb.getItem({ test: 'healthcheck' });
+      if (!insertedDoc || insertedDoc.test2 !== healthCheckDoc.test2) {
+        throw new Error('Health check failed: Read/Write inconsistency.');
+      }
+      await testDb.delete({ test: 'healthcheck' });
+    } catch (error) {
+      await client.close();
+      throw error;
+    }
   }
 
   static async ensureDBIndicesAllChains(): Promise<void> {

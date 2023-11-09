@@ -26,10 +26,15 @@ describe('abstract-database', () => {
 
   it('Should throw error if DatabaseClient is not initialized', async () => {
     DatabaseClientStorage.client = undefined;
+
     expect(() => new TestDatabase(networkName, txidVersion)).to.throw(
       'DatabaseClient not initialized',
     );
-    await DatabaseClient.init(); // Re-initialize for the following tests
+
+    const client = await DatabaseClient.init(); // Re-initialize for the following tests
+
+    // Check if the client is defined indicating successful health check
+    expect(client).to.be.ok;
   });
 
   it('Should correctly initialize TestDatabase', async () => {
