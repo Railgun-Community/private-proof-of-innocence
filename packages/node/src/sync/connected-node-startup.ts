@@ -96,7 +96,7 @@ export class ConnectedNodeStartup {
             );
           }
         } catch (err) {
-          throw new Error(
+          dbg(
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
             `Error initially connecting and getting node status from ${nodeURL}: ${err.message}`,
           );
