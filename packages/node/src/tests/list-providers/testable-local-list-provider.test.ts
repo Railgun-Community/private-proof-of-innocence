@@ -3,7 +3,7 @@
 import { LocalListProvider } from '../../local-list-provider';
 import { NetworkName } from '@railgun-community/shared-models';
 
-export class TestableListProvider extends LocalListProvider {
+export class TestableLocalListProvider extends LocalListProvider {
   constructor(listKey: string) {
     super(listKey);
   }

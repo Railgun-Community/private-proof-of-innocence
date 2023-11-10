@@ -26,6 +26,8 @@ import { POIMerkletreeManager } from '../../poi-events/poi-merkletree-manager';
 import { currentTimestampSec } from '../../util/timestamp';
 import { calculateShieldBlindedCommitment } from '../../util/shield-blinded-commitment';
 import { Constants } from '../../config/constants';
+import { TestableLocalListProvider } from '../../tests/list-providers/testable-local-list-provider.test';
+import axios from 'axios';
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
@@ -34,9 +36,11 @@ const networkName = NetworkName.EthereumGoerli;
 const txidVersion = TXIDVersion.V2_PoseidonMerkle;
 
 let listProvider: ListProvider;
+let testableLocalListProvider: TestableLocalListProvider;
 let db: ShieldQueueDatabase;
 
 let stubGetAllShields: SinonStub;
+let axiosGetStub: sinon.SinonStub; // only used for testable-local-list-provider.test.ts
 
 const createStubGetAllShields = (shieldDatas: ShieldData[]) => {
   stubGetAllShields = sinon
@@ -53,10 +57,13 @@ describe('list-provider', () => {
     listProvider = new TestMockListProviderExcludeSingleAddress(
       MOCK_LIST_KEYS[0],
     );
+    testableLocalListProvider = new TestableLocalListProvider('listKey');
+    axiosGetStub = sinon.stub(axios, 'get');
   });
 
   afterEach(() => {
     stubGetAllShields?.restore();
+    axiosGetStub?.restore();
   });
 
   beforeEach(async () => {
@@ -221,4 +228,39 @@ describe('list-provider', () => {
     expect(listProviderEventQueueSpy.callCount).to.equal(2);
     listProviderEventQueueSpy.restore();
   });
+
+  it('Should use the backup Chainalysis oracle contract when API call fails', async function () {
+    // Stub the API call failure
+    const fakeError = new Error('Network Error');
+    axiosGetStub.withArgs(sinon.match.string).rejects(fakeError);
+
+    // Call the function that should trigger the API call with an unsanctioned address
+    const shieldDecision =
+      await testableLocalListProvider.testShouldAllowShield(
+        NetworkName.Ethereum,
+        '0xdcbba85e6b848dfff6aa7b70e34570029ea433ba197ea8c0876aaa8329c27791', // random txid from Etherscan
+        '0x690B9A9E9aa1C9dB991C7721a92d351Db4FaC990', // random address from Etherscan
+        0, // block timestamp
+      );
+
+    // Assert on the decision
+    expect(shieldDecision).to.have.property('shouldAllow', true);
+    expect(shieldDecision).to.not.have.property('blockReason');
+
+    // Call the function that should trigger the API call with a sanctioned address
+    const shieldDecision2 =
+      await testableLocalListProvider.testShouldAllowShield(
+        NetworkName.Ethereum,
+        '0xdcbba85e6b848dfff6aa7b70e34570029ea433ba197ea8c0876aaa8329c27791', // random txid from Etherscan
+        '0x8589427373D6D84E98730D7795D8f6f8731FDA16', // sanctioned tornado address from OFAC
+        0, // block timestamp
+      );
+
+    // Assert on the decision
+    expect(shieldDecision2).to.have.property('shouldAllow', false);
+    expect(shieldDecision2).to.have.property(
+      'blockReason',
+      'Address is sanctioned',
+    );
+  }).timeout(10000);
 });
