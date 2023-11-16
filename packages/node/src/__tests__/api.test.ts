@@ -21,11 +21,12 @@ import 'dotenv/config';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { BlockedShieldsCache } from '../shields/blocked-shields-cache';
-import sinon from 'sinon';
+import sinon, { SinonStub } from 'sinon';
 import { QueryLimits } from '../config/query-limits';
 import { TransactProofMempool } from '../proof-mempool/transact-proof-mempool';
-import * as snarkProofVerify from '../util/snark-proof-verify';
+import * as SnarkProofVerifyModule from '../util/snark-proof-verify';
 import { RailgunTxidMerkletreeManager } from '../railgun-txids/railgun-txid-merkletree-manager';
+import Sinon from 'sinon';
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
@@ -40,7 +41,9 @@ let apiUrl: string;
 
 let base64Credentials: string;
 
-let stubGetAllShields: sinon.SinonStub;
+let stubGetAllShields: SinonStub;
+let verifyTransactProofStub: SinonStub;
+let txidMerklerootExistsStub: SinonStub;
 
 class AxiosTest {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -83,6 +86,14 @@ describe('api', function () {
     stubGetAllShields = sinon
       .stub(WalletModule, 'getNewShieldsFromWallet')
       .resolves([]);
+    verifyTransactProofStub = Sinon.stub(
+      SnarkProofVerifyModule,
+      'verifyTransactProof',
+    );
+    txidMerklerootExistsStub = Sinon.stub(
+      RailgunTxidMerkletreeManager,
+      'checkIfMerklerootExistsByTxidIndex',
+    );
 
     node3011 = new ProofOfInnocenceNode(host, '3011', [], listProvider);
     await node3011.start();
@@ -107,7 +118,9 @@ describe('api', function () {
   });
 
   after(async function () {
-    stubGetAllShields?.restore();
+    stubGetAllShields.restore();
+    verifyTransactProofStub.restore();
+    txidMerklerootExistsStub.restore();
     await node3010.stop();
     await node3011.stop();
   });
@@ -275,15 +288,10 @@ describe('api', function () {
     };
 
     // Stub the verifyTransactProof function
-    const stubVerifyProof = sinon.stub(snarkProofVerify, 'verifyTransactProof');
-    stubVerifyProof.resolves(true);
+    verifyTransactProofStub.resolves(true);
 
     // Stub the checkIfMerklerootExistsByTxidIndex function
-    const stubMerkleroot = sinon.stub(
-      RailgunTxidMerkletreeManager,
-      'checkIfMerklerootExistsByTxidIndex',
-    );
-    stubMerkleroot.resolves(true);
+    txidMerklerootExistsStub.resolves(true);
 
     const response = await AxiosTest.postRequest(
       `${apiUrl}/submit-transact-proof/${chainType}/${chainID}`,
@@ -291,9 +299,6 @@ describe('api', function () {
     );
 
     expect(response.status).to.equal(200);
-
-    stubVerifyProof.restore();
-    stubMerkleroot.restore();
   }).timeout(20000);
 
   it('Should return 400 for POST /submit-transact-proof with invalid body', async () => {
