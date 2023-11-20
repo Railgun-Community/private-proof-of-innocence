@@ -7,14 +7,13 @@ import {
   BlindedCommitmentType,
   GetMerkleProofsParams,
   GetPOIsPerListParams,
-  GetTransactProofsParams,
   NetworkName,
   NodeStatusAllNetworks,
+  POIEventType,
   SingleCommitmentProofsData,
   SubmitLegacyTransactProofParams,
   SubmitTransactProofParams,
   TXIDVersion,
-  TransactProofData,
 } from '@railgun-community/shared-models';
 import axios, { AxiosError } from 'axios';
 import 'dotenv/config';
@@ -24,9 +23,10 @@ import { BlockedShieldsCache } from '../shields/blocked-shields-cache';
 import sinon, { SinonStub } from 'sinon';
 import { QueryLimits } from '../config/query-limits';
 import { TransactProofMempool } from '../proof-mempool/transact-proof-mempool';
-import * as SnarkProofVerifyModule from '../util/snark-proof-verify';
 import { RailgunTxidMerkletreeManager } from '../railgun-txids/railgun-txid-merkletree-manager';
-import Sinon from 'sinon';
+import { POIMerkletreeManager } from '../poi-events/poi-merkletree-manager';
+import { SignedPOIEvent } from '../models/poi-types';
+import { POIEventList } from '../poi-events/poi-event-list';
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
@@ -43,6 +43,9 @@ let base64Credentials: string;
 
 let stubGetAllShields: SinonStub;
 let submitProofStub: SinonStub;
+let getMerkleProofsStub: SinonStub;
+let verifySignatureAndUpdateValidatedRailgunTxidStatusStub: SinonStub;
+let verifyAndAddSignedPOIEventsWithValidatedMerklerootsStub: SinonStub;
 
 class AxiosTest {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -82,10 +85,20 @@ describe('api', function () {
 
     const host = 'localhost';
 
+    // SINON STUBS
     stubGetAllShields = sinon
       .stub(WalletModule, 'getNewShieldsFromWallet')
       .resolves([]);
     submitProofStub = sinon.stub(TransactProofMempool, 'submitProof');
+    getMerkleProofsStub = sinon.stub(POIMerkletreeManager, 'getMerkleProofs');
+    verifySignatureAndUpdateValidatedRailgunTxidStatusStub = sinon.stub(
+      RailgunTxidMerkletreeManager,
+      'verifySignatureAndUpdateValidatedRailgunTxidStatus',
+    );
+    verifyAndAddSignedPOIEventsWithValidatedMerklerootsStub = sinon.stub(
+      POIEventList,
+      'verifyAndAddSignedPOIEventsWithValidatedMerkleroots',
+    );
 
     node3011 = new ProofOfInnocenceNode(host, '3011', [], listProvider);
     await node3011.start();
@@ -112,6 +125,9 @@ describe('api', function () {
   after(async function () {
     stubGetAllShields.restore();
     submitProofStub.restore();
+    getMerkleProofsStub.restore();
+    verifySignatureAndUpdateValidatedRailgunTxidStatusStub.restore();
+    verifyAndAddSignedPOIEventsWithValidatedMerklerootsStub.restore();
     await node3010.stop();
     await node3011.stop();
   });
@@ -232,7 +248,19 @@ describe('api', function () {
         `${apiUrl}/blocked-shields/${chainType}/${chainID}`,
         { bloomFilterSerialized: 0, listKey },
       ),
-    ).to.eventually.be.rejectedWith('Request failed with status code 400');
+    ).to.be.rejectedWith('Request failed with status code 400');
+  });
+
+  it('Should return 400 for POST /blocked-shields with invalid listKey', async () => {
+    const chainType = '0';
+    const chainID = '5';
+
+    await expect(
+      AxiosTest.postRequest(
+        `${apiUrl}/blocked-shields/${chainType}/${chainID}`,
+        { bloomFilterSerialized: 0, listKey },
+      ),
+    ).to.be.rejectedWith('Request failed with status code 400');
   });
 
   it('Should return 200 for POST /submit-transact-proof', async () => {
@@ -241,7 +269,7 @@ describe('api', function () {
 
     const body: SubmitTransactProofParams = {
       txidVersion: TXIDVersion.V2_PoseidonMerkle,
-      listKey: MOCK_LIST_KEYS[0],
+      listKey: listKey,
       transactProofData: {
         snarkProof: {
           pi_a: [
@@ -299,6 +327,57 @@ describe('api', function () {
         { listKey, transactProofData: 0 },
       ),
     ).to.eventually.be.rejectedWith('Request failed with status code 400');
+  });
+
+  it('Should return 400 for POST /submit-transact-proof with invalid listKey', async () => {
+    const chainType = '0';
+    const chainID = '5';
+
+    const body: SubmitTransactProofParams = {
+      txidVersion: TXIDVersion.V2_PoseidonMerkle,
+      listKey: 'fake_list_key',
+      transactProofData: {
+        snarkProof: {
+          pi_a: [
+            '13766471856281251472923302905099603168301598594631438526482227084351434874784',
+            '8588729525737659890182759996444901624839043933579336012761314740925805937052',
+          ],
+          pi_b: [
+            [
+              '14369045691397547776662456281960288655359320266442203106166271127565009565977',
+              '13979602192554711032664475121727723415005805236727028063872064436784678703054',
+            ],
+            [
+              '19941723190973813766411664236004793025252825360816561816851087470547847175501',
+              '17786622999411477509388993850683907602108444106094119333080295444943292227976',
+            ],
+          ],
+          pi_c: [
+            '640379350533687394488172632727298795692314074384434085471944446397998938790',
+            '20177179856562770201382212249372199931536044097005309916738846107336280050881',
+          ],
+        },
+        poiMerkleroots: [
+          '284d03b4f4e545a9bf5259162f0d5103c1598c98217b84ec51589610d94f7071',
+        ],
+        txidMerkleroot:
+          '171280a4deabf34cc6d73713225ece6565516313f4475a07177d0736e2b4eaa4',
+        txidMerklerootIndex: 0,
+        blindedCommitmentsOut: [
+          '0x1441c994c1336075c8fc3687235e583fb5fa37e561184585bac31e3c029a46eb',
+          '0x19f596cb35c783ce81498026696fae8f84de0937f68354ef29a08bf8c01e3f38',
+        ],
+        railgunTxidIfHasUnshield:
+          '0x0fefd169291c1deec2affa8dcbfbee4a4bbeddfc3b5723c031665ba631725c62',
+      },
+    };
+
+    await expect(
+      AxiosTest.postRequest(
+        `${apiUrl}/submit-transact-proof/${chainType}/${chainID}`,
+        body,
+      ),
+    ).to.be.rejectedWith('Request failed with status code 400');
   });
 
   it('Should return 200 for POST /submit-single-commitment-proofs', async () => {
@@ -430,9 +509,17 @@ describe('api', function () {
 
     const body: GetMerkleProofsParams = {
       txidVersion: TXIDVersion.V2_PoseidonMerkle,
-      listKey: 'test_list',
+      listKey: listKey,
       blindedCommitments: ['', ''],
     };
+
+    // Stub the getMerkleProofs function used in the api call as an async function
+    getMerkleProofsStub.callsFake(async () => {
+      return {
+        txidMerkleProofs: [],
+        poiMerkleProofs: [],
+      };
+    });
 
     const response = await AxiosTest.postRequest(
       `${apiUrl}/merkle-proofs/${chainType}/${chainID}`,
@@ -653,7 +740,6 @@ describe('api', function () {
     const chainType = '0';
     const chainID = '5';
     const txidVersion = TXIDVersion.V2_PoseidonMerkle;
-    const listKey = MOCK_LIST_KEYS[0];
     const blindedCommitmentsOut = [
       '0x1441c994c1336075c8fc3687235e583fb5fa37e561184585bac31e3c029a46eb',
       '0x19f596cb35c783ce81498026696fae8f84de0937f68354ef29a08bf8c01e3f38',
@@ -705,7 +791,7 @@ describe('api', function () {
     ).to.be.rejectedWith('Request failed with status code 400');
   });
 
-  it('Should submit a validated txid', async () => {
+  it('Should return 200 for POST /submit-validated-txid', async () => {
     const chainType = '0';
     const chainID = '5';
     const txidVersion = TXIDVersion.V2_PoseidonMerkle;
@@ -719,5 +805,104 @@ describe('api', function () {
     );
 
     expect(response.status).to.equal(200);
+  });
+
+  it('Should return 400 for POST /submit-validated-txid with invalid listKey', async () => {
+    const chainType = '0';
+    const chainID = '5';
+    const txidVersion = TXIDVersion.V2_PoseidonMerkle;
+    const txidIndex = 0;
+    const merkleroot = '';
+    const signature = '0x00';
+
+    // Stub the verifySignatureAndUpdateValidatedRailgunTxidStatus function used in the api call as an async function
+    verifySignatureAndUpdateValidatedRailgunTxidStatusStub.callsFake(
+      async () => {},
+    );
+
+    await expect(
+      AxiosTest.postRequest(
+        `${apiUrl}/submit-validated-txid/${chainType}/${chainID}`,
+        {
+          txidVersion,
+          txidIndex,
+          merkleroot,
+          signature,
+          listKey: 'fake_list_key',
+        },
+      ),
+    ).to.be.rejectedWith('Request failed with status code 400');
+  });
+
+  it('Should return 200 for POST /pois-per-blinded-commitment', async () => {
+    const chainType = '0';
+    const chainID = '5';
+    const blindedCommitmentDatas: BlindedCommitmentData[] = [
+      {
+        blindedCommitment: '',
+        type: BlindedCommitmentType.Transact,
+      },
+      {
+        blindedCommitment: '',
+        type: BlindedCommitmentType.Shield,
+      },
+    ];
+
+    const response = await AxiosTest.postRequest(
+      `${apiUrl}/pois-per-blinded-commitment/${chainType}/${chainID}`,
+      { txidVersion, listKey, blindedCommitmentDatas },
+    );
+
+    expect(response.status).to.equal(200);
+  });
+
+  it('Should return 200 for POST /submit-poi-event', async () => {
+    const chainType = '0';
+    const chainID = '5';
+    const txidVersion = TXIDVersion.V2_PoseidonMerkle;
+    const signedPOIEvent: SignedPOIEvent = {
+      index: 0,
+      blindedCommitment: '',
+      signature: '',
+      type: POIEventType.Transact,
+    };
+    const validatedMerkleroot = '';
+
+    // Stub verifyAndAddSignedPOIEventsWithValidatedMerkleroots function used in the api call as an async function
+    verifyAndAddSignedPOIEventsWithValidatedMerklerootsStub.callsFake(
+      async () => {},
+    );
+
+    const response = await AxiosTest.postRequest(
+      `${apiUrl}/submit-poi-event/${chainType}/${chainID}`,
+      { txidVersion, listKey, signedPOIEvent, validatedMerkleroot },
+    );
+
+    expect(response.status).to.equal(200);
+  });
+
+  it('Should return 400 for POST /submit-poi-event with invalid listKey', async () => {
+    const chainType = '0';
+    const chainID = '5';
+    const txidVersion = TXIDVersion.V2_PoseidonMerkle;
+    const signedPOIEvent: SignedPOIEvent = {
+      index: 0,
+      blindedCommitment: '',
+      signature: '',
+      type: POIEventType.Transact,
+    };
+    const validatedMerkleroot = '';
+
+    await expect(
+      AxiosTest.postRequest(
+        `${apiUrl}/submit-poi-event/${chainType}/${chainID}`,
+        {
+          txidVersion,
+          listKey: 'fake_list_key',
+          signedPOIEvent,
+          validatedMerkleroot,
+        },
+      ),
+    ).to.be.rejectedWith('Request failed with status code 400');
   });
 });
