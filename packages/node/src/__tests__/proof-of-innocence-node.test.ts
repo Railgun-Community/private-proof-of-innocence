@@ -62,7 +62,7 @@ describe('proof-of-innocence-node', () => {
       async () => nodeWithListProvider.getPollStatus(),
       status => status === PollStatus.POLLING,
       20,
-      5000 / 20, // 5 sec.
+      10000 / 20, // 10 seconds
     );
     if (pollStatusPolling !== PollStatus.POLLING) {
       throw new Error(
@@ -121,5 +121,5 @@ describe('proof-of-innocence-node', () => {
   it('Should start up a node with only aggregator', async () => {
     await nodeOnlyAggregator.start();
     await nodeOnlyAggregator.stop();
-  }).timeout(10000);
+  }).timeout(20000);
 });

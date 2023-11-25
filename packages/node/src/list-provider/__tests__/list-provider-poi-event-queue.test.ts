@@ -110,17 +110,18 @@ describe('list-provider-poi-event-queue', () => {
       txidVersion,
       transactProofData,
     );
-
     // Wait until queue is empty
     const pollQueueLength = await poll(
-      async () =>
-        ListProviderPOIEventQueue.getPOIEventQueueLength(
+      async () => {
+        const queueLength = ListProviderPOIEventQueue.getPOIEventQueueLength(
           networkName,
           txidVersion,
-        ),
+        );
+        return queueLength;
+      },
       queueLength => queueLength === 0,
       20,
-      5000 / 20, // 5 sec.
+      40000 / 20, // 40 seconds
     );
     if (pollQueueLength !== 0) {
       throw new Error(

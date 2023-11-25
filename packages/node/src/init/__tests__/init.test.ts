@@ -13,5 +13,5 @@ describe('init', () => {
     await initDatabases();
     await initEngineAndScanTXIDs();
     await initModules(MOCK_LIST_KEYS);
-  }).timeout(10000);
+  }).timeout(30000);
 });

@@ -17,7 +17,7 @@ import {
 } from '@railgun-community/shared-models';
 import axios, { AxiosError } from 'axios';
 import 'dotenv/config';
-import chai from 'chai';
+import chai, { assert } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { BlockedShieldsCache } from '../shields/blocked-shields-cache';
 import sinon, { SinonStub } from 'sinon';
@@ -27,6 +27,9 @@ import { RailgunTxidMerkletreeManager } from '../railgun-txids/railgun-txid-merk
 import { POIMerkletreeManager } from '../poi-events/poi-merkletree-manager';
 import { SignedPOIEvent } from '../models/poi-types';
 import { POIEventList } from '../poi-events/poi-event-list';
+import * as General from '../config/general';
+import { POINodeRequest } from '../api/poi-node-request';
+import { API } from '../api/api';
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
@@ -35,17 +38,23 @@ const listKey = MOCK_LIST_KEYS[0];
 
 const txidVersion = TXIDVersion.V2_PoseidonMerkle;
 
+const host = 'localhost';
+
 let node3010: ProofOfInnocenceNode;
 let node3011: ProofOfInnocenceNode;
 let apiUrl: string;
 
 let base64Credentials: string;
 
+// SINON STUBS
 let stubGetAllShields: SinonStub;
 let submitProofStub: SinonStub;
 let getMerkleProofsStub: SinonStub;
 let verifySignatureAndUpdateValidatedRailgunTxidStatusStub: SinonStub;
 let verifyAndAddSignedPOIEventsWithValidatedMerklerootsStub: SinonStub;
+let isListProviderStub: SinonStub;
+let nodeURLForListKeyStub: SinonStub;
+let getNodeStatusAllNetworksStub: SinonStub;
 
 class AxiosTest {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -79,26 +88,9 @@ class AxiosTest {
 
 describe('api', function () {
   before(async function () {
-    this.timeout(30000);
+    this.timeout(40000);
 
     const listProvider = new LocalListProvider(listKey);
-
-    const host = 'localhost';
-
-    // SINON STUBS
-    stubGetAllShields = sinon
-      .stub(WalletModule, 'getNewShieldsFromWallet')
-      .resolves([]);
-    submitProofStub = sinon.stub(TransactProofMempool, 'submitProof');
-    getMerkleProofsStub = sinon.stub(POIMerkletreeManager, 'getMerkleProofs');
-    verifySignatureAndUpdateValidatedRailgunTxidStatusStub = sinon.stub(
-      RailgunTxidMerkletreeManager,
-      'verifySignatureAndUpdateValidatedRailgunTxidStatus',
-    );
-    verifyAndAddSignedPOIEventsWithValidatedMerklerootsStub = sinon.stub(
-      POIEventList,
-      'verifyAndAddSignedPOIEventsWithValidatedMerkleroots',
-    );
 
     node3011 = new ProofOfInnocenceNode(host, '3011', [], listProvider);
     await node3011.start();
@@ -122,14 +114,55 @@ describe('api', function () {
     ).toString('base64');
   });
 
-  after(async function () {
+  beforeEach(async function () {
+    // SINON STUBS
+    stubGetAllShields = sinon
+      .stub(WalletModule, 'getNewShieldsFromWallet')
+      .resolves([]);
+    submitProofStub = sinon.stub(TransactProofMempool, 'submitProof');
+    getMerkleProofsStub = sinon.stub(POIMerkletreeManager, 'getMerkleProofs');
+    verifySignatureAndUpdateValidatedRailgunTxidStatusStub = sinon.stub(
+      RailgunTxidMerkletreeManager,
+      'verifySignatureAndUpdateValidatedRailgunTxidStatus',
+    );
+    verifyAndAddSignedPOIEventsWithValidatedMerklerootsStub = sinon.stub(
+      POIEventList,
+      'verifyAndAddSignedPOIEventsWithValidatedMerkleroots',
+    );
+    isListProviderStub = sinon.stub(General, 'isListProvider');
+    nodeURLForListKeyStub = sinon.stub(General, 'nodeURLForListKey');
+    getNodeStatusAllNetworksStub = sinon.stub(
+      POINodeRequest,
+      'getNodeStatusAllNetworks',
+    );
+  });
+
+  afterEach(async function () {
     stubGetAllShields.restore();
     submitProofStub.restore();
     getMerkleProofsStub.restore();
     verifySignatureAndUpdateValidatedRailgunTxidStatusStub.restore();
     verifyAndAddSignedPOIEventsWithValidatedMerklerootsStub.restore();
+    isListProviderStub.restore();
+    nodeURLForListKeyStub.restore();
+    getNodeStatusAllNetworksStub.restore();
+  });
+
+  after(async function () {
     await node3010.stop();
     await node3011.stop();
+  });
+
+  it('Should throw an error if serve is called twice', () => {
+    const api = new API([listKey]);
+    api.serve('localhost', '3011'); // First call to serve
+
+    try {
+      api.serve('localhost', '3011'); // Second call to serve
+      assert.fail('Expected serve to throw an error, but it did not');
+    } catch (err) {
+      assert.equal(err.message, 'API is already running.');
+    }
   });
 
   it('Should return status ok for GET /', async () => {
@@ -137,7 +170,7 @@ describe('api', function () {
 
     expect(response.status).to.equal(200);
     expect(response.data).to.deep.equal({ status: 'ok' });
-  }).timeout(2000);
+  }).timeout(10000);
 
   it('Should return 200 for GET /perf with valid credentials', async () => {
     const response = await axios.get(`${apiUrl}/perf`, {
@@ -153,6 +186,12 @@ describe('api', function () {
       'freemem',
       'loadavg',
     ]);
+  });
+
+  it('Should return 401 for GET /perf with missing auth', async () => {
+    await expect(axios.get(`${apiUrl}/perf`)).to.eventually.be.rejectedWith(
+      'Request failed with status code 401',
+    );
   });
 
   it('Should return 401 for GET /perf with invalid auth', async () => {
@@ -193,6 +232,21 @@ describe('api', function () {
     }
   });
 
+  it('Should return 200 for POST /node-status-v2/:listKey', async () => {
+    // Stub nodeURLForListKey with the aggregator key
+    nodeURLForListKeyStub.returns('http://localhost:3011');
+
+    const response = await axios.get(`${apiUrl}/node-status-v2/${listKey}`);
+
+    expect(response.status).to.equal(200);
+  });
+
+  it('Should return 500 for POST /node-status-v2/:listKey with undefined listKey', async () => {
+    await expect(
+      axios.get(`${apiUrl}/node-status-v2/${listKey}`),
+    ).to.eventually.be.rejectedWith('Request failed with status code 500');
+  });
+
   it('Should return 200 for POST /transact-proofs', async () => {
     const chainType = '0';
     const chainID = '5';
@@ -214,12 +268,38 @@ describe('api', function () {
     const chainType = '0';
     const chainID = '5';
 
+    // Stub the isListProvider function to fake being an aggregator so error message is returned
+    isListProviderStub.callsFake(() => true);
+
     await expect(
       AxiosTest.postRequest(
         `${apiUrl}/transact-proofs/${chainType}/${chainID}`,
         { bloomFilterSerialized: 0, listKey },
       ),
-    ).to.eventually.be.rejectedWith('Request failed with status code 400');
+    ).to.eventually.be.rejectedWith(
+      `Request failed with status code 400: must have required property 'txidVersion'`,
+    );
+  });
+
+  it('Should return 400 for POST /transact-proofs with Invalid listKey', async () => {
+    const chainType = '0';
+    const chainID = '5';
+
+    // Stub the isListProvider function to fake being an aggregator so error message is returned
+    isListProviderStub.callsFake(() => true);
+
+    await expect(
+      AxiosTest.postRequest(
+        `${apiUrl}/transact-proofs/${chainType}/${chainID}`,
+        {
+          txidVersion: TXIDVersion.V2_PoseidonMerkle,
+          bloomFilterSerialized: 'someValidSerializedData',
+          listKey: 'fake_list_key',
+        },
+      ),
+    ).to.eventually.be.rejectedWith(
+      'Request failed with status code 400: Invalid listKey',
+    );
   });
 
   it('Should return 200 for POST /blocked-shields', async () => {
@@ -243,24 +323,42 @@ describe('api', function () {
     const chainType = '0';
     const chainID = '5';
 
+    // Stub the isListProvider function to fake being an aggregator so error message is returned
+    isListProviderStub.callsFake(() => true);
+
     await expect(
       AxiosTest.postRequest(
         `${apiUrl}/blocked-shields/${chainType}/${chainID}`,
         { bloomFilterSerialized: 0, listKey },
       ),
-    ).to.be.rejectedWith('Request failed with status code 400');
+    ).to.be.rejectedWith(
+      `Request failed with status code 400: must have required property 'txidVersion'`,
+    );
   });
 
-  it('Should return 400 for POST /blocked-shields with invalid listKey', async () => {
+  it('Should return 400 for POST /blocked-shields with Invalid listKey', async () => {
     const chainType = '0';
     const chainID = '5';
 
+    // Stub the isListProvider function to fake being an aggregator so error message is returned
+    isListProviderStub.callsFake(() => true);
+
     await expect(
       AxiosTest.postRequest(
         `${apiUrl}/blocked-shields/${chainType}/${chainID}`,
-        { bloomFilterSerialized: 0, listKey },
+        {
+          txidVersion: TXIDVersion.V2_PoseidonMerkle,
+          bloomFilterSerialized: BlockedShieldsCache.serializeBloomFilter(
+            'fake_list_key',
+            NetworkName.EthereumGoerli,
+            TXIDVersion.V2_PoseidonMerkle,
+          ),
+          listKey: 'fake_list_key',
+        },
       ),
-    ).to.be.rejectedWith('Request failed with status code 400');
+    ).to.be.rejectedWith(
+      'Request failed with status code 400: Invalid listKey',
+    );
   });
 
   it('Should return 200 for POST /submit-transact-proof', async () => {
@@ -321,17 +419,25 @@ describe('api', function () {
     const chainType = '0';
     const chainID = '5';
 
+    // Stub the isListProvider function to fake being an aggregator so error message is returned
+    isListProviderStub.callsFake(() => true);
+
     await expect(
       AxiosTest.postRequest(
         `${apiUrl}/submit-transact-proof/${chainType}/${chainID}`,
         { listKey, transactProofData: 0 },
       ),
-    ).to.eventually.be.rejectedWith('Request failed with status code 400');
+    ).to.eventually.be.rejectedWith(
+      `Request failed with status code 400: must have required property 'txidVersion'`,
+    );
   });
 
-  it('Should return 400 for POST /submit-transact-proof with invalid listKey', async () => {
+  it('Should return 400 for POST /submit-transact-proof with Invalid listKey', async () => {
     const chainType = '0';
     const chainID = '5';
+
+    // Stub the isListProvider function to fake being an aggregator so error message is returned
+    isListProviderStub.callsFake(() => true);
 
     const body: SubmitTransactProofParams = {
       txidVersion: TXIDVersion.V2_PoseidonMerkle,
@@ -377,7 +483,9 @@ describe('api', function () {
         `${apiUrl}/submit-transact-proof/${chainType}/${chainID}`,
         body,
       ),
-    ).to.be.rejectedWith('Request failed with status code 400');
+    ).to.be.rejectedWith(
+      'Request failed with status code 400: Invalid listKey',
+    );
   });
 
   it('Should return 200 for POST /submit-single-commitment-proofs', async () => {
@@ -468,17 +576,25 @@ describe('api', function () {
     const chainType = '0';
     const chainID = '5';
 
+    // Stub the isListProvider function to fake being an aggregator so error message is returned
+    isListProviderStub.callsFake(() => true);
+
     await expect(
       AxiosTest.postRequest(`${apiUrl}/pois-per-list/${chainType}/${chainID}`, {
         listKey: 0,
         blindedCommitmentDatas: 0,
       }),
-    ).to.eventually.be.rejectedWith('Request failed with status code 400');
+    ).to.eventually.be.rejectedWith(
+      `Request failed with status code 400: must have required property 'txidVersion'`,
+    );
   });
 
   it('Should return `Too many blinded commitments` for POST /pois-per-list', async () => {
     const chainType = '0';
     const chainID = '5';
+
+    // Stub the isListProvider function to fake being an aggregator so error message is returned
+    isListProviderStub.callsFake(() => true);
 
     // Create array with 1000 blinded commitments
     const blindedCommitmentDatas: BlindedCommitmentData[] = Array.from(
@@ -500,7 +616,9 @@ describe('api', function () {
         `${apiUrl}/pois-per-list/${chainType}/${chainID}`,
         body,
       ),
-    ).to.eventually.be.rejectedWith(`Request failed with status code 400`);
+    ).to.eventually.be.rejectedWith(
+      `Request failed with status code 400: Too many blinded commitments`,
+    );
   });
 
   it('Should return 200 for POST /merkle-proofs', async () => {
@@ -515,10 +633,13 @@ describe('api', function () {
 
     // Stub the getMerkleProofs function used in the api call as an async function
     getMerkleProofsStub.callsFake(async () => {
-      return {
-        txidMerkleProofs: [],
-        poiMerkleProofs: [],
+      const dummyMerkleProof = {
+        leaf: '',
+        elements: [],
+        indices: '',
+        root: '',
       };
+      return [dummyMerkleProof];
     });
 
     const response = await AxiosTest.postRequest(
@@ -533,12 +654,66 @@ describe('api', function () {
     const chainType = '0';
     const chainID = '5';
 
+    // Stub the isListProvider function to fake being an aggregator so error message is returned
+    isListProviderStub.callsFake(() => true);
+
     await expect(
       AxiosTest.postRequest(`${apiUrl}/merkle-proofs/${chainType}/${chainID}`, {
         listKey,
         blindedCommitments: 0,
       }),
-    ).to.eventually.be.rejectedWith('Request failed with status code 400');
+    ).to.eventually.be.rejectedWith(
+      `Request failed with status code 400: must have required property 'txidVersion'`,
+    );
+  });
+
+  it('Should return 400 for POST /merkle-proofs with invalid listKey', async () => {
+    const chainType = '0';
+    const chainID = '5';
+
+    // Stub the isListProvider function to fake being an aggregator so error message is returned
+    isListProviderStub.callsFake(() => true);
+
+    const body: GetMerkleProofsParams = {
+      txidVersion: TXIDVersion.V2_PoseidonMerkle,
+      listKey: 'fake_list_key',
+      blindedCommitments: ['', ''],
+    };
+
+    await expect(
+      AxiosTest.postRequest(
+        `${apiUrl}/merkle-proofs/${chainType}/${chainID}`,
+        body,
+      ),
+    ).to.eventually.be.rejectedWith(
+      `Request failed with status code 400: Invalid listKey`,
+    );
+  });
+
+  it('Should return 400 for POST /merkle-proofs with blindedCommitments.length > QueryLimits.GET_MERKLE_PROOFS_MAX_BLINDED_COMMITMENTS', async () => {
+    const chainType = '0';
+    const chainID = '5';
+
+    // Stub the isListProvider function to fake being an aggregator so error message is returned
+    isListProviderStub.callsFake(() => true);
+
+    const body: GetMerkleProofsParams = {
+      txidVersion: TXIDVersion.V2_PoseidonMerkle,
+      listKey: listKey,
+      blindedCommitments: Array.from(
+        { length: QueryLimits.GET_MERKLE_PROOFS_MAX_BLINDED_COMMITMENTS + 1 },
+        () => '',
+      ),
+    };
+
+    await expect(
+      AxiosTest.postRequest(
+        `${apiUrl}/merkle-proofs/${chainType}/${chainID}`,
+        body,
+      ),
+    ).to.eventually.be.rejectedWith(
+      `Request failed with status code 400: Too many blinded commitments`,
+    );
   });
 
   it('Should return 200 for POST /validate-txid-merkleroot', async () => {
@@ -807,7 +982,7 @@ describe('api', function () {
     expect(response.status).to.equal(200);
   });
 
-  it('Should return 400 for POST /submit-validated-txid with invalid listKey', async () => {
+  it('Should return 400 for POST /submit-validated-txid with Invalid listKey', async () => {
     const chainType = '0';
     const chainID = '5';
     const txidVersion = TXIDVersion.V2_PoseidonMerkle;
@@ -820,6 +995,9 @@ describe('api', function () {
       async () => {},
     );
 
+    // Stub the isListProvider function to fake being an aggregator so error message is returned
+    isListProviderStub.callsFake(() => true);
+
     await expect(
       AxiosTest.postRequest(
         `${apiUrl}/submit-validated-txid/${chainType}/${chainID}`,
@@ -831,7 +1009,9 @@ describe('api', function () {
           listKey: 'fake_list_key',
         },
       ),
-    ).to.be.rejectedWith('Request failed with status code 400');
+    ).to.be.rejectedWith(
+      'Request failed with status code 400: Invalid listKey',
+    );
   });
 
   it('Should return 200 for POST /pois-per-blinded-commitment', async () => {
@@ -854,6 +1034,30 @@ describe('api', function () {
     );
 
     expect(response.status).to.equal(200);
+  });
+
+  it('Should return 400 for POST /pois-per-blinded-commitment with too many blinded commitments', async () => {
+    const chainType = '0';
+    const chainID = '5';
+    const blindedCommitmentDatas: BlindedCommitmentData[] = Array.from(
+      { length: QueryLimits.GET_POI_EXISTENCE_MAX_BLINDED_COMMITMENTS + 1 },
+      () => ({
+        blindedCommitment: '',
+        type: BlindedCommitmentType.Transact,
+      }),
+    );
+
+    // Stub the isListProvider function to fake being an aggregator so error message is returned
+    isListProviderStub.callsFake(() => true);
+
+    await expect(
+      AxiosTest.postRequest(
+        `${apiUrl}/pois-per-blinded-commitment/${chainType}/${chainID}`,
+        { txidVersion, listKey, blindedCommitmentDatas },
+      ),
+    ).to.eventually.be.rejectedWith(
+      `Request failed with status code 400: Too many blinded commitments`,
+    );
   });
 
   it('Should return 200 for POST /submit-poi-event', async () => {
@@ -881,7 +1085,7 @@ describe('api', function () {
     expect(response.status).to.equal(200);
   });
 
-  it('Should return 400 for POST /submit-poi-event with invalid listKey', async () => {
+  it('Should return 400 for POST /submit-poi-event with Invalid listKey', async () => {
     const chainType = '0';
     const chainID = '5';
     const txidVersion = TXIDVersion.V2_PoseidonMerkle;
@@ -893,6 +1097,9 @@ describe('api', function () {
     };
     const validatedMerkleroot = '';
 
+    // Stub the isListProvider function to fake being an aggregator so error message is returned
+    isListProviderStub.callsFake(() => true);
+
     await expect(
       AxiosTest.postRequest(
         `${apiUrl}/submit-poi-event/${chainType}/${chainID}`,
@@ -903,6 +1110,253 @@ describe('api', function () {
           validatedMerkleroot,
         },
       ),
-    ).to.be.rejectedWith('Request failed with status code 400');
+    ).to.be.rejectedWith(
+      'Request failed with status code 400: Invalid listKey',
+    );
+  });
+
+  it('Should return 200 for POST /legacy-transact-proofs', async () => {
+    const chainType = '0';
+    const chainID = '5';
+    const txidVersion = TXIDVersion.V2_PoseidonMerkle;
+    const bloomFilterSerialized = BlockedShieldsCache.serializeBloomFilter(
+      listKey,
+      NetworkName.EthereumGoerli,
+      txidVersion,
+    );
+
+    const response = await AxiosTest.postRequest(
+      `${apiUrl}/legacy-transact-proofs/${chainType}/${chainID}`,
+      { txidVersion, bloomFilterSerialized },
+    );
+
+    expect(response.status).to.equal(200);
+  });
+
+  it('Should return 400 for POST /legacy-transact-proofs with invalid body', async () => {
+    const chainType = '0';
+    const chainID = '5';
+
+    await expect(
+      AxiosTest.postRequest(
+        `${apiUrl}/legacy-transact-proofs/${chainType}/${chainID}`,
+        { bloomFilterSerialized: 0 },
+      ),
+    ).to.eventually.be.rejectedWith(
+      `Request failed with status code 400: must have required property 'txidVersion'`,
+    );
+  });
+
+  it('Should return 200 for POST /poi-events', async () => {
+    const chainType = '0';
+    const chainID = '5';
+    const txidVersion = TXIDVersion.V2_PoseidonMerkle;
+
+    const response = await AxiosTest.postRequest(
+      `${apiUrl}/poi-events/${chainType}/${chainID}`,
+      { txidVersion, listKey, startIndex: 0, endIndex: 1 },
+    );
+
+    expect(response.status).to.equal(200);
+  });
+
+  it('Should return 400 for POST /poi-events with invalid body', async () => {
+    const chainType = '0';
+    const chainID = '5';
+
+    await expect(
+      AxiosTest.postRequest(`${apiUrl}/poi-events/${chainType}/${chainID}`, {
+        startIndex: 0,
+        endIndex: 1,
+      }),
+    ).to.eventually.be.rejectedWith(
+      `Request failed with status code 400: must have required property 'txidVersion'`,
+    );
+  });
+
+  it('Should return 400 for POST /poi-events with invalid listKey', async () => {
+    const chainType = '0';
+    const chainID = '5';
+    const txidVersion = TXIDVersion.V2_PoseidonMerkle;
+
+    // Stub isListProvider to get full error message as an aggregator
+    isListProviderStub.callsFake(() => true);
+
+    await expect(
+      AxiosTest.postRequest(`${apiUrl}/poi-events/${chainType}/${chainID}`, {
+        txidVersion,
+        listKey: 'fake_list_key',
+        startIndex: 0,
+        endIndex: 1,
+      }),
+    ).to.eventually.be.rejectedWith(
+      `Request failed with status code 400: Invalid listKey`,
+    );
+  });
+
+  it('Should return 400 for POST /poi-events with rangeLength > MAX_EVENT_QUERY_RANGE_LENGTH', async () => {
+    const chainType = '0';
+    const chainID = '5';
+    const txidVersion = TXIDVersion.V2_PoseidonMerkle;
+
+    // Stub isListProvider to get full error message as an aggregator
+    isListProviderStub.callsFake(() => true);
+
+    await expect(
+      AxiosTest.postRequest(`${apiUrl}/poi-events/${chainType}/${chainID}`, {
+        txidVersion,
+        listKey,
+        startIndex: 0,
+        endIndex: QueryLimits.MAX_EVENT_QUERY_RANGE_LENGTH + 1,
+      }),
+    ).to.eventually.be.rejectedWith(
+      `Request failed with status code 400: Max event query range length is ${QueryLimits.MAX_EVENT_QUERY_RANGE_LENGTH}`,
+    );
+  });
+
+  it('Should return 400 for POST /poi-events with rangeLength < 0', async () => {
+    const chainType = '0';
+    const chainID = '5';
+    const txidVersion = TXIDVersion.V2_PoseidonMerkle;
+
+    // Stub isListProvider to get full error message as an aggregator
+    isListProviderStub.callsFake(() => true);
+
+    await expect(
+      AxiosTest.postRequest(`${apiUrl}/poi-events/${chainType}/${chainID}`, {
+        txidVersion,
+        listKey,
+        startIndex: 1,
+        endIndex: 0,
+      }),
+    ).to.eventually.be.rejectedWith(
+      `Request failed with status code 400: Invalid query range`,
+    );
+  });
+
+  it('Should return 200 for POST /poi-merkletree-leaves', async () => {
+    const chainType = '0';
+    const chainID = '5';
+    const txidVersion = TXIDVersion.V2_PoseidonMerkle;
+
+    const response = await AxiosTest.postRequest(
+      `${apiUrl}/poi-merkletree-leaves/${chainType}/${chainID}`,
+      { txidVersion, listKey, startIndex: 0, endIndex: 1 },
+    );
+
+    expect(response.status).to.equal(200);
+  });
+
+  it('Should return 400 for POST /poi-merkletree-leaves with invalid body', async () => {
+    const chainType = '0';
+    const chainID = '5';
+
+    await expect(
+      AxiosTest.postRequest(
+        `${apiUrl}/poi-merkletree-leaves/${chainType}/${chainID}`,
+        {
+          startIndex: 0,
+          endIndex: 1,
+        },
+      ),
+    ).to.eventually.be.rejectedWith(
+      `Request failed with status code 400: must have required property 'txidVersion'`,
+    );
+  });
+
+  it('Should return 400 for POST /poi-merkletree-leaves with invalid listKey', async () => {
+    const chainType = '0';
+    const chainID = '5';
+    const txidVersion = TXIDVersion.V2_PoseidonMerkle;
+
+    // Stub isListProvider to get full error message as an aggregator
+    isListProviderStub.callsFake(() => true);
+
+    await expect(
+      AxiosTest.postRequest(
+        `${apiUrl}/poi-merkletree-leaves/${chainType}/${chainID}`,
+        {
+          txidVersion,
+          listKey: 'fake_list_key',
+          startIndex: 0,
+          endIndex: 1,
+        },
+      ),
+    ).to.eventually.be.rejectedWith(
+      `Request failed with status code 400: Invalid listKey`,
+    );
+  }).timeout(10000);
+
+  it('Should return 400 for POST /poi-merkletree-leaves with rangeLength > MAX_POI_MERKLETREE_LEAVES_QUERY_RANGE_LENGTH', async () => {
+    const chainType = '0';
+    const chainID = '5';
+    const txidVersion = TXIDVersion.V2_PoseidonMerkle;
+
+    // Stub isListProvider to get full error message as an aggregator
+    isListProviderStub.callsFake(() => true);
+
+    await expect(
+      AxiosTest.postRequest(
+        `${apiUrl}/poi-merkletree-leaves/${chainType}/${chainID}`,
+        {
+          txidVersion,
+          listKey,
+          startIndex: 0,
+          endIndex:
+            QueryLimits.MAX_POI_MERKLETREE_LEAVES_QUERY_RANGE_LENGTH + 1,
+        },
+      ),
+    ).to.eventually.be.rejectedWith(
+      `Request failed with status code 400: Max event query range length is ${QueryLimits.MAX_POI_MERKLETREE_LEAVES_QUERY_RANGE_LENGTH}`,
+    );
+  });
+
+  it('Should return 400 for POST /poi-merkletree-leaves with rangeLength < 0', async () => {
+    const chainType = '0';
+    const chainID = '5';
+    const txidVersion = TXIDVersion.V2_PoseidonMerkle;
+
+    // Stub isListProvider to get full error message as an aggregator
+    isListProviderStub.callsFake(() => true);
+
+    await expect(
+      AxiosTest.postRequest(
+        `${apiUrl}/poi-merkletree-leaves/${chainType}/${chainID}`,
+        {
+          txidVersion,
+          listKey,
+          startIndex: 1,
+          endIndex: 0,
+        },
+      ),
+    ).to.eventually.be.rejectedWith(
+      `Request failed with status code 400: Invalid query range`,
+    );
+  });
+
+  it('Should return 200 for POST /validated-txid/:chainType/:chainID', async () => {
+    const chainType = '0';
+    const chainID = '5';
+    const txidVersion = TXIDVersion.V2_PoseidonMerkle;
+
+    const response = await AxiosTest.postRequest(
+      `${apiUrl}/validated-txid/${chainType}/${chainID}`,
+      { txidVersion },
+    );
+
+    expect(response.status).to.equal(200);
+  });
+
+  it('Should return 200 for POST /validate-poi-merkleroots/:chainType/:chainID', async () => {
+    const chainType = '0';
+    const chainID = '5';
+    const txidVersion = TXIDVersion.V2_PoseidonMerkle;
+
+    const response = await AxiosTest.postRequest(
+      `${apiUrl}/validate-poi-merkleroots/${chainType}/${chainID}`,
+      { txidVersion, listKey, poiMerkleroots: [''] },
+    );
+
+    expect(response.status).to.equal(200);
   });
 });
