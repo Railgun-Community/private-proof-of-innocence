@@ -35,7 +35,7 @@ describe('proof-of-innocence-node', () => {
       '0.0.0.0',
       PORT_1,
       [{ name: 'test', nodeURL: `http://localhost:${PORT_2}` }],
-      testListProvider,
+      new TestMockListProviderExcludeSingleAddress(MOCK_LIST_KEYS[0]),
     );
   });
 
