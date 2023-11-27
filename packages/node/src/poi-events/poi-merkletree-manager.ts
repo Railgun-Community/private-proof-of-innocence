@@ -298,6 +298,7 @@ export class POIMerkletreeManager {
           blindedCommitment,
         );
         if (shieldBlocked) {
+          dbg(`POIStatus.ShieldBlocked for ${blindedCommitment}`);
           return POIStatus.ShieldBlocked;
         }
         break;
@@ -315,6 +316,7 @@ export class POIMerkletreeManager {
             blindedCommitment,
           );
         if (isDefined(transactProofExists)) {
+          dbg(`Transact POIStatus.ProofSubmitted for ${blindedCommitment}`);
           return POIStatus.ProofSubmitted;
         }
         break;
@@ -332,12 +334,14 @@ export class POIMerkletreeManager {
             blindedCommitment, // railgunTxid for unshields
           );
         if (isDefined(unshieldProofExists)) {
+          dbg(`Unshield POIStatus.ProofSubmitted for ${blindedCommitment}`);
           return POIStatus.ProofSubmitted;
         }
         break;
       }
     }
 
+    dbg(`POIStatus.Missing for ${blindedCommitment}`);
     return POIStatus.Missing;
   }
 
