@@ -282,11 +282,13 @@ export class POIMerkletreeManager {
 
     const hasValidPOI = await merkletree.nodeHashExists(blindedCommitment);
     if (hasValidPOI) {
+      dbg(`POI exists in merkletree for ${blindedCommitment}`);
       return POIStatus.Valid;
     }
 
     switch (type) {
       case BlindedCommitmentType.Shield: {
+        dbg(`Checking if shield is blocked for ${blindedCommitment}`);
         const shieldBlockedDB = new BlockedShieldsPerListDatabase(
           networkName,
           txidVersion,
@@ -302,6 +304,7 @@ export class POIMerkletreeManager {
       }
 
       case BlindedCommitmentType.Transact: {
+        dbg(`Checking if transact proof exists for ${blindedCommitment}`);
         const transactProofMempoolDB = new TransactProofPerListMempoolDatabase(
           networkName,
           txidVersion,
@@ -318,6 +321,7 @@ export class POIMerkletreeManager {
       }
 
       case BlindedCommitmentType.Unshield: {
+        dbg(`Checking if unshield proof exists for ${blindedCommitment}`);
         const transactProofMempoolDB = new TransactProofPerListMempoolDatabase(
           networkName,
           txidVersion,

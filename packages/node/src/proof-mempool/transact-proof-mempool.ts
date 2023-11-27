@@ -55,6 +55,7 @@ export class TransactProofMempool {
     );
     if (!shouldAdd) {
       this.doNotAddProofCache.set(doNotAddProofCacheHash, true);
+      dbg('Do not add transact proof - shouldAdd is false');
       return;
     }
 
