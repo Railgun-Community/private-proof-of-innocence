@@ -11,7 +11,7 @@ import debug from 'debug';
 import { PushSync } from '../sync/push-sync';
 import { POIMerkletreeManager } from '../poi-events/poi-merkletree-manager';
 import {
-  POIValidation,
+  POIValidator,
   getBlindedCommitmentForShieldOrTransact,
   hexToBigInt,
 } from '@railgun-community/wallet';
@@ -115,12 +115,12 @@ export class SingleCommitmentProofManager {
     } = filteredSingleCommitmentProofsData;
 
     try {
-      // Use internal function instead of POI request.
-      POIValidation.init(
-        POIMerkletreeManager.validateAllPOIMerklerootsExistWithChain,
-      );
+      // // Use internal function instead of POI request.
+      // POIValidation.init(
+      //   POIMerkletreeManager.validateAllPOIMerklerootsExistWithChain,
+      // );
 
-      await POIValidation.assertIsValidSpendableTXID(
+      await POIValidator.assertIsValidSpendableTXID(
         listKey,
         txidVersion,
         chainForNetwork(networkName),

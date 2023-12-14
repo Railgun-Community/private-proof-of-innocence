@@ -69,6 +69,7 @@ const getNodeStatus = (): NodeStatusAllNetworks => ({
             [POIEventType.Unshield]: 0,
             [POIEventType.LegacyTransact]: 0,
           },
+          listProviderPOIEventQueueLength: 2,
           pendingTransactProofs: 2,
           blockedShields: 2,
           historicalMerklerootsLength: 2,
