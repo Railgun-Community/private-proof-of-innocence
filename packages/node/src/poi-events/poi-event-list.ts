@@ -200,7 +200,7 @@ export class POIEventList {
       );
     } catch (err) {
       // no op
-      dbg(err);
+      dbg(`addValidSignedPOIEventOptionalValidatedMerkleroot() error: ${err}`);
       throw err;
     }
   }

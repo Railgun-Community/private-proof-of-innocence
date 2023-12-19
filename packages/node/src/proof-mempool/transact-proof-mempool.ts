@@ -30,6 +30,19 @@ export class TransactProofMempool {
   private static doNotAddProofCache = new Map<string, boolean>();
   private static alreadyForwardedProofCache = new Map<string, boolean>();
 
+  /**
+   * Check if proof has been previoiusly added to doNotAddProofCache.
+   * Determine if proof should be added to mempool (shouldAdd).
+   * Inserts transact proof into TransactProofPerListMempoolDatabase.
+   * Adds transact proof to TransactProofMempoolCache.
+   * Adds transact proof to list (tryAddToList).
+   *
+   * @param listKey
+   * @param networkName
+   * @param txidVersion
+   * @param transactProofData
+   * @returns
+   */
   static async submitProof(
     listKey: string,
     networkName: NetworkName,
