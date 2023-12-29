@@ -1,9 +1,8 @@
 /// <reference types="../types/index" />
 import express, { NextFunction, Request, Response } from 'express';
 import cors from 'cors';
-import os from 'os';
 import debug from 'debug';
-import { Server } from 'http';
+import { Server, get } from 'http';
 import {
   Validator,
   ValidationError,
@@ -13,13 +12,11 @@ import { POIEventList } from '../poi-events/poi-event-list';
 import {
   isListProvider,
   networkNameForSerializedChain,
-  nodeURLForListKey,
 } from '../config/general';
 import { TransactProofMempool } from '../proof-mempool/transact-proof-mempool';
 import { POIMerkletreeManager } from '../poi-events/poi-merkletree-manager';
 import { RailgunTxidMerkletreeManager } from '../railgun-txids/railgun-txid-merkletree-manager';
 import { QueryLimits } from '../config/query-limits';
-import { NodeStatus } from '../status/node-status';
 import {
   NodeStatusAllNetworks,
   GetTransactProofsParams,
@@ -29,7 +26,6 @@ import {
   GetMerkleProofsParams,
   ValidateTxidMerklerootParams,
   GetLatestValidatedRailgunTxidParams,
-  TXIDVersion,
   ValidatedRailgunTxidStatus,
   MerkleProof,
   POIsPerListMap,
@@ -74,11 +70,22 @@ import {
   SubmitValidatedTxidAndMerklerootParams,
 } from '../models/poi-types';
 import { BlockedShieldsSyncer } from '../shields/blocked-shields-syncer';
-import { POINodeRequest } from './poi-node-request';
 import { TransactProofMempoolPruner } from '../proof-mempool/transact-proof-mempool-pruner';
 import { LegacyTransactProofMempool } from '../proof-mempool/legacy/legacy-transact-proof-mempool';
 import { SingleCommitmentProofManager } from '../single-commitment-proof/single-commitment-proof-manager';
 import { shouldLogVerbose } from '../util/logging';
+import {
+  getNodeStatus,
+  getNodeStatusListKey,
+  getPerformanceMetrics,
+  getPoiEvents,
+  getStatus,
+} from './route-logic';
+import {
+  LogicFunctionMap,
+  formatJsonRpcError,
+  validateParams,
+} from './json-rpc-handlers';
 
 const dbg = debug('poi:api');
 
@@ -94,6 +101,11 @@ export class API {
 
   static debug = false;
 
+  /**
+   * Create a new API instance
+   *
+   * @param listKeys - List keys to use for the API
+   */
   constructor(listKeys: string[]) {
     this.app = express();
     this.app.use(express.json({ limit: '5mb' }));
@@ -132,6 +144,12 @@ export class API {
     );
   }
 
+  /**
+   * Start the API server
+   *
+   * @param host - Hostname to listen on
+   * @param port - Port to listen on
+   */
   serve(host: string, port: string) {
     if (this.server) {
       throw new Error('API already running.');
@@ -144,6 +162,9 @@ export class API {
     });
   }
 
+  /**
+   * Stop the API server
+   */
   stop() {
     if (this.server) {
       this.server.close();
@@ -153,6 +174,16 @@ export class API {
     }
   }
 
+  /**
+   * Basic auth middleware for protected routes
+   *
+   * Username and password are read from the BASIC_AUTH_USERNAME and BASIC_AUTH_PASSWORD environment variables.
+   *
+   * @param req - Express request
+   * @param res - Express response
+   * @param next - Express next function
+   * @returns void
+   */
   private basicAuth(req: Request, res: Response, next: NextFunction): void {
     const authorization = req.headers.authorization;
 
@@ -179,6 +210,15 @@ export class API {
     res.status(401).json({ message: 'Unauthorized' });
   }
 
+  /**
+   * Safe GET handler that catches errors.
+   *
+   * If the API is running in list provider mode, the specific error message is returned to the client.
+   * If the API is running in aggregator mode, a 500 response is returned without the error message.
+   *
+   * @param route - Route to handle GET requests for
+   * @param handler - Request handler function that returns a Promise
+   */
   private safeGet = <ReturnType>(
     route: string,
     handler: (req: Request) => Promise<ReturnType>,
@@ -268,51 +308,122 @@ export class API {
     );
   };
 
+  /**
+   * Check if the listKey is valid
+   *
+   * @param listKey
+   * @returns true if the listKey is valid
+   */
   private hasListKey(listKey: string) {
     return this.listKeys.includes(listKey);
   }
 
+  /**
+   * Handle JSON RPC requests
+   *
+   * Acts as a dispatcher that routes JSON RPC requests to appropriate handlers based on
+   * the method field in the request.
+   *
+   * @param req - Express request
+   * @param res - Express response
+   */
+  private handleJsonRpcRequest(req: Request, res: Response) {
+    // Get method, params, and id from the request body
+    const { method, params, id } = req.body;
+
+    // Map of methods to their corresponding logic functions
+    const logicFunctionMap: LogicFunctionMap = {
+      'ppoi_node-status-v2': {
+        logicFunction: () => getNodeStatus(this.listKeys), // takes listKeys from constructor
+        schema: null,
+      },
+      'ppoi_node-status-v2/:listKey': {
+        logicFunction: () => getNodeStatusListKey(params.listKey), // Gets listKey from req.body.params
+        schema: null, // TODO: I believe this is null since it's not a POST request
+      },
+      // ppoi_perf: getPerformanceMetrics,
+    };
+
+    // Check if the method is supported using Object.prototype.hasOwnProperty.call
+    if (!Object.prototype.hasOwnProperty.call(logicFunctionMap, method)) {
+      res.status(404).json({
+        jsonrpc: '2.0',
+        error: { code: -32601, message: 'Method not found' },
+        id,
+      });
+      return;
+    }
+
+    try {
+      // Get the logic function and schema for the method
+      const { logicFunction, schema } = logicFunctionMap[method];
+
+      // Validate the params against the schema
+      validateParams(validator, params, schema);
+
+      // Call the logic function and return the result
+      logicFunction(params)
+        .then(result => res.json({ jsonrpc: '2.0', result, id }))
+        .catch(error =>
+          res.status(500).json({
+            jsonrpc: '2.0',
+            error: { code: -32603, message: error.message },
+            id,
+          }),
+        );
+    } catch (error) {
+      res
+        .status(400)
+        .json({ jsonrpc: '2.0', error: formatJsonRpcError(error), id });
+    }
+  }
+
+  /**
+   * Add all routes, for use in constructor
+   */
   private addRoutes() {
     this.addStatusRoutes();
     this.addAggregatorRoutes();
     this.addClientRoutes();
   }
 
+  /**
+   * Add status routes
+   */
   private addStatusRoutes() {
+    /**
+     * Status route GET /
+     */
     this.app.get('/', (_req: Request, res: Response) => {
-      res.json({ status: 'ok' });
+      res.json(getStatus());
     });
 
+    /**
+     * Status route POST /
+     *
+     * This binds the JSON RPC functionality to the base route.
+     */
+    this.app.post('/', this.handleJsonRpcRequest);
+
+    /**
+     * Performance route GET /perf, protected by basic auth
+     */
     this.app.get('/perf', this.basicAuth, (_req: Request, res: Response) => {
-      res.json({
-        time: new Date(),
-        memoryUsage: process.memoryUsage(),
-        freemem: os.freemem(),
-        loadavg: os.loadavg(),
-      });
+      res.json(getPerformanceMetrics());
     });
   }
 
   private addAggregatorRoutes() {
-    this.safeGet<NodeStatusAllNetworks>('/node-status-v2', async () => {
-      return NodeStatus.getNodeStatusAllNetworks(
-        this.listKeys,
-        TXIDVersion.V2_PoseidonMerkle,
-      );
-    });
-
-    this.safeGet<NodeStatusAllNetworks>(
-      '/node-status-v2/:listKey',
-      async (req: Request) => {
-        const { listKey } = req.params;
-        req.body as GetPOIListEventRangeParams;
-        const nodeURL = nodeURLForListKey(listKey);
-        if (!isDefined(nodeURL)) {
-          throw new Error('Cannot connect to listKey');
-        }
-        return POINodeRequest.getNodeStatusAllNetworks(nodeURL);
-      },
+    this.safeGet<NodeStatusAllNetworks>('/node-status-v2', () =>
+      getNodeStatus(this.listKeys),
     );
+
+    this.safeGet<NodeStatusAllNetworks>('/node-status-v2/:listKey', req => {
+      // Extract listKey from request parameters
+      const { listKey } = req.params;
+      // Directly call the logic function with the extracted listKey
+      return getNodeStatusListKey(listKey);
+    });
 
     // TODO:
     // this.safePost<NodeStatusAllNetworks>(
@@ -327,32 +438,11 @@ export class API {
     this.safePost<POISyncedListEvent[]>(
       '/poi-events/:chainType/:chainID',
       async (req: Request) => {
-        const { chainType, chainID } = req.params;
-        const { txidVersion, listKey, startIndex, endIndex } =
-          req.body as GetPOIListEventRangeParams;
-        if (!this.hasListKey(listKey)) {
+        // Check if the listKey is valid
+        if (!this.hasListKey(req.body.listKey)) {
           return [];
         }
-        const networkName = networkNameForSerializedChain(chainType, chainID);
-
-        const rangeLength = endIndex - startIndex;
-        if (rangeLength > QueryLimits.MAX_EVENT_QUERY_RANGE_LENGTH) {
-          throw new Error(
-            `Max event query range length is ${QueryLimits.MAX_EVENT_QUERY_RANGE_LENGTH}`,
-          );
-        }
-        if (rangeLength < 0) {
-          throw new Error(`Invalid query range`);
-        }
-
-        const events = await POIEventList.getPOIListEventRange(
-          listKey,
-          networkName,
-          txidVersion,
-          startIndex,
-          endIndex,
-        );
-        return events;
+        return getPoiEvents(req.params.chainType, req.params.chainID, req.body);
       },
       SharedChainTypeIDParamsSchema,
       GetPOIListEventRangeBodySchema,
