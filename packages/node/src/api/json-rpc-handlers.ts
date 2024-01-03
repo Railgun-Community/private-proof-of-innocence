@@ -39,27 +39,6 @@ export const handleJsonRpcError = (res: Response, error: Error, id: string) => {
   });
 };
 
-/**
- * Validate the params against the schema
- *
- * @param validator - Validator to use
- * @param params - Params to validate
- * @param schema - Schema to validate against
- * @throws ValidationError if params are invalid
- * @returns void
- */
-export const validateParams = (
-  validator: Validator,
-  params: AllowedSchema,
-  schema: AllowedSchema | null,
-) => {
-  if (!schema) {
-    return; // If no schema is provided, skip schema validation
-  }
-
-  validator.validate({ params: params, body: schema });
-};
-
 export function formatJsonRpcError(error: ValidationError): JsonRpcError {
   // Format the validation error for JSON-RPC response
   const errorDetails = error.validationErrors.body ?? [];
