@@ -210,6 +210,7 @@ describe('api', function () {
 
   it('Should return node status for GET /node-status-v2', async () => {
     const response = await axios.get(`${apiUrl}/node-status-v2`);
+
     const body = response.data as unknown as NodeStatusAllNetworks;
 
     expect(response.status).to.equal(200);
@@ -247,6 +248,93 @@ describe('api', function () {
     ).to.eventually.be.rejectedWith('Request failed with status code 500');
   });
 
+  it('Should return 200 for POST /poi-events', async () => {
+    const chainType = '0';
+    const chainID = '5';
+    const txidVersion = TXIDVersion.V2_PoseidonMerkle;
+
+    const response = await AxiosTest.postRequest(
+      `${apiUrl}/poi-events/${chainType}/${chainID}`,
+      { txidVersion, listKey, startIndex: 0, endIndex: 1 },
+    );
+
+    expect(response.status).to.equal(200);
+  });
+
+  it('Should return 400 for POST /poi-events with invalid body', async () => {
+    const chainType = '0';
+    const chainID = '5';
+
+    await expect(
+      AxiosTest.postRequest(`${apiUrl}/poi-events/${chainType}/${chainID}`, {
+        startIndex: 0,
+        endIndex: 1,
+      }),
+    ).to.eventually.be.rejectedWith(
+      `Request failed with status code 400: must have required property 'txidVersion'`,
+    );
+  });
+
+  it('Should return 400 for POST /poi-events with invalid listKey', async () => {
+    const chainType = '0';
+    const chainID = '5';
+    const txidVersion = TXIDVersion.V2_PoseidonMerkle;
+
+    // Stub isListProvider to get full error message as an aggregator
+    isListProviderStub.callsFake(() => true);
+
+    await expect(
+      AxiosTest.postRequest(`${apiUrl}/poi-events/${chainType}/${chainID}`, {
+        txidVersion,
+        listKey: 'fake_list_key',
+        startIndex: 0,
+        endIndex: 1,
+      }),
+    ).to.eventually.be.rejectedWith(
+      `Request failed with status code 400: Invalid listKey`,
+    );
+  });
+
+  it('Should return 400 for POST /poi-events with rangeLength > MAX_EVENT_QUERY_RANGE_LENGTH', async () => {
+    const chainType = '0';
+    const chainID = '5';
+    const txidVersion = TXIDVersion.V2_PoseidonMerkle;
+
+    // Stub isListProvider to get full error message as an aggregator
+    isListProviderStub.callsFake(() => true);
+
+    await expect(
+      AxiosTest.postRequest(`${apiUrl}/poi-events/${chainType}/${chainID}`, {
+        txidVersion,
+        listKey,
+        startIndex: 0,
+        endIndex: QueryLimits.MAX_EVENT_QUERY_RANGE_LENGTH + 1,
+      }),
+    ).to.eventually.be.rejectedWith(
+      `Request failed with status code 400: Max event query range length is ${QueryLimits.MAX_EVENT_QUERY_RANGE_LENGTH}`,
+    );
+  });
+
+  it('Should return 400 for POST /poi-events with rangeLength < 0', async () => {
+    const chainType = '0';
+    const chainID = '5';
+    const txidVersion = TXIDVersion.V2_PoseidonMerkle;
+
+    // Stub isListProvider to get full error message as an aggregator
+    isListProviderStub.callsFake(() => true);
+
+    await expect(
+      AxiosTest.postRequest(`${apiUrl}/poi-events/${chainType}/${chainID}`, {
+        txidVersion,
+        listKey,
+        startIndex: 1,
+        endIndex: 0,
+      }),
+    ).to.eventually.be.rejectedWith(
+      `Request failed with status code 400: Invalid query range`,
+    );
+  });
+
   it('Should return 200 for POST /transact-proofs', async () => {
     const chainType = '0';
     const chainID = '5';
@@ -274,7 +362,7 @@ describe('api', function () {
     await expect(
       AxiosTest.postRequest(
         `${apiUrl}/transact-proofs/${chainType}/${chainID}`,
-        { bloomFilterSerialized: 0, listKey },
+        { bloomFilterSerialized: 'someValidSerializedData', listKey },
       ),
     ).to.eventually.be.rejectedWith(
       `Request failed with status code 400: must have required property 'txidVersion'`,
@@ -1144,93 +1232,6 @@ describe('api', function () {
       ),
     ).to.eventually.be.rejectedWith(
       `Request failed with status code 400: must have required property 'txidVersion'`,
-    );
-  });
-
-  it('Should return 200 for POST /poi-events', async () => {
-    const chainType = '0';
-    const chainID = '5';
-    const txidVersion = TXIDVersion.V2_PoseidonMerkle;
-
-    const response = await AxiosTest.postRequest(
-      `${apiUrl}/poi-events/${chainType}/${chainID}`,
-      { txidVersion, listKey, startIndex: 0, endIndex: 1 },
-    );
-
-    expect(response.status).to.equal(200);
-  });
-
-  it('Should return 400 for POST /poi-events with invalid body', async () => {
-    const chainType = '0';
-    const chainID = '5';
-
-    await expect(
-      AxiosTest.postRequest(`${apiUrl}/poi-events/${chainType}/${chainID}`, {
-        startIndex: 0,
-        endIndex: 1,
-      }),
-    ).to.eventually.be.rejectedWith(
-      `Request failed with status code 400: must have required property 'txidVersion'`,
-    );
-  });
-
-  it('Should return 400 for POST /poi-events with invalid listKey', async () => {
-    const chainType = '0';
-    const chainID = '5';
-    const txidVersion = TXIDVersion.V2_PoseidonMerkle;
-
-    // Stub isListProvider to get full error message as an aggregator
-    isListProviderStub.callsFake(() => true);
-
-    await expect(
-      AxiosTest.postRequest(`${apiUrl}/poi-events/${chainType}/${chainID}`, {
-        txidVersion,
-        listKey: 'fake_list_key',
-        startIndex: 0,
-        endIndex: 1,
-      }),
-    ).to.eventually.be.rejectedWith(
-      `Request failed with status code 400: Invalid listKey`,
-    );
-  });
-
-  it('Should return 400 for POST /poi-events with rangeLength > MAX_EVENT_QUERY_RANGE_LENGTH', async () => {
-    const chainType = '0';
-    const chainID = '5';
-    const txidVersion = TXIDVersion.V2_PoseidonMerkle;
-
-    // Stub isListProvider to get full error message as an aggregator
-    isListProviderStub.callsFake(() => true);
-
-    await expect(
-      AxiosTest.postRequest(`${apiUrl}/poi-events/${chainType}/${chainID}`, {
-        txidVersion,
-        listKey,
-        startIndex: 0,
-        endIndex: QueryLimits.MAX_EVENT_QUERY_RANGE_LENGTH + 1,
-      }),
-    ).to.eventually.be.rejectedWith(
-      `Request failed with status code 400: Max event query range length is ${QueryLimits.MAX_EVENT_QUERY_RANGE_LENGTH}`,
-    );
-  });
-
-  it('Should return 400 for POST /poi-events with rangeLength < 0', async () => {
-    const chainType = '0';
-    const chainID = '5';
-    const txidVersion = TXIDVersion.V2_PoseidonMerkle;
-
-    // Stub isListProvider to get full error message as an aggregator
-    isListProviderStub.callsFake(() => true);
-
-    await expect(
-      AxiosTest.postRequest(`${apiUrl}/poi-events/${chainType}/${chainID}`, {
-        txidVersion,
-        listKey,
-        startIndex: 1,
-        endIndex: 0,
-      }),
-    ).to.eventually.be.rejectedWith(
-      `Request failed with status code 400: Invalid query range`,
     );
   });
 

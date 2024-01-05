@@ -40,31 +40,53 @@ import debug from 'debug';
 import os from 'os';
 
 /**
- * Logic for / route
+ * Logic for shared HTTP error responses
  *
- * @returns Status object
+ * @param err - Error to handle
+ * @returns Status code and error message
+ * @remarks This is used by both the JSON-RPC handler and REST safePost in api.ts
  */
+export function handleHTTPError(err: Error): {
+  statusCode: number;
+  errorMessage: string;
+} {
+  let statusCode = 500;
+  let errorMessage = 'Internal server error';
+
+  const messageToStatusCodeMap: Record<string, number> = {
+    'Invalid listKey': 400,
+    'Cannot connect to listKey': 404,
+    'Invalid query range': 400,
+    [`Max event query range length is ${QueryLimits.MAX_EVENT_QUERY_RANGE_LENGTH}`]: 400,
+    [`Max event query range length is ${QueryLimits.MAX_POI_MERKLETREE_LEAVES_QUERY_RANGE_LENGTH}`]: 400,
+    [`Too many blinded commitments: max ${QueryLimits.GET_POI_EXISTENCE_MAX_BLINDED_COMMITMENTS}`]: 400,
+    [`Too many blinded commitments: max ${QueryLimits.GET_MERKLE_PROOFS_MAX_BLINDED_COMMITMENTS}`]: 400,
+  };
+
+  if (messageToStatusCodeMap[err.message]) {
+    statusCode = messageToStatusCodeMap[err.message];
+    errorMessage = err.message;
+  }
+
+  return { statusCode, errorMessage };
+}
+
+// ** Status routes logic
+
 export const getStatus = () => {
   return { status: 'ok' };
 };
 
+// ** Aggregator routes logic
+
 export const getNodeStatus_ROUTE = async (listKeys: string[]) => {
-  console.log('inside getNodeStatus_ROUTE');
   return NodeStatus.getNodeStatusAllNetworks(
     listKeys,
     TXIDVersion.V2_PoseidonMerkle,
   );
 };
 
-/**
- * Get the node status for a listKey
- *
- * @param params - Params to validate from JSON RPC request
- * @returns Function that returns a promise of the node status
- */
 export const getNodeStatusListKey = async (listKey: string) => {
-  console.log('Inside getNodeStatusListKey');
-
   const nodeURL = nodeURLForListKey(listKey);
 
   if (!isDefined(nodeURL)) {
@@ -86,7 +108,7 @@ export const getPerformanceMetrics = () => {
 export const getPoiEvents = async (
   chainType: string,
   chainID: string,
-  params: GetPOIListEventRangeParams,
+  params: any,
 ) => {
   const networkName = networkNameForSerializedChain(chainType, chainID);
 
@@ -204,7 +226,7 @@ export const submitPOIEvent = async (
   );
 };
 
-export const submitValidatedTxidAndMerkleroot = async (
+export const submitValidatedTxid = async (
   chainType: string,
   chainID: string,
   params: SubmitValidatedTxidAndMerklerootParams,
@@ -256,6 +278,8 @@ export const removeTransactProof = async (
     signature,
   );
 };
+
+// ** Client routes logic
 
 export const submitTransactProof = async (
   chainType: string,

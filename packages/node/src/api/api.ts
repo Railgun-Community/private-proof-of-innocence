@@ -1,3 +1,11 @@
+/**
+ * @description API module for the Proof of Innocence node
+ *
+ * @note Supports both JSON-RPC and REST API
+ * @note Logic is shared between the JSON-RPC and REST API, from route-logic.ts
+ * @note HTTP error handling is shared between JSON-RPC and REST API, from route-logic.ts
+ * @note Schema validation is defined in schemas.ts.
+ */
 /// <reference types="../types/index" />
 import express, { NextFunction, Request, Response } from 'express';
 import cors from 'cors';
@@ -9,7 +17,6 @@ import {
   AllowedSchema,
 } from 'express-json-validator-middleware';
 import { isListProvider } from '../config/general';
-import { QueryLimits } from '../config/query-limits';
 import {
   NodeStatusAllNetworks,
   GetTransactProofsParams,
@@ -82,11 +89,12 @@ import {
   submitPOIEvent,
   submitSingleCommitmentProofs,
   submitTransactProof,
-  submitValidatedTxidAndMerkleroot,
   validatePoiMerkleroots,
   validateTxidMerkleroot,
+  handleHTTPError,
+  submitValidatedTxid,
 } from './route-logic';
-import { LogicFunctionMap } from './json-rpc-handlers';
+import { getLogicFunctionMap } from './json-rpc-handlers';
 
 const dbg = debug('poi:api');
 
@@ -116,6 +124,9 @@ export class API {
         origin: '*',
       }),
     );
+    // Bind (this) to the JSON-RPC request handler function
+    this.handleJsonRpcRequest = this.handleJsonRpcRequest.bind(this);
+
     this.addRoutes();
 
     this.listKeys = listKeys;
@@ -128,7 +139,6 @@ export class API {
         res: Response,
         next: NextFunction,
       ) => {
-        console.log('inside error middleware');
         if (error instanceof ValidationError) {
           res
             .status(400)
@@ -157,7 +167,6 @@ export class API {
       throw new Error('API is already running.');
     }
     this.server = this.app.listen(Number(port), host, () => {
-      console.log(`Listening at http://${host}:${port}`);
       dbg(`Listening at http://${host}:${port}`);
     });
     this.server.on('error', err => {
@@ -185,57 +194,19 @@ export class API {
    *
    * @param req - Express request
    * @param res - Express response
+   * @returns void
+   * @throws Error if the method is not supported
+   * @throws Error if the params are invalid
+   * @throws Error if the logic function throws an error
    */
   private async handleJsonRpcRequest(req: Request, res: Response) {
-    console.log('Received JSON RPC Request:', req.body);
-
-    console.log('akjansdkjansd');
-
-    // console.log('Before setting up logicFunctionMap, listKeys:', this.listKeys);
-
-    // // Get method, params, and id from the request body
     const { method, params, id } = req.body;
 
-    // Map of methods to their corresponding logic functions
-    const logicFunctionMap: LogicFunctionMap = {
-      'ppoi_node-status-v2': {
-        logicFunction: async () => {
-          console.log('Inside logicFunctionMap');
-
-          return getNodeStatus_ROUTE(this.listKeys);
-        }, // takes listKeys from constructor
-        schema: null,
-      },
-      'ppoi_node-status-v2/:listKey': {
-        logicFunction: async () => {
-          return getNodeStatusListKey(params.listKey);
-        }, // Gets listKey from req.body.params
-        schema: null,
-      },
-      'ppoi_poi_events/:chainType/:chainID': {
-        logicFunction: () =>
-          getPoiEvents(
-            req.params.chainType,
-            req.params.chainID,
-            params as GetPOIListEventRangeParams,
-          ),
-        schema: GetPOIListEventRangeBodySchema,
-      },
-      'ppoi_poi_merkletree_leaves/:chainType/:chainID': {
-        logicFunction: () =>
-          getPOIMerkletreeLeaves(
-            req.params.chainType,
-            req.params.chainID,
-            params as GetPOIMerkletreeLeavesParams,
-          ),
-        schema: GetPOIMerkletreeLeavesBodySchema,
-      },
-    };
+    // Get the logic functions
+    const logicFunctionMap = getLogicFunctionMap(params, this.listKeys, dbg);
 
     // Check if the method is supported
-    if (!logicFunctionMap[method]) {
-      console.log('Method not found in logicFunctionMap:', method);
-
+    if (!Object.prototype.hasOwnProperty.call(logicFunctionMap, method)) {
       res.status(404).json({
         jsonrpc: '2.0',
         error: { code: -32601, message: 'Method not found' },
@@ -244,28 +215,65 @@ export class API {
       return;
     }
 
+    // Check validity of listKey if present
+    if (Boolean(params.listKey) && !this.hasListKey(params.listKey)) {
+      res.status(400).json({
+        jsonrpc: '2.0',
+        error: {
+          code: -32602,
+          message: 'Invalid params',
+          data: 'Invalid listKey',
+        },
+        id,
+      });
+      return;
+    }
+
+    // Execute the requested method
     try {
-      // Get the logic function and schema for the method
       const { logicFunction, schema } = logicFunctionMap[method];
 
-      // Validate the params against the schema
-      if (schema) validator.validate({ params: params, body: schema });
-
-      // // print listkeys before call
-      // console.log('listKeys', this.listKeys);
+      // Manually validate params/schema since validation package isn't compatible with JSON-RPC
+      if (schema) {
+        const validateResult = validator.ajv.validate(schema, params);
+        if (!validateResult) {
+          // Validation failed, handle error response
+          const errors = validator.ajv.errors;
+          res.status(400).json({
+            jsonrpc: '2.0',
+            error: { code: -32602, message: 'Invalid params', data: errors },
+            id,
+          });
+          return;
+        }
+      }
 
       // Execute the logic function
       const result = await logicFunction();
-      console.log('Logic function result:', result);
-
       res.json({ jsonrpc: '2.0', result, id });
     } catch (error) {
-      console.log('Error in handleJsonRpcRequest:', error);
-      res.status(500).json({
-        jsonrpc: '2.0',
-        error: { code: -32603, message: error.message },
-        id,
-      });
+      const { statusCode, errorMessage } = handleHTTPError(error);
+      const jsonRpcErrorCode = statusCode === 400 ? -32602 : -32603;
+
+      // Respond with error
+      if (isListProvider()) {
+        // Show the error message to aggregator nodes
+        res.status(statusCode).json({
+          jsonrpc: '2.0',
+          error: { code: jsonRpcErrorCode, message: errorMessage },
+          id,
+        });
+      } else {
+        // Hide the error message for client nodes
+        res.status(statusCode).json({
+          jsonrpc: '2.0',
+          error: {
+            code: jsonRpcErrorCode,
+            message: 'Error occurred while executing the JSON-RPC method',
+          },
+          id,
+        });
+      }
     }
   }
 
@@ -376,6 +384,7 @@ export class API {
       async (req: Request, res: Response, next: NextFunction) => {
         dbg(`POST request ${route}`);
         dbg({ ...req.params, ...req.body });
+
         try {
           const value: ReturnType = await handler(req);
           if (isDefined(value)) {
@@ -390,52 +399,18 @@ export class API {
 
           dbg(err);
 
-          let statusCode = 500;
-          let errorMessage = 'Internal server error';
-
-          if (err.message === 'Invalid listKey') {
-            statusCode = 400;
-            errorMessage = err.message;
-          } else if (err.message === 'Cannot connect to listKey') {
-            statusCode = 404;
-            errorMessage = err.message;
-          } else if (err.message === 'Invalid query range') {
-            statusCode = 400;
-            errorMessage = err.message;
-          } else if (
-            err.message ===
-            `Max event query range length is ${QueryLimits.MAX_EVENT_QUERY_RANGE_LENGTH}`
-          ) {
-            statusCode = 400;
-            errorMessage = err.message;
-          } else if (
-            err.message ===
-            `Max event query range length is ${QueryLimits.MAX_POI_MERKLETREE_LEAVES_QUERY_RANGE_LENGTH}`
-          ) {
-            statusCode = 400;
-            errorMessage = err.message;
-          } else if (
-            err.message ===
-            `Too many blinded commitments: max ${QueryLimits.GET_POI_EXISTENCE_MAX_BLINDED_COMMITMENTS}`
-          ) {
-            statusCode = 400;
-            errorMessage = err.message;
-          } else if (
-            err.message ===
-            `Too many blinded commitments: max ${QueryLimits.GET_MERKLE_PROOFS_MAX_BLINDED_COMMITMENTS}`
-          ) {
-            statusCode = 400;
-            errorMessage = err.message;
-          }
+          // Use the shared error handling function
+          const { statusCode, errorMessage } = handleHTTPError(err);
 
           if (isListProvider()) {
             // Show the error message to aggregator nodes
             return res.status(statusCode).json(errorMessage);
           } else {
             // Hide the error message
-            return res.status(statusCode).send();
+            return res
+              .status(statusCode)
+              .json('Error occurred while executing the REST method');
           }
-          // return next(err);
         }
       },
     );
@@ -488,8 +463,6 @@ export class API {
 
   private addAggregatorRoutes() {
     this.safeGet<NodeStatusAllNetworks>('/node-status-v2', async () => {
-      console.log('Inside safeGet /node-status-v2');
-
       return getNodeStatus_ROUTE(this.listKeys);
     });
 
@@ -624,7 +597,7 @@ export class API {
         if (!this.hasListKey(body.listKey)) {
           throw new Error('Invalid listKey');
         }
-        await submitValidatedTxidAndMerkleroot(
+        await submitValidatedTxid(
           req.params.chainType,
           req.params.chainID,
           body,
