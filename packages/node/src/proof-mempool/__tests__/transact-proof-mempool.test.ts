@@ -326,4 +326,112 @@ describe('transact-proof-mempool', () => {
       TransactProofMempoolCache.getCacheSize(listKey, networkName, txidVersion),
     ).to.equal(2);
   }).timeout(10000);
+
+  it.only('Should remove existing proof in list from mempool', async () => {
+    const transactProofData1: TransactProofData = {
+      snarkProof: MOCK_SNARK_PROOF,
+      poiMerkleroots: ['0x1111', '0x2222'],
+      txidMerklerootIndex: 58,
+      txidMerkleroot: '0x1234567890',
+      blindedCommitmentsOut: ['0x3333', '0x4444'],
+      railgunTxidIfHasUnshield: '0x45678900',
+    };
+    const transactProofData2: TransactProofData = {
+      snarkProof: MOCK_SNARK_PROOF,
+      poiMerkleroots: ['0x9999', '0x8888'],
+      txidMerklerootIndex: 59,
+      txidMerkleroot: '0x0987654321',
+      blindedCommitmentsOut: ['0x7777', '0x6666'],
+      railgunTxidIfHasUnshield: '0x00',
+    };
+    const transactProofData3: TransactProofData = {
+      snarkProof: MOCK_SNARK_PROOF,
+      poiMerkleroots: ['0x9999', '0x8888'],
+      txidMerklerootIndex: 59,
+      txidMerkleroot: '0x0987654321',
+      blindedCommitmentsOut: ['0x7777', '0x6666'],
+      railgunTxidIfHasUnshield: '0x45678900', // Same as #2 with a different railgunTxid - to test an edge case
+    };
+
+    verifyTransactProofStub.resolves(true);
+    txidMerklerootExistsStub.resolves(true);
+
+    await poiHistoricalMerklerootDB.insertMerkleroot(
+      listKey,
+      0, // index
+      transactProofData1.poiMerkleroots[0],
+    );
+    await poiHistoricalMerklerootDB.insertMerkleroot(
+      listKey,
+      1, // index
+      transactProofData1.poiMerkleroots[1],
+    );
+    await poiHistoricalMerklerootDB.insertMerkleroot(
+      listKey,
+      2, // index
+      transactProofData2.poiMerkleroots[0],
+    );
+    await poiHistoricalMerklerootDB.insertMerkleroot(
+      listKey,
+      3, // index
+      transactProofData2.poiMerkleroots[1],
+    );
+
+    await TransactProofMempool.submitProof(
+      listKey,
+      networkName,
+      txidVersion,
+      transactProofData1,
+    );
+    await TransactProofMempool.submitProof(
+      listKey,
+      networkName,
+      txidVersion,
+      transactProofData2,
+    );
+    await TransactProofMempool.submitProof(
+      listKey,
+      networkName,
+      txidVersion,
+      transactProofData3,
+    );
+
+    expect(
+      TransactProofMempoolCache.getCacheSize(listKey, networkName, txidVersion),
+    ).to.equal(3);
+
+    TransactProofMempoolCache.clearCache_FOR_TEST_ONLY();
+    expect(
+      TransactProofMempoolCache.getCacheSize(listKey, networkName, txidVersion),
+    ).to.equal(0);
+
+    await TransactProofMempool.inflateCacheFromDatabase(MOCK_LIST_KEYS);
+    expect(
+      TransactProofMempoolCache.getCacheSize(listKey, networkName, txidVersion),
+    ).to.equal(3);
+
+    // Don't remove the proof from the mempool
+    // await TransactProofMempoolPruner.removeProof(
+    //   listKey,
+    //   networkName,
+    //   txidVersion,
+    //   transactProofData1.blindedCommitmentsOut,
+    //   transactProofData1.railgunTxidIfHasUnshield,
+    //   false, // shouldSendNodeRequest
+    // );
+
+    expect(
+      TransactProofMempoolCache.getCacheSize(listKey, networkName, txidVersion),
+    ).to.equal(3);
+
+    // Let transact-proof-push-syncer poll and realize the proof is in the list and also in the mempool.
+    await new Promise(resolve => setTimeout(resolve, 10000));
+
+    // The proof should now be removed from the mempool after the syncer polls.
+    expect(
+      TransactProofMempoolCache.getCacheSize(listKey, networkName, txidVersion),
+    ).to.equal(2);
+
+    // Add a transact proof to the list and also into the mempool to appear as if it is stuck.
+  }).timeout(20000);
 });

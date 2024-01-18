@@ -7,6 +7,8 @@ import {
 import { Config } from '../config/config';
 import { TransactProofMempool } from '../proof-mempool/transact-proof-mempool';
 import { TransactProofPerListMempoolDatabase } from '../database/databases/transact-proof-per-list-mempool-database';
+import { TransactProofEventMatcher } from '../proof-mempool/transact-proof-event-matcher';
+import { TransactProofMempoolPruner } from '../proof-mempool/transact-proof-mempool-pruner';
 
 export class TransactProofPushSyncer {
   private listKeys: string[];
@@ -34,6 +36,16 @@ export class TransactProofPushSyncer {
     this.poll();
   }
 
+  /**
+   * Add POI events for transacts that are in the mempool.
+   *
+   * @param networkName - network name to add POI events for
+   * @param txidVersion - txid version to add POI events for
+   * @returns void
+   *
+   * @remarks This trys to add transact proofs to the list every 3 minutes.
+   * @remarks Proofs are checked to see if they are stuck in the mempool.
+   */
   private async addPOIEventsForTransacts(
     networkName: NetworkName,
     txidVersion: TXIDVersion,
@@ -57,12 +69,36 @@ export class TransactProofPushSyncer {
           railgunTxidIfHasUnshield:
             transactProofDBItem.railgunTxidIfHasUnshield,
         };
+        // Add to the mempool
         await TransactProofMempool.tryAddToList(
           listKey,
           networkName,
           txidVersion,
           transactProofData,
         );
+
+        // Remove proof if stuck in mempool after being added to the list
+        const orderedEventsExist =
+          await TransactProofEventMatcher.hasOrderedEventForEveryBlindedCommitment(
+            listKey,
+            networkName,
+            txidVersion,
+            transactProofData.blindedCommitmentsOut,
+            transactProofData.railgunTxidIfHasUnshield,
+          );
+        if (orderedEventsExist) {
+          console.log('Ordered events exist. Removing from mempool.');
+          // Remove item from the database.
+          await TransactProofMempoolPruner.removeProof(
+            listKey,
+            networkName,
+            txidVersion,
+            transactProofData.blindedCommitmentsOut,
+            transactProofData.railgunTxidIfHasUnshield,
+            true, // shouldSendNodeRequest
+          );
+          return;
+        }
       }
     }
   }
