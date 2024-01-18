@@ -2,24 +2,50 @@
 
 # RAILGUN Proof Of Innocence
 
-Compatible with NodeJS environments.
+This repository contains the codebase for the RAILGUN Private Proofs of Innocence (PPOI) Node and Dashboard, compatible with NodeJS environments.
 
-Install the POI Node package:
-`yarn add @railgun-community/proof-of-innocence`
+## Introduction
 
-## Deploying
+RAILGUN PPOI is a blockchain privacy solution that ensures transactions remain confidential and comply with OFAC sanctions.
 
-On the server where you want to deploy the POI Node, install dependencies:
+## Installation
 
-1. Node.js 16.20.x or higher
-2. yarn
-3. MongoDB
+To use the RAILGUN PPOI Node package in your project:
 
-Then run `./start-node`
+```bash
+yarn add @railgun-community/proof-of-innocence
+```
 
-On the server where you want to deploy the POI Dashboard, install dependencies:
+## Requirements
 
-1. Node.js 16.20.x or higher
-2. yarn
+- Node.js version 16.20.x or higher
+- Yarn package manager
+- MongoDB
 
-Then run `./start-dash`
+## Deployment
+
+### POI Node
+
+- Ensure the server meets the above requirements.
+- Run ./start-node to deploy the POI Node.
+
+### POI Dashboard
+
+- Ensure the server meets the requirements (excluding MongoDB).
+- Run ./start-dash to deploy the POI Dashboard.
+
+## Contributing
+
+Contributions to the RAILGUN POI project are welcome! Please refer to our contribution guidelines for more information.
+
+## Documentation
+
+For more detailed information about the project, please refer to the documentation.
+
+## License
+
+This project is licensed under [GPL-3.0-only].
+
+## Support and Community
+
+If you have any questions or need support, please join our community forum or Discord server.
