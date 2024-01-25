@@ -15,18 +15,18 @@ import {
   SubmitTransactProofParams,
   TXIDVersion,
 } from '@railgun-community/shared-models';
-import { ProofOfInnocenceNode } from '../proof-of-innocence-node';
-import { MOCK_LIST_KEYS } from '../tests/mocks.test';
-import { LocalListProvider } from '../local-list-provider';
+import { ProofOfInnocenceNode } from '../../proof-of-innocence-node';
+import { MOCK_LIST_KEYS } from '../../tests/mocks.test';
+import { LocalListProvider } from '../../local-list-provider';
 import sinon, { SinonStub } from 'sinon';
-import * as General from '../config/general';
-import { QueryLimits } from '../config/query-limits';
-import { BlockedShieldsCache } from '../shields/blocked-shields-cache';
-import { SignedPOIEvent } from '../models/poi-types';
-import { POIEventList } from '../poi-events/poi-event-list';
-import { RailgunTxidMerkletreeManager } from '../railgun-txids/railgun-txid-merkletree-manager';
-import { TransactProofMempool } from '../proof-mempool/transact-proof-mempool';
-import { POIMerkletreeManager } from '../poi-events/poi-merkletree-manager';
+import * as General from '../../config/general';
+import { QueryLimits } from '../../config/query-limits';
+import { BlockedShieldsCache } from '../../shields/blocked-shields-cache';
+import { SignedPOIEvent } from '../../models/poi-types';
+import { POIEventList } from '../../poi-events/poi-event-list';
+import { RailgunTxidMerkletreeManager } from '../../railgun-txids/railgun-txid-merkletree-manager';
+import { TransactProofMempool } from '../../proof-mempool/transact-proof-mempool';
+import { POIMerkletreeManager } from '../../poi-events/poi-merkletree-manager';
 
 interface ValidationError {
   params: {
@@ -1706,4 +1706,21 @@ describe('JSON RPC API Tests', function () {
       expect(response.status).to.equal(200);
     });
   });
+
+  // Stub POINodeRequest.getNodeStatusAllNetworks to use JSON-RPC
+  // Have to stub the function and test the surrounding functionality that it returns, real integration test
+
+  // Start with node-status-v2
+  // used in POINodeRequest.getNodeStatusAllNetworks()
+  // used in RoundRobinSyncer.poll()
+  // used in ConnectedNodeStartup.start()
+  // NOT in NodeStatus.getNodeStatusAllNetworks, this is a different status
+
+  // Where are the tests related to roundRobinSyncer and connectedNodeStartup at?
+  // This should contain the integration stub tests
+  // Somehow, connectedNodeStartup has > 80% test coverage but no related test file
+  // Need to ensure round robin syncer and connected node startup function as expected with
+  // ... getNodeStatusAllNetworks stubbed to use JSON-RPC
+  // Where can this even be done..?
+  // There seems to be no specific place that ConnectedNodeStartup can be specifically tested.
 });

@@ -102,6 +102,7 @@ export class ProofOfInnocenceNode {
   async stop() {
     this.api.stop();
     await stopEngine();
+    // this.running = false;
   }
 
   getPollStatus() {

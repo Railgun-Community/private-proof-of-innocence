@@ -1,7 +1,7 @@
-import { ProofOfInnocenceNode } from '../proof-of-innocence-node';
-import { LocalListProvider } from '../local-list-provider';
-import { MOCK_LIST_KEYS } from '../tests/mocks.test';
-import * as WalletModule from '../engine/wallet';
+import { ProofOfInnocenceNode } from '../../proof-of-innocence-node';
+import { LocalListProvider } from '../../local-list-provider';
+import { MOCK_LIST_KEYS } from '../../tests/mocks.test';
+import * as WalletModule from '../../engine/wallet';
 import {
   BlindedCommitmentData,
   BlindedCommitmentType,
@@ -19,17 +19,17 @@ import axios, { AxiosError } from 'axios';
 import 'dotenv/config';
 import chai, { assert } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import { BlockedShieldsCache } from '../shields/blocked-shields-cache';
+import { BlockedShieldsCache } from '../../shields/blocked-shields-cache';
 import sinon, { SinonStub } from 'sinon';
-import { QueryLimits } from '../config/query-limits';
-import { TransactProofMempool } from '../proof-mempool/transact-proof-mempool';
-import { RailgunTxidMerkletreeManager } from '../railgun-txids/railgun-txid-merkletree-manager';
-import { POIMerkletreeManager } from '../poi-events/poi-merkletree-manager';
-import { SignedPOIEvent } from '../models/poi-types';
-import { POIEventList } from '../poi-events/poi-event-list';
-import * as General from '../config/general';
-import { POINodeRequest } from '../api/poi-node-request';
-import { API } from '../api/api';
+import { QueryLimits } from '../../config/query-limits';
+import { TransactProofMempool } from '../../proof-mempool/transact-proof-mempool';
+import { RailgunTxidMerkletreeManager } from '../../railgun-txids/railgun-txid-merkletree-manager';
+import { POIMerkletreeManager } from '../../poi-events/poi-merkletree-manager';
+import { SignedPOIEvent } from '../../models/poi-types';
+import { POIEventList } from '../../poi-events/poi-event-list';
+import * as General from '../../config/general';
+import { POINodeRequest } from '../poi-node-request';
+import { API } from '../api';
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
