@@ -31,7 +31,7 @@ export class TransactProofMempool {
   private static alreadyForwardedProofCache = new Map<string, boolean>();
 
   /**
-   * Check if proof has been previoiusly added to doNotAddProofCache.
+   * Check if proof has been previously added to doNotAddProofCache.
    * Determine if proof should be added to mempool (shouldAdd).
    * Inserts transact proof into TransactProofPerListMempoolDatabase.
    * Adds transact proof to TransactProofMempoolCache.

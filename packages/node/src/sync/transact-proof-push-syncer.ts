@@ -1,3 +1,8 @@
+/**
+ * TransactProofPushSyncer is for periodically checking if transact proofs are stuck in the mempool.
+ * If the proof does not exist in the list yet, they are added to the list.
+ * If the proof exists in the list and in the mempool, they are removed from the mempool.
+ */
 import {
   NetworkName,
   delay,
@@ -5,11 +10,13 @@ import {
   TXIDVersion,
 } from '@railgun-community/shared-models';
 import { Config } from '../config/config';
-import { TransactProofMempool } from '../proof-mempool/transact-proof-mempool';
 import { TransactProofPerListMempoolDatabase } from '../database/databases/transact-proof-per-list-mempool-database';
 import { TransactProofEventMatcher } from '../proof-mempool/transact-proof-event-matcher';
 import { TransactProofMempoolPruner } from '../proof-mempool/transact-proof-mempool-pruner';
+import { TransactProofMempool } from '../proof-mempool/transact-proof-mempool';
+import debug from 'debug';
 
+const dbg = debug('poi:transact-proof-push-syncer');
 export class TransactProofPushSyncer {
   private listKeys: string[];
 
@@ -69,15 +76,8 @@ export class TransactProofPushSyncer {
           railgunTxidIfHasUnshield:
             transactProofDBItem.railgunTxidIfHasUnshield,
         };
-        // Add to the mempool
-        await TransactProofMempool.tryAddToList(
-          listKey,
-          networkName,
-          txidVersion,
-          transactProofData,
-        );
 
-        // Remove proof if stuck in mempool after being added to the list
+        // Remove proof if stuck in mempool when already exists in list.
         const orderedEventsExist =
           await TransactProofEventMatcher.hasOrderedEventForEveryBlindedCommitment(
             listKey,
@@ -86,19 +86,29 @@ export class TransactProofPushSyncer {
             transactProofData.blindedCommitmentsOut,
             transactProofData.railgunTxidIfHasUnshield,
           );
+
         if (orderedEventsExist) {
-          console.log('Ordered events exist. Removing from mempool.');
-          // Remove item from the database.
+          dbg('Event already exists for every blinded commitment');
+
+          // Remove item from database.
           await TransactProofMempoolPruner.removeProof(
             listKey,
             networkName,
             txidVersion,
             transactProofData.blindedCommitmentsOut,
             transactProofData.railgunTxidIfHasUnshield,
-            true, // shouldSendNodeRequest
+            true, // shouldSendNodeRequest to remove from other nodes
           );
           return;
         }
+
+        // Try adding proof to list.
+        await TransactProofMempool.tryAddToList(
+          listKey,
+          networkName,
+          txidVersion,
+          transactProofData,
+        );
       }
     }
   }
