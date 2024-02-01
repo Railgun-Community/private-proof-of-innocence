@@ -1706,21 +1706,4 @@ describe('JSON RPC API Tests', function () {
       expect(response.status).to.equal(200);
     });
   });
-
-  // Stub POINodeRequest.getNodeStatusAllNetworks to use JSON-RPC
-  // Have to stub the function and test the surrounding functionality that it returns, real integration test
-
-  // Start with node-status-v2
-  // used in POINodeRequest.getNodeStatusAllNetworks()
-  // used in RoundRobinSyncer.poll()
-  // used in ConnectedNodeStartup.start()
-  // NOT in NodeStatus.getNodeStatusAllNetworks, this is a different status
-
-  // Where are the tests related to roundRobinSyncer and connectedNodeStartup at?
-  // This should contain the integration stub tests
-  // Somehow, connectedNodeStartup has > 80% test coverage but no related test file
-  // Need to ensure round robin syncer and connected node startup function as expected with
-  // ... getNodeStatusAllNetworks stubbed to use JSON-RPC
-  // Where can this even be done..?
-  // There seems to be no specific place that ConnectedNodeStartup can be specifically tested.
 });
