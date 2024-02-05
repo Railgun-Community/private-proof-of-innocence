@@ -1,7 +1,14 @@
+/**
+ * @description API module for the Proof of Innocence node
+ *
+ * @note Supports both JSON-RPC and REST API
+ * @note Logic is shared between the JSON-RPC and REST API, from route-logic.ts
+ * @note HTTP error handling is shared between JSON-RPC and REST API, from route-logic.ts
+ * @note Schema validation is defined in schemas.ts.
+ */
 /// <reference types="../types/index" />
 import express, { NextFunction, Request, Response } from 'express';
 import cors from 'cors';
-import os from 'os';
 import debug from 'debug';
 import { Server } from 'http';
 import {
@@ -9,17 +16,7 @@ import {
   ValidationError,
   AllowedSchema,
 } from 'express-json-validator-middleware';
-import { POIEventList } from '../poi-events/poi-event-list';
-import {
-  isListProvider,
-  networkNameForSerializedChain,
-  nodeURLForListKey,
-} from '../config/general';
-import { TransactProofMempool } from '../proof-mempool/transact-proof-mempool';
-import { POIMerkletreeManager } from '../poi-events/poi-merkletree-manager';
-import { RailgunTxidMerkletreeManager } from '../railgun-txids/railgun-txid-merkletree-manager';
-import { QueryLimits } from '../config/query-limits';
-import { NodeStatus } from '../status/node-status';
+import { isListProvider } from '../config/general';
 import {
   NodeStatusAllNetworks,
   GetTransactProofsParams,
@@ -29,7 +26,6 @@ import {
   GetMerkleProofsParams,
   ValidateTxidMerklerootParams,
   GetLatestValidatedRailgunTxidParams,
-  TXIDVersion,
   ValidatedRailgunTxidStatus,
   MerkleProof,
   POIsPerListMap,
@@ -73,12 +69,32 @@ import {
   SubmitPOIEventParams,
   SubmitValidatedTxidAndMerklerootParams,
 } from '../models/poi-types';
-import { BlockedShieldsSyncer } from '../shields/blocked-shields-syncer';
-import { POINodeRequest } from './poi-node-request';
-import { TransactProofMempoolPruner } from '../proof-mempool/transact-proof-mempool-pruner';
-import { LegacyTransactProofMempool } from '../proof-mempool/legacy/legacy-transact-proof-mempool';
-import { SingleCommitmentProofManager } from '../single-commitment-proof/single-commitment-proof-manager';
 import { shouldLogVerbose } from '../util/logging';
+import {
+  getBlockedShields,
+  getLegacyTransactProofs,
+  getMerkleProofs,
+  getNodeStatus_ROUTE,
+  getNodeStatusListKey,
+  getPOIMerkletreeLeaves,
+  getPOIsPerBlindedCommitment,
+  getPOIsPerList,
+  getPerformanceMetrics,
+  getPoiEvents,
+  getStatus,
+  getTransactProofs,
+  getValidatedTxid,
+  removeTransactProof,
+  submitLegacyTransactProofs,
+  submitPOIEvent,
+  submitSingleCommitmentProofs,
+  submitTransactProof,
+  validatePoiMerkleroots,
+  validateTxidMerkleroot,
+  handleHTTPError,
+  submitValidatedTxid,
+} from './route-logic';
+import { getLogicFunctionMap } from './json-rpc-handlers';
 
 const dbg = debug('poi:api');
 
@@ -94,6 +110,11 @@ export class API {
 
   static debug = false;
 
+  /**
+   * Create a new API instance
+   *
+   * @param listKeys - List keys to use for the API
+   */
   constructor(listKeys: string[]) {
     this.app = express();
     this.app.use(express.json({ limit: '5mb' }));
@@ -103,6 +124,9 @@ export class API {
         origin: '*',
       }),
     );
+    // Bind (this) to the JSON-RPC request handler function
+    this.handleJsonRpcRequest = this.handleJsonRpcRequest.bind(this);
+
     this.addRoutes();
 
     this.listKeys = listKeys;
@@ -132,9 +156,15 @@ export class API {
     );
   }
 
+  /**
+   * Start the API server
+   *
+   * @param host - Hostname to listen on
+   * @param port - Port to listen on
+   */
   serve(host: string, port: string) {
     if (this.server) {
-      throw new Error('API already running.');
+      throw new Error('API is already running.');
     }
     this.server = this.app.listen(Number(port), host, () => {
       dbg(`Listening at http://${host}:${port}`);
@@ -144,6 +174,9 @@ export class API {
     });
   }
 
+  /**
+   * Stop the API server
+   */
   stop() {
     if (this.server) {
       this.server.close();
@@ -153,6 +186,107 @@ export class API {
     }
   }
 
+  /**
+   * Handle JSON RPC requests
+   *
+   * Acts as a dispatcher that routes JSON RPC requests to appropriate handlers based on
+   * the method field in the request.
+   *
+   * @param req - Express request
+   * @param res - Express response
+   * @returns void
+   * @throws Error if the method is not supported
+   * @throws Error if the params are invalid
+   * @throws Error if the logic function throws an error
+   */
+  private async handleJsonRpcRequest(req: Request, res: Response) {
+    const { method, params, id } = req.body;
+
+    // Get the logic functions
+    const logicFunctionMap = getLogicFunctionMap(params, this.listKeys, dbg);
+
+    // Check if the method is supported
+    if (!Object.prototype.hasOwnProperty.call(logicFunctionMap, method)) {
+      res.status(404).json({
+        jsonrpc: '2.0',
+        error: { code: -32601, message: 'Method not found' },
+        id,
+      });
+      return;
+    }
+
+    // Check validity of listKey if present
+    if (Boolean(params.listKey) && !this.hasListKey(params.listKey)) {
+      res.status(400).json({
+        jsonrpc: '2.0',
+        error: {
+          code: -32602,
+          message: 'Invalid params',
+          data: 'Invalid listKey',
+        },
+        id,
+      });
+      return;
+    }
+
+    // Execute the requested method
+    try {
+      const { logicFunction, schema } = logicFunctionMap[method];
+
+      // Manually validate params/schema since validation package isn't compatible with JSON-RPC
+      if (schema) {
+        const validateResult = validator.ajv.validate(schema, params);
+        if (!validateResult) {
+          // Validation failed, handle error response
+          const errors = validator.ajv.errors;
+          res.status(400).json({
+            jsonrpc: '2.0',
+            error: { code: -32602, message: 'Invalid params', data: errors },
+            id,
+          });
+          return;
+        }
+      }
+
+      // Execute the logic function
+      const result = await logicFunction();
+      res.json({ jsonrpc: '2.0', result, id });
+    } catch (error) {
+      const { statusCode, errorMessage } = handleHTTPError(error);
+      const jsonRpcErrorCode = statusCode === 400 ? -32602 : -32603;
+
+      // Respond with error
+      if (isListProvider()) {
+        // Show the error message to aggregator nodes
+        res.status(statusCode).json({
+          jsonrpc: '2.0',
+          error: { code: jsonRpcErrorCode, message: errorMessage },
+          id,
+        });
+      } else {
+        // Hide the error message for client nodes
+        res.status(statusCode).json({
+          jsonrpc: '2.0',
+          error: {
+            code: jsonRpcErrorCode,
+            message: 'Error occurred while executing the JSON-RPC method',
+          },
+          id,
+        });
+      }
+    }
+  }
+
+  /**
+   * Basic auth middleware for protected routes
+   *
+   * Username and password are read from the BASIC_AUTH_USERNAME and BASIC_AUTH_PASSWORD environment variables.
+   *
+   * @param req - Express request
+   * @param res - Express response
+   * @param next - Express next function
+   * @returns void
+   */
   private basicAuth(req: Request, res: Response, next: NextFunction): void {
     const authorization = req.headers.authorization;
 
@@ -179,6 +313,15 @@ export class API {
     res.status(401).json({ message: 'Unauthorized' });
   }
 
+  /**
+   * Safe GET handler that catches errors.
+   *
+   * If the API is running in list provider mode, the specific error message is returned to the client.
+   * If the API is running in aggregator mode, a 500 response is returned without the error message.
+   *
+   * @param route - Route to handle GET requests for
+   * @param handler - Request handler function that returns a Promise
+   */
   private safeGet = <ReturnType>(
     route: string,
     handler: (req: Request) => Promise<ReturnType>,
@@ -241,6 +384,7 @@ export class API {
       async (req: Request, res: Response, next: NextFunction) => {
         dbg(`POST request ${route}`);
         dbg({ ...req.params, ...req.body });
+
         try {
           const value: ReturnType = await handler(req);
           if (isDefined(value)) {
@@ -255,62 +399,80 @@ export class API {
 
           dbg(err);
 
+          // Use the shared error handling function
+          const { statusCode, errorMessage } = handleHTTPError(err);
+
           if (isListProvider()) {
             // Show the error message to aggregator nodes
-            return res.status(500).json(err.message);
+            return res.status(statusCode).json(errorMessage);
           } else {
             // Hide the error message
-            return res.status(500).send();
+            return res
+              .status(statusCode)
+              .json('Error occurred while executing the REST method');
           }
-          // return next(err);
         }
       },
     );
   };
 
+  /**
+   * Check if the listKey is valid
+   *
+   * @param listKey
+   * @returns true if the listKey is valid
+   */
   private hasListKey(listKey: string) {
     return this.listKeys.includes(listKey);
   }
 
+  /**
+   * Add all routes, for use in constructor
+   */
   private addRoutes() {
     this.addStatusRoutes();
     this.addAggregatorRoutes();
     this.addClientRoutes();
   }
 
+  /**
+   * Add status routes
+   */
   private addStatusRoutes() {
+    /**
+     * Status route GET /
+     */
     this.app.get('/', (_req: Request, res: Response) => {
-      res.json({ status: 'ok' });
+      res.json(getStatus());
     });
 
+    /**
+     * Status route POST /
+     *
+     * This binds the JSON RPC functionality to the base route.
+     */
+    this.app.post('/', this.handleJsonRpcRequest);
+
+    /**
+     * Performance route GET /perf, protected by basic auth
+     */
     this.app.get('/perf', this.basicAuth, (_req: Request, res: Response) => {
-      res.json({
-        time: new Date(),
-        memoryUsage: process.memoryUsage(),
-        freemem: os.freemem(),
-        loadavg: os.loadavg(),
-      });
+      res.json(getPerformanceMetrics());
     });
   }
 
   private addAggregatorRoutes() {
     this.safeGet<NodeStatusAllNetworks>('/node-status-v2', async () => {
-      return NodeStatus.getNodeStatusAllNetworks(
-        this.listKeys,
-        TXIDVersion.V2_PoseidonMerkle,
-      );
+      return getNodeStatus_ROUTE(this.listKeys);
     });
 
     this.safeGet<NodeStatusAllNetworks>(
       '/node-status-v2/:listKey',
       async (req: Request) => {
+        // Extract listKey from request parameters
         const { listKey } = req.params;
-        req.body as GetPOIListEventRangeParams;
-        const nodeURL = nodeURLForListKey(listKey);
-        if (!isDefined(nodeURL)) {
-          throw new Error('Cannot connect to listKey');
-        }
-        return POINodeRequest.getNodeStatusAllNetworks(nodeURL);
+        // Directly call the logic function with the extracted listKey
+        return getNodeStatusListKey(listKey);
       },
     );
 
@@ -327,32 +489,12 @@ export class API {
     this.safePost<POISyncedListEvent[]>(
       '/poi-events/:chainType/:chainID',
       async (req: Request) => {
-        const { chainType, chainID } = req.params;
-        const { txidVersion, listKey, startIndex, endIndex } =
-          req.body as GetPOIListEventRangeParams;
-        if (!this.hasListKey(listKey)) {
-          return [];
+        const body = req.body as GetPOIListEventRangeParams;
+        // Check if the listKey is valid
+        if (!this.hasListKey(body.listKey)) {
+          throw new Error('Invalid listKey');
         }
-        const networkName = networkNameForSerializedChain(chainType, chainID);
-
-        const rangeLength = endIndex - startIndex;
-        if (rangeLength > QueryLimits.MAX_EVENT_QUERY_RANGE_LENGTH) {
-          throw new Error(
-            `Max event query range length is ${QueryLimits.MAX_EVENT_QUERY_RANGE_LENGTH}`,
-          );
-        }
-        if (rangeLength < 0) {
-          throw new Error(`Invalid query range`);
-        }
-
-        const events = await POIEventList.getPOIListEventRange(
-          listKey,
-          networkName,
-          txidVersion,
-          startIndex,
-          endIndex,
-        );
-        return events;
+        return getPoiEvents(req.params.chainType, req.params.chainID, body);
       },
       SharedChainTypeIDParamsSchema,
       GetPOIListEventRangeBodySchema,
@@ -361,34 +503,17 @@ export class API {
     this.safePost<string[]>(
       '/poi-merkletree-leaves/:chainType/:chainID',
       async (req: Request) => {
-        const { chainType, chainID } = req.params;
-        const { txidVersion, listKey, startIndex, endIndex } =
-          req.body as GetPOIMerkletreeLeavesParams;
-        if (!this.hasListKey(listKey)) {
-          return [];
-        }
-        const networkName = networkNameForSerializedChain(chainType, chainID);
+        const body = req.body as GetPOIMerkletreeLeavesParams;
 
-        const rangeLength = endIndex - startIndex;
-        if (
-          rangeLength > QueryLimits.MAX_POI_MERKLETREE_LEAVES_QUERY_RANGE_LENGTH
-        ) {
-          throw new Error(
-            `Max event query range length is ${QueryLimits.MAX_POI_MERKLETREE_LEAVES_QUERY_RANGE_LENGTH}`,
-          );
+        // Check if the listKey is valid
+        if (!this.hasListKey(body.listKey)) {
+          throw new Error('Invalid listKey');
         }
-        if (rangeLength < 0) {
-          throw new Error(`Invalid query range`);
-        }
-
-        const events = await POIMerkletreeManager.getPOIMerkletreeLeaves(
-          listKey,
-          networkName,
-          txidVersion,
-          startIndex,
-          endIndex,
+        return await getPOIMerkletreeLeaves(
+          req.params.chainType,
+          req.params.chainID,
+          body,
         );
-        return events;
       },
       SharedChainTypeIDParamsSchema,
       GetPOIMerkletreeLeavesBodySchema,
@@ -396,23 +521,20 @@ export class API {
 
     this.safePost<TransactProofData[]>(
       '/transact-proofs/:chainType/:chainID',
-      async (req: Request) => {
-        const { chainType, chainID } = req.params;
-        const { txidVersion, bloomFilterSerialized, listKey } =
-          req.body as GetTransactProofsParams;
-        if (!this.hasListKey(listKey)) {
-          return [];
+      (req: Request) => {
+        const body = req.body as GetTransactProofsParams;
+
+        if (!this.hasListKey(body.listKey)) {
+          throw new Error('Invalid listKey');
         }
-
-        const networkName = networkNameForSerializedChain(chainType, chainID);
-
-        const proofs = TransactProofMempool.getFilteredProofs(
-          listKey,
-          networkName,
-          txidVersion,
-          bloomFilterSerialized,
+        // safePOST requires a Promise to be returned
+        return Promise.resolve(
+          getTransactProofs(
+            req.params.chainType,
+            req.params.chainID,
+            req.body as GetTransactProofsParams,
+          ),
         );
-        return proofs;
       },
       SharedChainTypeIDParamsSchema,
       GetTransactProofsBodySchema,
@@ -420,19 +542,14 @@ export class API {
 
     this.safePost<LegacyTransactProofData[]>(
       '/legacy-transact-proofs/:chainType/:chainID',
-      async (req: Request) => {
-        const { chainType, chainID } = req.params;
-        const { txidVersion, bloomFilterSerialized } =
-          req.body as GetLegacyTransactProofsParams;
-
-        const networkName = networkNameForSerializedChain(chainType, chainID);
-
-        const proofs = LegacyTransactProofMempool.getFilteredProofs(
-          networkName,
-          txidVersion,
-          bloomFilterSerialized,
+      (req: Request) => {
+        return Promise.resolve(
+          getLegacyTransactProofs(
+            req.params.chainType,
+            req.params.chainID,
+            req.body as GetLegacyTransactProofsParams,
+          ),
         );
-        return proofs;
       },
       SharedChainTypeIDParamsSchema,
       GetLegacyTransactProofsBodySchema,
@@ -440,23 +557,15 @@ export class API {
 
     this.safePost<SignedBlockedShield[]>(
       '/blocked-shields/:chainType/:chainID',
-      async (req: Request) => {
-        const { chainType, chainID } = req.params;
-        const { txidVersion, bloomFilterSerialized, listKey } =
-          req.body as GetBlockedShieldsParams;
-        if (!this.hasListKey(listKey)) {
-          return [];
+      (req: Request) => {
+        const body = req.body as GetBlockedShieldsParams;
+        if (!this.hasListKey(body.listKey)) {
+          throw new Error('Invalid listKey');
         }
 
-        const networkName = networkNameForSerializedChain(chainType, chainID);
-
-        const proofs = BlockedShieldsSyncer.getFilteredBlockedShields(
-          txidVersion,
-          listKey,
-          networkName,
-          bloomFilterSerialized,
+        return Promise.resolve(
+          getBlockedShields(req.params.chainType, req.params.chainID, body),
         );
-        return proofs;
       },
       SharedChainTypeIDParamsSchema,
       GetBlockedShieldsBodySchema,
@@ -465,24 +574,16 @@ export class API {
     this.safePost<void>(
       '/submit-poi-event/:chainType/:chainID',
       async (req: Request) => {
-        const { chainType, chainID } = req.params;
-        const { txidVersion, listKey, signedPOIEvent, validatedMerkleroot } =
-          req.body as SubmitPOIEventParams;
-        if (!this.hasListKey(listKey)) {
-          return;
+        const body = req.body as SubmitPOIEventParams;
+        if (!this.hasListKey(body.listKey)) {
+          throw new Error('Invalid listKey');
         }
-        const networkName = networkNameForSerializedChain(chainType, chainID);
-
-        dbg(
-          `REQUEST: Submit Signed POI Event: ${listKey}, ${signedPOIEvent.index}`,
-        );
-
-        // Submit and verify the proof
-        await POIEventList.verifyAndAddSignedPOIEventsWithValidatedMerkleroots(
-          listKey,
-          networkName,
-          txidVersion,
-          [{ signedPOIEvent, validatedMerkleroot }],
+        // Submit the POI event, return void
+        await submitPOIEvent(
+          req.params.chainType,
+          req.params.chainID,
+          body,
+          dbg, // Pass in debugger for logging submitted signed POI events
         );
       },
       SharedChainTypeIDParamsSchema,
@@ -492,24 +593,15 @@ export class API {
     this.safePost<void>(
       '/submit-validated-txid/:chainType/:chainID',
       async (req: Request) => {
-        const { chainType, chainID } = req.params;
-        const { txidVersion, txidIndex, merkleroot, signature, listKey } =
-          req.body as SubmitValidatedTxidAndMerklerootParams;
-        if (!this.hasListKey(listKey)) {
-          return;
+        const body = req.body as SubmitValidatedTxidAndMerklerootParams;
+        if (!this.hasListKey(body.listKey)) {
+          throw new Error('Invalid listKey');
         }
-        const networkName = networkNameForSerializedChain(chainType, chainID);
-
-        dbg(`REQUEST: Submit Validated TXID: ${txidIndex}`);
-
-        // Submit and verify the proof
-        await RailgunTxidMerkletreeManager.verifySignatureAndUpdateValidatedRailgunTxidStatus(
-          networkName,
-          txidVersion,
-          txidIndex,
-          merkleroot,
-          signature,
-          listKey,
+        await submitValidatedTxid(
+          req.params.chainType,
+          req.params.chainID,
+          body,
+          dbg, // Pass in debugger for logging submitted validated txids
         );
       },
       SharedChainTypeIDParamsSchema,
@@ -519,33 +611,16 @@ export class API {
     this.safePost<void>(
       '/remove-transact-proof/:chainType/:chainID',
       async (req: Request) => {
-        const { chainType, chainID } = req.params;
-        const {
-          txidVersion,
-          listKey,
-          blindedCommitmentsOut,
-          railgunTxidIfHasUnshield,
-          signature,
-        } = req.body as RemoveTransactProofParams;
-        if (!this.hasListKey(listKey)) {
-          return;
+        const body = req.body as RemoveTransactProofParams;
+
+        if (!this.hasListKey(body.listKey)) {
+          throw new Error('Invalid listKey');
         }
-
-        const networkName = networkNameForSerializedChain(chainType, chainID);
-
-        dbg(
-          `REQUEST: Remove Transact Proof: ${listKey} - blindedCommitmentsOut ${blindedCommitmentsOut.join(
-            ',',
-          )} - railgunTxidIfHasUnshield ${railgunTxidIfHasUnshield}`,
-        );
-
-        await TransactProofMempoolPruner.removeProofSigned(
-          listKey,
-          networkName,
-          txidVersion,
-          blindedCommitmentsOut,
-          railgunTxidIfHasUnshield,
-          signature,
+        await removeTransactProof(
+          req.params.chainType,
+          req.params.chainID,
+          body,
+          dbg,
         );
       },
       SharedChainTypeIDParamsSchema,
@@ -557,27 +632,16 @@ export class API {
     this.safePost<void>(
       '/submit-transact-proof/:chainType/:chainID',
       async (req: Request) => {
-        const { chainType, chainID } = req.params;
-        const { txidVersion, listKey, transactProofData } =
-          req.body as SubmitTransactProofParams;
-        if (!this.hasListKey(listKey)) {
-          return;
+        const body = req.body as SubmitTransactProofParams;
+
+        if (!this.hasListKey(body.listKey)) {
+          throw new Error('Invalid listKey');
         }
-
-        const networkName = networkNameForSerializedChain(chainType, chainID);
-
-        dbg(
-          `REQUEST: Submit Transact Proof: ${listKey} - ${transactProofData.blindedCommitmentsOut.join(
-            ', ',
-          )}`,
-        );
-
-        // Submit and verify the proof
-        await TransactProofMempool.submitProof(
-          listKey,
-          networkName,
-          txidVersion,
-          transactProofData,
+        await submitTransactProof(
+          req.params.chainType,
+          req.params.chainID,
+          body,
+          dbg,
         );
       },
       SharedChainTypeIDParamsSchema,
@@ -587,33 +651,22 @@ export class API {
     this.safePost<void>(
       '/submit-legacy-transact-proofs/:chainType/:chainID',
       async (req: Request) => {
-        const { chainType, chainID } = req.params;
-        const { txidVersion, listKeys, legacyTransactProofDatas } =
-          req.body as SubmitLegacyTransactProofParams;
+        const body = req.body as SubmitLegacyTransactProofParams;
 
-        const filteredListKeys = listKeys.filter(listKey =>
+        // Filter the listKeys to only include valid listKeys
+        const filteredListKeys = body.listKeys.filter(listKey =>
           this.hasListKey(listKey),
         );
-        const networkName = networkNameForSerializedChain(chainType, chainID);
 
-        dbg(
-          `REQUEST: Submit Legacy Transact Proof: ${listKeys.join(
-            ', ',
-          )} - ${legacyTransactProofDatas
-            .map(d => d.blindedCommitment)
-            .join(', ')}`,
-        );
+        // Modify body.listKeys to only include valid listKeys
+        body.listKeys = filteredListKeys;
 
-        // Submit and verify the proofs
-        await Promise.all(
-          legacyTransactProofDatas.map(async legacyTransactProofData => {
-            await LegacyTransactProofMempool.submitLegacyProof(
-              networkName,
-              txidVersion,
-              legacyTransactProofData,
-              filteredListKeys,
-            );
-          }),
+        // Submit the legacy transact proofs
+        await submitLegacyTransactProofs(
+          req.params.chainType,
+          req.params.chainID,
+          body,
+          dbg,
         );
       },
       SharedChainTypeIDParamsSchema,
@@ -623,21 +676,12 @@ export class API {
     this.safePost<void>(
       '/submit-single-commitment-proofs/:chainType/:chainID',
       async (req: Request) => {
-        const { chainType, chainID } = req.params;
-        const { txidVersion, singleCommitmentProofsData } =
-          req.body as SubmitSingleCommitmentProofsParams;
-
-        const networkName = networkNameForSerializedChain(chainType, chainID);
-
-        dbg(
-          `REQUEST: Submit Single Commitment (Transact) Proof: railgun txid ${singleCommitmentProofsData.railgunTxid}`,
-        );
-
         // Submit and verify the proofs
-        await SingleCommitmentProofManager.submitProof(
-          networkName,
-          txidVersion,
-          singleCommitmentProofsData,
+        await submitSingleCommitmentProofs(
+          req.params.chainType,
+          req.params.chainID,
+          req.body as SubmitSingleCommitmentProofsParams,
+          dbg,
         );
       },
       SharedChainTypeIDParamsSchema,
@@ -646,27 +690,11 @@ export class API {
 
     this.safePost<POIsPerListMap>(
       '/pois-per-list/:chainType/:chainID',
-      async (req: Request) => {
-        const { chainType, chainID } = req.params;
-        const { txidVersion, listKeys, blindedCommitmentDatas } =
-          req.body as GetPOIsPerListParams;
-
-        const networkName = networkNameForSerializedChain(chainType, chainID);
-
-        if (
-          blindedCommitmentDatas.length >
-          QueryLimits.GET_POI_EXISTENCE_MAX_BLINDED_COMMITMENTS
-        ) {
-          throw new Error(
-            `Too many blinded commitments: max ${QueryLimits.GET_POI_EXISTENCE_MAX_BLINDED_COMMITMENTS}`,
-          );
-        }
-
-        return POIMerkletreeManager.getPOIStatusPerList(
-          listKeys,
-          networkName,
-          txidVersion,
-          blindedCommitmentDatas,
+      (req: Request) => {
+        return getPOIsPerList(
+          req.params.chainType,
+          req.params.chainID,
+          req.body as GetPOIsPerListParams,
         );
       },
       SharedChainTypeIDParamsSchema,
@@ -675,27 +703,11 @@ export class API {
 
     this.safePost<POIsPerBlindedCommitmentMap>(
       '/pois-per-blinded-commitment/:chainType/:chainID',
-      async (req: Request) => {
-        const { chainType, chainID } = req.params;
-        const { txidVersion, listKey, blindedCommitmentDatas } =
-          req.body as GetPOIsPerBlindedCommitmentParams;
-
-        const networkName = networkNameForSerializedChain(chainType, chainID);
-
-        if (
-          blindedCommitmentDatas.length >
-          QueryLimits.GET_POI_EXISTENCE_MAX_BLINDED_COMMITMENTS
-        ) {
-          throw new Error(
-            `Too many blinded commitments: max ${QueryLimits.GET_POI_EXISTENCE_MAX_BLINDED_COMMITMENTS}`,
-          );
-        }
-
-        return POIMerkletreeManager.poiStatusPerBlindedCommitment(
-          listKey,
-          networkName,
-          txidVersion,
-          blindedCommitmentDatas,
+      (req: Request) => {
+        return getPOIsPerBlindedCommitment(
+          req.params.chainType,
+          req.params.chainID,
+          req.body as GetPOIsPerBlindedCommitmentParams,
         );
       },
       SharedChainTypeIDParamsSchema,
@@ -705,28 +717,17 @@ export class API {
     this.safePost<MerkleProof[]>(
       '/merkle-proofs/:chainType/:chainID',
       async (req: Request) => {
-        const { chainType, chainID } = req.params;
-        const { txidVersion, listKey, blindedCommitments } =
-          req.body as GetMerkleProofsParams;
-        if (!this.hasListKey(listKey)) {
-          return [];
+        const body = req.body as GetMerkleProofsParams;
+
+        // Check if the listKey is valid
+        if (!this.hasListKey(body.listKey)) {
+          throw new Error('Invalid listKey');
         }
-        const networkName = networkNameForSerializedChain(chainType, chainID);
-        if (
-          blindedCommitments.length >
-          QueryLimits.GET_MERKLE_PROOFS_MAX_BLINDED_COMMITMENTS
-        ) {
-          throw new Error(
-            `Too many blinded commitments: max ${QueryLimits.GET_MERKLE_PROOFS_MAX_BLINDED_COMMITMENTS}`,
-          );
-        }
-        const merkleProofs = await POIMerkletreeManager.getMerkleProofs(
-          listKey,
-          networkName,
-          txidVersion,
-          blindedCommitments,
+        return await getMerkleProofs(
+          req.params.chainType,
+          req.params.chainID,
+          body,
         );
-        return merkleProofs;
       },
       SharedChainTypeIDParamsSchema,
       GetMerkleProofsBodySchema,
@@ -735,16 +736,11 @@ export class API {
     this.safePost<ValidatedRailgunTxidStatus>(
       '/validated-txid/:chainType/:chainID',
       async (req: Request) => {
-        const { chainType, chainID } = req.params;
-        const { txidVersion } = req.body as GetLatestValidatedRailgunTxidParams;
-        const networkName = networkNameForSerializedChain(chainType, chainID);
-
-        const validatedRailgunTxidStatus =
-          await RailgunTxidMerkletreeManager.getValidatedRailgunTxidStatus(
-            networkName,
-            txidVersion,
-          );
-        return validatedRailgunTxidStatus;
+        return await getValidatedTxid(
+          req.params.chainType,
+          req.params.chainID,
+          req.body as GetLatestValidatedRailgunTxidParams,
+        );
       },
       SharedChainTypeIDParamsSchema,
       GetLatestValidatedRailgunTxidBodySchema,
@@ -753,19 +749,11 @@ export class API {
     this.safePost<boolean>(
       '/validate-txid-merkleroot/:chainType/:chainID',
       async (req: Request) => {
-        const { chainType, chainID } = req.params;
-        const { txidVersion, tree, index, merkleroot } =
-          req.body as ValidateTxidMerklerootParams;
-        const networkName = networkNameForSerializedChain(chainType, chainID);
-        const isValid =
-          await RailgunTxidMerkletreeManager.checkIfMerklerootExists(
-            networkName,
-            txidVersion,
-            tree,
-            index,
-            merkleroot,
-          );
-        return isValid;
+        return await validateTxidMerkleroot(
+          req.params.chainType,
+          req.params.chainID,
+          req.body as ValidateTxidMerklerootParams,
+        );
       },
       SharedChainTypeIDParamsSchema,
       ValidateTxidMerklerootBodySchema,
@@ -774,18 +762,11 @@ export class API {
     this.safePost<boolean>(
       '/validate-poi-merkleroots/:chainType/:chainID',
       async (req: Request) => {
-        const { chainType, chainID } = req.params;
-        const { txidVersion, listKey, poiMerkleroots } =
-          req.body as ValidatePOIMerklerootsParams;
-        const networkName = networkNameForSerializedChain(chainType, chainID);
-        const isValid =
-          await POIMerkletreeManager.validateAllPOIMerklerootsExist(
-            txidVersion,
-            networkName,
-            listKey,
-            poiMerkleroots,
-          );
-        return isValid;
+        return await validatePoiMerkleroots(
+          req.params.chainType,
+          req.params.chainID,
+          req.body as ValidatePOIMerklerootsParams,
+        );
       },
       SharedChainTypeIDParamsSchema,
       ValidatePOIMerklerootsBodySchema,

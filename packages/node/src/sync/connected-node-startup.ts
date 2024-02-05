@@ -34,8 +34,6 @@ export class ConnectedNodeStartup {
           const nodeStatusAllNetworks =
             await POINodeRequest.getNodeStatusAllNetworks(nodeURL);
 
-          // Check here if connection is successful and node is responding to requests
-
           // Check all list keys
           this.listKeys.forEach(listKey => {
             if (!nodeStatusAllNetworks.listKeys.includes(listKey)) {

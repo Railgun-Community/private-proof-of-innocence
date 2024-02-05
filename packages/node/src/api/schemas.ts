@@ -1,3 +1,9 @@
+/**
+ * This file contains all the schemas used by the API.
+ *
+ * Schemas are extended for JSON-RPC requests to include params normally sent in the REST path.
+ * @example REST /poi-events/:chainType/:chainID for JSON-RPC is ppoi_poi_events, with chainType and chainID as params
+ */
 import { AllowedSchema } from 'express-json-validator-middleware';
 import { JSONSchema4 } from 'json-schema';
 
@@ -20,6 +26,26 @@ export const GetPOIListEventRangeBodySchema: AllowedSchema = {
     listKey: { type: 'string' },
   },
   required: ['txidVersion', 'startIndex', 'endIndex', 'listKey'],
+};
+
+export const ExtendedGetPOIListEventRangeBodySchema: AllowedSchema = {
+  type: 'object',
+  properties: {
+    chainType: { type: 'string' },
+    chainID: { type: 'string' },
+    txidVersion: { type: 'string' },
+    startIndex: { type: 'number' },
+    endIndex: { type: 'number' },
+    listKey: { type: 'string' },
+  },
+  required: [
+    'chainType',
+    'chainID',
+    'txidVersion',
+    'startIndex',
+    'endIndex',
+    'listKey',
+  ],
 };
 
 export const GetPOIMerkletreeLeavesBodySchema: AllowedSchema = {

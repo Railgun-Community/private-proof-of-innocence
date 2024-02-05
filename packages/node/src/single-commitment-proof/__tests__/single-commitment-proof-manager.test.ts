@@ -30,6 +30,9 @@ let poiMerkletreeDB: POIMerkletreeDatabase;
 
 let checkIfRailgunTxidExistsStub: SinonStub;
 
+// Save the original value of the `ready` property to not disrupt other tests
+const originalReady = ListProviderPOIEventQueue.ready;
+
 describe('single-commitment-proof-manager', () => {
   before(async function run() {
     await DatabaseClient.init();
@@ -46,6 +49,8 @@ describe('single-commitment-proof-manager', () => {
       RailgunTxidMerkletreeManager,
       'checkIfRailgunTxidExists',
     ).resolves(true);
+    // Set the `ready` property to true, which is set in node startup
+    ListProviderPOIEventQueue.ready = true;
   });
 
   beforeEach(async () => {
@@ -62,6 +67,8 @@ describe('single-commitment-proof-manager', () => {
     await poiHistoricalMerklerootDB.deleteAllItems_DANGEROUS();
     await orderedEventDB.deleteAllItems_DANGEROUS();
     await poiMerkletreeDB.deleteAllItems_DANGEROUS();
+    // Restore the original value of the `ready` property
+    ListProviderPOIEventQueue.ready = originalReady;
   });
 
   after(() => {
@@ -129,8 +136,7 @@ describe('single-commitment-proof-manager', () => {
       singleCommitmentProofsData,
     );
 
-    // Delay until event added from queue (risky)
-    await delay(500);
+    await delay(1000);
 
     expect(
       await orderedEventDB.eventExists(
