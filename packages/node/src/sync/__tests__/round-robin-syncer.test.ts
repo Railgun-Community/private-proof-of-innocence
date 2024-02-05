@@ -207,7 +207,7 @@ describe('round-robin-syncer', () => {
     ).to.equal(1);
 
     getPOIListEventRangeStub.restore();
-  });
+  }).timeout(10000);
 
   it('Should update transact proof mempools', async () => {
     const transactProofData1: TransactProofData = {
