@@ -174,9 +174,6 @@ export abstract class AbstractDatabase<T extends Document> {
         this.dbg(
           `Unexpected indexName: got ${createdIndexName}, expected ${indexName}`,
         );
-        console.log(
-          `Unexpected indexName: got ${createdIndexName}, expected ${indexName}`,
-        );
       }
     } catch (err) {
       this.dbg(

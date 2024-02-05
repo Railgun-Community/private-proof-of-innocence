@@ -11,6 +11,15 @@ import { isListProvider } from '../config/general';
 const dbg = debug('poi:transact-proof-mempool');
 
 export class TransactProofMempoolPruner {
+  /**
+   * Removes a proof from the mempool if all other blinded commitments have been added.
+   *
+   * @param listKey
+   * @param networkName
+   * @param txidVersion
+   * @param blindedCommitment
+   * @returns `void` if !existingProof or !orderedEventsExist
+   */
   static async removeProofIfAllOtherBlindedCommitmentsAdded(
     listKey: string,
     networkName: NetworkName,
@@ -50,6 +59,17 @@ export class TransactProofMempoolPruner {
     }
   }
 
+  /**
+   * Removes a proof from the mempool, and sends a node request to remove it from other nodes.
+   *
+   * @param listKey
+   * @param networkName
+   * @param txidVersion
+   * @param blindedCommitmentsOut
+   * @param railgunTxidIfHasUnshield
+   * @param shouldSendNodeRequest
+   * @returns `void` if error thrown or not list provider
+   */
   static async removeProof(
     listKey: string,
     networkName: NetworkName,
@@ -77,8 +97,12 @@ export class TransactProofMempoolPruner {
         railgunTxidIfHasUnshield,
       );
 
+      // If not from removeProofSigned(), then send node request to remove from other nodes.
       if (shouldSendNodeRequest) {
         if (!isListProvider()) {
+          dbg(
+            `WARNING: removeProof(): Not sending remove requests to all nodes, !isListProvider() - ${listKey})`,
+          );
           // Cannot sign without list.
           return;
         }
@@ -96,11 +120,24 @@ export class TransactProofMempoolPruner {
       }
     } catch (err) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      dbg(`Error removing from transact proof mempool: ${err.message}`);
+      dbg(
+        `removeProof(): Error removing from transact proof mempool: ${err.message}`,
+      );
       return;
     }
   }
 
+  /**
+   * Removes a proof from the mempool if the signature is valid.
+   *
+   * @param listKey
+   * @param networkName
+   * @param txidVersion
+   * @param blindedCommitmentsOut
+   * @param railgunTxidIfHasUnshield
+   * @param signature
+   * @returns `void` if the signature is invalid, otherwise returns the result of `removeProof()`.
+   */
   static async removeProofSigned(
     listKey: string,
     networkName: NetworkName,
@@ -117,7 +154,9 @@ export class TransactProofMempoolPruner {
         signature,
       ))
     ) {
-      dbg(`Invalid signature for remove proof - ${listKey}`);
+      dbg(
+        `removeProofSigned(): Invalid signature for remove proof - ${listKey}`,
+      );
       return;
     }
 

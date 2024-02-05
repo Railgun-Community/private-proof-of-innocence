@@ -7,6 +7,7 @@ import Sinon, { SinonStub } from 'sinon';
 import * as WalletModule from '../../engine/wallet';
 import {
   NetworkName,
+  POIEventType,
   TXIDVersion,
   TransactProofData,
 } from '@railgun-community/shared-models';
@@ -19,6 +20,8 @@ import { POIHistoricalMerklerootDatabase } from '../../database/databases/poi-hi
 import { ListProviderPOIEventQueue } from '../../list-provider/list-provider-poi-event-queue';
 import { POIOrderedEventsDatabase } from '../../database/databases/poi-ordered-events-database';
 import { TransactProofMempoolPruner } from '../transact-proof-mempool-pruner';
+import { TransactProofPushSyncer } from '../../sync/transact-proof-push-syncer';
+import { SignedPOIEvent } from '../../models/poi-types';
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
@@ -326,4 +329,131 @@ describe('transact-proof-mempool', () => {
       TransactProofMempoolCache.getCacheSize(listKey, networkName, txidVersion),
     ).to.equal(2);
   }).timeout(10000);
+
+  it('Should remove repeat proof in mempool that already exists in the list', async () => {
+    // Create 2 proofs to be added to the list.
+    const transactProofData1: TransactProofData = {
+      snarkProof: MOCK_SNARK_PROOF,
+      poiMerkleroots: ['0x1111', '0x2222'],
+      txidMerklerootIndex: 56,
+      txidMerkleroot: '0x1234567890',
+      blindedCommitmentsOut: ['0x3333', '0x4444'],
+      railgunTxidIfHasUnshield: '0x00',
+    };
+    const transactProofData2: TransactProofData = {
+      snarkProof: MOCK_SNARK_PROOF,
+      poiMerkleroots: ['0x9999', '0x8888'],
+      txidMerklerootIndex: 57,
+      txidMerkleroot: '0x0987654321',
+      blindedCommitmentsOut: ['0x6666', '0x7777'],
+      railgunTxidIfHasUnshield: '0x00',
+    };
+
+    verifyTransactProofStub.resolves(true);
+    txidMerklerootExistsStub.resolves(true);
+
+    await poiHistoricalMerklerootDB.insertMerkleroot(
+      listKey,
+      0, // index
+      transactProofData1.poiMerkleroots[0],
+    );
+    await poiHistoricalMerklerootDB.insertMerkleroot(
+      listKey,
+      1, // index
+      transactProofData1.poiMerkleroots[1],
+    );
+    await poiHistoricalMerklerootDB.insertMerkleroot(
+      listKey,
+      2, // index
+      transactProofData2.poiMerkleroots[0],
+    );
+    await poiHistoricalMerklerootDB.insertMerkleroot(
+      listKey,
+      3, // index
+      transactProofData2.poiMerkleroots[1],
+    );
+
+    // Add the proofs directly into the mempool
+    await TransactProofMempool.submitProof(
+      listKey,
+      networkName,
+      txidVersion,
+      transactProofData1,
+    );
+    await TransactProofMempool.submitProof(
+      listKey,
+      networkName,
+      txidVersion,
+      transactProofData2,
+    );
+    expect(
+      TransactProofMempoolCache.getCacheSize(listKey, networkName, txidVersion),
+    ).to.equal(2);
+
+    // Add transactProofData1's signed events to the ordered events database.
+    const orderedEventsDB = new POIOrderedEventsDatabase(
+      networkName,
+      txidVersion,
+    );
+    const poiEvent1: SignedPOIEvent = {
+      index: 0,
+      type: POIEventType.Transact,
+      blindedCommitment: transactProofData1.blindedCommitmentsOut[0],
+      signature: '0x00',
+    };
+    const poiEvent2: SignedPOIEvent = {
+      index: 1,
+      type: POIEventType.Transact,
+      blindedCommitment: transactProofData1.blindedCommitmentsOut[1],
+      signature: '0x01',
+    };
+    await orderedEventsDB.insertValidSignedPOIEvent(listKey, poiEvent1);
+    await orderedEventsDB.insertValidSignedPOIEvent(listKey, poiEvent2);
+
+    // Ensure the related signed events to transactProofData1 are in the list.
+    expect(await orderedEventsDB.getCount(listKey)).to.equal(2);
+
+    // Utility function to wait for a specific condition to become true
+    function waitForCondition(
+      conditionFn: () => boolean,
+      intervalMs: number,
+      timeoutMs: number,
+    ): Promise<void> {
+      return new Promise((resolve, reject) => {
+        const startTime = Date.now();
+        const checkCondition = () => {
+          if (conditionFn()) {
+            // Here, conditionFn is explicitly expected to return a boolean
+            resolve();
+          } else if (Date.now() - startTime > timeoutMs) {
+            reject(new Error('Condition not met within timeout period'));
+          } else {
+            setTimeout(checkCondition, intervalMs);
+          }
+        };
+        checkCondition();
+      });
+    }
+
+    // Create TransactProofPushSyncer so we can force it to poll and check for repeat proofs
+    const transactProofPushSyncer = new TransactProofPushSyncer(MOCK_LIST_KEYS);
+    transactProofPushSyncer.startPolling();
+
+    // Wait for the condition (cache size to be 1) to be true since we can't await startPolling()
+    await waitForCondition(
+      () =>
+        TransactProofMempoolCache.getCacheSize(
+          listKey,
+          networkName,
+          txidVersion,
+        ) === 1,
+      1000, // Check every 100ms
+      10000, // Timeout after 5000ms
+    );
+
+    // Expect the proof already existing in the list to be removed from the mempool
+    expect(
+      TransactProofMempoolCache.getCacheSize(listKey, networkName, txidVersion),
+    ).to.equal(1);
+  }).timeout(20000);
 });

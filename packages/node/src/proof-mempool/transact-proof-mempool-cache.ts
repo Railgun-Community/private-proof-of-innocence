@@ -34,6 +34,14 @@ export class TransactProofMempoolCache {
     return Array.from(cache.values());
   }
 
+  /**
+   * Returns the number of items in the cache for a given list key, network name, and transaction ID version.
+   *
+   * @param listKey - A string key to identify the specific list in the cache.
+   * @param networkName - The network name, used as a second-level key in the cache.
+   * @param txidVersion - The version of the transaction ID, determining the final level of caching.
+   * @returns The number of items in the cache for the given parameters.
+   */
   static getCacheSize(
     listKey: string,
     networkName: NetworkName,
@@ -43,20 +51,42 @@ export class TransactProofMempoolCache {
     return cache.size;
   }
 
+  /**
+   * Retrieves a cache map specific to a given list key, network name, and transaction ID version.
+   * If the cache for the given list key or network name doesn't exist, it initializes them.
+   *
+   * The method ensures that each level of cache (listKey, networkName) is properly instantiated
+   * before attempting to access or modify it. This prevents potential runtime errors due to
+   * undefined cache segments.
+   *
+   * @remarks
+   * The cache is structured to first segregate by `listKey`, then by `networkName`,
+   * and finally by the `txidVersion`. Each segment is lazily initialized if not already present.
+   *
+   * @param listKey - A string key to identify the specific list in the cache.
+   * @param networkName - The network name, used as a second-level key in the cache.
+   * @param txidVersion - The version of the transaction ID, determining the final level of caching.
+   * @returns A `BlindedCommitmentMap` object representing the specific cache for the given parameters.
+   */
   private static getCache(
     listKey: string,
     networkName: NetworkName,
     txidVersion: TXIDVersion,
   ) {
+    // If the cache for the listKey doesn't exist, create it
     this.transactProofMempoolCache[listKey] ??= {};
 
+    // Get the specific cache for the listKey, cast to TransactCacheType type
     const cacheForList = this.transactProofMempoolCache[
       listKey
     ] as TransactCacheType['listKey'];
 
+    // If the cache for the networkName doesn't exist, create it
     cacheForList[networkName] ??= {
       [TXIDVersion.V2_PoseidonMerkle]: new Map(),
     };
+
+    // Return specific cache map for networkName and txidVersion, cast to BlindedCommitmentMap type
     return cacheForList[networkName]?.[txidVersion] as BlindedCommitmentMap;
   }
 
@@ -67,6 +97,14 @@ export class TransactProofMempoolCache {
     return [...blindedCommitmentsOut, railgunTxidIfHasUnshield].join('|');
   }
 
+  /**
+   * Adds a transact proof to the mempool cache.
+   *
+   * @param listKey
+   * @param networkName
+   * @param txidVersion
+   * @param transactProofData
+   */
   static addToCache(
     listKey: string,
     networkName: NetworkName,
