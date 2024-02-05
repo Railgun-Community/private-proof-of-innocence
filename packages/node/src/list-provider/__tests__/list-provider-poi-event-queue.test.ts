@@ -121,7 +121,7 @@ describe('list-provider-poi-event-queue', () => {
       },
       queueLength => queueLength === 0,
       20,
-      40000 / 20, // 40 seconds
+      5000 / 20, // 5 seconds
     );
     if (pollQueueLength !== 0) {
       throw new Error(

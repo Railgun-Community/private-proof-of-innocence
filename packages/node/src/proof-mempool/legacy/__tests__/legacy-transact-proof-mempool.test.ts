@@ -65,24 +65,9 @@ describe('legacy-transact-proof-mempool', () => {
     await legacyTransactProofMempoolDB.deleteAllItems_DANGEROUS();
     await orderedEventDB.deleteAllItems_DANGEROUS();
     LegacyTransactProofMempoolCache.clearCache_FOR_TEST_ONLY();
-  });
 
-  after(() => {
-    try {
-      tryValidateRailgunTxidOccurredBeforeBlockNumberStub.restore();
-    } catch (error) {
-      throw new Error(
-        'Error restoring tryValidateRailgunTxidOccurredBeforeBlockNumberStub',
-      );
-    }
-
-    try {
-      legacyTransactProofMempoolVerifyBlindedCommitmentStub.restore();
-    } catch (error) {
-      throw new Error(
-        'Error restoring legacyTransactProofMempoolVerifyBlindedCommitmentStub',
-      );
-    }
+    tryValidateRailgunTxidOccurredBeforeBlockNumberStub.restore();
+    legacyTransactProofMempoolVerifyBlindedCommitmentStub.restore();
   });
 
   it('Should only add valid legacy transact proofs', async () => {

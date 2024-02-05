@@ -49,13 +49,13 @@
     "snarkjs": "^0.7.0"
   },
   "peerDependencies": {
-    "@railgun-community/shared-models": "6.2.7",
-    "@railgun-community/wallet": "6.3.2",
+    "@railgun-community/shared-models": "^6.3.0",
+    "@railgun-community/wallet": "7.0.0",
     "ethers": "github:Railgun-Community/ethers.js#v6.7.8"
   },
   "devDependencies": {
-    "@railgun-community/shared-models": "^6.2.7",
-    "@railgun-community/wallet": "6.3.2",
+    "@railgun-community/shared-models": "^6.3.0",
+    "@railgun-community/wallet": "7.0.0",
     "@types/chai": "^4.3.5",
     "@types/chai-as-promised": "^7.1.5",
     "@types/cors": "^2.8.13",

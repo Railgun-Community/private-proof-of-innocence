@@ -35,7 +35,7 @@ describe('proof-of-innocence-node', () => {
       '0.0.0.0',
       PORT_1,
       [{ name: 'test', nodeURL: `http://localhost:${PORT_2}` }],
-      new TestMockListProviderExcludeSingleAddress(MOCK_LIST_KEYS[0]),
+      testListProvider,
     );
   });
 
@@ -62,7 +62,7 @@ describe('proof-of-innocence-node', () => {
       async () => nodeWithListProvider.getPollStatus(),
       status => status === PollStatus.POLLING,
       20,
-      10000 / 20, // 10 seconds
+      5000 / 20, // 5 sec.
     );
     if (pollStatusPolling !== PollStatus.POLLING) {
       throw new Error(
