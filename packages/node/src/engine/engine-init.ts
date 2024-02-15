@@ -16,7 +16,7 @@ import {
 import { Config } from '../config/config';
 import { groth16 } from 'snarkjs';
 import debug from 'debug';
-import { POIMerkletreeManager } from 'poi-events/poi-merkletree-manager';
+import { POIMerkletreeManager } from '../poi-events/poi-merkletree-manager';
 
 const dbgLog = debug('poi:engine:log');
 const dbgError = debug('poi:engine:error');
