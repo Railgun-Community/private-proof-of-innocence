@@ -16,6 +16,7 @@ import {
 import { Config } from '../config/config';
 import { groth16 } from 'snarkjs';
 import debug from 'debug';
+import { POIMerkletreeManager } from 'poi-events/poi-merkletree-manager';
 
 const dbgLog = debug('poi:engine:log');
 const dbgError = debug('poi:engine:error');
@@ -49,7 +50,12 @@ export const startEngine = async () => {
   const shouldDebug = true;
   setLoggers(dbgLog, dbgError);
 
-  await startRailgunEngineForPOINode(levelDB, shouldDebug, testArtifactStore);
+  await startRailgunEngineForPOINode(
+    levelDB,
+    shouldDebug,
+    testArtifactStore,
+    POIMerkletreeManager.validateAllPOIMerklerootsExistWithChain,
+  );
 
   getProver().setSnarkJSGroth16(groth16 as SnarkJSGroth16);
 

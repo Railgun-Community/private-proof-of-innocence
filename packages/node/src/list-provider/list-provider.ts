@@ -75,6 +75,7 @@ export abstract class ListProvider {
 
     ListProviderPOIEventQueue.init(listKey);
     ListProviderBlocklist.init(listKey);
+    POIMerkletreeManager.nodeListKey = listKey;
   }
 
   protected abstract shouldAllowShield(

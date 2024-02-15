@@ -19,7 +19,6 @@ import {
 import { TransactProofPerListMempoolDatabase } from '../database/databases/transact-proof-per-list-mempool-database';
 import { BlockedShieldsPerListDatabase } from '../database/databases/blocked-shields-per-list-database';
 import { POIHistoricalMerklerootDatabase } from '../database/databases/poi-historical-merkleroot-database';
-import { ListProviderPOIEventQueue } from '../list-provider/list-provider-poi-event-queue';
 import { nodeURLForListKey } from '../config/general';
 import { POINodeRequest } from '../api/poi-node-request';
 import debug from 'debug';
@@ -33,6 +32,8 @@ export class POIMerkletreeManager {
   > = {};
 
   private static listKeys: string[] = [];
+
+  static nodeListKey: string;
 
   static initListMerkletrees(listKeys: string[]) {
     this.listKeys = listKeys;
@@ -140,7 +141,7 @@ export class POIMerkletreeManager {
     txidVersion: TXIDVersion,
     blindedCommitments: string[],
   ): Promise<MerkleProof[]> {
-    if (ListProviderPOIEventQueue.listKey !== listKey) {
+    if (POIMerkletreeManager.nodeListKey !== listKey) {
       // Forward request to list provider directly
       const nodeURL = nodeURLForListKey(listKey);
       if (isDefined(nodeURL)) {
@@ -228,7 +229,7 @@ export class POIMerkletreeManager {
     txidVersion: TXIDVersion,
     blindedCommitmentDatas: BlindedCommitmentData[],
   ): Promise<POIsPerBlindedCommitmentMap> {
-    if (ListProviderPOIEventQueue.listKey !== listKey) {
+    if (POIMerkletreeManager.nodeListKey !== listKey) {
       // Forward request to list provider directly
       const nodeURL = nodeURLForListKey(listKey);
       if (isDefined(nodeURL)) {
@@ -378,7 +379,7 @@ export class POIMerkletreeManager {
     listKey: string,
     poiMerkleroots: string[],
   ): Promise<boolean> {
-    if (ListProviderPOIEventQueue.listKey !== listKey) {
+    if (POIMerkletreeManager.nodeListKey !== listKey) {
       // Forward request to list provider directly
       const nodeURL = nodeURLForListKey(listKey);
       if (isDefined(nodeURL)) {

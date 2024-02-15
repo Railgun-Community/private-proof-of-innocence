@@ -1052,10 +1052,10 @@
   resolved "https://registry.yarnpkg.com/@railgun-community/curve25519-scalarmult-wasm/-/curve25519-scalarmult-wasm-0.1.5.tgz#edb5e40a8f1fdb7f7e0de1d04e8badabe41cb2a8"
   integrity sha512-Cur8uM/IdNW3WzUwdPloDG1CF0rpSBDWq2yGXJMZ7IMeBGdc4Jj0h9tnNMFRZ35ZuCVVbZ3yClmqSa4PsbpdGQ==
 
-"@railgun-community/engine@7.0.0":
-  version "7.0.0"
-  resolved "https://registry.yarnpkg.com/@railgun-community/engine/-/engine-7.0.0.tgz#6935901071deb1737274f2654fcdeb5d9b272ae1"
-  integrity sha512-6Nas+UnAabwwcEakT89cfCwmQzkgEQ05Fh5ZrIBFIC+maxK/aj2PkLdKD0+lhy2MQ1dZJkQ+Soc1R3CUJnDK+g==
+"@railgun-community/engine@7.1.0":
+  version "7.1.0"
+  resolved "https://registry.yarnpkg.com/@railgun-community/engine/-/engine-7.1.0.tgz#604d9f9b7e75af02440aec5156c03ffb3e129bff"
+  integrity sha512-ryO/wITYBEtOc05SdlPtqy4RnJxTNX2htwgjx+zkCqj5STunOkUoH5oBKgZ+Gy8eUTXwDpOV9teNHguFkLTDXw==
   dependencies:
     "@noble/ciphers" "^0.4.0"
     "@noble/ed25519" "^1.7.1"
@@ -1081,15 +1081,20 @@
   resolved "https://registry.yarnpkg.com/@railgun-community/poseidon-hash-wasm/-/poseidon-hash-wasm-1.0.0.tgz#5b3b77c832055b51b0865f5b5f569ff105dc5a08"
   integrity sha512-X9qFW6kYKz85eTlzoJBgbv7HjT8+T93yXAVNLUu3wSv7PSoWFef6bS7HRTdWBSSVxFawLaTMtmhoC20T9Zzi5A==
 
-"@railgun-community/shared-models@6.3.0", "@railgun-community/shared-models@^6.3.0":
+"@railgun-community/shared-models@6.3.1":
+  version "6.3.1"
+  resolved "https://registry.yarnpkg.com/@railgun-community/shared-models/-/shared-models-6.3.1.tgz#a4e2a9606e1dcc205e13560f147c53e4c4f9b89a"
+  integrity sha512-/CVTlS79OF2bz7nonRw5fvmsBq5cfJ7v4QswSgPNw6IZflP6omHI+/hcxW90PIoQ40nfS2HaC2+wUgAkdv4Axw==
+
+"@railgun-community/shared-models@^6.3.0":
   version "6.3.0"
   resolved "https://registry.yarnpkg.com/@railgun-community/shared-models/-/shared-models-6.3.0.tgz#c3d87091b9afc880f369b30f63c7df6f0f47829b"
   integrity sha512-ZesDE7DnLUmjn+2M6UisXPUumImmqWHi854+7q3EkYV5R/Gjsth4yeca1OBNSjCmANpg7nZvDjctkodWFi0xBw==
 
-"@railgun-community/wallet@7.0.0":
-  version "7.0.0"
-  resolved "https://registry.yarnpkg.com/@railgun-community/wallet/-/wallet-7.0.0.tgz#37b1c3fa885ac7625b7958126459dc1aff3269c9"
-  integrity sha512-RgFn9fhDXzlwtf0yQwwj3m4GGUYROpFb++V1YexmxUvQALlr+BrExOmludadkdEQnBTPUghFyD48hcN48jDqqg==
+"@railgun-community/wallet@7.1.0":
+  version "7.1.0"
+  resolved "https://registry.yarnpkg.com/@railgun-community/wallet/-/wallet-7.1.0.tgz#7e685917e960398e15d97e782b6e9354ee9a3745"
+  integrity sha512-xyMaNhgn3+4UMjfdDLVI4/qrKnhdQ86KP34uHidPlZSfUPsDAZ5PJ420c6BYX9X998wv9YKrrqWFRyXfCOlW+A==
   dependencies:
     "@graphql-mesh/cache-localforage" "^0.7.20"
     "@graphql-mesh/cross-helpers" "^0.3.4"
@@ -1102,8 +1107,8 @@
     "@graphql-mesh/types" "^0.91.14"
     "@graphql-mesh/utils" "^0.43.22"
     "@noble/ed25519" "^1.7.1"
-    "@railgun-community/engine" "7.0.0"
-    "@railgun-community/shared-models" "6.3.0"
+    "@railgun-community/engine" "7.1.0"
+    "@railgun-community/shared-models" "6.3.1"
     "@whatwg-node/fetch" "^0.8.4"
     assert "2.0.0"
     axios "0.27.2"
