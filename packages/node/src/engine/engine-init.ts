@@ -40,7 +40,7 @@ const testArtifactStore = new ArtifactStore(
   fileExists,
 );
 
-export const startEngine = () => {
+export const startEngine = async () => {
   if (engineStarted) {
     return;
   }
@@ -49,7 +49,7 @@ export const startEngine = () => {
   const shouldDebug = true;
   setLoggers(dbgLog, dbgError);
 
-  startRailgunEngineForPOINode(levelDB, shouldDebug, testArtifactStore);
+  await startRailgunEngineForPOINode(levelDB, shouldDebug, testArtifactStore);
 
   getProver().setSnarkJSGroth16(groth16 as SnarkJSGroth16);
 

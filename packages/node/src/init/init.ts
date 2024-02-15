@@ -31,7 +31,7 @@ export const initDatabases = async () => {
 export const initEngineAndScanTXIDs = async () => {
   // Init engine and RPCs
   dbg('Initializing Engine and RPCs...');
-  startEngine();
+  await startEngine();
   setOnUTXOMerkletreeScanCallback(onUTXOMerkletreeScanCallback);
   setOnTXIDMerkletreeScanCallback(onTXIDMerkletreeScanCallback);
 

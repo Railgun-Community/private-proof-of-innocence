@@ -36,7 +36,7 @@ describe('legacy-transact-proof-mempool', () => {
   before(async function run() {
     this.timeout(10000);
     await DatabaseClient.init();
-    startEngine();
+    await startEngine();
     await initNetworkProviders([networkName]);
     POIMerkletreeManager.initListMerkletrees([listKey]);
     legacyTransactProofMempoolDB = new LegacyTransactProofMempoolDatabase(
@@ -65,7 +65,9 @@ describe('legacy-transact-proof-mempool', () => {
     await legacyTransactProofMempoolDB.deleteAllItems_DANGEROUS();
     await orderedEventDB.deleteAllItems_DANGEROUS();
     LegacyTransactProofMempoolCache.clearCache_FOR_TEST_ONLY();
+  });
 
+  after(() => {
     tryValidateRailgunTxidOccurredBeforeBlockNumberStub.restore();
     legacyTransactProofMempoolVerifyBlindedCommitmentStub.restore();
   });
