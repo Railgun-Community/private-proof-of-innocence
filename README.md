@@ -1,6 +1,6 @@
-[![POI Node Unit Tests](https://github.com/Railgun-Community/proof-of-innocence/actions/workflows/poi-node-unit-tests.yml/badge.svg?branch=main)](https://github.com/Railgun-Community/proof-of-innocence/actions)
+[![POI Node Unit Tests](https://github.com/Railgun-Community/private-proof-of-innocence/actions/workflows/poi-node-unit-tests.yml/badge.svg?branch=main)](https://github.com/Railgun-Community/private-proof-of-innocence/actions)
 
-# RAILGUN Proof Of Innocence
+# RAILGUN Private Proof Of Innocence
 
 This repository contains the codebase for the RAILGUN Private Proofs of Innocence (PPOI) Node and Dashboard, compatible with NodeJS environments.
 
