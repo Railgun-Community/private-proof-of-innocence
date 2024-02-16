@@ -5,6 +5,7 @@ import {
 } from '@railgun-community/shared-models';
 import { POINodeCountingBloomFilter } from '../util/poi-node-bloom-filters';
 import { CountingBloomFilter } from 'bloom-filters';
+import { Config } from 'config/config';
 
 type BlindedCommitmentMap = Map<string, TransactProofData>;
 // { listKey: {networkName: { txidVersion: {getBlindedCommitmentsCacheString: TransactProofData} } } }
@@ -82,9 +83,13 @@ export class TransactProofMempoolCache {
     ] as TransactCacheType['listKey'];
 
     // If the cache for the networkName doesn't exist, create it
-    cacheForList[networkName] ??= {
-      [TXIDVersion.V2_PoseidonMerkle]: new Map(),
-    };
+    cacheForList[networkName] ??= Config.TXID_VERSIONS.reduce(
+      (acc, txidVersion) => {
+        acc[txidVersion] = new Map();
+        return acc;
+      },
+      {} as Record<TXIDVersion, BlindedCommitmentMap>,
+    );
 
     // Return specific cache map for networkName and txidVersion, cast to BlindedCommitmentMap type
     return cacheForList[networkName]?.[txidVersion] as BlindedCommitmentMap;

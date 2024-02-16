@@ -5,6 +5,7 @@ import {
 } from '@railgun-community/shared-models';
 import { POINodeBloomFilter } from '../../util/poi-node-bloom-filters';
 import { BloomFilter } from 'bloom-filters';
+import { Config } from 'config/config';
 
 type BlindedCommitmentMap = Map<string, LegacyTransactProofData>;
 // { {networkName: { txidVersion: {blindedCommitment: LegacyTransactProofData} } }
@@ -36,9 +37,15 @@ export class LegacyTransactProofMempoolCache {
   }
 
   private static getCache(networkName: NetworkName, txidVersion: TXIDVersion) {
-    this.legacyTransactProofMempoolCache[networkName] ??= {
-      [TXIDVersion.V2_PoseidonMerkle]: new Map(),
-    };
+    this.legacyTransactProofMempoolCache[networkName] ??=
+      Config.TXID_VERSIONS.reduce(
+        (acc, txidVersion) => {
+          acc[txidVersion] = new Map();
+          return acc;
+        },
+        {} as Record<TXIDVersion, BlindedCommitmentMap>,
+      );
+
     return this.legacyTransactProofMempoolCache[networkName]?.[
       txidVersion
     ] as BlindedCommitmentMap;
