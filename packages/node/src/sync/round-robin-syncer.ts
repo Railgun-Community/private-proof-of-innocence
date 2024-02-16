@@ -127,6 +127,11 @@ export class RoundRobinSyncer {
         return;
       }
       for (const txidVersion of Config.TXID_VERSIONS) {
+        if (txidVersion !== TXIDVersion.V2_PoseidonMerkle) {
+          // TODO: Upadte nodeStatusAllNetworks.forNetwork to support multiple TXIDVersions
+          continue;
+        }
+
         try {
           await RailgunTxidMerkletreeManager.updateValidatedRailgunTxidStatusSafe(
             nodeURL,
@@ -158,6 +163,11 @@ export class RoundRobinSyncer {
       const { listStatuses } = nodeStatus;
 
       for (const txidVersion of Config.TXID_VERSIONS) {
+        if (txidVersion !== TXIDVersion.V2_PoseidonMerkle) {
+          // TODO: Upadte nodeStatusAllNetworks.forNetwork to support multiple TXIDVersions
+          continue;
+        }
+
         for (const listKey of this.listKeys) {
           if (!isDefined(listStatuses[listKey])) {
             continue;
@@ -377,6 +387,11 @@ export class RoundRobinSyncer {
       }
 
       for (const txidVersion of Config.TXID_VERSIONS) {
+        if (txidVersion !== TXIDVersion.V2_PoseidonMerkle) {
+          // TODO: Upadte nodeStatusAllNetworks.forNetwork to support multiple TXIDVersions
+          continue;
+        }
+
         try {
           await this.updateLegacyTransactProofMempool(
             nodeURL,
@@ -452,6 +467,11 @@ export class RoundRobinSyncer {
       const { listStatuses } = nodeStatus;
 
       for (const txidVersion of Config.TXID_VERSIONS) {
+        if (txidVersion !== TXIDVersion.V2_PoseidonMerkle) {
+          // TODO: Upadte nodeStatusAllNetworks.forNetwork to support multiple TXIDVersions
+          continue;
+        }
+
         for (const listKey of this.listKeys) {
           if (!isDefined(listStatuses[listKey])) {
             continue;
