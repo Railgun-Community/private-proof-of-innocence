@@ -2,6 +2,7 @@ import { NetworkName, TXIDVersion } from '@railgun-community/shared-models';
 import { POINodeBloomFilter } from '../util/poi-node-bloom-filters';
 import { BloomFilter } from 'bloom-filters';
 import { SignedBlockedShield } from '../models/poi-types';
+import { Config } from 'config/config';
 
 type BlindedCommitmentMap = Map<string, SignedBlockedShield>;
 // { listKey: {networkName: {txidVersion: {blindedCommitment: SignedBlockedShield} } } }
@@ -61,9 +62,14 @@ export class BlockedShieldsCache {
       listKey
     ] as BlockedShieldsCacheType['listKey'];
 
-    cacheForList[networkName] ??= {
-      [TXIDVersion.V2_PoseidonMerkle]: new Map(),
-    };
+    cacheForList[networkName] ??= Config.TXID_VERSIONS.reduce(
+      (acc, txidVersion) => {
+        acc[txidVersion] = new Map();
+        return acc;
+      },
+      {} as Record<TXIDVersion, BlindedCommitmentMap>,
+    );
+
     return cacheForList[networkName]?.[txidVersion] as BlindedCommitmentMap;
   }
 

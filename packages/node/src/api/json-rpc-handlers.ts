@@ -70,6 +70,7 @@ import {
   SubmitTransactProofParams,
   ValidatePOIMerklerootsParams,
   ValidateTxidMerklerootParams,
+  isDefined,
 } from '@railgun-community/shared-models';
 
 interface JsonRpcError {
@@ -125,7 +126,7 @@ export const getLogicFunctionMap = (
     // *** Aggregator methods
     ppoi_node_status: {
       logicFunction: async () => {
-        return params.listKey
+        return isDefined(params.listKey)
           ? getNodeStatusListKey(params.listKey)
           : getNodeStatus_ROUTE(listKeys);
       },

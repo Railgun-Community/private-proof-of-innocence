@@ -213,10 +213,14 @@ export class ListProviderPOIEventQueue {
     txidVersion: TXIDVersion,
     poiEvent: POIEvent,
   ) {
-    ListProviderPOIEventQueue.poiEventQueue[networkName] ??= {
-      [TXIDVersion.V2_PoseidonMerkle]: [],
-      [TXIDVersion.V3_PoseidonMerkle]: [],
-    };
+    ListProviderPOIEventQueue.poiEventQueue[networkName] ??=
+      Config.TXID_VERSIONS.reduce(
+        (acc, txidVersion) => {
+          acc[txidVersion] = [];
+          return acc;
+        },
+        {} as Record<TXIDVersion, POIEvent[]>,
+      );
 
     const queue =
       ListProviderPOIEventQueue.poiEventQueue[networkName]?.[txidVersion];
