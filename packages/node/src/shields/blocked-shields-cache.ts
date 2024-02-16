@@ -2,7 +2,7 @@ import { NetworkName, TXIDVersion } from '@railgun-community/shared-models';
 import { POINodeBloomFilter } from '../util/poi-node-bloom-filters';
 import { BloomFilter } from 'bloom-filters';
 import { SignedBlockedShield } from '../models/poi-types';
-import { Config } from 'config/config';
+import { Config } from '../config/config';
 
 type BlindedCommitmentMap = Map<string, SignedBlockedShield>;
 // { listKey: {networkName: {txidVersion: {blindedCommitment: SignedBlockedShield} } } }

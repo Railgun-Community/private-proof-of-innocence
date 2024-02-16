@@ -5,7 +5,7 @@ import {
 } from '@railgun-community/shared-models';
 import { POINodeCountingBloomFilter } from '../util/poi-node-bloom-filters';
 import { CountingBloomFilter } from 'bloom-filters';
-import { Config } from 'config/config';
+import { Config } from '../config/config';
 
 type BlindedCommitmentMap = Map<string, TransactProofData>;
 // { listKey: {networkName: { txidVersion: {getBlindedCommitmentsCacheString: TransactProofData} } } }

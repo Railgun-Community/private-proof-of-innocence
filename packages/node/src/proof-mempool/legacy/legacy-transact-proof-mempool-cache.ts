@@ -5,7 +5,7 @@ import {
 } from '@railgun-community/shared-models';
 import { POINodeBloomFilter } from '../../util/poi-node-bloom-filters';
 import { BloomFilter } from 'bloom-filters';
-import { Config } from 'config/config';
+import { Config } from '../../config/config';
 
 type BlindedCommitmentMap = Map<string, LegacyTransactProofData>;
 // { {networkName: { txidVersion: {blindedCommitment: LegacyTransactProofData} } }
