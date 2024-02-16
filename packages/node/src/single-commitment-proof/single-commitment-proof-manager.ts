@@ -114,22 +114,6 @@ export class SingleCommitmentProofManager {
     } = filteredSingleCommitmentProofsData;
 
     try {
-      // TODO: POI node interface not initialized error
-      // comes from retrievePOIsForBlindedCommitments in engine/src/poi/poi.ts
-      // where does POI.init occur?
-      // it looks like POI.init does not occur anywhere in engine
-      // POI.init is used in wallet wallet/src/services/poi/wallet-poi.ts
-      // WalletPOI.init is used in wallet startRailgunEngine
-      // engine-init.ts used to use startRailgunEngine, but now uses startRailgunEngineForPOINode which does not call WalletPOI.init
-      // https://github.com/Railgun-Community/proof-of-innocence/commit/67d8cb9be7c7149a31b3f7b8504f2eb0cdda4231
-      // FIX: call POI.init in startRailgunEngineForPOINode ? requires poiNodeURLs and customPOILists
-      // can't remove from engine.retrievePOIsForBlindedCommitments since it uses a value from it
-
-      // // Use internal function instead of POI request.
-      // POIValidator.init(
-      //   POIMerkletreeManager.validateAllPOIMerklerootsExistWithChain,
-      // );
-
       await POIValidator.assertIsValidSpendableTXID(
         listKey,
         txidVersion,
