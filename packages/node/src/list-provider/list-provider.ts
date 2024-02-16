@@ -16,7 +16,7 @@ import {
   ShieldData,
   formatToByteLength,
   getRailgunTxidsForUnshields,
-  scanUpdatesForMerkletreeAndWallets,
+  refreshBalances,
 } from '@railgun-community/wallet';
 import debug from 'debug';
 import { ShieldQueueDatabase } from '../database/databases/shield-queue-database';
@@ -75,6 +75,7 @@ export abstract class ListProvider {
 
     ListProviderPOIEventQueue.init(listKey);
     ListProviderBlocklist.init(listKey);
+    POIMerkletreeManager.nodeListKey = listKey;
   }
 
   protected abstract shouldAllowShield(
@@ -202,7 +203,7 @@ export abstract class ListProvider {
 
     for (const networkName of Config.NETWORK_NAMES) {
       const chain = chainForNetwork(networkName);
-      await scanUpdatesForMerkletreeAndWallets(chain);
+      await refreshBalances(chain, undefined);
     }
 
     // eslint-disable-next-line @typescript-eslint/no-floating-promises

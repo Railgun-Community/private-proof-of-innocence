@@ -215,6 +215,7 @@ export class ListProviderPOIEventQueue {
   ) {
     ListProviderPOIEventQueue.poiEventQueue[networkName] ??= {
       [TXIDVersion.V2_PoseidonMerkle]: [],
+      [TXIDVersion.V3_PoseidonMerkle]: [],
     };
 
     const queue =

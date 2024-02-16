@@ -166,6 +166,7 @@ export class API {
     if (this.server) {
       throw new Error('API is already running.');
     }
+
     this.server = this.app.listen(Number(port), host, () => {
       dbg(`Listening at http://${host}:${port}`);
     });

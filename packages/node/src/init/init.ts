@@ -4,7 +4,6 @@ import { initNetworkProviders } from '../rpc-providers/active-network-providers'
 import {
   getEngine,
   getTXIDMerkletreeForNetwork,
-  resetFullTXIDMerkletrees,
   setOnTXIDMerkletreeScanCallback,
   setOnUTXOMerkletreeScanCallback,
 } from '@railgun-community/wallet';
@@ -32,7 +31,7 @@ export const initDatabases = async () => {
 export const initEngineAndScanTXIDs = async () => {
   // Init engine and RPCs
   dbg('Initializing Engine and RPCs...');
-  startEngine();
+  await startEngine();
   setOnUTXOMerkletreeScanCallback(onUTXOMerkletreeScanCallback);
   setOnTXIDMerkletreeScanCallback(onTXIDMerkletreeScanCallback);
 
@@ -62,8 +61,7 @@ export const initEngineAndScanTXIDs = async () => {
             });
           }
 
-          await getEngine().syncRailgunTransactionsForTXIDVersion(
-            txidVersion,
+          await getEngine().syncRailgunTransactionsV2(
             chain,
             'initEngineAndScanTXIDs',
           );

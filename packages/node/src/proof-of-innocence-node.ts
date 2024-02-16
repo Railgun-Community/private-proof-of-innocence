@@ -62,6 +62,7 @@ export class ProofOfInnocenceNode {
 
   async start() {
     if (this.running) {
+      dbg(`Node already running, exiting start()`);
       return;
     }
 
@@ -92,6 +93,7 @@ export class ProofOfInnocenceNode {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         `Cannot connect to API - check port ${this.port} for existing process: ${err.message}`,
       );
+      throw new Error(`Cannot start node: port ${this.port} is already in use`);
     }
 
     ListProviderPOIEventQueue.ready = true;

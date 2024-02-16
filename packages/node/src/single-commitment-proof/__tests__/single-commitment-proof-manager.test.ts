@@ -36,7 +36,7 @@ const originalReady = ListProviderPOIEventQueue.ready;
 describe('single-commitment-proof-manager', () => {
   before(async function run() {
     await DatabaseClient.init();
-    startEngine();
+    await startEngine();
     ListProviderPOIEventQueue.init(listKey);
     POIMerkletreeManager.initListMerkletrees([listKey]);
     poiHistoricalMerklerootDB = new POIHistoricalMerklerootDatabase(

@@ -13,7 +13,7 @@ const { expect } = chai;
 describe('active-network-providers', () => {
   before(async function run() {
     this.timeout(30000);
-    startEngine();
+    await startEngine();
     await initNetworkProviders([NetworkName.EthereumGoerli]);
   });
 
