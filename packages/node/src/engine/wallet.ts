@@ -20,7 +20,7 @@ export const getNewShieldsFromWallet = (
 ): Promise<ShieldData[]> => {
   const { supportsV3 } = NETWORK_CONFIG[networkName];
   if (!supportsV3 && txidVersion === TXIDVersion.V3_PoseidonMerkle) {
-    dbg('Network does not support V3 txids');
+    dbg(`${networkName} does not support V3 txids.`);
     return Promise.resolve([]);
   }
 
