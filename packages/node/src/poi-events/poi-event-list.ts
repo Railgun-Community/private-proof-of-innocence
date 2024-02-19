@@ -200,7 +200,9 @@ export class POIEventList {
       );
     } catch (err) {
       // no op
-      dbg(`addValidSignedPOIEventOptionalValidatedMerkleroot() error: ${err}`);
+      dbg(
+        `[${networkName}, ${txidVersion}] addValidSignedPOIEventOptionalValidatedMerkleroot() error: ${err}`,
+      );
       throw err;
     }
   }

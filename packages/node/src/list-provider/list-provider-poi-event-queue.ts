@@ -108,7 +108,7 @@ export class ListProviderPOIEventQueue {
     }
 
     dbg(
-      `Queue shield event - blinded commitment ${poiEventShield.blindedCommitment}`,
+      `Queue shield event [${networkName}, ${txidVersion}] - blinded commitment ${poiEventShield.blindedCommitment}`,
     );
     return ListProviderPOIEventQueue.queuePOIEvent(
       networkName,
@@ -128,7 +128,7 @@ export class ListProviderPOIEventQueue {
     }
 
     dbg(
-      `Queue single commitment event - blinded commitment ${blindedCommitment}`,
+      `Queue single commitment event [${networkName}, ${txidVersion}] - blinded commitment ${blindedCommitment}`,
     );
 
     const poiEvent: POIEventTransact = {
@@ -158,7 +158,9 @@ export class ListProviderPOIEventQueue {
         return hexToBigInt(blindedCommitment) !== 0n;
       })
       .forEach(blindedCommitment => {
-        dbg(`Queue transact event - blinded commitment ${blindedCommitment}`);
+        dbg(
+          `Queue transact event [${networkName}, ${txidVersion}] - blinded commitment ${blindedCommitment}`,
+        );
 
         const poiEvent: POIEventTransact = {
           type: POIEventType.Transact,
@@ -196,7 +198,7 @@ export class ListProviderPOIEventQueue {
     }
 
     dbg(
-      `Queue legacy transact event - blinded commitment ${legacyTransactProofData.blindedCommitment}`,
+      `Queue legacy transact event [${networkName}, ${txidVersion}] - blinded commitment ${legacyTransactProofData.blindedCommitment}`,
     );
 
     const poiEvent: POIEventLegacyTransact = {
@@ -232,7 +234,7 @@ export class ListProviderPOIEventQueue {
     });
     if (isDefined(existingEvent)) {
       dbg(
-        `Event exists in queue... ignore new event, but retrigger add-from-queue`,
+        `Event exists in queue [${networkName}, ${txidVersion}]... ignore new event, but retrigger add-from-queue`,
       );
     } else {
       queue?.push(poiEvent);
@@ -332,11 +334,15 @@ export class ListProviderPOIEventQueue {
         ]?.[txidVersion],
       )
     ) {
-      dbg(`Warning: Already adding events from queue`);
+      dbg(
+        `Warning: Already adding events from queue [${networkName}, ${txidVersion}]`,
+      );
       return;
     }
     if (!this.ready) {
-      dbg(`Warning: Not ready to add events to list`);
+      dbg(
+        `Warning: Not ready to add events to list [${networkName}, ${txidVersion}]`,
+      );
       return;
     }
 
@@ -365,7 +371,7 @@ export class ListProviderPOIEventQueue {
         )
       ) {
         throw new Error(
-          'Tried to add POI event while unsynced - risk of duplicate indices. Skipping until synced.',
+          `Tried to add POI event while unsynced - risk of duplicate indices. Skipping until synced. [${networkName}, ${txidVersion}]`,
         );
       }
 
@@ -406,11 +412,15 @@ export class ListProviderPOIEventQueue {
           networkName
         ]?.[txidVersion]
       ) {
-        dbg(`Warning: Key mismatch. Skipping adding POI event from queue.`);
+        dbg(
+          `Warning: Key mismatch. Skipping adding POI event from queue. [${networkName}, ${txidVersion}]`,
+        );
         return;
       }
 
-      dbg(`Adding POI event to list from queue: ${nextIndex}`);
+      dbg(
+        `Adding POI event to list from queue [${networkName}, ${txidVersion}]: ${nextIndex}`,
+      );
 
       await POIEventList.addValidSignedPOIEventOwnedList(
         ListProviderPOIEventQueue.listKey,
@@ -471,7 +481,10 @@ export class ListProviderPOIEventQueue {
       }
     } catch (err) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      dbg('Error adding POI event from queue', err.message);
+      dbg(
+        `Error adding POI event from queue [${networkName}, ${txidVersion}]`,
+        err.message,
+      );
       if (
         currentEventKey ===
         ListProviderPOIEventQueue.addingPOIEventKeyForNetworkAndTXIDVersion[
