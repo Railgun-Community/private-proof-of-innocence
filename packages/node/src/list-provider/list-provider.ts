@@ -221,6 +221,7 @@ export abstract class ListProvider {
 
     const newShields: ShieldData[] = await getNewShieldsFromWallet(
       networkName,
+      txidVersion,
       startingBlock,
     );
 

@@ -1,9 +1,13 @@
-import { NetworkName, TXIDVersion } from '@railgun-community/shared-models';
+import {
+  NETWORK_CONFIG,
+  NetworkName,
+  TXIDVersion,
+} from '@railgun-community/shared-models';
 import {
   ShieldData,
-  getAllShields,
   validateRailgunTxidOccurredBeforeBlockNumber,
   getGlobalUTXOTreePositionForRailgunTransactionCommitment,
+  getShieldsForTXIDVersion,
 } from '@railgun-community/wallet';
 import debug from 'debug';
 
@@ -11,9 +15,16 @@ const dbg = debug('poi:wallet');
 
 export const getNewShieldsFromWallet = (
   networkName: NetworkName,
+  txidVersion: TXIDVersion,
   startingBlock: number,
 ): Promise<ShieldData[]> => {
-  return getAllShields(networkName, startingBlock);
+  const { supportsV3 } = NETWORK_CONFIG[networkName];
+  if (!supportsV3 && txidVersion === TXIDVersion.V3_PoseidonMerkle) {
+    dbg('Network does not support V3 txids');
+    return Promise.resolve([]);
+  }
+
+  return getShieldsForTXIDVersion(txidVersion, networkName, startingBlock);
 };
 
 export const tryValidateRailgunTxidOccurredBeforeBlockNumber = async (

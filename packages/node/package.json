@@ -50,12 +50,12 @@
   },
   "peerDependencies": {
     "@railgun-community/shared-models": "^6.3.0",
-    "@railgun-community/wallet": "7.1.1",
-    "ethers": "github:Railgun-Community/ethers.js#v6.7.8"
+    "@railgun-community/wallet": "7.1.2",
+    "ethers": "github:Railgun-Community/ethers.js#v6.7.10"
   },
   "devDependencies": {
     "@railgun-community/shared-models": "^6.3.0",
-    "@railgun-community/wallet": "7.1.1",
+    "@railgun-community/wallet": "7.1.2",
     "@types/chai": "^4.3.5",
     "@types/chai-as-promised": "^7.1.5",
     "@types/cors": "^2.8.13",
@@ -78,7 +78,7 @@
     "eslint-config-prettier": "^8.8.0",
     "eslint-plugin-flowtype": "^8.0.3",
     "eslint-plugin-import": "^2.27.5",
-    "ethers": "github:Railgun-Community/ethers.js#v6.7.8",
+    "ethers": "github:Railgun-Community/ethers.js#v6.7.10",
     "leveldown": "^6.1.1",
     "madge": "^6.1.0",
     "mocha": "^10.2.0",
