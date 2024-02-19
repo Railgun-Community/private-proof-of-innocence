@@ -226,7 +226,7 @@ export abstract class ListProvider {
     );
 
     dbg(
-      `[${networkName}] Attempting to insert ${newShields.length} unknown shields`,
+      `[${networkName}, ${txidVersion}] Attempting to insert ${newShields.length} unknown shields`,
     );
 
     await Promise.all(
@@ -256,7 +256,7 @@ export abstract class ListProvider {
       );
 
       dbg(
-        `[${networkName}] Attempting to categorize ${unknownShields.length} unknown shields...`,
+        `[${networkName}, ${txidVersion}] Attempting to categorize ${unknownShields.length} unknown shields...`,
       );
 
       for (const shieldQueueDBItem of unknownShields) {
@@ -570,7 +570,7 @@ export abstract class ListProvider {
     const allowedShields = await shieldQueueDB.getShields(ShieldStatus.Allowed);
 
     dbg(
-      `[${networkName}] Attempting to queue POI events for ${allowedShields.length} allowed shields...`,
+      `[${networkName}, ${txidVersion}] Attempting to queue POI events for ${allowedShields.length} allowed shields...`,
     );
 
     await Promise.all(
