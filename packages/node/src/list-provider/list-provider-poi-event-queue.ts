@@ -31,8 +31,8 @@ import { generateKey } from '../util/util';
 const dbg = debug('poi:event-queue');
 
 export class ListProviderPOIEventQueue {
-  private static addingPOIEventKeyForNetwork: Partial<
-    Record<NetworkName, string>
+  private static addingPOIEventKeyForNetworkAndTXIDVersion: Partial<
+    Record<NetworkName, Partial<Record<TXIDVersion, string>>>
   > = {};
 
   private static poiEventQueue: Partial<
@@ -271,6 +271,29 @@ export class ListProviderPOIEventQueue {
     };
   }
 
+  static setAddingPOIEventKey(
+    networkName: NetworkName,
+    txidVersion: TXIDVersion,
+    key: Optional<string>,
+  ) {
+    if (
+      !isDefined(
+        ListProviderPOIEventQueue.addingPOIEventKeyForNetworkAndTXIDVersion[
+          networkName
+        ],
+      )
+    ) {
+      ListProviderPOIEventQueue.addingPOIEventKeyForNetworkAndTXIDVersion[
+        networkName
+      ] = {};
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    ListProviderPOIEventQueue.addingPOIEventKeyForNetworkAndTXIDVersion[
+      networkName
+    ]![txidVersion] = key;
+  }
+
   static async addPOIEventsFromQueue(
     networkName: NetworkName,
     txidVersion: TXIDVersion,
@@ -282,7 +305,9 @@ export class ListProviderPOIEventQueue {
     }
     if (
       isDefined(
-        ListProviderPOIEventQueue.addingPOIEventKeyForNetwork[networkName],
+        ListProviderPOIEventQueue.addingPOIEventKeyForNetworkAndTXIDVersion[
+          networkName
+        ]?.[txidVersion],
       )
     ) {
       dbg(`Warning: Already adding events from queue`);
@@ -294,8 +319,12 @@ export class ListProviderPOIEventQueue {
     }
 
     const currentEventKey = generateKey();
-    ListProviderPOIEventQueue.addingPOIEventKeyForNetwork[networkName] =
-      currentEventKey;
+
+    ListProviderPOIEventQueue.setAddingPOIEventKey(
+      networkName,
+      txidVersion,
+      currentEventKey,
+    );
 
     try {
       const orderedEventsDB = new POIOrderedEventsDatabase(
@@ -326,8 +355,12 @@ export class ListProviderPOIEventQueue {
         // Remove item from queue.
         queue.splice(0, 1);
 
-        ListProviderPOIEventQueue.addingPOIEventKeyForNetwork[networkName] =
-          undefined;
+        ListProviderPOIEventQueue.setAddingPOIEventKey(
+          networkName,
+          txidVersion,
+          undefined, // key
+        );
+
         if (queue.length > 0) {
           await ListProviderPOIEventQueue.addPOIEventsFromQueue(
             networkName,
@@ -344,7 +377,9 @@ export class ListProviderPOIEventQueue {
 
       if (
         currentEventKey !==
-        ListProviderPOIEventQueue.addingPOIEventKeyForNetwork[networkName]
+        ListProviderPOIEventQueue.addingPOIEventKeyForNetworkAndTXIDVersion[
+          networkName
+        ]?.[txidVersion]
       ) {
         dbg(`Warning: Key mismatch. Skipping adding POI event from queue.`);
         return;
@@ -395,8 +430,12 @@ export class ListProviderPOIEventQueue {
         });
       }
 
-      ListProviderPOIEventQueue.addingPOIEventKeyForNetwork[networkName] =
-        undefined;
+      ListProviderPOIEventQueue.setAddingPOIEventKey(
+        networkName,
+        txidVersion,
+        undefined, // key
+      );
+
       if (queue.length > 0) {
         // Continue with next item in queue.
         await ListProviderPOIEventQueue.addPOIEventsFromQueue(
@@ -410,10 +449,15 @@ export class ListProviderPOIEventQueue {
       dbg('Error adding POI event from queue', err.message);
       if (
         currentEventKey ===
-        ListProviderPOIEventQueue.addingPOIEventKeyForNetwork[networkName]
+        ListProviderPOIEventQueue.addingPOIEventKeyForNetworkAndTXIDVersion[
+          networkName
+        ]?.[txidVersion]
       ) {
-        ListProviderPOIEventQueue.addingPOIEventKeyForNetwork[networkName] =
-          undefined;
+        ListProviderPOIEventQueue.setAddingPOIEventKey(
+          networkName,
+          txidVersion,
+          undefined, // key
+        );
       }
     }
   }
