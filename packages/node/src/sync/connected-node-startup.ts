@@ -2,7 +2,7 @@ import debug from 'debug';
 import { NodeConfig } from '../models/general-types';
 import { POINodeRequest } from '../api/poi-node-request';
 import { Config } from '../config/config';
-import { NetworkName } from '@railgun-community/shared-models';
+import { NetworkName, TXIDVersion } from '@railgun-community/shared-models';
 import { ListProviderPOIEventQueue } from '../list-provider/list-provider-poi-event-queue';
 import { POIEventList } from '../poi-events/poi-event-list';
 
@@ -70,6 +70,8 @@ export class ConnectedNodeStartup {
           // If they do, this node will wait to add new events until it's synced.
           dbg(`Updating minimum next add index...`);
 
+          // TODO-V3: Add request to node-status-v3 (or add txidVersion to existing node status) and set ListProviderPOIEventQueue.tryUpdateMinimumNextAddIndex for V3
+
           const listKey = ListProviderPOIEventQueue.listKey;
           for (const networkName of Config.NETWORK_NAMES) {
             const poiEventLengths =
@@ -87,6 +89,7 @@ export class ConnectedNodeStartup {
             ListProviderPOIEventQueue.tryUpdateMinimumNextAddIndex(
               listKey,
               networkName,
+              TXIDVersion.V2_PoseidonMerkle,
               syncedIndex,
             );
             dbg(

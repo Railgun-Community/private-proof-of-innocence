@@ -39,7 +39,9 @@ export class ListProviderPOIEventQueue {
     Record<NetworkName, Record<TXIDVersion, POIEvent[]>>
   > = {};
 
-  private static minimumNextAddIndex: Partial<Record<NetworkName, number>> = {};
+  private static minimumNextAddIndex: Partial<
+    Record<NetworkName, Partial<Record<TXIDVersion, number>>>
+  > = {};
 
   static listKey: string;
 
@@ -240,22 +242,42 @@ export class ListProviderPOIEventQueue {
     ListProviderPOIEventQueue.addPOIEventsFromQueue(networkName, txidVersion);
   }
 
-  private static getMinimumNextAddIndex(networkName: NetworkName) {
-    return ListProviderPOIEventQueue.minimumNextAddIndex[networkName] ?? 0;
+  private static getMinimumNextAddIndex(
+    networkName: NetworkName,
+    txidVersion: TXIDVersion,
+  ) {
+    return (
+      ListProviderPOIEventQueue.minimumNextAddIndex[networkName]?.[
+        txidVersion
+      ] ?? 0
+    );
   }
 
   static tryUpdateMinimumNextAddIndex(
     listKey: string,
     networkName: NetworkName,
+    txidVersion: TXIDVersion,
     syncedIndex: number,
   ) {
     if (listKey !== this.listKey) {
       return;
     }
-    ListProviderPOIEventQueue.minimumNextAddIndex[networkName] = Math.max(
-      ListProviderPOIEventQueue.getMinimumNextAddIndex(networkName),
-      syncedIndex,
-    );
+
+    if (
+      !isDefined(ListProviderPOIEventQueue.minimumNextAddIndex[networkName])
+    ) {
+      ListProviderPOIEventQueue.minimumNextAddIndex[networkName] = {};
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    ListProviderPOIEventQueue.minimumNextAddIndex[networkName]![txidVersion] =
+      Math.max(
+        ListProviderPOIEventQueue.getMinimumNextAddIndex(
+          networkName,
+          txidVersion,
+        ),
+        syncedIndex,
+      );
   }
 
   static async createSignedPOIEvent(
@@ -337,7 +359,10 @@ export class ListProviderPOIEventQueue {
       const nextIndex = lastAddedItem ? lastAddedItem.index + 1 : 0;
       if (
         nextIndex <
-        ListProviderPOIEventQueue.getMinimumNextAddIndex(networkName)
+        ListProviderPOIEventQueue.getMinimumNextAddIndex(
+          networkName,
+          txidVersion,
+        )
       ) {
         throw new Error(
           'Tried to add POI event while unsynced - risk of duplicate indices. Skipping until synced.',
