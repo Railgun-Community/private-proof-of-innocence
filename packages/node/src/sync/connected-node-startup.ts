@@ -68,7 +68,7 @@ export class ConnectedNodeStartup {
 
           // The "minimum next add index" ensures that no connected nodes have a more-updated list than this node.
           // If they do, this node will wait to add new events until it's synced.
-          dbg(`Updating minimum next add index...`);
+          dbg(`Updating minimum next add index V2...`);
 
           // TODO-V3: Add request to node-status-v3 (or add txidVersion to existing node status) and set ListProviderPOIEventQueue.tryUpdateMinimumNextAddIndex for V3
 
@@ -83,7 +83,7 @@ export class ConnectedNodeStartup {
               : 0;
             const syncedIndex = eventListLength;
             dbg(
-              `Minimum next-add index: ${listKey} ${networkName} ${syncedIndex}`,
+              `Minimum next-add index V2: ${listKey} ${networkName} ${syncedIndex}`,
             );
 
             ListProviderPOIEventQueue.tryUpdateMinimumNextAddIndex(
@@ -93,7 +93,7 @@ export class ConnectedNodeStartup {
               syncedIndex,
             );
             dbg(
-              `Updated minimum next-add index: ${listKey} ${networkName} ${syncedIndex}`,
+              `Updated minimum next-add index V2: ${listKey} ${networkName} ${syncedIndex}`,
             );
           }
         } catch (err) {
