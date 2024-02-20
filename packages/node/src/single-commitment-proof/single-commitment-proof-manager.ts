@@ -101,7 +101,7 @@ export class SingleCommitmentProofManager {
       return;
     }
 
-    dbg('Adding single commitment proof');
+    dbg(`Adding single commitment proof [${networkName}, ${txidVersion}]`);
 
     const {
       commitment,
@@ -130,7 +130,9 @@ export class SingleCommitmentProofManager {
           railgunTxid,
         );
       if (!railgunTxidExists) {
-        throw new Error('Could not find railgun txid');
+        throw new Error(
+          `Could not find railgun txid [${networkName}, ${txidVersion}]`,
+        );
       }
 
       const blindedCommitment = getBlindedCommitmentForShieldOrTransact(

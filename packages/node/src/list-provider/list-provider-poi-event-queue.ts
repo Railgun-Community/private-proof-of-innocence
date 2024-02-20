@@ -383,6 +383,10 @@ export class ListProviderPOIEventQueue {
           poiEvent.blindedCommitment,
         )
       ) {
+        dbg(
+          `Event already exists in list. Skipping adding POI event from queue. [${networkName}, ${txidVersion}]`,
+        );
+
         // Remove item from queue.
         queue.splice(0, 1);
 

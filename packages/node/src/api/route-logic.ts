@@ -346,6 +346,13 @@ export const submitSingleCommitmentProofs = async (
   dbg(
     `REQUEST: Submit Single Commitment (Transact) Proof: railgun txid ${singleCommitmentProofsData.railgunTxid}`,
   );
+  Object.values(singleCommitmentProofsData.pois).forEach(preTxPOIMap => {
+    Object.values(preTxPOIMap).forEach(preTxPOI => {
+      preTxPOI.blindedCommitmentsOut.forEach(blindedCommitment => {
+        dbg(`blindedCommitment: ${blindedCommitment}`);
+      });
+    });
+  });
 
   // Submit and verify the proofs
   await SingleCommitmentProofManager.submitProof(
