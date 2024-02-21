@@ -129,7 +129,11 @@ export class LocalListProvider extends ListProvider {
 
       const isSanctioned =
         isDefined(identifications) &&
-        identifications.some(id => id.category === 'sanctions');
+        identifications.some(
+          id =>
+            id.category.toLowerCase() === 'sanctions' ||
+            id.category.toLowerCase() === 'sanctioned entity',
+        );
 
       return isSanctioned;
     } catch (err) {
