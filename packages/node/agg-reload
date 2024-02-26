@@ -2,7 +2,6 @@
 set -e
 
 git pull && \
-rm -rf ../dashboard && \
 yarn build && \
 pm2 reload pm2-aggregator.config.js && \
 ./agg-log;
