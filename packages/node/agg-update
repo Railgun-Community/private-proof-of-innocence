@@ -1,8 +1,9 @@
 #!/bin/bash
 set -e
 
-git pull origin main && \
+git fetch && \
 git rebase origin/main && \
+rm -rf ../dashboard && \
 yarn && \
 yarn build && \
 pm2 restart node-aggregator && \
