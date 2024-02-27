@@ -15,7 +15,7 @@ import axios from 'axios';
 import { TransactProofPushSyncer } from './sync/transact-proof-push-syncer';
 import { ListProviderPOIEventQueue } from './list-provider/list-provider-poi-event-queue';
 import { delay } from '@railgun-community/shared-models';
-import { Config } from 'config/config';
+import { Config } from './config/config';
 import { refreshBalances } from '@railgun-community/wallet';
 
 const dbg = debug('poi:node');
