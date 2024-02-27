@@ -1,10 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import {
-  NetworkName,
-  isDefined,
-  TXIDVersion,
-} from '@railgun-community/shared-models';
+import { NetworkName, isDefined } from '@railgun-community/shared-models';
 import {
   ListProvider,
   ListProviderConfig,

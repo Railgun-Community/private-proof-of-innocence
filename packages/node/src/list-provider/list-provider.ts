@@ -16,7 +16,6 @@ import {
   ShieldData,
   formatToByteLength,
   getRailgunTxidsForUnshields,
-  refreshBalances,
 } from '@railgun-community/wallet';
 import debug from 'debug';
 import { ShieldQueueDatabase } from '../database/databases/shield-queue-database';
@@ -45,7 +44,6 @@ export type ListProviderConfig = {
   validateShieldsOverrideDelayMsec?: number;
   addAllowedShieldsOverrideDelayMsec?: number;
   ensureAddedShieldsHaveEventsOverrideDelayMsec?: number;
-  rescanHistoryOverrideDelayMsec?: number;
 };
 
 // 30 seconds
@@ -58,8 +56,6 @@ const DEFAULT_VALIDATE_SHIELDS_DELAY_MSEC = 10 * 1000;
 const DEFAULT_ADD_ALLOWED_SHIELDS_DELAY_MSEC = 30 * 1000;
 // 30 seconds
 const DEFAULT_ENSURE_ADDED_SHIELDS_HAVE_EVENTS_DELAY_MSEC = 10 * 60 * 1000;
-// 5 minutes
-const DEFAULT_RESCAN_HISTORY_DELAY_MSEC = 5 * 60 * 1000;
 
 const dbg = debug('poi:list-provider');
 
@@ -103,8 +99,6 @@ export abstract class ListProvider {
     this.runAddAllowedShieldsPoller();
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.runEnsureAddedShieldsHaveEventsPoller();
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    this.runRescanHistoryPoller();
 
     ListProviderPOIEventQueue.startPolling();
   }
@@ -192,22 +186,6 @@ export abstract class ListProvider {
 
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.runEnsureAddedShieldsHaveEventsPoller();
-  }
-
-  private async runRescanHistoryPoller() {
-    // Delay on first run - Engine is scanned on initialization.
-    await delay(
-      this.config.rescanHistoryOverrideDelayMsec ??
-        DEFAULT_RESCAN_HISTORY_DELAY_MSEC,
-    );
-
-    for (const networkName of Config.NETWORK_NAMES) {
-      const chain = chainForNetwork(networkName);
-      await refreshBalances(chain, undefined);
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    this.runRescanHistoryPoller();
   }
 
   async queueNewUnknownShields(
