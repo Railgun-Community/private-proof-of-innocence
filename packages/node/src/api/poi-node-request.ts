@@ -16,7 +16,6 @@ import {
   SignedBlockedShield,
   SignedPOIEvent,
 } from '../models/poi-types';
-import debug from 'debug';
 import {
   getListPublicKey,
   signRemoveProof,
