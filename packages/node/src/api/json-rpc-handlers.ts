@@ -72,12 +72,7 @@ import {
   ValidateTxidMerklerootParams,
   isDefined,
 } from '@railgun-community/shared-models';
-
-interface JsonRpcError {
-  code: number;
-  message: string;
-  data: any[];
-}
+import { JsonRpcError } from 'ethers';
 
 export type LogicFunction = (params?: any) => Promise<any>;
 export type Schema = AllowedSchema | null;
@@ -106,7 +101,10 @@ export const handleJsonRpcError = (res: Response, error: Error, id: string) => {
 export function formatJsonRpcError(error: ValidationError): JsonRpcError {
   // Format the validation error for JSON-RPC response
   const errorDetails = error.validationErrors.body ?? [];
-  return { code: -32602, message: 'Invalid params', data: errorDetails };
+  return {
+    id: Date.now(),
+    error: { code: -32602, message: 'Invalid params', data: errorDetails },
+  };
 }
 
 /**

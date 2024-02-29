@@ -2,34 +2,19 @@ import {
   NETWORK_CONFIG,
   NetworkName,
   TransactProofData,
-  GetTransactProofsParams,
-  GetBlockedShieldsParams,
   NodeStatusAllNetworks,
-  ValidateTxidMerklerootParams,
-  SubmitTransactProofParams,
   TXIDVersion,
-  SubmitLegacyTransactProofParams,
   LegacyTransactProofData,
-  SubmitSingleCommitmentProofsParams,
   SingleCommitmentProofsData,
-  GetMerkleProofsParams,
   MerkleProof,
-  ValidatePOIMerklerootsParams,
   BlindedCommitmentData,
 } from '@railgun-community/shared-models';
-import axios, { AxiosError } from 'axios';
+import axios from 'axios';
 import {
-  GetLegacyTransactProofsParams,
-  GetPOIListEventRangeParams,
-  GetPOIMerkletreeLeavesParams,
-  GetPOIsPerBlindedCommitmentParams,
   POISyncedListEvent,
   POIsPerBlindedCommitmentMap,
-  RemoveTransactProofParams,
   SignedBlockedShield,
   SignedPOIEvent,
-  SubmitPOIEventParams,
-  SubmitValidatedTxidAndMerklerootParams,
 } from '../models/poi-types';
 import debug from 'debug';
 import {
@@ -38,44 +23,45 @@ import {
   signValidatedTxidMerkleroot,
 } from '../util/ed25519';
 import { isListProvider } from '../config/general';
-
-const dbg = debug('poi:request');
-
+import { JsonRpcError, JsonRpcPayload, JsonRpcResult } from 'ethers';
 export class POINodeRequest {
-  private static getNodeRouteURL = (url: string, route: string): string => {
-    return `${url}/${route}`;
-  };
+  private static async jsonRpcRequest<
+    Params extends any[] | Record<string, any>,
+    ResponseData,
+  >(nodeURL: string, method: string, params: Params): Promise<ResponseData> {
+    const payload: JsonRpcPayload = {
+      jsonrpc: '2.0',
+      method,
+      params,
+      id: Date.now(),
+    };
 
-  private static async getRequest<ResponseData>(
-    url: string,
-  ): Promise<ResponseData> {
     try {
-      const { data }: { data: ResponseData } = await axios.get(url);
-      return data;
-    } catch (err) {
-      if (!(err instanceof AxiosError)) {
-        throw err;
-      }
-      const errMessage = err.message;
-      dbg(`ERROR ${url} - ${errMessage}`);
-      throw new Error(errMessage);
-    }
-  }
+      // Directly use Axios to make the post request
+      const response = await axios.post(nodeURL, payload);
 
-  private static async postRequest<Params, ResponseData>(
-    url: string,
-    params: Params,
-  ): Promise<ResponseData> {
-    try {
-      const { data }: { data: ResponseData } = await axios.post(url, params);
-      return data;
-    } catch (err) {
-      if (!(err instanceof AxiosError)) {
-        throw err;
+      // Ensure the response is in the expected format
+      const data: JsonRpcResult | JsonRpcError = response.data;
+
+      // Check if the response contains an error
+      if ('error' in data) {
+        throw new Error(data.error.message);
       }
-      const errMessage = `${err.message}: ${err.response?.data}`;
-      dbg(`ERROR ${url} - ${errMessage}`);
-      throw new Error(errMessage);
+
+      // Assuming the result will always be in the expected ResponseData format
+      return data.result as ResponseData;
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        console.error(
+          `ERROR ${nodeURL} - ${error.message}: ${JSON.stringify(
+            error.response.data,
+          )}`,
+        );
+        throw new Error(
+          `${error.message}: ${JSON.stringify(error.response.data)}`,
+        );
+      }
+      throw error;
     }
   }
 
@@ -87,29 +73,26 @@ export class POINodeRequest {
     index: number,
     merkleroot: string,
   ): Promise<boolean> => {
-    const chain = NETWORK_CONFIG[networkName].chain;
-    const route = `validate-txid-merkleroot/${chain.type}/${chain.id}`;
-    const url = POINodeRequest.getNodeRouteURL(nodeURL, route);
-    const isValid = await POINodeRequest.postRequest<
-      ValidateTxidMerklerootParams,
-      boolean
-    >(url, {
-      txidVersion,
-      tree,
-      index,
-      merkleroot,
-    });
+    const method = 'ppoi_validate_txid_merkleroot';
+    const params = { networkName, txidVersion, tree, index, merkleroot };
+
+    const isValid = await this.jsonRpcRequest<typeof params, boolean>(
+      nodeURL,
+      method,
+      params,
+    );
     return isValid;
   };
 
   static getNodeStatusAllNetworks = async (
     nodeURL: string,
   ): Promise<NodeStatusAllNetworks> => {
-    const route = `node-status-v2`;
-    const url = POINodeRequest.getNodeRouteURL(nodeURL, route);
+    const method = 'ppoi_node_status';
+    const nodeStatusAllNetworks = await this.jsonRpcRequest<
+      object,
+      NodeStatusAllNetworks
+    >(nodeURL, method, {});
 
-    const nodeStatusAllNetworks =
-      await POINodeRequest.getRequest<NodeStatusAllNetworks>(url);
     return nodeStatusAllNetworks;
   };
 
@@ -121,19 +104,21 @@ export class POINodeRequest {
     startIndex: number,
     endIndex: number,
   ): Promise<POISyncedListEvent[]> => {
+    const method = 'ppoi_poi_events';
     const chain = NETWORK_CONFIG[networkName].chain;
-    const route = `poi-events/${chain.type}/${chain.id}`;
-    const url = POINodeRequest.getNodeRouteURL(nodeURL, route);
 
-    const poiEvents = await POINodeRequest.postRequest<
-      GetPOIListEventRangeParams,
-      POISyncedListEvent[]
-    >(url, {
+    const params = {
+      chainType: chain.type,
+      chainID: chain.id,
       txidVersion,
       listKey,
       startIndex,
       endIndex,
-    });
+    };
+    const poiEvents = await this.jsonRpcRequest<
+      typeof params,
+      POISyncedListEvent[]
+    >(nodeURL, method, params);
     return poiEvents;
   };
 
@@ -146,18 +131,22 @@ export class POINodeRequest {
     endIndex: number,
   ): Promise<string[]> => {
     const chain = NETWORK_CONFIG[networkName].chain;
-    const route = `poi-merkletree-leaves/${chain.type}/${chain.id}`;
-    const url = POINodeRequest.getNodeRouteURL(nodeURL, route);
-
-    const poiMerkletreeLeaves = await POINodeRequest.postRequest<
-      GetPOIMerkletreeLeavesParams,
-      string[]
-    >(url, {
+    const method = 'ppoi_poi_merkletree_leaves';
+    const params = {
+      chainID: chain.id,
+      chainType: chain.type,
+      networkName,
       txidVersion,
       listKey,
       startIndex,
       endIndex,
-    });
+    };
+
+    const poiMerkletreeLeaves = await this.jsonRpcRequest<
+      typeof params,
+      string[]
+    >(nodeURL, method, params);
+
     return poiMerkletreeLeaves;
   };
 
@@ -169,17 +158,20 @@ export class POINodeRequest {
     bloomFilterSerialized: string,
   ): Promise<TransactProofData[]> => {
     const chain = NETWORK_CONFIG[networkName].chain;
-    const route = `transact-proofs/${chain.type}/${chain.id}`;
-    const url = POINodeRequest.getNodeRouteURL(nodeURL, route);
-
-    const transactProofs = await POINodeRequest.postRequest<
-      GetTransactProofsParams,
-      TransactProofData[]
-    >(url, {
-      listKey,
+    const method = 'ppoi_transact_proofs';
+    const params = {
+      chainID: chain.id,
+      chainType: chain.type,
+      networkName,
       txidVersion,
+      listKey,
       bloomFilterSerialized,
-    });
+    };
+
+    const transactProofs = await this.jsonRpcRequest<
+      typeof params,
+      TransactProofData[]
+    >(nodeURL, method, params);
     return transactProofs;
   };
 
@@ -190,16 +182,20 @@ export class POINodeRequest {
     bloomFilterSerialized: string,
   ): Promise<LegacyTransactProofData[]> => {
     const chain = NETWORK_CONFIG[networkName].chain;
-    const route = `legacy-transact-proofs/${chain.type}/${chain.id}`;
-    const url = POINodeRequest.getNodeRouteURL(nodeURL, route);
+    const method = 'ppoi_legacy_transact_proofs';
 
-    const transactProofs = await POINodeRequest.postRequest<
-      GetLegacyTransactProofsParams,
-      LegacyTransactProofData[]
-    >(url, {
+    const params = {
+      chainID: chain.id,
+      chainType: chain.type,
+      networkName,
       txidVersion,
       bloomFilterSerialized,
-    });
+    };
+
+    const transactProofs = await this.jsonRpcRequest<
+      typeof params,
+      LegacyTransactProofData[]
+    >(nodeURL, method, params);
     return transactProofs;
   };
 
@@ -211,17 +207,21 @@ export class POINodeRequest {
     bloomFilterSerialized: string,
   ): Promise<SignedBlockedShield[]> => {
     const chain = NETWORK_CONFIG[networkName].chain;
-    const route = `blocked-shields/${chain.type}/${chain.id}`;
-    const url = POINodeRequest.getNodeRouteURL(nodeURL, route);
+    const method = 'ppoi_blocked_shields';
 
-    const signedBlockedShields = await POINodeRequest.postRequest<
-      GetBlockedShieldsParams,
-      SignedBlockedShield[]
-    >(url, {
-      listKey,
+    const params = {
+      chainID: chain.id,
+      chainType: chain.type,
+      networkName,
       txidVersion,
+      listKey,
       bloomFilterSerialized,
-    });
+    };
+
+    const signedBlockedShields = await this.jsonRpcRequest<
+      typeof params,
+      SignedBlockedShield[]
+    >(nodeURL, method, params);
     return signedBlockedShields;
   };
 
@@ -233,14 +233,23 @@ export class POINodeRequest {
     transactProofData: TransactProofData,
   ): Promise<void> => {
     const chain = NETWORK_CONFIG[networkName].chain;
-    const route = `submit-transact-proof/${chain.type}/${chain.id}`;
-    const url = POINodeRequest.getNodeRouteURL(nodeURL, route);
+    const method = 'ppoi_submit_transact_proof';
 
-    await POINodeRequest.postRequest<SubmitTransactProofParams, void>(url, {
+    const params = {
+      chainID: chain.id,
+      chainType: chain.type,
+      networkName,
       txidVersion,
       listKey,
       transactProofData,
-    });
+    };
+
+    const response = await this.jsonRpcRequest<typeof params, void>(
+      nodeURL,
+      method,
+      params,
+    );
+    return response;
   };
 
   static submitLegacyTransactProof = async (
@@ -250,17 +259,23 @@ export class POINodeRequest {
     legacyTransactProofData: LegacyTransactProofData,
   ): Promise<void> => {
     const chain = NETWORK_CONFIG[networkName].chain;
-    const route = `submit-legacy-transact-proofs/${chain.type}/${chain.id}`;
-    const url = POINodeRequest.getNodeRouteURL(nodeURL, route);
+    const method = 'ppoi_submit_legacy_transact_proofs';
 
-    await POINodeRequest.postRequest<SubmitLegacyTransactProofParams, void>(
-      url,
-      {
-        txidVersion,
-        listKeys: [],
-        legacyTransactProofDatas: [legacyTransactProofData],
-      },
+    const params = {
+      chainID: chain.id,
+      chainType: chain.type,
+      networkName,
+      txidVersion,
+      listKeys: [],
+      legacyTransactProofDatas: [legacyTransactProofData],
+    };
+
+    const response = await this.jsonRpcRequest<typeof params, void>(
+      nodeURL,
+      method,
+      params,
     );
+    return response;
   };
 
   static submitSingleCommitmentProof = async (
@@ -270,16 +285,22 @@ export class POINodeRequest {
     singleCommitmentProofsData: SingleCommitmentProofsData,
   ): Promise<void> => {
     const chain = NETWORK_CONFIG[networkName].chain;
-    const route = `submit-single-commitment-proofs/${chain.type}/${chain.id}`;
-    const url = POINodeRequest.getNodeRouteURL(nodeURL, route);
+    const method = 'ppoi_submit_single_commitment_proofs';
 
-    await POINodeRequest.postRequest<SubmitSingleCommitmentProofsParams, void>(
-      url,
-      {
-        txidVersion,
-        singleCommitmentProofsData,
-      },
+    const params = {
+      chainID: chain.id,
+      chainType: chain.type,
+      networkName,
+      txidVersion,
+      singleCommitmentProofsData,
+    };
+
+    const response = await this.jsonRpcRequest<typeof params, void>(
+      nodeURL,
+      method,
+      params,
     );
+    return response;
   };
 
   static removeTransactProof = async (
@@ -291,26 +312,25 @@ export class POINodeRequest {
     railgunTxidIfHasUnshield: string,
   ): Promise<void> => {
     const chain = NETWORK_CONFIG[networkName].chain;
-    const route = `remove-transact-proof/${chain.type}/${chain.id}`;
-    const url = POINodeRequest.getNodeRouteURL(nodeURL, route);
-
-    if (!isListProvider()) {
-      // Cannot sign without list.
-      return;
-    }
+    const method = 'ppoi_remove_transact_proof';
 
     const signature = await signRemoveProof(
       blindedCommitmentsOut,
       railgunTxidIfHasUnshield,
     );
 
-    await POINodeRequest.postRequest<RemoveTransactProofParams, void>(url, {
+    const params = {
+      chainID: chain.id,
+      chainType: chain.type,
+      networkName,
       txidVersion,
       listKey,
       blindedCommitmentsOut,
       railgunTxidIfHasUnshield,
       signature,
-    });
+    };
+
+    await this.jsonRpcRequest<typeof params, void>(nodeURL, method, params);
   };
 
   static submitPOIEvent = async (
@@ -322,15 +342,24 @@ export class POINodeRequest {
     validatedMerkleroot: string,
   ): Promise<void> => {
     const chain = NETWORK_CONFIG[networkName].chain;
-    const route = `submit-poi-event/${chain.type}/${chain.id}`;
-    const url = POINodeRequest.getNodeRouteURL(nodeURL, route);
+    const method = 'ppoi_submit_poi_events';
 
-    await POINodeRequest.postRequest<SubmitPOIEventParams, void>(url, {
+    const params = {
+      chainID: chain.id,
+      chainType: chain.type,
+      networkName,
       txidVersion,
       listKey,
       signedPOIEvent,
       validatedMerkleroot,
-    });
+    };
+
+    const response = await this.jsonRpcRequest<typeof params, void>(
+      nodeURL,
+      method,
+      params,
+    );
+    return response;
   };
 
   static getMerkleProofs = async (
@@ -341,17 +370,22 @@ export class POINodeRequest {
     blindedCommitments: string[],
   ): Promise<MerkleProof[]> => {
     const chain = NETWORK_CONFIG[networkName].chain;
-    const route = `merkle-proofs/${chain.type}/${chain.id}`;
-    const url = POINodeRequest.getNodeRouteURL(nodeURL, route);
+    const method = 'ppoi_merkle_proofs';
 
-    return POINodeRequest.postRequest<GetMerkleProofsParams, MerkleProof[]>(
-      url,
-      {
-        txidVersion,
-        listKey,
-        blindedCommitments,
-      },
-    );
+    const params = {
+      chainID: chain.id,
+      chainType: chain.type,
+      networkName,
+      txidVersion,
+      listKey,
+      blindedCommitments,
+    };
+
+    const merkleProofs = await this.jsonRpcRequest<
+      typeof params,
+      MerkleProof[]
+    >(nodeURL, method, params);
+    return merkleProofs;
   };
 
   static getPOIStatusPerBlindedCommitment = async (
@@ -362,17 +396,22 @@ export class POINodeRequest {
     blindedCommitmentDatas: BlindedCommitmentData[],
   ): Promise<POIsPerBlindedCommitmentMap> => {
     const chain = NETWORK_CONFIG[networkName].chain;
-    const route = `pois-per-blinded-commitment/${chain.type}/${chain.id}`;
-    const url = POINodeRequest.getNodeRouteURL(nodeURL, route);
+    const method = 'ppoi_pois_per_blinded_commitment';
 
-    return POINodeRequest.postRequest<
-      GetPOIsPerBlindedCommitmentParams,
-      POIsPerBlindedCommitmentMap
-    >(url, {
+    const params = {
+      chainID: chain.id,
+      chainType: chain.type,
+      networkName,
       txidVersion,
       listKey,
       blindedCommitmentDatas,
-    });
+    };
+
+    const poisPerBlindedCommitment = await this.jsonRpcRequest<
+      typeof params,
+      POIsPerBlindedCommitmentMap
+    >(nodeURL, method, params);
+    return poisPerBlindedCommitment;
   };
 
   static validatePOIMerkleroots = async (
@@ -383,17 +422,23 @@ export class POINodeRequest {
     poiMerkleroots: string[],
   ): Promise<boolean> => {
     const chain = NETWORK_CONFIG[networkName].chain;
-    const route = `validate-poi-merkleroots/${chain.type}/${chain.id}`;
-    const url = POINodeRequest.getNodeRouteURL(nodeURL, route);
+    const method = 'ppoi_validate_poi_merkleroots';
 
-    return POINodeRequest.postRequest<ValidatePOIMerklerootsParams, boolean>(
-      url,
-      {
-        txidVersion,
-        listKey,
-        poiMerkleroots,
-      },
+    const params = {
+      chainID: chain.id,
+      chainType: chain.type,
+      networkName,
+      txidVersion,
+      listKey,
+      poiMerkleroots,
+    };
+
+    const isValid = await this.jsonRpcRequest<typeof params, boolean>(
+      nodeURL,
+      method,
+      params,
     );
+    return isValid;
   };
 
   static submitValidatedTxidAndMerkleroot = async (
@@ -404,8 +449,7 @@ export class POINodeRequest {
     merkleroot: string,
   ) => {
     const chain = NETWORK_CONFIG[networkName].chain;
-    const route = `submit-validated-txid/${chain.type}/${chain.id}`;
-    const url = POINodeRequest.getNodeRouteURL(nodeURL, route);
+    const method = 'ppoi_validated_txid';
 
     const listKey = await getListPublicKey();
 
@@ -416,15 +460,17 @@ export class POINodeRequest {
 
     const signature = await signValidatedTxidMerkleroot(txidIndex, merkleroot);
 
-    await POINodeRequest.postRequest<
-      SubmitValidatedTxidAndMerklerootParams,
-      void
-    >(url, {
+    const params = {
+      chainID: chain.id,
+      chainType: chain.type,
+      networkName,
       txidVersion,
       txidIndex,
       merkleroot,
       signature,
       listKey,
-    });
+    };
+
+    await this.jsonRpcRequest<typeof params, void>(nodeURL, method, params);
   };
 }
