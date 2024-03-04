@@ -7,6 +7,8 @@ import { NodeConfig } from './models/general-types';
 import { isListProvider } from './config/general';
 import debug from 'debug';
 import { isDefined } from '@railgun-community/shared-models';
+import inspector from 'node:inspector';
+import fs from 'node:fs';
 
 const dbg = debug('poi:main');
 
@@ -18,6 +20,36 @@ process.on('uncaughtException', (err: Error | string) => {
   dbg('uncaughtException');
   dbg(err);
 });
+
+const TOO_MUCH_MEMORY = 500_000_000; // 500MB in bytes
+setTimeout(() => {
+  if (process.memoryUsage().rss > TOO_MUCH_MEMORY) {
+    const datestamp = new Date()
+      .toISOString()
+      .replace(/-/g, '')
+      .replace(/:/g, '')
+      .split('.')[0];
+    const filename = `./profile-${datestamp}.heapsnapshot`;
+    const fd = fs.openSync(filename, 'w');
+
+    const session = new inspector.Session();
+    session.connect();
+
+    session.on('HeapProfiler.addHeapSnapshotChunk', m => {
+      fs.writeSync(fd, m.params.chunk);
+    });
+
+    session.post('HeapProfiler.takeHeapSnapshot', {}, (err: Error | null) => {
+      session.disconnect();
+      fs.closeSync(fd);
+      if (err) {
+        dbg('Error taking heap snapshot');
+        dbg(err);
+        fs.unlinkSync(filename);
+      }
+    });
+  }
+}, 5000);
 
 // eslint-disable-next-line @typescript-eslint/no-floating-promises
 (async () => {
