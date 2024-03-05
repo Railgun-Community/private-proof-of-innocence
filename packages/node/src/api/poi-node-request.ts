@@ -310,6 +310,11 @@ export class POINodeRequest {
     blindedCommitmentsOut: string[],
     railgunTxidIfHasUnshield: string,
   ): Promise<void> => {
+    if (!isListProvider()) {
+      // Cannot sign without list.
+      return;
+    }
+
     const chain = NETWORK_CONFIG[networkName].chain;
     const method = 'ppoi_remove_transact_proof';
 
