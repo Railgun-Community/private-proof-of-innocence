@@ -9,6 +9,7 @@ import { MOCK_LIST_KEYS } from '../tests/mocks.test';
 import sinon from 'sinon';
 import { POINodeRequest } from '../api/poi-node-request';
 import axios from 'axios';
+import * as ActiveNetworkProviders from '../rpc-providers/active-network-providers';
 
 chai.use(chaiAsPromised);
 
@@ -18,6 +19,8 @@ let nodeOnlyAggregator: ProofOfInnocenceNode;
 
 const PORT_1 = '3010';
 const PORT_2 = '3011';
+
+let initNetworkProvidersStub: sinon.SinonStub;
 
 describe('proof-of-innocence-node', () => {
   before(async function run() {
@@ -41,6 +44,13 @@ describe('proof-of-innocence-node', () => {
 
   beforeEach(async function () {
     this.timeout(20000);
+
+    // // Stub loadEngineProvider where failure occurs without internet connection during testing
+    // // No actual network calls should be happening during testing
+    // initNetworkProvidersStub = sinon
+    //   .stub(ActiveNetworkProviders, 'initNetworkProviders')
+    //   .resolves();
+
     await nodeOnlyAggregator.start();
     await nodeWithListProvider.start();
   });
@@ -49,6 +59,8 @@ describe('proof-of-innocence-node', () => {
     this.timeout(20000);
     await nodeOnlyAggregator.stop();
     await nodeWithListProvider.stop();
+
+    // initNetworkProvidersStub.restore();
   });
 
   it('Should start up a node with list provider', async () => {
@@ -84,11 +96,6 @@ describe('proof-of-innocence-node', () => {
       const nodeStatusAllNetworks = await axios.post(
         `${nodeURL}/`, // JSON-RPC endpoint
         jsonRpcRequest,
-      );
-
-      console.log(
-        'nodeStatusAllNetworks.data.result',
-        await nodeStatusAllNetworks.data.result,
       );
 
       return nodeStatusAllNetworks.data.result;

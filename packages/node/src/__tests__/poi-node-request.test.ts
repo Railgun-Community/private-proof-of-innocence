@@ -6,20 +6,17 @@ import axios from 'axios';
 
 describe('POINodeRequest', () => {
   let axiosPostStub: sinon.SinonStub;
-  let axiosGetStub: sinon.SinonStub;
 
   beforeEach(() => {
     axiosPostStub = sinon.stub(axios, 'post');
-    axiosGetStub = sinon.stub(axios, 'get');
   });
 
   afterEach(() => {
     axiosPostStub.restore();
-    axiosGetStub.restore();
   });
 
   it('Should validateRailgunTxidMerkleroot', async () => {
-    const nodeURL = '';
+    const nodeURL = 'http://localhost:8080';
     const networkName = NetworkName.Ethereum;
     const txidVersion = TXIDVersion.V2_PoseidonMerkle;
     const tree = 0;
@@ -27,7 +24,7 @@ describe('POINodeRequest', () => {
     const merkleroot = '';
 
     // Stub the axios post request
-    axiosPostStub.resolves({ data: true });
+    axiosPostStub.resolves({ data: { id: 0, result: true } });
 
     const result = await POINodeRequest.validateRailgunTxidMerkleroot(
       nodeURL,
@@ -45,7 +42,9 @@ describe('POINodeRequest', () => {
     const nodeURL = '';
 
     // Stub the axios get request
-    axiosGetStub.resolves({ data: { listKeys: [], forNetwork: {} } });
+    axiosPostStub.resolves({
+      data: { id: 0, result: { listKeys: [], forNetwork: {} } },
+    });
 
     const result = await POINodeRequest.getNodeStatusAllNetworks(nodeURL);
 
@@ -61,7 +60,7 @@ describe('POINodeRequest', () => {
     const endIndex = 0;
 
     // Stub the axios get request
-    axiosPostStub.resolves({ data: [] });
+    axiosPostStub.resolves({ data: { id: 0, result: [] } });
 
     const result = await POINodeRequest.getPOIListEventRange(
       nodeURL,
