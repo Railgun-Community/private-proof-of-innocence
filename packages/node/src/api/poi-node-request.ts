@@ -8,6 +8,7 @@ import {
   SingleCommitmentProofsData,
   MerkleProof,
   BlindedCommitmentData,
+  POIJSONRPCMethod,
 } from '@railgun-community/shared-models';
 import axios from 'axios';
 import {
@@ -27,7 +28,11 @@ export class POINodeRequest {
   private static async jsonRpcRequest<
     Params extends any[] | Record<string, any>,
     ResponseData,
-  >(nodeURL: string, method: string, params: Params): Promise<ResponseData> {
+  >(
+    nodeURL: string,
+    method: POIJSONRPCMethod,
+    params: Params,
+  ): Promise<ResponseData> {
     const payload: JsonRpcPayload = {
       jsonrpc: '2.0',
       method,
@@ -72,7 +77,7 @@ export class POINodeRequest {
     index: number,
     merkleroot: string,
   ): Promise<boolean> => {
-    const method = 'ppoi_validate_txid_merkleroot';
+    const method = POIJSONRPCMethod.ValidateTXIDMerkleroot;
     const params = { networkName, txidVersion, tree, index, merkleroot };
 
     const isValid = await this.jsonRpcRequest<typeof params, boolean>(
@@ -86,7 +91,7 @@ export class POINodeRequest {
   static getNodeStatusAllNetworks = async (
     nodeURL: string,
   ): Promise<NodeStatusAllNetworks> => {
-    const method = 'ppoi_node_status';
+    const method = POIJSONRPCMethod.NodeStatus;
     const nodeStatusAllNetworks = await this.jsonRpcRequest<
       object,
       NodeStatusAllNetworks
@@ -103,7 +108,7 @@ export class POINodeRequest {
     startIndex: number,
     endIndex: number,
   ): Promise<POISyncedListEvent[]> => {
-    const method = 'ppoi_poi_events';
+    const method = POIJSONRPCMethod.POIEvents;
     const chain = NETWORK_CONFIG[networkName].chain;
 
     const params = {
@@ -130,7 +135,7 @@ export class POINodeRequest {
     endIndex: number,
   ): Promise<string[]> => {
     const chain = NETWORK_CONFIG[networkName].chain;
-    const method = 'ppoi_poi_merkletree_leaves';
+    const method = POIJSONRPCMethod.POIMerkletreeLeaves;
     const params = {
       chainID: chain.id,
       chainType: chain.type,
@@ -157,7 +162,7 @@ export class POINodeRequest {
     bloomFilterSerialized: string,
   ): Promise<TransactProofData[]> => {
     const chain = NETWORK_CONFIG[networkName].chain;
-    const method = 'ppoi_transact_proofs';
+    const method = POIJSONRPCMethod.TransactProofs;
     const params = {
       chainID: chain.id,
       chainType: chain.type,
@@ -181,7 +186,7 @@ export class POINodeRequest {
     bloomFilterSerialized: string,
   ): Promise<LegacyTransactProofData[]> => {
     const chain = NETWORK_CONFIG[networkName].chain;
-    const method = 'ppoi_legacy_transact_proofs';
+    const method = POIJSONRPCMethod.LegacyTransactProofs;
 
     const params = {
       chainID: chain.id,
@@ -206,7 +211,7 @@ export class POINodeRequest {
     bloomFilterSerialized: string,
   ): Promise<SignedBlockedShield[]> => {
     const chain = NETWORK_CONFIG[networkName].chain;
-    const method = 'ppoi_blocked_shields';
+    const method = POIJSONRPCMethod.BlockedShields;
 
     const params = {
       chainID: chain.id,
@@ -232,7 +237,7 @@ export class POINodeRequest {
     transactProofData: TransactProofData,
   ): Promise<void> => {
     const chain = NETWORK_CONFIG[networkName].chain;
-    const method = 'ppoi_submit_transact_proof';
+    const method = POIJSONRPCMethod.SubmitTransactProof;
 
     const params = {
       chainID: chain.id,
@@ -258,7 +263,7 @@ export class POINodeRequest {
     legacyTransactProofData: LegacyTransactProofData,
   ): Promise<void> => {
     const chain = NETWORK_CONFIG[networkName].chain;
-    const method = 'ppoi_submit_legacy_transact_proofs';
+    const method = POIJSONRPCMethod.SubmitLegacyTransactProofs;
 
     const params = {
       chainID: chain.id,
@@ -284,7 +289,7 @@ export class POINodeRequest {
     singleCommitmentProofsData: SingleCommitmentProofsData,
   ): Promise<void> => {
     const chain = NETWORK_CONFIG[networkName].chain;
-    const method = 'ppoi_submit_single_commitment_proofs';
+    const method = POIJSONRPCMethod.SubmitSingleCommitmentProofs;
 
     const params = {
       chainID: chain.id,
@@ -316,7 +321,7 @@ export class POINodeRequest {
     }
 
     const chain = NETWORK_CONFIG[networkName].chain;
-    const method = 'ppoi_remove_transact_proof';
+    const method = POIJSONRPCMethod.RemoveTransactProof;
 
     const signature = await signRemoveProof(
       blindedCommitmentsOut,
@@ -346,7 +351,7 @@ export class POINodeRequest {
     validatedMerkleroot: string,
   ): Promise<void> => {
     const chain = NETWORK_CONFIG[networkName].chain;
-    const method = 'ppoi_submit_poi_events';
+    const method = POIJSONRPCMethod.SubmitPOIEvents;
 
     const params = {
       chainID: chain.id,
@@ -374,7 +379,7 @@ export class POINodeRequest {
     blindedCommitments: string[],
   ): Promise<MerkleProof[]> => {
     const chain = NETWORK_CONFIG[networkName].chain;
-    const method = 'ppoi_merkle_proofs';
+    const method = POIJSONRPCMethod.MerkleProofs;
 
     const params = {
       chainID: chain.id,
@@ -400,7 +405,7 @@ export class POINodeRequest {
     blindedCommitmentDatas: BlindedCommitmentData[],
   ): Promise<POIsPerBlindedCommitmentMap> => {
     const chain = NETWORK_CONFIG[networkName].chain;
-    const method = 'ppoi_pois_per_blinded_commitment';
+    const method = POIJSONRPCMethod.POIsPerBlindedCommitment;
 
     const params = {
       chainID: chain.id,
@@ -426,7 +431,7 @@ export class POINodeRequest {
     poiMerkleroots: string[],
   ): Promise<boolean> => {
     const chain = NETWORK_CONFIG[networkName].chain;
-    const method = 'ppoi_validate_poi_merkleroots';
+    const method = POIJSONRPCMethod.ValidatePOIMerkleroots;
 
     const params = {
       chainID: chain.id,
@@ -453,7 +458,7 @@ export class POINodeRequest {
     merkleroot: string,
   ) => {
     const chain = NETWORK_CONFIG[networkName].chain;
-    const method = 'ppoi_validated_txid';
+    const method = POIJSONRPCMethod.ValidatedTXID;
 
     const listKey = await getListPublicKey();
 

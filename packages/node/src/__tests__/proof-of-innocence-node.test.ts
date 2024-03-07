@@ -4,7 +4,7 @@ import chaiAsPromised from 'chai-as-promised';
 import { ProofOfInnocenceNode } from '../proof-of-innocence-node';
 import { TestMockListProviderExcludeSingleAddress } from '../tests/list-providers/test-mock-list-provider-exclude-single-address.test';
 import { PollStatus } from '../models/general-types';
-import { poll } from '@railgun-community/shared-models';
+import { POIJSONRPCMethod, poll } from '@railgun-community/shared-models';
 import { MOCK_LIST_KEYS } from '../tests/mocks.test';
 import sinon from 'sinon';
 import { POINodeRequest } from '../api/poi-node-request';
@@ -88,7 +88,7 @@ describe('proof-of-innocence-node', () => {
     const getNodeStatusAllNetworks_JSON_RPC_STUB = async (nodeURL: string) => {
       const jsonRpcRequest = {
         jsonrpc: '2.0',
-        method: 'ppoi_node_status',
+        method: POIJSONRPCMethod.NodeStatus,
         params: {},
         id: '1',
       };
