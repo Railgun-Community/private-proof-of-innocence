@@ -9,6 +9,7 @@ import debug from 'debug';
 import { isDefined } from '@railgun-community/shared-models';
 import inspector from 'node:inspector';
 import fs from 'node:fs';
+import path from 'node:path';
 
 const dbg = debug('poi:main');
 
@@ -21,15 +22,10 @@ process.on('uncaughtException', (err: Error | string) => {
   dbg(err);
 });
 
-const TOO_MUCH_MEMORY = 500_000_000; // 500MB in bytes
-setTimeout(() => {
-  if (process.memoryUsage().rss > TOO_MUCH_MEMORY) {
-    const datestamp = new Date()
-      .toISOString()
-      .replace(/-/g, '')
-      .replace(/:/g, '')
-      .split('.')[0];
-    const filename = `./profile-${datestamp}.heapsnapshot`;
+const TOO_MUCH_MEMORY = 700_000_000; // 700MB in bytes
+setInterval(() => {
+  const filename = path.resolve(path.join(__dirname, '../dump.heapsnapshot'));
+  if (!fs.existsSync(filename) && process.memoryUsage().rss > TOO_MUCH_MEMORY) {
     const fd = fs.openSync(filename, 'w');
 
     const session = new inspector.Session();
@@ -49,7 +45,7 @@ setTimeout(() => {
       }
     });
   }
-}, 5000);
+}, 10_000);
 
 // eslint-disable-next-line @typescript-eslint/no-floating-promises
 (async () => {
