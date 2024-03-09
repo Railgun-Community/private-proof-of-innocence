@@ -8,7 +8,7 @@
     "build": "npm run clean && tsc"
   },
   "dependencies": {
-    "@railgun-community/shared-models": "^6.3.2",
+    "@railgun-community/shared-models": "^6.4.0",
     "@railgun-community/wallet": "7.2.3",
     "axios": "^1.5.0",
     "ethers": "github:Railgun-Community/ethers.js#v6.7.10",

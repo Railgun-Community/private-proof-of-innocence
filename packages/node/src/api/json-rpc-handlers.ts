@@ -12,15 +12,6 @@ import {
   ValidationError,
 } from 'express-json-validator-middleware';
 import {
-  GetLegacyTransactProofsParams,
-  GetPOIListEventRangeParams,
-  GetPOIMerkletreeLeavesParams,
-  GetPOIsPerBlindedCommitmentParams,
-  RemoveTransactProofParams,
-  SubmitPOIEventParams,
-  SubmitValidatedTxidAndMerklerootParams,
-} from 'models/poi-types';
-import {
   getNodeStatusListKey,
   getNodeStatus_ROUTE,
   getPoiEvents,
@@ -59,19 +50,7 @@ import {
   ValidatePOIMerklerootsBodySchema,
   ValidateTxidMerklerootBodySchema,
 } from './schemas';
-import {
-  GetBlockedShieldsParams,
-  GetLatestValidatedRailgunTxidParams,
-  GetMerkleProofsParams,
-  GetPOIsPerListParams,
-  GetTransactProofsParams,
-  SubmitLegacyTransactProofParams,
-  SubmitSingleCommitmentProofsParams,
-  SubmitTransactProofParams,
-  ValidatePOIMerklerootsParams,
-  ValidateTxidMerklerootParams,
-  isDefined,
-} from '@railgun-community/shared-models';
+import { isDefined } from '@railgun-community/shared-models';
 import { JsonRpcError } from 'ethers';
 
 export type LogicFunction = (params?: any) => Promise<any>;
@@ -132,115 +111,48 @@ export const getLogicFunctionMap = (
     },
     ppoi_poi_events: {
       logicFunction: () =>
-        getPoiEvents(
-          params.chainType,
-          params.chainID,
-          params as GetPOIListEventRangeParams & {
-            chainType: string;
-            chainID: string;
-          },
-        ),
+        getPoiEvents(params.chainType, params.chainID, params),
       schema: ExtendedGetPOIListEventRangeBodySchema,
     },
     ppoi_poi_merkletree_leaves: {
       logicFunction: () =>
-        getPOIMerkletreeLeaves(
-          params.chainType,
-          params.chainID,
-          params as GetPOIMerkletreeLeavesParams & {
-            chainType: string;
-            chainID: string;
-          },
-        ),
+        getPOIMerkletreeLeaves(params.chainType, params.chainID, params),
       schema: GetPOIMerkletreeLeavesBodySchema,
     },
     ppoi_transact_proofs: {
       logicFunction: async () =>
-        getTransactProofs(
-          params.chainType,
-          params.chainID,
-          params as GetTransactProofsParams & {
-            chainType: string;
-            chainID: string;
-          },
-        ),
+        getTransactProofs(params.chainType, params.chainID, params),
       schema: GetTransactProofsBodySchema,
     },
     ppoi_legacy_transact_proofs: {
       logicFunction: async () =>
-        getLegacyTransactProofs(
-          params.chainType,
-          params.chainID,
-          params as GetLegacyTransactProofsParams & {
-            chainType: string;
-            chainID: string;
-          },
-        ),
+        getLegacyTransactProofs(params.chainType, params.chainID, params),
       schema: GetLegacyTransactProofsBodySchema,
     },
     ppoi_blocked_shields: {
       logicFunction: async () =>
-        getBlockedShields(
-          params.chainType,
-          params.chainID,
-          params as GetBlockedShieldsParams & {
-            chainType: string;
-            chainID: string;
-          },
-        ),
+        getBlockedShields(params.chainType, params.chainID, params),
       schema: GetBlockedShieldsBodySchema,
     },
     ppoi_submit_poi_events: {
       logicFunction: () =>
-        submitPOIEvent(
-          params.chainType,
-          params.chainID,
-          params as SubmitPOIEventParams & {
-            chainType: string;
-            chainID: string;
-          },
-          dbg,
-        ),
+        submitPOIEvent(params.chainType, params.chainID, params, dbg),
       schema: null,
     },
     ppoi_submit_validated_txid: {
       logicFunction: () =>
-        submitValidatedTxid(
-          params.chainType,
-          params.chainID,
-          params as SubmitValidatedTxidAndMerklerootParams & {
-            chainType: string;
-            chainID: string;
-          },
-          dbg,
-        ),
+        submitValidatedTxid(params.chainType, params.chainID, params, dbg),
       schema: SubmitValidatedTxidBodySchema,
     },
     ppoi_remove_transact_proof: {
       logicFunction: () =>
-        removeTransactProof(
-          params.chainType,
-          params.chainID,
-          params as RemoveTransactProofParams & {
-            chainType: string;
-            chainID: string;
-          },
-          dbg,
-        ),
+        removeTransactProof(params.chainType, params.chainID, params, dbg),
       schema: RemoveTransactProofBodySchema,
     },
     // *** Client methods
     ppoi_submit_transact_proof: {
       logicFunction: () =>
-        submitTransactProof(
-          params.chainType,
-          params.chainID,
-          params as SubmitTransactProofParams & {
-            chainType: string;
-            chainID: string;
-          },
-          dbg,
-        ),
+        submitTransactProof(params.chainType, params.chainID, params, dbg),
       schema: SubmitTransactProofBodySchema,
     },
     ppoi_submit_legacy_transact_proofs: {
@@ -248,10 +160,7 @@ export const getLogicFunctionMap = (
         submitLegacyTransactProofs(
           params.chainType,
           params.chainID,
-          params as SubmitLegacyTransactProofParams & {
-            chainType: string;
-            chainID: string;
-          },
+          params,
           dbg,
         ),
       schema: SubmitLegacyTransactProofsBodySchema,
@@ -261,84 +170,39 @@ export const getLogicFunctionMap = (
         submitSingleCommitmentProofs(
           params.chainType,
           params.chainID,
-          params as SubmitSingleCommitmentProofsParams & {
-            chainType: string;
-            chainID: string;
-          },
+          params,
           dbg,
         ),
       schema: SubmitSingleCommitmentProofsBodySchema,
     },
     ppoi_pois_per_list: {
       logicFunction: () =>
-        getPOIsPerList(
-          params.chainType,
-          params.chainID,
-          params as GetPOIsPerListParams & {
-            chainType: string;
-            chainID: string;
-          },
-        ),
+        getPOIsPerList(params.chainType, params.chainID, params),
       schema: GetPOIsPerListBodySchema,
     },
     ppoi_pois_per_blinded_commitment: {
       logicFunction: () =>
-        getPOIsPerBlindedCommitment(
-          params.chainType,
-          params.chainID,
-          params as GetPOIsPerBlindedCommitmentParams & {
-            chainType: string;
-            chainID: string;
-          },
-        ),
+        getPOIsPerBlindedCommitment(params.chainType, params.chainID, params),
       schema: GetPOIsPerBlindedCommitmentBodySchema,
     },
     ppoi_merkle_proofs: {
       logicFunction: () =>
-        getMerkleProofs(
-          params.chainType,
-          params.chainID,
-          params as GetMerkleProofsParams & {
-            chainType: string;
-            chainID: string;
-          },
-        ),
+        getMerkleProofs(params.chainType, params.chainID, params),
       schema: GetMerkleProofsBodySchema,
     },
     ppoi_validated_txid: {
       logicFunction: () =>
-        getValidatedTxid(
-          params.chainType,
-          params.chainID,
-          params as GetLatestValidatedRailgunTxidParams & {
-            chainType: string;
-            chainID: string;
-          },
-        ),
+        getValidatedTxid(params.chainType, params.chainID, params),
       schema: GetLatestValidatedRailgunTxidBodySchema,
     },
     ppoi_validate_txid_merkleroot: {
       logicFunction: () =>
-        validateTxidMerkleroot(
-          params.chainType,
-          params.chainID,
-          params as ValidateTxidMerklerootParams & {
-            chainType: string;
-            chainID: string;
-          },
-        ),
+        validateTxidMerkleroot(params.chainType, params.chainID, params),
       schema: ValidateTxidMerklerootBodySchema,
     },
     ppoi_validate_poi_merkleroots: {
       logicFunction: () =>
-        validatePoiMerkleroots(
-          params.chainType,
-          params.chainID,
-          params as ValidatePOIMerklerootsParams & {
-            chainType: string;
-            chainID: string;
-          },
-        ),
+        validatePoiMerkleroots(params.chainType, params.chainID, params),
       schema: ValidatePOIMerklerootsBodySchema,
     },
   };

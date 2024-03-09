@@ -454,6 +454,8 @@ describe('api', function () {
     const chainID = '5';
 
     const body: SubmitTransactProofParams = {
+      chainType,
+      chainID,
       txidVersion: TXIDVersion.V2_PoseidonMerkle,
       listKey: listKey,
       transactProofData: {
@@ -528,6 +530,8 @@ describe('api', function () {
     isListProviderStub.callsFake(() => true);
 
     const body: SubmitTransactProofParams = {
+      chainType,
+      chainID,
       txidVersion: TXIDVersion.V2_PoseidonMerkle,
       listKey: 'fake_list_key',
       transactProofData: {
@@ -709,6 +713,8 @@ describe('api', function () {
     );
 
     const body: GetPOIsPerListParams = {
+      chainType,
+      chainID,
       txidVersion,
       listKeys: [listKey],
       blindedCommitmentDatas: blindedCommitmentDatas,
@@ -729,6 +735,8 @@ describe('api', function () {
     const chainID = '5';
 
     const body: GetMerkleProofsParams = {
+      chainType,
+      chainID,
       txidVersion: TXIDVersion.V2_PoseidonMerkle,
       listKey: listKey,
       blindedCommitments: ['', ''],
@@ -778,6 +786,8 @@ describe('api', function () {
     isListProviderStub.callsFake(() => true);
 
     const body: GetMerkleProofsParams = {
+      chainType,
+      chainID,
       txidVersion: TXIDVersion.V2_PoseidonMerkle,
       listKey: 'fake_list_key',
       blindedCommitments: ['', ''],
@@ -801,6 +811,8 @@ describe('api', function () {
     isListProviderStub.callsFake(() => true);
 
     const body: GetMerkleProofsParams = {
+      chainType,
+      chainID,
       txidVersion: TXIDVersion.V2_PoseidonMerkle,
       listKey: listKey,
       blindedCommitments: Array.from(
@@ -853,6 +865,8 @@ describe('api', function () {
     const chainID = '5';
 
     const body: SubmitLegacyTransactProofParams = {
+      chainType,
+      chainID,
       txidVersion: TXIDVersion.V2_PoseidonMerkle,
       listKeys: ['test_list'],
       legacyTransactProofDatas: [
