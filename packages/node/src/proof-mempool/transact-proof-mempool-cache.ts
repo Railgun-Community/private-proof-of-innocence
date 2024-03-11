@@ -6,6 +6,7 @@ import {
 import { POINodeCountingBloomFilter } from '../util/poi-node-bloom-filters';
 import { CountingBloomFilter } from 'bloom-filters';
 import { Config } from '../config/config';
+import dbg from 'debug';
 
 type BlindedCommitmentMap = Map<string, TransactProofData>;
 // { listKey: {networkName: { txidVersion: {getBlindedCommitmentsCacheString: TransactProofData} } } }
@@ -116,6 +117,17 @@ export class TransactProofMempoolCache {
     txidVersion: TXIDVersion,
     transactProofData: TransactProofData,
   ) {
+    dbg('transactProofMempoolCache:addToCache')(
+      'listKey:',
+      listKey,
+      'networkName:',
+      networkName,
+      'txidVersion:',
+      txidVersion,
+      'transactProofData:',
+      transactProofData,
+    );
+
     const cache = this.getCache(listKey, networkName, txidVersion);
 
     cache.set(
@@ -142,6 +154,19 @@ export class TransactProofMempoolCache {
     blindedCommitmentsOut: string[],
     railgunTxidIfHasUnshield: string,
   ) {
+    dbg('transactProofMempoolCache:removeFromCache')(
+      'listKey:',
+      listKey,
+      'networkName:',
+      networkName,
+      'txidVersion:',
+      txidVersion,
+      'blindedCommitmentsOut:',
+      blindedCommitmentsOut,
+      'railgunTxidIfHasUnshield:',
+      railgunTxidIfHasUnshield,
+    );
+
     const cache = this.getCache(listKey, networkName, txidVersion);
     cache.delete(
       this.getBlindedCommitmentsCacheString(
@@ -183,6 +208,19 @@ export class TransactProofMempoolCache {
     blindedCommitmentsOut: string[],
     railgunTxidIfHasUnshield: string,
   ) {
+    dbg('transactProofMempoolCache:addToBloomFilter')(
+      'listKey:',
+      listKey,
+      'networkName:',
+      networkName,
+      'txidVersion:',
+      txidVersion,
+      'blindedCommitmentsOut:',
+      blindedCommitmentsOut,
+      'railgunTxidIfHasUnshield:',
+      railgunTxidIfHasUnshield,
+    );
+
     this.getBloomFilter(listKey, networkName, txidVersion).add(
       this.getBlindedCommitmentsCacheString(
         blindedCommitmentsOut,
@@ -198,6 +236,19 @@ export class TransactProofMempoolCache {
     blindedCommitmentsOut: string[],
     railgunTxidIfHasUnshield: string,
   ) {
+    dbg('transactProofMempoolCache:removeFromBloomFilter')(
+      'listKey:',
+      listKey,
+      'networkName:',
+      networkName,
+      'txidVersion:',
+      txidVersion,
+      'blindedCommitmentsOut:',
+      blindedCommitmentsOut,
+      'railgunTxidIfHasUnshield:',
+      railgunTxidIfHasUnshield,
+    );
+
     this.getBloomFilter(listKey, networkName, txidVersion).remove(
       this.getBlindedCommitmentsCacheString(
         blindedCommitmentsOut,
