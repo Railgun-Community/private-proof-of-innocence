@@ -8,8 +8,11 @@ const NUMBER_OF_HASHES = 20;
 const SEED = 0;
 
 export class POINodeBloomFilter {
-  static create(): BloomFilter {
-    const filter = new BloomFilter(SIZE_IN_BITS, NUMBER_OF_HASHES);
+  static create(
+    size: number = SIZE_IN_BITS,
+    hashes: number = NUMBER_OF_HASHES,
+  ): BloomFilter {
+    const filter = new BloomFilter(size, hashes);
     filter._seed = SEED;
     return filter;
   }
@@ -28,7 +31,7 @@ export class POINodeBloomFilter {
 export class POINodeCountingBloomFilter {
   static create(
     size: number = SIZE_IN_BITS,
-    hashes = NUMBER_OF_HASHES,
+    hashes: number = NUMBER_OF_HASHES,
   ): CountingBloomFilter {
     const filter = new CountingBloomFilter(size, hashes);
     filter._seed = SEED;

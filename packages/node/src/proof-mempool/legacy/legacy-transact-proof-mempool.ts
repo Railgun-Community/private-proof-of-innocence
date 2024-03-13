@@ -4,7 +4,7 @@ import {
   LegacyTransactProofData,
   isDefined,
 } from '@railgun-community/shared-models';
-import { POINodeCountingBloomFilter } from '../../util/poi-node-bloom-filters';
+import { POINodeBloomFilter } from '../../util/poi-node-bloom-filters';
 import { POIOrderedEventsDatabase } from '../../database/databases/poi-ordered-events-database';
 import { RailgunTxidMerkletreeManager } from '../../railgun-txids/railgun-txid-merkletree-manager';
 import { QueryLimits } from '../../config/query-limits';
@@ -341,7 +341,7 @@ export class LegacyTransactProofMempool {
         txidVersion,
       );
 
-    const bloomFilter = POINodeCountingBloomFilter.deserialize(
+    const bloomFilter = POINodeBloomFilter.deserialize(
       countingBloomFilterSerialized,
     );
 

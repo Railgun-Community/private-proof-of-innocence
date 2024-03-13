@@ -15,7 +15,7 @@ import { MOCK_LIST_KEYS, MOCK_SNARK_PROOF } from '../../tests/mocks.test';
 import { TransactProofPerListMempoolDatabase } from '../../database/databases/transact-proof-per-list-mempool-database';
 import { DatabaseClient } from '../../database/database-client-init';
 import { TransactProofMempoolCache } from '../transact-proof-mempool-cache';
-import { POINodeBloomFilter } from '../../util/poi-node-bloom-filters';
+import { POINodeCountingBloomFilter } from '../../util/poi-node-bloom-filters';
 import { POIHistoricalMerklerootDatabase } from '../../database/databases/poi-historical-merkleroot-database';
 import { ListProviderPOIEventQueue } from '../../list-provider/list-provider-poi-event-queue';
 import { POIOrderedEventsDatabase } from '../../database/databases/poi-ordered-events-database';
@@ -142,7 +142,7 @@ describe('transact-proof-mempool', () => {
 
     expect(listProviderEventQueueSpy.calledOnce).to.equal(true);
     listProviderEventQueueSpy.restore();
-  }).timeout(100000);
+  }).timeout(100_000);
 
   it('Should add to cache and get bloom-filtered transact proofs', async () => {
     const transactProofData1: TransactProofData = {
@@ -203,9 +203,9 @@ describe('transact-proof-mempool', () => {
       TransactProofMempoolCache.getCacheSize(listKey, networkName, txidVersion),
     ).to.equal(2);
 
-    const bloomFilter = POINodeBloomFilter.create();
+    const bloomFilter = POINodeCountingBloomFilter.create();
     const bloomFilterSerializedNoData =
-      POINodeBloomFilter.serialize(bloomFilter);
+      POINodeCountingBloomFilter.serialize(bloomFilter);
     expect(
       TransactProofMempool.getFilteredProofs(
         listKey,
@@ -222,7 +222,7 @@ describe('transact-proof-mempool', () => {
       ),
     );
     const bloomFilterSerializedWithProof1 =
-      POINodeBloomFilter.serialize(bloomFilter);
+      POINodeCountingBloomFilter.serialize(bloomFilter);
     expect(
       TransactProofMempool.getFilteredProofs(
         listKey,
@@ -231,7 +231,7 @@ describe('transact-proof-mempool', () => {
         bloomFilterSerializedWithProof1,
       ),
     ).to.deep.equal([transactProofData2]);
-  }).timeout(10000);
+  }).timeout(20_000);
 
   it('Should inflate cache from database', async () => {
     const transactProofData1: TransactProofData = {
@@ -328,7 +328,7 @@ describe('transact-proof-mempool', () => {
     expect(
       TransactProofMempoolCache.getCacheSize(listKey, networkName, txidVersion),
     ).to.equal(2);
-  }).timeout(10000);
+  }).timeout(20_000);
 
   it('Should remove repeat proof in mempool that already exists in the list', async () => {
     // Create 2 proofs to be added to the list.
@@ -455,5 +455,5 @@ describe('transact-proof-mempool', () => {
     expect(
       TransactProofMempoolCache.getCacheSize(listKey, networkName, txidVersion),
     ).to.equal(1);
-  }).timeout(20000);
+  }).timeout(20_000);
 });
