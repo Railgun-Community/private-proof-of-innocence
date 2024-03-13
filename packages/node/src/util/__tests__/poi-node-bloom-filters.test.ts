@@ -30,12 +30,13 @@ describe('poi-node-bloom-filters', () => {
   });
 
   it('Should create serializable CountingBloomFilter', async () => {
-    const countingBloomFilter = POINodeCountingBloomFilter.create();
+    const countingBloomFilter = POINodeCountingBloomFilter.create(6, 3);
 
     countingBloomFilter.add('hello');
     countingBloomFilter.add('world');
 
     expect(countingBloomFilter.has('hello')).to.be.true;
+    expect(countingBloomFilter.has('world')).to.be.true;
 
     countingBloomFilter.remove('hello');
 
@@ -45,9 +46,9 @@ describe('poi-node-bloom-filters', () => {
 
     const serialized =
       POINodeCountingBloomFilter.serialize(countingBloomFilter);
-    const deserialized = POINodeCountingBloomFilter.deserialize(serialized);
+    const deserialized = POINodeCountingBloomFilter.deserialize(serialized, 6, 3);
 
-    expect(countingBloomFilter.has('hello')).to.be.false;
+    expect(deserialized.has('hello')).to.be.false;
     expect(deserialized.has('world')).to.be.true;
     expect(deserialized.has('friend')).to.be.false;
   });
