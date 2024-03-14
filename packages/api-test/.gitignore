@@ -1,0 +1,28 @@
+# OSX
+.DS_Store
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+package-lock.json
+dist/
+
+# Local db
+test.db
+engine.db
+mongo.db
+mongo.test.db
+
+# Env
+.env
+
+# Test
+.nyc_output
+coverage/
+
+# Prover Artifacts
+artifacts-v*/
+
+# Amazon DB public credentials
+global-bundle.pem

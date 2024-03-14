@@ -22,7 +22,6 @@ import {
   CollectionName,
   DBFilter,
   DBIndexSpec,
-  DBMaxMin,
   DBStream,
 } from '../models/database-types';
 import { networkForName } from '../config/general';
@@ -107,19 +106,11 @@ export abstract class AbstractDatabase<T extends Document> {
   }
 
   protected async findAll(
-    filter?: DBFilter<T>,
+    filter?: Filter<T>,
     sort?: Sort,
-    max?: DBMaxMin<T>,
-    min?: DBMaxMin<T>,
     limit?: number,
   ): Promise<T[]> {
     let cursor = this.collection.find();
-    if (isDefined(max)) {
-      cursor = cursor.max(max).hint(Object.keys(max));
-    }
-    if (isDefined(min)) {
-      cursor = cursor.min(min).hint(Object.keys(min));
-    }
     if (isDefined(filter)) {
       cursor = cursor.filter(filter);
     }
@@ -150,6 +141,12 @@ export abstract class AbstractDatabase<T extends Document> {
     return this.collection.countDocuments(filter);
   }
 
+  private getIndexName(indexSpec: DBIndexSpec<T>) {
+    return indexSpec
+      .map((indexKey: keyof T) => `${indexKey as string}_1`)
+      .join('_');
+  }
+
   protected async createIndex(
     indexSpec: DBIndexSpec<T>,
     options?: CreateIndexesOptions,
@@ -160,7 +157,7 @@ export abstract class AbstractDatabase<T extends Document> {
 
     // Check that the combined length of the collection name and index name is less than 63 characters
     const collectionName = this.collection.collectionName;
-    const indexName = options?.name ?? indexSpec.join('_');
+    const indexName = options?.name ?? this.getIndexName(indexSpec);
     const combinedLength = collectionName.length + indexName.length;
     if (combinedLength > 63) {
       throw new Error(
@@ -169,12 +166,50 @@ export abstract class AbstractDatabase<T extends Document> {
     }
 
     try {
-      return await this.collection.createIndex(indexSpec as string[], options);
+      const createdIndexName = await this.collection.createIndex(
+        indexSpec as string[],
+        options,
+      );
+      if (createdIndexName !== indexName) {
+        this.dbg(
+          `Unexpected indexName: got ${createdIndexName}, expected ${indexName}`,
+        );
+      }
     } catch (err) {
       this.dbg(
         `Error while creating index with spec: ${JSON.stringify(
           indexSpec,
         )} and options: ${JSON.stringify(options)}`,
+      );
+      this.dbg(err.message);
+      throw err;
+    }
+  }
+
+  async indexExists(indexes: string[], unique: boolean): Promise<boolean> {
+    const existingIndexes = await this.listCollectionIndexes();
+    return isDefined(
+      existingIndexes.find(index => {
+        if (unique !== (index.unique ?? false)) {
+          return false;
+        }
+        if (Object.keys(index.key).length !== indexes.length) {
+          return false;
+        }
+        return indexes.every(indexName => {
+          return 'key' in index && indexName in index.key;
+        });
+      }),
+    );
+  }
+
+  async dropIndex(indexSpec: DBIndexSpec<T>) {
+    try {
+      const indexName = this.getIndexName(indexSpec);
+      return await this.collection.dropIndex(indexName);
+    } catch (err) {
+      this.dbg(
+        `Error while dropping index with spec: ${JSON.stringify(indexSpec)}`,
       );
       this.dbg(err.message);
       throw err;

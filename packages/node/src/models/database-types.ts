@@ -125,6 +125,7 @@ export type POIMerkletreeDBItem = {
 export type POIHistoricalMerklerootDBItem = {
   listKey: string;
   rootHash: string;
+  index: number;
 };
 
 // DO NOT CHANGE FIELDS WITHOUT CLEARING OR MIGRATING THE DB.

@@ -20,18 +20,46 @@ import { TransactProofMempoolPruner } from './transact-proof-mempool-pruner';
 import { tryValidateRailgunTxidOccurredBeforeBlockNumber } from '../engine/wallet';
 import { TransactProofEventMatcher } from './transact-proof-event-matcher';
 import { POIMerkletreeManager } from '../poi-events/poi-merkletree-manager';
+import { sha256Hash } from '../util/hash';
 
 const dbg = debug('poi:transact-proof-mempool');
 
 const VALIDATION_ERROR_TEXT = 'Validation error';
 
 export class TransactProofMempool {
+  private static doNotAddProofCache = new Map<string, boolean>();
+  private static alreadyForwardedProofCache = new Map<string, boolean>();
+
+  /**
+   * Check if proof has been previously added to doNotAddProofCache.
+   * Determine if proof should be added to mempool (shouldAdd).
+   * Inserts transact proof into TransactProofPerListMempoolDatabase.
+   * Adds transact proof to TransactProofMempoolCache.
+   * Adds transact proof to list (tryAddToList).
+   *
+   * @param listKey
+   * @param networkName
+   * @param txidVersion
+   * @param transactProofData
+   * @returns
+   */
   static async submitProof(
     listKey: string,
     networkName: NetworkName,
     txidVersion: TXIDVersion,
     transactProofData: TransactProofData,
   ) {
+    const doNotAddProofCacheHash = sha256Hash({
+      listKey,
+      networkName,
+      txidVersion,
+      transactProofData,
+    });
+    if (this.doNotAddProofCache.has(doNotAddProofCacheHash)) {
+      dbg('Do not add transact proof - cache hit');
+      return;
+    }
+
     const shouldAdd = await this.shouldAdd(
       listKey,
       networkName,
@@ -39,6 +67,8 @@ export class TransactProofMempool {
       transactProofData,
     );
     if (!shouldAdd) {
+      this.doNotAddProofCache.set(doNotAddProofCacheHash, true);
+      dbg('Do not add transact proof - shouldAdd is false');
       return;
     }
 
@@ -74,6 +104,18 @@ export class TransactProofMempool {
       return;
     }
     try {
+      const cacheHash = sha256Hash({
+        nodeURL,
+        networkName,
+        txidVersion,
+        listKey,
+        transactProofData,
+      });
+      if (this.alreadyForwardedProofCache.has(cacheHash)) {
+        dbg('Already pushed proof to destination node');
+        return;
+      }
+
       await PushSync.sendNodeRequest(
         nodeURL,
         async nodeURL => {
@@ -87,6 +129,9 @@ export class TransactProofMempool {
         },
         true, // shouldThrow
       );
+
+      // Cache sha hash of the transact proof contents, so that we don't push it again.
+      this.alreadyForwardedProofCache.set(cacheHash, true);
     } catch (err) {
       dbg(
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -109,7 +154,6 @@ export class TransactProofMempool {
     transactProofData: TransactProofData,
   ): Promise<void> {
     if (ListProviderPOIEventQueue.listKey !== listKey) {
-      // Immediately push to destination node, by its listKey
       await this.pushProofToDestinationNode(
         listKey,
         networkName,
@@ -236,6 +280,16 @@ export class TransactProofMempool {
       );
     if (orderedEventsExist) {
       dbg('Event already exists for every blinded commitment');
+
+      // Remove proof from mempool.
+      await TransactProofMempoolPruner.removeProof(
+        listKey,
+        networkName,
+        txidVersion,
+        transactProofData.blindedCommitmentsOut,
+        transactProofData.railgunTxidIfHasUnshield,
+        true, // shouldSendNodeRequest
+      );
       return false;
     }
 

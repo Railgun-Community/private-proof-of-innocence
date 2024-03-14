@@ -3,13 +3,17 @@ import {
   POIEventLengths,
   POIEventType,
   TXIDVersion,
+  isDefined,
+  removeUndefineds,
 } from '@railgun-community/shared-models';
 import { POIOrderedEventsDatabase } from '../database/databases/poi-ordered-events-database';
-import { SignedPOIEvent } from '../models/poi-types';
+import { POISyncedListEvent, SignedPOIEvent } from '../models/poi-types';
 import { verifyPOIEvent } from '../util/ed25519';
 import { POIMerkletreeManager } from './poi-merkletree-manager';
 import { TransactProofMempoolPruner } from '../proof-mempool/transact-proof-mempool-pruner';
 import debug from 'debug';
+import { POIMerkletreeDatabase } from '../database/databases/poi-merkletree-database';
+import { POIHistoricalMerklerootDatabase } from '../database/databases/poi-historical-merkleroot-database';
 
 const dbg = debug('poi:event-list');
 
@@ -79,28 +83,51 @@ export class POIEventList {
     txidVersion: TXIDVersion,
     startIndex: number,
     endIndex: number,
-  ): Promise<SignedPOIEvent[]> {
+  ): Promise<POISyncedListEvent[]> {
     const db = new POIOrderedEventsDatabase(networkName, txidVersion);
     const dbEvents = await db.getPOIEvents(listKey, startIndex, endIndex);
 
-    return dbEvents.map(dbEvent => {
-      const { index, blindedCommitment, signature, type } = dbEvent;
-      return {
-        index,
-        blindedCommitment,
-        signature,
-        type,
-      };
-    });
+    return removeUndefineds(
+      await Promise.all(
+        dbEvents.map(async dbEvent => {
+          const { index, blindedCommitment, signature, type } = dbEvent;
+
+          const historicalMerkleroot =
+            await POIMerkletreeManager.getHistoricalMerkleroot(
+              listKey,
+              networkName,
+              txidVersion,
+              index,
+            );
+
+          if (!isDefined(historicalMerkleroot)) {
+            dbg(
+              `WARNING: No historical merkleroot for list ${listKey} network ${networkName}, index ${index}`,
+            );
+            return undefined;
+          }
+
+          return {
+            signedPOIEvent: {
+              index,
+              blindedCommitment,
+              signature,
+              type,
+            },
+            validatedMerkleroot: historicalMerkleroot,
+          };
+        }),
+      ),
+    );
   }
 
-  static async verifyAndAddSignedPOIEvents(
+  static async verifyAndAddSignedPOIEventsWithValidatedMerkleroots(
     listKey: string,
     networkName: NetworkName,
     txidVersion: TXIDVersion,
-    signedPOIEvents: SignedPOIEvent[],
+    poiListSyncedEvents: POISyncedListEvent[],
   ): Promise<void> {
-    for (const signedPOIEvent of signedPOIEvents) {
+    for (const { signedPOIEvent, validatedMerkleroot } of poiListSyncedEvents) {
       const verified = await verifyPOIEvent(signedPOIEvent, listKey);
       if (!verified) {
         throw new Error(`POI event failed verification`);
@@ -110,6 +137,7 @@ export class POIEventList {
         networkName,
         txidVersion,
         signedPOIEvent,
+        validatedMerkleroot,
       );
     }
   }
@@ -119,6 +147,38 @@ export class POIEventList {
     networkName: NetworkName,
     txidVersion: TXIDVersion,
     signedPOIEvent: SignedPOIEvent,
+    validatedMerkleroot: string,
+  ) {
+    return this.addValidSignedPOIEventOptionalValidatedMerkleroot(
+      listKey,
+      networkName,
+      txidVersion,
+      signedPOIEvent,
+      validatedMerkleroot,
+    );
+  }
+
+  static async addValidSignedPOIEventOwnedList(
+    listKey: string,
+    networkName: NetworkName,
+    txidVersion: TXIDVersion,
+    signedPOIEvent: SignedPOIEvent,
+  ) {
+    return this.addValidSignedPOIEventOptionalValidatedMerkleroot(
+      listKey,
+      networkName,
+      txidVersion,
+      signedPOIEvent,
+      undefined,
+    );
+  }
+
+  private static async addValidSignedPOIEventOptionalValidatedMerkleroot(
+    listKey: string,
+    networkName: NetworkName,
+    txidVersion: TXIDVersion,
+    signedPOIEvent: SignedPOIEvent,
+    validatedMerkleroot: Optional<string>,
   ) {
     try {
       await POIMerkletreeManager.addPOIEvent(
@@ -126,6 +186,7 @@ export class POIEventList {
         networkName,
         txidVersion,
         signedPOIEvent,
+        validatedMerkleroot,
       );
 
       const db = new POIOrderedEventsDatabase(networkName, txidVersion);
@@ -139,8 +200,28 @@ export class POIEventList {
       );
     } catch (err) {
       // no op
-      dbg(err);
-      return;
+      dbg(
+        `[${networkName}, ${txidVersion}] addValidSignedPOIEventOptionalValidatedMerkleroot() error: ${err}`,
+      );
+      throw err;
     }
+  }
+
+  static async deleteAllPOIEventsForList_DANGEROUS(
+    listKey: string,
+    networkName: NetworkName,
+    txidVersion: TXIDVersion,
+  ) {
+    const eventsDB = new POIOrderedEventsDatabase(networkName, txidVersion);
+    await eventsDB.deleteAllEventsForList_DANGEROUS(listKey);
+
+    const poiMerkletreeDB = new POIMerkletreeDatabase(networkName, txidVersion);
+    await poiMerkletreeDB.deleteAllPOIMerkletreeNodesForList_DANGEROUS(listKey);
+
+    const poiMerklerootDB = new POIHistoricalMerklerootDatabase(
+      networkName,
+      txidVersion,
+    );
+    await poiMerklerootDB.deleteAllPOIMerklerootsForList_DANGEROUS(listKey);
   }
 }

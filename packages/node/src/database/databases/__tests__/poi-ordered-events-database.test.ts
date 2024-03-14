@@ -10,6 +10,9 @@ import { DatabaseClient } from '../../database-client-init';
 import { SignedPOIEvent } from '../../../models/poi-types';
 import { POIEventList } from '../../../poi-events/poi-event-list';
 import { MOCK_LIST_KEYS } from '../../../tests/mocks.test';
+import { POIMerkletreeManager } from '../../../poi-events/poi-merkletree-manager';
+import { POIHistoricalMerklerootDatabase } from '../poi-historical-merkleroot-database';
+import { POIMerkletreeDatabase } from '../poi-merkletree-database';
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
@@ -17,28 +20,38 @@ const { expect } = chai;
 const networkName = NetworkName.EthereumGoerli;
 const txidVersion = TXIDVersion.V2_PoseidonMerkle;
 
-let db: POIOrderedEventsDatabase;
+let poiEventsDB: POIOrderedEventsDatabase;
+let poiMerkletreeDB: POIMerkletreeDatabase;
+let poiMerklerootDB: POIHistoricalMerklerootDatabase;
 
 const listKey = MOCK_LIST_KEYS[0];
 
 describe('poi-ordered-events-database', () => {
   before(async () => {
     await DatabaseClient.init();
-    db = new POIOrderedEventsDatabase(networkName, txidVersion);
-    await db.createCollectionIndices();
+    POIMerkletreeManager.initListMerkletrees([listKey]);
+    poiEventsDB = new POIOrderedEventsDatabase(networkName, txidVersion);
+    await poiEventsDB.createCollectionIndices();
+    poiMerkletreeDB = new POIMerkletreeDatabase(networkName, txidVersion);
+    poiMerklerootDB = new POIHistoricalMerklerootDatabase(
+      networkName,
+      txidVersion,
+    );
   });
 
   beforeEach(async () => {
-    await db.deleteAllItems_DANGEROUS();
+    await poiEventsDB.deleteAllItems_DANGEROUS();
+    await poiMerkletreeDB.deleteAllItems_DANGEROUS();
+    await poiMerklerootDB.deleteAllItems_DANGEROUS();
   });
 
   it('Should correctly initialize POIOrderedEventsDatabase', () => {
-    expect(db).to.be.instanceOf(POIOrderedEventsDatabase);
+    expect(poiEventsDB).to.be.instanceOf(POIOrderedEventsDatabase);
   });
 
   it('Should create collection indices', async () => {
     // Fetch all indexes for the collection
-    const indexes = await db.listCollectionIndexes();
+    const indexes = await poiEventsDB.listCollectionIndexes();
 
     // Check if an index exists for the 'index' field
     const indexFieldExists = indexes.some(index => {
@@ -67,8 +80,9 @@ describe('poi-ordered-events-database', () => {
       type: POIEventType.Shield,
     };
 
-    await db.insertValidSignedPOIEvent(listKey, signedPOIEvent);
-    const events = await db.getPOIEvents(listKey, 0);
+    await poiEventsDB.insertValidSignedPOIEvent(listKey, signedPOIEvent);
+    const events = await poiEventsDB.getPOIEvents(listKey, 0);
+    expect(events.length).to.equal(1);
 
     // Check the POI event was inserted
     const retrievedEvent = events[0];
@@ -78,46 +92,66 @@ describe('poi-ordered-events-database', () => {
     expect(retrievedEvent.signature).to.equal(signedPOIEvent.signature);
 
     // Call getCount and check the returned value
-    const count = await db.getCount(listKey, POIEventType.Shield);
+    const count = await poiEventsDB.getCount(listKey, POIEventType.Shield);
     expect(count).to.equal(1);
   });
 
   it('Should fetch POI events with a given listKey and startingIndex', async () => {
-    const events = await db.getPOIEvents(listKey, 0);
-
+    const events = await poiEventsDB.getPOIEvents(listKey, 0);
     expect(events.length).to.equal(0);
   });
 
   it('Should fetch POI events with a given listKey, startingIndex and endIndex', async () => {
     const startIndex = 0;
-    const endIndex = 3; // NOTE: endIndex is exclusive
+    const endIndex = 3;
 
-    const signedPOIEvent1: SignedPOIEvent = {
+    const signedPOIEvent0: SignedPOIEvent = {
       index: 0,
-      blindedCommitment: 'commitment_1',
+      blindedCommitment: '0x1234',
+      signature: 'someSignature',
+      type: POIEventType.Shield,
+    };
+    const signedPOIEvent1: SignedPOIEvent = {
+      index: 1,
+      blindedCommitment: '0x5678',
       signature: 'someSignature',
       type: POIEventType.Shield,
     };
     const signedPOIEvent2: SignedPOIEvent = {
-      index: 1,
-      blindedCommitment: 'commitment_2',
-      signature: 'someSignature',
-      type: POIEventType.Shield,
-    };
-    const signedPOIEvent3: SignedPOIEvent = {
       index: 2,
-      blindedCommitment: 'commitment_3',
+      blindedCommitment: '0x7890',
       signature: 'someSignature',
       type: POIEventType.Shield,
     };
 
-    // Insert three events into the database
-    await db.insertValidSignedPOIEvent(listKey, signedPOIEvent1);
-    await db.insertValidSignedPOIEvent(listKey, signedPOIEvent2);
-    await db.insertValidSignedPOIEvent(listKey, signedPOIEvent3);
+    await POIEventList.addValidSignedPOIEventOwnedList(
+      listKey,
+      networkName,
+      txidVersion,
+      signedPOIEvent0,
+    );
+    await POIEventList.addValidSignedPOIEventOwnedList(
+      listKey,
+      networkName,
+      txidVersion,
+      signedPOIEvent1,
+    );
+    await POIEventList.addValidSignedPOIEventOwnedList(
+      listKey,
+      networkName,
+      txidVersion,
+      signedPOIEvent2,
+    );
 
     // Fetch POI events with endIndex
-    const events = await db.getPOIEvents(listKey, startIndex, endIndex);
+    const events = await poiEventsDB.getPOIEvents(
+      listKey,
+      startIndex,
+      endIndex,
+    );
+
+    // Check that the length of the events is as expected
+    expect(events.length).to.equal(3);
 
     // Retrieve only the 2nd event
     const eventRange = await POIEventList.getPOIListEventRange(
@@ -127,10 +161,18 @@ describe('poi-ordered-events-database', () => {
       1,
       2,
     );
-    expect(eventRange).to.deep.equal([signedPOIEvent2]);
-
-    // Check that the length of the events is as expected
-    expect(events.length).to.equal(3);
+    expect(eventRange).to.deep.equal([
+      {
+        signedPOIEvent: signedPOIEvent1,
+        validatedMerkleroot:
+          '10667d409f91d8baec3b1532279a2343208030c0feb16bad86c6086a8c2907c6',
+      },
+      {
+        signedPOIEvent: signedPOIEvent2,
+        validatedMerkleroot:
+          '2f5b7acae7fa92d7c4ba47c29ce34f31865c616946cef14fcb56a177f37ed628',
+      },
+    ]);
   });
 
   it('Should correctly fetch the last added item', async () => {
@@ -148,11 +190,11 @@ describe('poi-ordered-events-database', () => {
     };
 
     // Insert two events into the database
-    await db.insertValidSignedPOIEvent(listKey, signedPOIEvent1);
-    await db.insertValidSignedPOIEvent(listKey, signedPOIEvent2);
+    await poiEventsDB.insertValidSignedPOIEvent(listKey, signedPOIEvent1);
+    await poiEventsDB.insertValidSignedPOIEvent(listKey, signedPOIEvent2);
 
     // Fetch the last added item
-    const lastAddedItem = await db.getLastAddedItem(listKey);
+    const lastAddedItem = await poiEventsDB.getLastAddedItem(listKey);
 
     // Check that the last added item is as expected
     expect(lastAddedItem).to.not.be.null;

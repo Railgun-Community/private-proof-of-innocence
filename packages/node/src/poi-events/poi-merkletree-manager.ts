@@ -12,10 +12,18 @@ import {
 } from '@railgun-community/shared-models';
 import { Config } from '../config/config';
 import { POIMerkletree } from './poi-merkletree';
-import { SignedPOIEvent } from '../models/poi-types';
+import {
+  POIsPerBlindedCommitmentMap,
+  SignedPOIEvent,
+} from '../models/poi-types';
 import { TransactProofPerListMempoolDatabase } from '../database/databases/transact-proof-per-list-mempool-database';
 import { BlockedShieldsPerListDatabase } from '../database/databases/blocked-shields-per-list-database';
 import { POIHistoricalMerklerootDatabase } from '../database/databases/poi-historical-merkleroot-database';
+import { nodeURLForListKey } from '../config/general';
+import { POINodeRequest } from '../api/poi-node-request';
+import debug from 'debug';
+
+const dbg = debug('poi:merkletree-manager');
 
 export class POIMerkletreeManager {
   private static merkletrees: Record<
@@ -24,6 +32,8 @@ export class POIMerkletreeManager {
   > = {};
 
   private static listKeys: string[] = [];
+
+  static nodeListKey: string;
 
   static initListMerkletrees(listKeys: string[]) {
     this.listKeys = listKeys;
@@ -46,6 +56,24 @@ export class POIMerkletreeManager {
     this.merkletrees = {};
   }
 
+  static async getHistoricalMerkleroot(
+    listKey: string,
+    networkName: NetworkName,
+    txidVersion: TXIDVersion,
+    index: number,
+  ): Promise<Optional<string>> {
+    const historicalMerklerootDB = new POIHistoricalMerklerootDatabase(
+      networkName,
+      txidVersion,
+    );
+    const merklerootDBItem =
+      await historicalMerklerootDB.getMerklerootByGlobalLeafIndex(
+        listKey,
+        index,
+      );
+    return merklerootDBItem?.rootHash;
+  }
+
   private static getMerkletreeForListAndNetwork(
     listKey: string,
     networkName: NetworkName,
@@ -58,6 +86,21 @@ export class POIMerkletreeManager {
       );
     }
     return merkletree;
+  }
+
+  static async getPOIMerkletreeLeaves(
+    listKey: string,
+    networkName: NetworkName,
+    txidVersion: TXIDVersion,
+    startIndex: number,
+    endIndex: number,
+  ): Promise<string[]> {
+    const merkletree = POIMerkletreeManager.getMerkletreeForListAndNetwork(
+      listKey,
+      networkName,
+      txidVersion,
+    );
+    return merkletree.getLeaves(startIndex, endIndex);
   }
 
   static async getTotalEventsAllPOIMerkletrees(
@@ -78,6 +121,7 @@ export class POIMerkletreeManager {
     networkName: NetworkName,
     txidVersion: TXIDVersion,
     signedPOIEvent: SignedPOIEvent,
+    validatedMerkleroot: Optional<string>,
   ) {
     const merkletree = POIMerkletreeManager.getMerkletreeForListAndNetwork(
       listKey,
@@ -87,6 +131,7 @@ export class POIMerkletreeManager {
     await merkletree.insertLeaf(
       signedPOIEvent.index,
       signedPOIEvent.blindedCommitment,
+      validatedMerkleroot,
     );
   }
 
@@ -96,6 +141,40 @@ export class POIMerkletreeManager {
     txidVersion: TXIDVersion,
     blindedCommitments: string[],
   ): Promise<MerkleProof[]> {
+    if (POIMerkletreeManager.nodeListKey !== listKey) {
+      // Forward request to list provider directly
+      const nodeURL = nodeURLForListKey(listKey);
+      if (isDefined(nodeURL)) {
+        try {
+          return await POINodeRequest.getMerkleProofs(
+            nodeURL,
+            networkName,
+            txidVersion,
+            listKey,
+            blindedCommitments,
+          );
+        } catch (err) {
+          dbg(
+            `WARNING: Could not request merkleproofs from list provider. Using node's current DB instead.`,
+          );
+        }
+      }
+    }
+
+    return this.getMerkleProofsFromCurrentNode(
+      listKey,
+      networkName,
+      txidVersion,
+      blindedCommitments,
+    );
+  }
+
+  private static async getMerkleProofsFromCurrentNode(
+    listKey: string,
+    networkName: NetworkName,
+    txidVersion: TXIDVersion,
+    blindedCommitments: string[],
+  ) {
     const merkletree = POIMerkletreeManager.getMerkletreeForListAndNetwork(
       listKey,
       networkName,
@@ -124,22 +203,68 @@ export class POIMerkletreeManager {
         if (!this.listKeys.includes(listKey)) {
           return;
         }
-        await Promise.all(
-          blindedCommitmentDatas.map(async blindedCommitmentData => {
-            const { blindedCommitment } = blindedCommitmentData;
+
+        const poiStatusPerBlindedCommitment =
+          await this.poiStatusPerBlindedCommitment(
+            listKey,
+            networkName,
+            txidVersion,
+            blindedCommitmentDatas,
+          );
+
+        Object.entries(poiStatusPerBlindedCommitment).forEach(
+          ([blindedCommitment, poiStatus]) => {
             poisPerListMap[blindedCommitment] ??= {};
-            poisPerListMap[blindedCommitment][listKey] =
-              await POIMerkletreeManager.getPOIStatus(
-                listKey,
-                networkName,
-                txidVersion,
-                blindedCommitmentData,
-              );
-          }),
+            poisPerListMap[blindedCommitment][listKey] = poiStatus;
+          },
         );
       }),
     );
     return poisPerListMap;
+  }
+
+  static async poiStatusPerBlindedCommitment(
+    listKey: string,
+    networkName: NetworkName,
+    txidVersion: TXIDVersion,
+    blindedCommitmentDatas: BlindedCommitmentData[],
+  ): Promise<POIsPerBlindedCommitmentMap> {
+    if (POIMerkletreeManager.nodeListKey !== listKey) {
+      // Forward request to list provider directly
+      const nodeURL = nodeURLForListKey(listKey);
+      if (isDefined(nodeURL)) {
+        try {
+          return await POINodeRequest.getPOIStatusPerBlindedCommitment(
+            nodeURL,
+            networkName,
+            txidVersion,
+            listKey,
+            blindedCommitmentDatas,
+          );
+        } catch (err) {
+          dbg(
+            `WARNING: Could not get poi status from list provider. Using node's current DB instead.`,
+          );
+        }
+      }
+    }
+
+    const poiStatusPerBlindedCommitmentMap: {
+      [blindedCommitment: string]: POIStatus;
+    } = {};
+    await Promise.all(
+      blindedCommitmentDatas.map(async blindedCommitmentData => {
+        const { blindedCommitment } = blindedCommitmentData;
+        poiStatusPerBlindedCommitmentMap[blindedCommitment] =
+          await POIMerkletreeManager.getPOIStatus(
+            listKey,
+            networkName,
+            txidVersion,
+            blindedCommitmentData,
+          );
+      }),
+    );
+    return poiStatusPerBlindedCommitmentMap;
   }
 
   static async getPOIStatus(
@@ -158,11 +283,13 @@ export class POIMerkletreeManager {
 
     const hasValidPOI = await merkletree.nodeHashExists(blindedCommitment);
     if (hasValidPOI) {
+      dbg(`POI exists in merkletree for ${blindedCommitment}`);
       return POIStatus.Valid;
     }
 
     switch (type) {
       case BlindedCommitmentType.Shield: {
+        dbg(`Checking if shield is blocked for ${blindedCommitment}`);
         const shieldBlockedDB = new BlockedShieldsPerListDatabase(
           networkName,
           txidVersion,
@@ -172,12 +299,14 @@ export class POIMerkletreeManager {
           blindedCommitment,
         );
         if (shieldBlocked) {
+          dbg(`POIStatus.ShieldBlocked for ${blindedCommitment}`);
           return POIStatus.ShieldBlocked;
         }
         break;
       }
 
       case BlindedCommitmentType.Transact: {
+        dbg(`Checking if transact proof exists for ${blindedCommitment}`);
         const transactProofMempoolDB = new TransactProofPerListMempoolDatabase(
           networkName,
           txidVersion,
@@ -188,12 +317,14 @@ export class POIMerkletreeManager {
             blindedCommitment,
           );
         if (isDefined(transactProofExists)) {
+          dbg(`Transact POIStatus.ProofSubmitted for ${blindedCommitment}`);
           return POIStatus.ProofSubmitted;
         }
         break;
       }
 
       case BlindedCommitmentType.Unshield: {
+        dbg(`Checking if unshield proof exists for ${blindedCommitment}`);
         const transactProofMempoolDB = new TransactProofPerListMempoolDatabase(
           networkName,
           txidVersion,
@@ -204,13 +335,42 @@ export class POIMerkletreeManager {
             blindedCommitment, // railgunTxid for unshields
           );
         if (isDefined(unshieldProofExists)) {
+          dbg(`Unshield POIStatus.ProofSubmitted for ${blindedCommitment}`);
           return POIStatus.ProofSubmitted;
         }
         break;
       }
     }
 
+    dbg(`POIStatus.Missing for ${blindedCommitment}`);
     return POIStatus.Missing;
+  }
+
+  static async getHistoricalPOIMerklerootsCount(
+    txidVersion: TXIDVersion,
+    networkName: NetworkName,
+    listKey: string,
+  ) {
+    const poiMerklerootDb = new POIHistoricalMerklerootDatabase(
+      networkName,
+      txidVersion,
+    );
+    const total = await poiMerklerootDb.getTotalMerkleroots(listKey);
+    return total;
+  }
+
+  static async getLatestPOIMerkleroot(
+    txidVersion: TXIDVersion,
+    networkName: NetworkName,
+    listKey: string,
+  ): Promise<Optional<string>> {
+    const poiMerklerootDb = new POIHistoricalMerklerootDatabase(
+      networkName,
+      txidVersion,
+    );
+    const latestMerklerootDbItem =
+      await poiMerklerootDb.getLatestMerkleroot(listKey);
+    return latestMerklerootDbItem?.rootHash;
   }
 
   static async validateAllPOIMerklerootsExist(
@@ -218,7 +378,27 @@ export class POIMerkletreeManager {
     networkName: NetworkName,
     listKey: string,
     poiMerkleroots: string[],
-  ) {
+  ): Promise<boolean> {
+    if (POIMerkletreeManager.nodeListKey !== listKey) {
+      // Forward request to list provider directly
+      const nodeURL = nodeURLForListKey(listKey);
+      if (isDefined(nodeURL)) {
+        try {
+          return await POINodeRequest.validatePOIMerkleroots(
+            nodeURL,
+            networkName,
+            txidVersion,
+            listKey,
+            poiMerkleroots,
+          );
+        } catch (err) {
+          dbg(
+            `WARNING: Could not validate merkleroots from list provider. Using node's current DB instead.`,
+          );
+        }
+      }
+    }
+
     const poiMerklerootDb = new POIHistoricalMerklerootDatabase(
       networkName,
       txidVersion,
@@ -235,7 +415,7 @@ export class POIMerkletreeManager {
     chain: Chain,
     listKey: string,
     poiMerkleroots: string[],
-  ) {
+  ): Promise<boolean> {
     const network = networkForChain(chain);
     if (!network) {
       throw new Error('Network not found for chain');

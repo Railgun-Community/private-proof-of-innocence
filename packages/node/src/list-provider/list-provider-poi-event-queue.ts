@@ -25,21 +25,27 @@ import debug from 'debug';
 import { POINodeRequest } from '../api/poi-node-request';
 import { PushSync } from '../sync/push-sync';
 import { hexToBigInt } from '@railgun-community/wallet';
+import { POIMerkletreeManager } from '../poi-events/poi-merkletree-manager';
+import { generateKey } from '../util/util';
 
 const dbg = debug('poi:event-queue');
 
 export class ListProviderPOIEventQueue {
-  private static isAddingPOIEventForNetwork: Partial<
-    Record<NetworkName, boolean>
+  private static addingPOIEventKeyForNetworkAndTXIDVersion: Partial<
+    Record<NetworkName, Partial<Record<TXIDVersion, string>>>
   > = {};
 
   private static poiEventQueue: Partial<
     Record<NetworkName, Record<TXIDVersion, POIEvent[]>>
   > = {};
 
-  private static minimumNextAddIndex: Partial<Record<NetworkName, number>> = {};
+  private static minimumNextAddIndex: Partial<
+    Record<NetworkName, Partial<Record<TXIDVersion, number>>>
+  > = {};
 
   static listKey: string;
+
+  static ready = false;
 
   static init(listKey: string) {
     ListProviderPOIEventQueue.listKey = listKey;
@@ -70,6 +76,20 @@ export class ListProviderPOIEventQueue {
     ListProviderPOIEventQueue.poll();
   }
 
+  static clearEventQueue_TestOnly(
+    networkName: NetworkName,
+    txidVersion: TXIDVersion,
+  ) {
+    const eventQueueForNetwork = this.poiEventQueue[networkName];
+    if (eventQueueForNetwork) {
+      eventQueueForNetwork[txidVersion] = [];
+    }
+  }
+
+  static clearMinimumNextAddIndex_TestOnly() {
+    this.minimumNextAddIndex = {};
+  }
+
   static getPOIEventQueueLength(
     networkName: NetworkName,
     txidVersion: TXIDVersion,
@@ -88,7 +108,7 @@ export class ListProviderPOIEventQueue {
     }
 
     dbg(
-      `Queue shield event - blinded commitment ${poiEventShield.blindedCommitment}`,
+      `Queue shield event [${networkName}, ${txidVersion}] - blinded commitment ${poiEventShield.blindedCommitment}`,
     );
     return ListProviderPOIEventQueue.queuePOIEvent(
       networkName,
@@ -108,7 +128,7 @@ export class ListProviderPOIEventQueue {
     }
 
     dbg(
-      `Queue single commitment event - blinded commitment ${blindedCommitment}`,
+      `Queue single commitment event [${networkName}, ${txidVersion}] - blinded commitment ${blindedCommitment}`,
     );
 
     const poiEvent: POIEventTransact = {
@@ -138,7 +158,9 @@ export class ListProviderPOIEventQueue {
         return hexToBigInt(blindedCommitment) !== 0n;
       })
       .forEach(blindedCommitment => {
-        dbg(`Queue transact event - blinded commitment ${blindedCommitment}`);
+        dbg(
+          `Queue transact event [${networkName}, ${txidVersion}] - blinded commitment ${blindedCommitment}`,
+        );
 
         const poiEvent: POIEventTransact = {
           type: POIEventType.Transact,
@@ -176,7 +198,7 @@ export class ListProviderPOIEventQueue {
     }
 
     dbg(
-      `Queue legacy transact event - blinded commitment ${legacyTransactProofData.blindedCommitment}`,
+      `Queue legacy transact event [${networkName}, ${txidVersion}] - blinded commitment ${legacyTransactProofData.blindedCommitment}`,
     );
 
     const poiEvent: POIEventLegacyTransact = {
@@ -195,9 +217,14 @@ export class ListProviderPOIEventQueue {
     txidVersion: TXIDVersion,
     poiEvent: POIEvent,
   ) {
-    ListProviderPOIEventQueue.poiEventQueue[networkName] ??= {
-      [TXIDVersion.V2_PoseidonMerkle]: [],
-    };
+    ListProviderPOIEventQueue.poiEventQueue[networkName] ??=
+      Config.TXID_VERSIONS.reduce(
+        (acc, txidVersion) => {
+          acc[txidVersion] = [];
+          return acc;
+        },
+        {} as Record<TXIDVersion, POIEvent[]>,
+      );
 
     const queue =
       ListProviderPOIEventQueue.poiEventQueue[networkName]?.[txidVersion];
@@ -207,7 +234,7 @@ export class ListProviderPOIEventQueue {
     });
     if (isDefined(existingEvent)) {
       dbg(
-        `Event exists in queue... ignore new event, but retrigger add-from-queue`,
+        `Event exists in queue [${networkName}, ${txidVersion}]... ignore new event, but retrigger add-from-queue`,
       );
     } else {
       queue?.push(poiEvent);
@@ -217,22 +244,42 @@ export class ListProviderPOIEventQueue {
     ListProviderPOIEventQueue.addPOIEventsFromQueue(networkName, txidVersion);
   }
 
-  private static getMinimumNextAddIndex(networkName: NetworkName) {
-    return ListProviderPOIEventQueue.minimumNextAddIndex[networkName] ?? 0;
+  private static getMinimumNextAddIndex(
+    networkName: NetworkName,
+    txidVersion: TXIDVersion,
+  ) {
+    return (
+      ListProviderPOIEventQueue.minimumNextAddIndex[networkName]?.[
+        txidVersion
+      ] ?? 0
+    );
   }
 
   static tryUpdateMinimumNextAddIndex(
     listKey: string,
     networkName: NetworkName,
+    txidVersion: TXIDVersion,
     syncedIndex: number,
   ) {
     if (listKey !== this.listKey) {
       return;
     }
-    ListProviderPOIEventQueue.minimumNextAddIndex[networkName] = Math.max(
-      ListProviderPOIEventQueue.getMinimumNextAddIndex(networkName),
-      syncedIndex,
-    );
+
+    if (
+      !isDefined(ListProviderPOIEventQueue.minimumNextAddIndex[networkName])
+    ) {
+      ListProviderPOIEventQueue.minimumNextAddIndex[networkName] = {};
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    ListProviderPOIEventQueue.minimumNextAddIndex[networkName]![txidVersion] =
+      Math.max(
+        ListProviderPOIEventQueue.getMinimumNextAddIndex(
+          networkName,
+          txidVersion,
+        ),
+        syncedIndex,
+      );
   }
 
   static async createSignedPOIEvent(
@@ -248,6 +295,29 @@ export class ListProviderPOIEventQueue {
     };
   }
 
+  static setAddingPOIEventKey(
+    networkName: NetworkName,
+    txidVersion: TXIDVersion,
+    key: Optional<string>,
+  ) {
+    if (
+      !isDefined(
+        ListProviderPOIEventQueue.addingPOIEventKeyForNetworkAndTXIDVersion[
+          networkName
+        ],
+      )
+    ) {
+      ListProviderPOIEventQueue.addingPOIEventKeyForNetworkAndTXIDVersion[
+        networkName
+      ] = {};
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    ListProviderPOIEventQueue.addingPOIEventKeyForNetworkAndTXIDVersion[
+      networkName
+    ]![txidVersion] = key;
+  }
+
   static async addPOIEventsFromQueue(
     networkName: NetworkName,
     txidVersion: TXIDVersion,
@@ -258,13 +328,31 @@ export class ListProviderPOIEventQueue {
       return;
     }
     if (
-      ListProviderPOIEventQueue.isAddingPOIEventForNetwork[networkName] === true
+      isDefined(
+        ListProviderPOIEventQueue.addingPOIEventKeyForNetworkAndTXIDVersion[
+          networkName
+        ]?.[txidVersion],
+      )
     ) {
-      dbg(`Warning: Already adding events from queue`);
+      dbg(
+        `Warning: Already adding events from queue [${networkName}, ${txidVersion}]`,
+      );
+      return;
+    }
+    if (!this.ready) {
+      dbg(
+        `Warning: Not ready to add events to list [${networkName}, ${txidVersion}]`,
+      );
       return;
     }
 
-    ListProviderPOIEventQueue.isAddingPOIEventForNetwork[networkName] = true;
+    const currentEventKey = generateKey();
+
+    ListProviderPOIEventQueue.setAddingPOIEventKey(
+      networkName,
+      txidVersion,
+      currentEventKey,
+    );
 
     try {
       const orderedEventsDB = new POIOrderedEventsDatabase(
@@ -276,12 +364,14 @@ export class ListProviderPOIEventQueue {
       );
       const nextIndex = lastAddedItem ? lastAddedItem.index + 1 : 0;
       if (
-        nextIndex > 0 &&
         nextIndex <
-          ListProviderPOIEventQueue.getMinimumNextAddIndex(networkName)
+        ListProviderPOIEventQueue.getMinimumNextAddIndex(
+          networkName,
+          txidVersion,
+        )
       ) {
         throw new Error(
-          'Tried to add POI event while unsynced - risk of duplicate indices. Skipping until synced.',
+          `Tried to add POI event while unsynced - risk of duplicate indices. Skipping until synced. [${networkName}, ${txidVersion}]`,
         );
       }
 
@@ -293,8 +383,26 @@ export class ListProviderPOIEventQueue {
           poiEvent.blindedCommitment,
         )
       ) {
+        dbg(
+          `Event already exists in list. Skipping adding POI event from queue. [${networkName}, ${txidVersion}]`,
+        );
+
+        // Remove item from queue.
         queue.splice(0, 1);
-        throw new Error('Event already exists in database');
+
+        ListProviderPOIEventQueue.setAddingPOIEventKey(
+          networkName,
+          txidVersion,
+          undefined, // key
+        );
+
+        if (queue.length > 0) {
+          await ListProviderPOIEventQueue.addPOIEventsFromQueue(
+            networkName,
+            txidVersion,
+          );
+        }
+        return;
       }
 
       const signedPOIEvent: SignedPOIEvent = await this.createSignedPOIEvent(
@@ -302,9 +410,23 @@ export class ListProviderPOIEventQueue {
         poiEvent,
       );
 
-      dbg(`Adding POI event to list from queue: ${nextIndex}`);
+      if (
+        currentEventKey !==
+        ListProviderPOIEventQueue.addingPOIEventKeyForNetworkAndTXIDVersion[
+          networkName
+        ]?.[txidVersion]
+      ) {
+        dbg(
+          `Warning: Key mismatch. Skipping adding POI event from queue. [${networkName}, ${txidVersion}]`,
+        );
+        return;
+      }
 
-      await POIEventList.addValidSignedPOIEvent(
+      dbg(
+        `Adding POI event to list from queue [${networkName}, ${txidVersion}]: ${nextIndex}`,
+      );
+
+      await POIEventList.addValidSignedPOIEventOwnedList(
         ListProviderPOIEventQueue.listKey,
         networkName,
         txidVersion,
@@ -328,28 +450,57 @@ export class ListProviderPOIEventQueue {
         }
       }
 
-      await PushSync.sendNodeRequestToAllNodes(async nodeURL => {
-        await POINodeRequest.submitPOIEvent(
-          nodeURL,
-          networkName,
-          txidVersion,
-          ListProviderPOIEventQueue.listKey,
-          signedPOIEvent,
-        );
-      });
+      const merkleroot = await POIMerkletreeManager.getHistoricalMerkleroot(
+        this.listKey,
+        networkName,
+        txidVersion,
+        signedPOIEvent.index,
+      );
+      if (isDefined(merkleroot)) {
+        await PushSync.sendNodeRequestToAllNodes(async nodeURL => {
+          await POINodeRequest.submitPOIEvent(
+            nodeURL,
+            networkName,
+            txidVersion,
+            ListProviderPOIEventQueue.listKey,
+            signedPOIEvent,
+            merkleroot, // validatedMerkleroot
+          );
+        });
+      }
 
-      ListProviderPOIEventQueue.isAddingPOIEventForNetwork[networkName] = false;
+      ListProviderPOIEventQueue.setAddingPOIEventKey(
+        networkName,
+        txidVersion,
+        undefined, // key
+      );
 
       if (queue.length > 0) {
-        return await ListProviderPOIEventQueue.addPOIEventsFromQueue(
+        // Continue with next item in queue.
+        await ListProviderPOIEventQueue.addPOIEventsFromQueue(
           networkName,
           txidVersion,
         );
+        return;
       }
     } catch (err) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      dbg('Error adding POI event from queue', err.message);
-      ListProviderPOIEventQueue.isAddingPOIEventForNetwork[networkName] = false;
+      dbg(
+        `Error adding POI event from queue [${networkName}, ${txidVersion}]`,
+        err.message,
+      );
+      if (
+        currentEventKey ===
+        ListProviderPOIEventQueue.addingPOIEventKeyForNetworkAndTXIDVersion[
+          networkName
+        ]?.[txidVersion]
+      ) {
+        ListProviderPOIEventQueue.setAddingPOIEventKey(
+          networkName,
+          txidVersion,
+          undefined, // key
+        );
+      }
     }
   }
 }

@@ -49,6 +49,7 @@ describe('list-provider', () => {
     await DatabaseClient.init();
     db = new ShieldQueueDatabase(networkName, txidVersion);
     await db.createCollectionIndices();
+    POIMerkletreeManager.initListMerkletrees(MOCK_LIST_KEYS);
     listProvider = new TestMockListProviderExcludeSingleAddress(
       MOCK_LIST_KEYS[0],
     );

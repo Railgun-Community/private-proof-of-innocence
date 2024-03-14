@@ -2,7 +2,7 @@ import debug from 'debug';
 import { NodeConfig } from '../models/general-types';
 import { POINodeRequest } from '../api/poi-node-request';
 import { Config } from '../config/config';
-import { NetworkName } from '@railgun-community/shared-models';
+import { NetworkName, TXIDVersion } from '@railgun-community/shared-models';
 import { ListProviderPOIEventQueue } from '../list-provider/list-provider-poi-event-queue';
 import { POIEventList } from '../poi-events/poi-event-list';
 
@@ -24,9 +24,13 @@ export class ConnectedNodeStartup {
       return;
     }
 
+    dbg('Making initial connection to nodes...');
+
     await Promise.all(
       this.nodeConfigs.map(async ({ nodeURL }) => {
         try {
+          dbg(`Connecting to node ${nodeURL}...`);
+
           const nodeStatusAllNetworks =
             await POINodeRequest.getNodeStatusAllNetworks(nodeURL);
 
@@ -64,6 +68,10 @@ export class ConnectedNodeStartup {
 
           // The "minimum next add index" ensures that no connected nodes have a more-updated list than this node.
           // If they do, this node will wait to add new events until it's synced.
+          dbg(`Updating minimum next add index V2...`);
+
+          // TODO-V3: Add request to node-status-v3 (or add txidVersion to existing node status) and set ListProviderPOIEventQueue.tryUpdateMinimumNextAddIndex for V3
+
           const listKey = ListProviderPOIEventQueue.listKey;
           for (const networkName of Config.NETWORK_NAMES) {
             const poiEventLengths =
@@ -74,10 +82,18 @@ export class ConnectedNodeStartup {
               ? POIEventList.getTotalEventsLength(poiEventLengths)
               : 0;
             const syncedIndex = eventListLength;
+            dbg(
+              `Minimum next-add index V2: ${listKey} ${networkName} ${syncedIndex}`,
+            );
+
             ListProviderPOIEventQueue.tryUpdateMinimumNextAddIndex(
               listKey,
               networkName,
+              TXIDVersion.V2_PoseidonMerkle,
               syncedIndex,
+            );
+            dbg(
+              `Updated minimum next-add index V2: ${listKey} ${networkName} ${syncedIndex}`,
             );
           }
         } catch (err) {

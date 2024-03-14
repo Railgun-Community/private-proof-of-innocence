@@ -16,7 +16,6 @@ import {
   ShieldData,
   formatToByteLength,
   getRailgunTxidsForUnshields,
-  scanUpdatesForMerkletreeAndWallets,
 } from '@railgun-community/wallet';
 import debug from 'debug';
 import { ShieldQueueDatabase } from '../database/databases/shield-queue-database';
@@ -45,7 +44,6 @@ export type ListProviderConfig = {
   validateShieldsOverrideDelayMsec?: number;
   addAllowedShieldsOverrideDelayMsec?: number;
   ensureAddedShieldsHaveEventsOverrideDelayMsec?: number;
-  rescanHistoryOverrideDelayMsec?: number;
 };
 
 // 30 seconds
@@ -58,8 +56,6 @@ const DEFAULT_VALIDATE_SHIELDS_DELAY_MSEC = 10 * 1000;
 const DEFAULT_ADD_ALLOWED_SHIELDS_DELAY_MSEC = 30 * 1000;
 // 30 seconds
 const DEFAULT_ENSURE_ADDED_SHIELDS_HAVE_EVENTS_DELAY_MSEC = 10 * 60 * 1000;
-// 5 minutes
-const DEFAULT_RESCAN_HISTORY_DELAY_MSEC = 5 * 60 * 1000;
 
 const dbg = debug('poi:list-provider');
 
@@ -75,6 +71,7 @@ export abstract class ListProvider {
 
     ListProviderPOIEventQueue.init(listKey);
     ListProviderBlocklist.init(listKey);
+    POIMerkletreeManager.nodeListKey = listKey;
   }
 
   protected abstract shouldAllowShield(
@@ -102,8 +99,6 @@ export abstract class ListProvider {
     this.runAddAllowedShieldsPoller();
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.runEnsureAddedShieldsHaveEventsPoller();
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    this.runRescanHistoryPoller();
 
     ListProviderPOIEventQueue.startPolling();
   }
@@ -193,22 +188,6 @@ export abstract class ListProvider {
     this.runEnsureAddedShieldsHaveEventsPoller();
   }
 
-  private async runRescanHistoryPoller() {
-    // Delay on first run - Engine is scanned on initialization.
-    await delay(
-      this.config.rescanHistoryOverrideDelayMsec ??
-        DEFAULT_RESCAN_HISTORY_DELAY_MSEC,
-    );
-
-    for (const networkName of Config.NETWORK_NAMES) {
-      const chain = chainForNetwork(networkName);
-      await scanUpdatesForMerkletreeAndWallets(chain);
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    this.runRescanHistoryPoller();
-  }
-
   async queueNewUnknownShields(
     networkName: NetworkName,
     txidVersion: TXIDVersion,
@@ -220,11 +199,12 @@ export abstract class ListProvider {
 
     const newShields: ShieldData[] = await getNewShieldsFromWallet(
       networkName,
+      txidVersion,
       startingBlock,
     );
 
     dbg(
-      `[${networkName}] Attempting to insert ${newShields.length} unknown shields`,
+      `[${networkName}, ${txidVersion}] Attempting to insert ${newShields.length} unknown shields`,
     );
 
     await Promise.all(
@@ -254,7 +234,7 @@ export abstract class ListProvider {
       );
 
       dbg(
-        `[${networkName}] Attempting to categorize ${unknownShields.length} unknown shields...`,
+        `[${networkName}, ${txidVersion}] Attempting to categorize ${unknownShields.length} unknown shields...`,
       );
 
       for (const shieldQueueDBItem of unknownShields) {
@@ -526,49 +506,54 @@ export abstract class ListProvider {
     }
   }
 
+  async addAllowedShield(
+    networkName: NetworkName,
+    txidVersion: TXIDVersion,
+    shieldDBItem: ShieldQueueDBItem,
+  ) {
+    const orderedEventsDB = new POIOrderedEventsDatabase(
+      networkName,
+      txidVersion,
+    );
+    if (
+      await orderedEventsDB.eventExists(
+        this.listKey,
+        shieldDBItem.blindedCommitment,
+      )
+    ) {
+      const shieldQueueDB = new ShieldQueueDatabase(networkName, txidVersion);
+      await shieldQueueDB.updateShieldStatus(
+        shieldDBItem,
+        ShieldStatus.AddedPOI,
+      );
+      return;
+    }
+
+    // Allow - add POIEvent
+    const poiEventShield: POIEventShield = {
+      type: POIEventType.Shield,
+      commitmentHash: shieldDBItem.commitmentHash,
+      blindedCommitment: shieldDBItem.blindedCommitment,
+    };
+    ListProviderPOIEventQueue.queueUnsignedPOIShieldEvent(
+      this.listKey,
+      networkName,
+      txidVersion,
+      poiEventShield,
+    );
+  }
+
   async addAllowedShields(networkName: NetworkName, txidVersion: TXIDVersion) {
     const shieldQueueDB = new ShieldQueueDatabase(networkName, txidVersion);
     const allowedShields = await shieldQueueDB.getShields(ShieldStatus.Allowed);
 
     dbg(
-      `[${networkName}] Attempting to queue POI events for ${allowedShields.length} allowed shields...`,
+      `[${networkName}, ${txidVersion}] Attempting to queue POI events for ${allowedShields.length} allowed shields...`,
     );
 
     await Promise.all(
       allowedShields.map(async shieldDBItem => {
-        const orderedEventsDB = new POIOrderedEventsDatabase(
-          networkName,
-          txidVersion,
-        );
-        if (
-          await orderedEventsDB.eventExists(
-            this.listKey,
-            shieldDBItem.blindedCommitment,
-          )
-        ) {
-          const shieldQueueDB = new ShieldQueueDatabase(
-            networkName,
-            txidVersion,
-          );
-          await shieldQueueDB.updateShieldStatus(
-            shieldDBItem,
-            ShieldStatus.AddedPOI,
-          );
-          return;
-        }
-
-        // Allow - add POIEvent
-        const poiEventShield: POIEventShield = {
-          type: POIEventType.Shield,
-          commitmentHash: shieldDBItem.commitmentHash,
-          blindedCommitment: shieldDBItem.blindedCommitment,
-        };
-        ListProviderPOIEventQueue.queueUnsignedPOIShieldEvent(
-          this.listKey,
-          networkName,
-          txidVersion,
-          poiEventShield,
-        );
+        await this.addAllowedShield(networkName, txidVersion, shieldDBItem);
       }),
     );
   }
@@ -628,7 +613,7 @@ export abstract class ListProvider {
     // Update status in DB
     const shieldQueueDB = new ShieldQueueDatabase(networkName, txidVersion);
     await shieldQueueDB.updateShieldStatus(shieldDBItem, ShieldStatus.Allowed);
-    await this.addAllowedShields(networkName, txidVersion);
+    await this.addAllowedShield(networkName, txidVersion, shieldDBItem);
   }
 
   private async blockShield(

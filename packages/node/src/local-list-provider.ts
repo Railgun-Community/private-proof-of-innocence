@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import { NetworkName, isDefined, TXIDVersion } from '@railgun-community/shared-models';
+import { NetworkName, isDefined } from '@railgun-community/shared-models';
 import {
   ListProvider,
   ListProviderConfig,
@@ -28,10 +28,6 @@ export class LocalListProvider extends ListProvider {
         shouldAllow: false,
         blockReason: 'Address is sanctioned',
       };
-    }
-
-    if (fromAddressLowercase === '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266') {
-      return { shouldAllow: false, blockReason: 'Test address is blocked' };
     }
 
     return { shouldAllow: true };

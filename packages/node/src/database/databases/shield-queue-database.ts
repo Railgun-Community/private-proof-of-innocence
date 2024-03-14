@@ -6,7 +6,6 @@ import {
 import {
   CollectionName,
   DBFilter,
-  DBMaxMin,
   DBSort,
   DBStream,
   ShieldQueueDBItem,
@@ -93,18 +92,16 @@ export class ShieldQueueDatabase extends AbstractDatabase<ShieldQueueDBItem> {
     endTimestamp?: number,
     limit?: number,
   ): Promise<ShieldQueueDBItem[]> {
-    const filter: DBFilter<ShieldQueueDBItem> = {
+    const filter: Filter<ShieldQueueDBItem> = {
       status,
     };
+    if (isDefined(endTimestamp)) {
+      filter.timestamp = { $lte: endTimestamp };
+    }
     const sort: DBSort<ShieldQueueDBItem> = {
       timestamp: 'ascending',
     };
-    const max: Optional<DBMaxMin<ShieldQueueDBItem>> = isDefined(endTimestamp)
-      ? {
-          timestamp: endTimestamp,
-        }
-      : undefined;
-    return this.findAll(filter, sort, max, undefined, limit);
+    return this.findAll(filter, sort, limit);
   }
 
   async getAllowedShieldByCommitmentHash(

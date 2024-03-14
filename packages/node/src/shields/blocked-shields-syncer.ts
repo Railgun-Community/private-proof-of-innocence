@@ -1,5 +1,5 @@
 import { NetworkName, TXIDVersion } from '@railgun-community/shared-models';
-import { POINodeCountingBloomFilter } from '../util/poi-node-bloom-filters';
+import { POINodeBloomFilter } from '../util/poi-node-bloom-filters';
 import { QueryLimits } from '../config/query-limits';
 import { Config } from '../config/config';
 import { SignedBlockedShield } from '../models/poi-types';
@@ -99,7 +99,7 @@ export class BlockedShieldsSyncer {
     const blockedShieldDatas: SignedBlockedShield[] =
       BlockedShieldsCache.getBlockedShields(listKey, networkName, txidVersion);
 
-    const bloomFilter = POINodeCountingBloomFilter.deserialize(
+    const bloomFilter = POINodeBloomFilter.deserialize(
       bloomFilterSerialized,
     );
 

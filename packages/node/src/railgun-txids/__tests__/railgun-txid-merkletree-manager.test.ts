@@ -30,7 +30,7 @@ describe('railgun-txid-merkletree-manager', () => {
 
     await DatabaseClient.init();
 
-    startEngine();
+    await startEngine();
     await initNetworkProviders([networkName]);
 
     txidMerkletreeStatusDB = new RailgunTxidMerkletreeStatusDatabase(

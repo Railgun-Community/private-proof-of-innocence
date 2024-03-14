@@ -18,6 +18,7 @@ export class TransactProofEventMatcher {
         return hexToBigInt(blindedCommitment) !== 0n;
       },
     );
+
     if (hexToBigInt(railgunTxidIfHasUnshield) !== 0n) {
       blindedCommitmentsIncludingUnshield.push(railgunTxidIfHasUnshield);
     }

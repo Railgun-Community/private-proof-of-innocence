@@ -9,9 +9,8 @@ import { chainForNetwork, nodeURLForListKey } from '../config/general';
 import { POINodeRequest } from '../api/poi-node-request';
 import debug from 'debug';
 import { PushSync } from '../sync/push-sync';
-import { POIMerkletreeManager } from '../poi-events/poi-merkletree-manager';
 import {
-  POIValidation,
+  POIValidator,
   getBlindedCommitmentForShieldOrTransact,
   hexToBigInt,
 } from '@railgun-community/wallet';
@@ -102,7 +101,7 @@ export class SingleCommitmentProofManager {
       return;
     }
 
-    dbg('Adding single commitment proof');
+    dbg(`Adding single commitment proof [${networkName}, ${txidVersion}]`);
 
     const {
       commitment,
@@ -115,12 +114,7 @@ export class SingleCommitmentProofManager {
     } = filteredSingleCommitmentProofsData;
 
     try {
-      // Use internal function instead of POI request.
-      POIValidation.init(
-        POIMerkletreeManager.validateAllPOIMerklerootsExistWithChain,
-      );
-
-      await POIValidation.assertIsValidSpendableTXID(
+      await POIValidator.assertIsValidSpendableTXID(
         listKey,
         txidVersion,
         chainForNetwork(networkName),
@@ -136,7 +130,9 @@ export class SingleCommitmentProofManager {
           railgunTxid,
         );
       if (!railgunTxidExists) {
-        throw new Error('Could not find railgun txid');
+        throw new Error(
+          `Could not find railgun txid [${networkName}, ${txidVersion}]`,
+        );
       }
 
       const blindedCommitment = getBlindedCommitmentForShieldOrTransact(

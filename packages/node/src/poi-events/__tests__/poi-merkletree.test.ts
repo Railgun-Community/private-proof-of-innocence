@@ -73,28 +73,83 @@ describe('poi-merkletree', () => {
     await merkletree.insertLeaf(
       0,
       'ab2f9d1ebd74c3e1f1ccee452a80ae27a94f14a542a4fd8b0c9ad9a1b7f9ffe5',
+      '2b6de07658fdb3b15b7fd96fdcf59d44bdef9eb20dc8beb2b5ac6d8bf9f011b1', // validatedMerkleroot
     );
-    await merkletree.insertMultipleLeaves_TEST_ONLY(1, [
+    expect(await merkletree.getRoot(0)).to.equal(
+      '2b6de07658fdb3b15b7fd96fdcf59d44bdef9eb20dc8beb2b5ac6d8bf9f011b1',
+    );
+    expect(
+      await merklerootDB.getMerklerootByGlobalLeafIndex(listKey, 0),
+    ).to.deep.equal({
+      listKey,
+      rootHash:
+        '2b6de07658fdb3b15b7fd96fdcf59d44bdef9eb20dc8beb2b5ac6d8bf9f011b1',
+      index: 0,
+    });
+
+    // Same leaf - error
+    await expect(
+      merkletree.insertLeaf(
+        1,
+        'ab2f9d1ebd74c3e1f1ccee452a80ae27a94f14a542a4fd8b0c9ad9a1b7f9ffe5',
+        '2b6de07658fdb3b15b7fd96fdcf59d44bdef9eb20dc8beb2b5ac6d8bf9f011b1', // validatedMerkleroot
+      ),
+    ).to.eventually.be.rejectedWith(
+      'Previous leaf has the same node hash - invalid entry',
+    );
+
+    await merkletree.insertLeaf(
+      1,
+      '071f842dbbae18082c04bfd08f4a56d71e1444317bfc6417dae8ac604d9493de',
+      '141baa90d97e062336fd433ba9ef26f949627b12fcc8849c2c1bd70b8355a489', // validatedMerkleroot
+    );
+    expect(await merkletree.getRoot(0)).to.equal(
+      '141baa90d97e062336fd433ba9ef26f949627b12fcc8849c2c1bd70b8355a489',
+    );
+    expect(
+      await merklerootDB.getMerklerootByGlobalLeafIndex(listKey, 1),
+    ).to.deep.equal({
+      listKey,
+      rootHash:
+        '141baa90d97e062336fd433ba9ef26f949627b12fcc8849c2c1bd70b8355a489',
+      index: 1,
+    });
+
+    await merkletree.rebuildTree(0);
+    expect(await merkletree.getRoot(0)).to.equal(
+      '141baa90d97e062336fd433ba9ef26f949627b12fcc8849c2c1bd70b8355a489',
+    );
+
+    await merkletree.insertMultipleLeaves_TEST_ONLY(2, [
       '8902638fe6fc05e4f1cd7c06940d6217591a0ccb003ed45198782fbff38e9f2d',
       '19889087c2ff4c4a164060a832a3ba11cce0c2e2dbd42da10c57101efb966fcd',
     ]);
 
-    expect(await merkletree.getTreeLength(0)).to.equal(3);
+    expect(await merkletree.getTreeLength(0)).to.equal(4);
     expect(await merkletree.getRoot(0)).to.equal(
-      '1bf92404b5bebd9e2c41a9d4cd55d9c9b369b0eab5fc1f9643ec1e60c75ab763',
+      '1cecd47eb0f6ad9d3bf093a36a1dd5a0863530c40dd4adbc637d7450ee50dff1',
     );
     expect(
       await merklerootDB.merklerootExists(
         listKey,
-        '1bf92404b5bebd9e2c41a9d4cd55d9c9b369b0eab5fc1f9643ec1e60c75ab763',
+        '1cecd47eb0f6ad9d3bf093a36a1dd5a0863530c40dd4adbc637d7450ee50dff1',
       ),
     ).to.equal(true);
 
+    expect(
+      await merklerootDB.getMerklerootByGlobalLeafIndex(listKey, 3),
+    ).to.deep.equal({
+      listKey,
+      rootHash:
+        '1cecd47eb0f6ad9d3bf093a36a1dd5a0863530c40dd4adbc637d7450ee50dff1',
+      index: 3,
+    });
+
     await merkletree.rebuildTree(0);
 
-    expect(await merkletree.getTreeLength(0)).to.equal(3);
+    expect(await merkletree.getTreeLength(0)).to.equal(4);
     expect(await merkletree.getRoot(0)).to.equal(
-      '1bf92404b5bebd9e2c41a9d4cd55d9c9b369b0eab5fc1f9643ec1e60c75ab763',
+      '1cecd47eb0f6ad9d3bf093a36a1dd5a0863530c40dd4adbc637d7450ee50dff1',
     );
 
     expect(

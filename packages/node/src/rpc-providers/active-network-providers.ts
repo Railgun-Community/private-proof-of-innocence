@@ -60,9 +60,11 @@ const initNetworkProvider = async (networkName: NetworkName) => {
     dbg,
   );
   finalConfig.providers = availableProviders;
+
   await loadEngineProvider(networkName, finalConfig);
 
   const fallbackProvider = createFallbackProviderFromJsonConfig(finalConfig);
+
   activeNetworkProviders[networkName] = fallbackProvider;
   dbg(`Loaded network ${networkName} - ${chain.type}:${chain.id}`);
 };

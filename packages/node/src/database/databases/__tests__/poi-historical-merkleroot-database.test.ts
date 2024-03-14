@@ -55,11 +55,16 @@ describe('poi-historical-merkleroot-database', () => {
       false,
     );
 
-    await db.insertMerkleroot(listKey, merklerootA);
+    const globalLeafIndex = 0;
+    await db.insertMerkleroot(listKey, globalLeafIndex, merklerootA);
 
     await expect(db.merklerootExists(listKey, merklerootA)).to.eventually.equal(
       true,
     );
+    expect(
+      (await db.getMerklerootByGlobalLeafIndex(listKey, globalLeafIndex))
+        ?.rootHash,
+    ).to.equal(merklerootA);
     await expect(
       db.allMerklerootsExist(listKey, [merklerootA]),
     ).to.eventually.equal(true);
@@ -99,7 +104,7 @@ describe('poi-historical-merkleroot-database', () => {
     // Insert the merkle root
     const merkleroot = '0x1234';
 
-    await db.insertMerkleroot(listKey, merkleroot);
+    await db.insertMerkleroot(listKey, 0, merkleroot);
 
     // Check that the merkle root exists
     await expect(db.merklerootExists(listKey, merkleroot)).to.eventually.equal(
@@ -118,11 +123,15 @@ describe('poi-historical-merkleroot-database', () => {
 
     // Insert another merkle root
     const merkleroot2 = '0x5678';
-    await db.insertMerkleroot(listKey, merkleroot2);
+    await db.insertMerkleroot(listKey, 1, merkleroot2);
 
     // Check all merkle roots exist
     await expect(
       db.allMerklerootsExist(listKey, [merkleroot, merkleroot2]),
     ).to.eventually.equal(true);
+
+    expect(
+      (await db.getMerklerootByGlobalLeafIndex(listKey, 1))?.rootHash,
+    ).to.equal(merkleroot2);
   });
 });

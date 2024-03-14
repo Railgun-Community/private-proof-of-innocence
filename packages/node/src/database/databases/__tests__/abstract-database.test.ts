@@ -21,19 +21,24 @@ describe('abstract-database', () => {
   before(async () => {
     await DatabaseClient.init();
     db = new TestDatabase(networkName, txidVersion);
+    await db.createCollectionIndices();
   });
 
   it('Should throw error if DatabaseClient is not initialized', async () => {
     DatabaseClientStorage.client = undefined;
+
     expect(() => new TestDatabase(networkName, txidVersion)).to.throw(
       'DatabaseClient not initialized',
     );
-    await DatabaseClient.init(); // Re-initialize for the following tests
+
+    const client = await DatabaseClient.init(); // Re-initialize for the following tests
+
+    // Check if the client is defined indicating successful health check
+    expect(client).to.be.ok;
   });
 
   it('Should correctly initialize TestDatabase', async () => {
     expect(db).to.be.instanceOf(TestDatabase);
-    await db.createCollectionIndices();
   });
 
   it('Should create collection indices', async () => {
@@ -46,6 +51,14 @@ describe('abstract-database', () => {
     });
 
     expect(indexExists).to.be.true;
+
+    expect(await db.indexExists(['test'], false)).to.equal(false);
+    expect(await db.indexExists(['test'], true)).to.equal(true);
+    expect(await db.indexExists(['test', 'test2'], false)).to.equal(true);
+    expect(await db.indexExists(['test', 'test2'], true)).to.equal(false);
+
+    await db.dropIndex(['test', 'test2']);
+    expect(await db.indexExists(['test', 'test2'], false)).to.equal(false);
   });
 
   it('Should create an index with a custom name', async () => {
@@ -64,7 +77,7 @@ describe('abstract-database', () => {
   it('Should throw error if combined length of collection and index name exceeds 64 characters', async () => {
     // Attempt to create an index with a long name in the TestDatabase
     await expect(db.createLongIndexForTest()).to.be.rejectedWith(
-      'Index name veryBigAndLongIndexNameToForceFailurePart1_veryBigAndLongIndexNameToForceFailurePart2 is too long for collection Test',
+      'Index name veryBigAndLongIndexNameToForceFailurePart1_1_veryBigAndLongIndexNameToForceFailurePart2_1 is too long for collection Test',
     );
   });
 

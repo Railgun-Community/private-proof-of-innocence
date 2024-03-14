@@ -1,32 +1,57 @@
 # RAILGUN Proof Of Innocence Node
 
-Compatible with NodeJS environments.
+This is the Node.js package for the RAILGUN Proof of Innocence system, providing the necessary tools and functionalities for privacy-enhanced blockchain transactions.
 
-`yarn add @railgun-community/proof-of-innocence`
+## Installation
 
-## TESTING
+To add the RAILGUN POI Node package to your project:
 
-1. Get MongoDB:
+```bash
+yarn add @railgun-community/proof-of-innocence
+```
 
-Mac MongoDB (https://www.mongodb.com/docs/manual/tutorial/install-mongodb-on-os-x/):
+## Testing
 
-- brew tap mongodb/brew
-- brew install mongodb-community@7.0
+### Prerequisites
 
-2. Run `yarn test-db` to start local MongoDB server.
+- MongoDB
 
-3. In a separate terminal, run `yarn test` or `yarn test-coverage`.
+For macOS, follow this guide to install MongoDB.
+For Amazon Linux, see the installation guide.
 
-## DEPLOYING
+### Running Tests
 
-Make sure the box has Node.js >=16.20 installed, and yarn.
+Start the MongoDB server locally:
 
-1. `yarn`
-2. `yarn setup-env`
-3. `npx pm2 start`
+```bash
+yarn test-db
+```
 
-OR, from the root of the monorepo, run `./start-node`.
+In a separate terminal, run the tests:
 
-## INSTALL MONGODB ON AMAZON LINUX
+```bash
+yarn test
+yarn test-coverage
+```
 
-https://www.mongodb.com/docs/manual/tutorial/install-mongodb-on-amazon/#std-label-install-mdb-community-amazon-linux
+## Deploying
+
+Ensure Node.js >=16.20 and yarn are installed.
+
+Run the following commands:
+
+```bash
+yarn
+yarn setup-env
+npx pm2 start
+```
+
+Alternatively, from the root of the monorepo, run ./start-node.
+
+## Contributing
+
+Contributions are highly appreciated. Please follow our contribution guidelines.
+
+## License
+
+This package is part of the RAILGUN POI project and is subject to its license terms.

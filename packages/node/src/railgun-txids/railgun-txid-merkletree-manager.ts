@@ -10,7 +10,7 @@ import {
   validateRailgunTxidMerkleroot,
   getLatestRailgunTxidData,
   getRailgunTxidMerkleroot,
-  fullResetTXIDMerkletrees,
+  fullResetTXIDMerkletreesV2,
   validateRailgunTxidExists,
 } from '@railgun-community/wallet';
 import { RailgunTxidMerkletreeStatusDatabase } from '../database/databases/railgun-txid-merkletree-status-database';
@@ -66,7 +66,7 @@ export class RailgunTxidMerkletreeManager {
   }
 
   static async fullResetRailgunTxidMerkletrees(networkName: NetworkName) {
-    return fullResetTXIDMerkletrees(networkName);
+    return fullResetTXIDMerkletreesV2(networkName);
   }
 
   static async resetRailgunTxidsAfterTxidIndex(

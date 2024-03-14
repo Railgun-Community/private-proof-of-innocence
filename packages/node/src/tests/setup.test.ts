@@ -16,6 +16,9 @@ before(async function run() {
   process.env.BASIC_AUTH_USERNAME = 'test-user';
   process.env.BASIC_AUTH_PASSWORD = 'test-pass';
 
+  // @ts-ignore
+  process.env.NODE_CONFIGS = [];
+
   Config.ENGINE_DB_DIR = TEST_DB_DIR;
 
   API.debug = true;

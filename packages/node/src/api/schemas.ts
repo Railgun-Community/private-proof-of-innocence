@@ -1,3 +1,9 @@
+/**
+ * This file contains all the schemas used by the API.
+ *
+ * Schemas are extended for JSON-RPC requests to include params normally sent in the REST path.
+ * @example REST /poi-events/:chainType/:chainID for JSON-RPC is ppoi_poi_events, with chainType and chainID as params
+ */
 import { AllowedSchema } from 'express-json-validator-middleware';
 import { JSONSchema4 } from 'json-schema';
 
@@ -12,6 +18,37 @@ export const SharedChainTypeIDParamsSchema: AllowedSchema = {
 };
 
 export const GetPOIListEventRangeBodySchema: AllowedSchema = {
+  type: 'object',
+  properties: {
+    txidVersion: { type: 'string' },
+    startIndex: { type: 'number' },
+    endIndex: { type: 'number' },
+    listKey: { type: 'string' },
+  },
+  required: ['txidVersion', 'startIndex', 'endIndex', 'listKey'],
+};
+
+export const ExtendedGetPOIListEventRangeBodySchema: AllowedSchema = {
+  type: 'object',
+  properties: {
+    chainType: { type: 'string' },
+    chainID: { type: 'string' },
+    txidVersion: { type: 'string' },
+    startIndex: { type: 'number' },
+    endIndex: { type: 'number' },
+    listKey: { type: 'string' },
+  },
+  required: [
+    'chainType',
+    'chainID',
+    'txidVersion',
+    'startIndex',
+    'endIndex',
+    'listKey',
+  ],
+};
+
+export const GetPOIMerkletreeLeavesBodySchema: AllowedSchema = {
   type: 'object',
   properties: {
     txidVersion: { type: 'string' },
@@ -217,6 +254,21 @@ export const SubmitValidatedTxidBodySchema: AllowedSchema = {
   required: ['txidVersion', 'txidIndex', 'merkleroot', 'signature', 'listKey'],
 };
 
+const blindedCommitmentDatasSchema: JSONSchema4 = {
+  type: 'array',
+  items: {
+    type: 'object',
+    properties: {
+      blindedCommitment: { type: 'string' },
+      type: {
+        type: 'string',
+        enum: ['Shield', 'Transact', 'Unshield'],
+      },
+    },
+    required: ['blindedCommitment', 'type'],
+  },
+};
+
 export const GetPOIsPerListBodySchema: AllowedSchema = {
   type: 'object',
   properties: {
@@ -225,22 +277,19 @@ export const GetPOIsPerListBodySchema: AllowedSchema = {
       type: 'array',
       items: { type: 'string' },
     },
-    blindedCommitmentDatas: {
-      type: 'array',
-      items: {
-        type: 'object',
-        properties: {
-          blindedCommitment: { type: 'string' },
-          type: {
-            type: 'string',
-            enum: ['Shield', 'Transact', 'Unshield'],
-          },
-        },
-        required: ['blindedCommitment', 'type'],
-      },
-    },
+    blindedCommitmentDatas: blindedCommitmentDatasSchema,
   },
   required: ['txidVersion', 'listKeys', 'blindedCommitmentDatas'],
+};
+
+export const GetPOIsPerBlindedCommitmentBodySchema: AllowedSchema = {
+  type: 'object',
+  properties: {
+    txidVersion: { type: 'string' },
+    listKey: { type: 'string' },
+    blindedCommitmentDatas: blindedCommitmentDatasSchema,
+  },
+  required: ['txidVersion', 'listKey', 'blindedCommitmentDatas'],
 };
 
 export const GetMerkleProofsBodySchema: AllowedSchema = {
