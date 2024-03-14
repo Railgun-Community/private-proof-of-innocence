@@ -77,15 +77,6 @@ export const handleJsonRpcError = (res: Response, error: Error, id: string) => {
   });
 };
 
-export function formatJsonRpcError(error: ValidationError): JsonRpcError {
-  // Format the validation error for JSON-RPC response
-  const errorDetails = error.validationErrors.body ?? [];
-  return {
-    id: Date.now(),
-    error: { code: -32602, message: 'Invalid params', data: errorDetails },
-  };
-}
-
 /**
  * Get the logic function map for the JSON RPC handler
  *
