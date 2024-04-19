@@ -12,7 +12,7 @@ import {
   hexlify,
 } from '@railgun-community/wallet';
 import { POIMerkletreeDatabase } from '../database/databases/poi-merkletree-database';
-import { poseidon } from 'circomlibjs';
+import { poseidon } from '@railgun-community/circomlibjs';
 import { POIMerkletreeDBItem } from '../models/database-types';
 import { POIHistoricalMerklerootDatabase } from '../database/databases/poi-historical-merkleroot-database';
 import debug from 'debug';

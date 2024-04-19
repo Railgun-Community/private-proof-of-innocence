@@ -87,6 +87,8 @@ export class POINodeRequest {
       boolean
     >(url, {
       txidVersion,
+      chainType: String(chain.type),
+      chainID: String(chain.id),
       tree,
       index,
       merkleroot,
@@ -122,6 +124,8 @@ export class POINodeRequest {
       POISyncedListEvent[]
     >(url, {
       txidVersion,
+      chainType: String(chain.type),
+      chainID: String(chain.id),
       listKey,
       startIndex,
       endIndex,
@@ -146,6 +150,8 @@ export class POINodeRequest {
       string[]
     >(url, {
       txidVersion,
+      chainType: String(chain.type),
+      chainID: String(chain.id),
       listKey,
       startIndex,
       endIndex,
@@ -190,6 +196,8 @@ export class POINodeRequest {
       LegacyTransactProofData[]
     >(url, {
       txidVersion,
+      chainType: String(chain.type),
+      chainID: String(chain.id),
       bloomFilterSerialized,
     });
     return transactProofs;
@@ -230,6 +238,8 @@ export class POINodeRequest {
 
     await POINodeRequest.postRequest<SubmitTransactProofParams, void>(url, {
       txidVersion,
+      chainType: String(chain.type),
+      chainID: String(chain.id),
       listKey,
       transactProofData,
     });
@@ -249,6 +259,8 @@ export class POINodeRequest {
       url,
       {
         txidVersion,
+        chainType: String(chain.type),
+        chainID: String(chain.id),
         listKeys: [],
         legacyTransactProofDatas: [legacyTransactProofData],
       },
@@ -269,6 +281,8 @@ export class POINodeRequest {
       url,
       {
         txidVersion,
+        chainType: String(chain.type),
+        chainID: String(chain.id),
         singleCommitmentProofsData,
       },
     );
@@ -288,6 +302,8 @@ export class POINodeRequest {
 
     await POINodeRequest.postRequest<SubmitPOIEventParams, void>(url, {
       txidVersion,
+      chainType: String(chain.type),
+      chainID: String(chain.id),
       listKey,
       signedPOIEvent,
       validatedMerkleroot,
@@ -309,6 +325,8 @@ export class POINodeRequest {
       url,
       {
         txidVersion,
+        chainType: String(chain.type),
+        chainID: String(chain.id),
         listKey,
         blindedCommitments,
       },
@@ -331,6 +349,8 @@ export class POINodeRequest {
       POIsPerBlindedCommitmentMap
     >(url, {
       txidVersion,
+      chainType: String(chain.type),
+      chainID: String(chain.id),
       listKey,
       blindedCommitmentDatas,
     });
@@ -351,6 +371,8 @@ export class POINodeRequest {
       url,
       {
         txidVersion,
+        chainType: String(chain.type),
+        chainID: String(chain.id),
         listKey,
         poiMerkleroots,
       },

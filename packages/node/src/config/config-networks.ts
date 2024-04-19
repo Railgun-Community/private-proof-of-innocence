@@ -30,7 +30,7 @@ const configNetworks: Partial<Record<NetworkName, NetworkConfig>> = {
   },
 
   // TEST NETS
-  [NetworkName.EthereumGoerli]: {
+  [NetworkName.EthereumGoerli_DEPRECATED]: {
     fallbackProviderConfig: fallbackProvidersEthereumGoerli,
   },
   [NetworkName.ArbitrumGoerli]: {
