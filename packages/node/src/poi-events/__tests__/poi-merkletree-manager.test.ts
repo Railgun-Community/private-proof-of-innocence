@@ -15,7 +15,7 @@ import { SignedPOIEvent } from '../../models/poi-types';
 chai.use(chaiAsPromised);
 const { expect } = chai;
 
-const networkName = NetworkName.EthereumGoerli;
+const networkName = NetworkName.EthereumGoerli_DEPRECATED;
 const txidVersion = TXIDVersion.V2_PoseidonMerkle;
 
 let merkletreeDB: POIMerkletreeDatabase;

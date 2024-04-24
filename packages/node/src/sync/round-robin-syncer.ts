@@ -21,7 +21,7 @@ import { LegacyTransactProofMempoolCache } from '../proof-mempool/legacy/legacy-
 import { LegacyTransactProofMempool } from '../proof-mempool/legacy/legacy-transact-proof-mempool';
 import { POIMerkletreeManager } from '../poi-events/poi-merkletree-manager';
 
-const dbg = debug('poi:sync');
+const dbg = debug('poi:round-robin-syncer');
 
 export class RoundRobinSyncer {
   private readonly nodeConfigs: NodeConfig[] = [];
@@ -40,6 +40,7 @@ export class RoundRobinSyncer {
   }
 
   getPollStatus(): PollStatus {
+    dbg(`Poll status: ${this.pollStatus}`);
     return this.pollStatus;
   }
 
@@ -58,7 +59,11 @@ export class RoundRobinSyncer {
 
     let shouldDelayNextPoll = true;
 
+    dbg(`Round robin poll starting to poll: ${nodeURL}`);
+
     try {
+      dbg(`in try block for ${nodeURL} in poll`);
+
       const nodeStatusAllNetworks =
         await POINodeRequest.getNodeStatusAllNetworks(nodeURL);
 

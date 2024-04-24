@@ -395,7 +395,7 @@ describe('api', function () {
     const chainID = '5';
     const bloomFilterSerialized = BlockedShieldsCache.serializeBloomFilter(
       listKey,
-      NetworkName.EthereumGoerli,
+      NetworkName.EthereumGoerli_DEPRECATED,
       txidVersion,
     );
 
@@ -438,7 +438,7 @@ describe('api', function () {
           txidVersion: TXIDVersion.V2_PoseidonMerkle,
           bloomFilterSerialized: BlockedShieldsCache.serializeBloomFilter(
             'fake_list_key',
-            NetworkName.EthereumGoerli,
+            NetworkName.EthereumGoerli_DEPRECATED,
             TXIDVersion.V2_PoseidonMerkle,
           ),
           listKey: 'fake_list_key',
@@ -1098,7 +1098,7 @@ describe('api', function () {
     const txidVersion = TXIDVersion.V2_PoseidonMerkle;
     const bloomFilterSerialized = BlockedShieldsCache.serializeBloomFilter(
       listKey,
-      NetworkName.EthereumGoerli,
+      NetworkName.EthereumGoerli_DEPRECATED,
       txidVersion,
     );
 

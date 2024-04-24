@@ -24,6 +24,9 @@ import {
 } from '../util/ed25519';
 import { isListProvider } from '../config/general';
 import { JsonRpcError, JsonRpcPayload, JsonRpcResult } from 'ethers';
+
+import debug from 'debug';
+const dbg = debug('poi-node-request');
 export class POINodeRequest {
   private static async jsonRpcRequest<
     Params extends any[] | Record<string, any>,
@@ -39,6 +42,8 @@ export class POINodeRequest {
       params,
       id: Date.now(),
     };
+
+    dbg(`Making JSON-RPC request to ${nodeURL} - ${JSON.stringify(payload)}`);
 
     try {
       // Directly use Axios to make the post request
@@ -91,7 +96,10 @@ export class POINodeRequest {
   static getNodeStatusAllNetworks = async (
     nodeURL: string,
   ): Promise<NodeStatusAllNetworks> => {
+    dbg(`Getting node status for all networks from ${nodeURL}`);
+
     const method = POIJSONRPCMethod.NodeStatus;
+
     const nodeStatusAllNetworks = await this.jsonRpcRequest<
       object,
       NodeStatusAllNetworks

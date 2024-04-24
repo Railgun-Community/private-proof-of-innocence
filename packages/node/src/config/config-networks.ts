@@ -1,5 +1,6 @@
 import fallbackProvidersEthereum from './fallback-providers/1-ethereum';
 import fallbackProvidersEthereumGoerli from './fallback-providers/5-ethereum-goerli';
+import fallbackProvidersEthereumSepolia from './fallback-providers/11155111-ethereum-sepolia';
 import fallbackProvidersBNBChain from './fallback-providers/56-binance-smart-chain';
 import fallbackProvidersPolygon from './fallback-providers/137-polygon-pos';
 import fallbackProvidersArbitrum from './fallback-providers/42161-arbitrum';
@@ -41,6 +42,9 @@ const configNetworks: Partial<Record<NetworkName, NetworkConfig>> = {
   },
   [NetworkName.Hardhat]: {
     fallbackProviderConfig: fallbackProvidersHardhat,
+  },
+  [NetworkName.EthereumSepolia]: {
+    fallbackProviderConfig: fallbackProvidersEthereumSepolia,
   },
 };
 

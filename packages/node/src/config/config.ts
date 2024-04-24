@@ -15,8 +15,8 @@ export class Config {
   static NETWORK_NAMES: NetworkName[] = Object.values(NetworkName).filter(
     networkName => {
       return (
-        NETWORK_CONFIG[networkName].deprecated === false &&
-        isDefined(NETWORK_CONFIG[networkName].poi)
+        isDefined(NETWORK_CONFIG[networkName].poi) &&
+        NETWORK_CONFIG[networkName].deprecated !== true
       );
     },
   );

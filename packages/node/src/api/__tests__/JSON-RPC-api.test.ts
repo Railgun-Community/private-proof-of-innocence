@@ -631,7 +631,7 @@ describe('JSON RPC API Tests', function () {
           txidVersion: TXIDVersion.V2_PoseidonMerkle,
           bloomFilterSerialized: BlockedShieldsCache.serializeBloomFilter(
             listKey,
-            NetworkName.EthereumGoerli,
+            NetworkName.EthereumGoerli_DEPRECATED,
             txidVersion,
           ),
         },
@@ -652,7 +652,7 @@ describe('JSON RPC API Tests', function () {
           chainID: '5',
           bloomFilterSerialized: BlockedShieldsCache.serializeBloomFilter(
             listKey,
-            NetworkName.EthereumGoerli,
+            NetworkName.EthereumGoerli_DEPRECATED,
             txidVersion,
           ),
         },
@@ -697,7 +697,7 @@ describe('JSON RPC API Tests', function () {
           txidVersion: TXIDVersion.V2_PoseidonMerkle,
           bloomFilterSerialized: BlockedShieldsCache.serializeBloomFilter(
             listKey,
-            NetworkName.EthereumGoerli,
+            NetworkName.EthereumGoerli_DEPRECATED,
             txidVersion,
           ),
           listKey,
@@ -719,7 +719,7 @@ describe('JSON RPC API Tests', function () {
           chainID: '5',
           bloomFilterSerialized: BlockedShieldsCache.serializeBloomFilter(
             listKey,
-            NetworkName.EthereumGoerli,
+            NetworkName.EthereumGoerli_DEPRECATED,
             txidVersion,
           ),
           listKey,
@@ -766,7 +766,7 @@ describe('JSON RPC API Tests', function () {
           txidVersion: TXIDVersion.V2_PoseidonMerkle,
           bloomFilterSerialized: BlockedShieldsCache.serializeBloomFilter(
             'fake_list_key',
-            NetworkName.EthereumGoerli,
+            NetworkName.EthereumGoerli_DEPRECATED,
             TXIDVersion.V2_PoseidonMerkle,
           ),
           listKey: 'fake_list_key',

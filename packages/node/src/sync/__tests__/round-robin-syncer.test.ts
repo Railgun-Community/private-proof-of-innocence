@@ -31,7 +31,7 @@ import { LegacyTransactProofMempool } from '../../proof-mempool/legacy/legacy-tr
 chai.use(chaiAsPromised);
 const { expect } = chai;
 
-const networkName = NetworkName.EthereumGoerli;
+const networkName = NetworkName.EthereumGoerli_DEPRECATED;
 const txidVersion = TXIDVersion.V2_PoseidonMerkle;
 
 let merkletreeDB: POIMerkletreeDatabase;

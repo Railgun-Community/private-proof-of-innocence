@@ -22,7 +22,7 @@ import { initNetworkProviders } from '../../../rpc-providers/active-network-prov
 chai.use(chaiAsPromised);
 const { expect } = chai;
 
-const networkName = NetworkName.EthereumGoerli;
+const networkName = NetworkName.EthereumGoerli_DEPRECATED;
 const txidVersion = TXIDVersion.V2_PoseidonMerkle;
 const listKey = MOCK_LIST_KEYS[0];
 

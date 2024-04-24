@@ -31,34 +31,45 @@ export const initDatabases = async () => {
 export const initEngineAndScanTXIDs = async () => {
   // Init engine and RPCs
   dbg('Initializing Engine and RPCs...');
+
   await startEngine();
+  dbg('- Engine started -');
+
   setOnUTXOMerkletreeScanCallback(onUTXOMerkletreeScanCallback);
   setOnTXIDMerkletreeScanCallback(onTXIDMerkletreeScanCallback);
 
   await initNetworkProviders();
+  dbg('- Network providers initialized -');
 
   // Make sure TXID trees are fully scanned for each chain.
   await Promise.all(
     Config.NETWORK_NAMES.map(async networkName => {
       const chain = chainForNetwork(networkName);
+
       await Promise.all(
         Config.TXID_VERSIONS.map(async txidVersion => {
           if (process.env.CLEAR_TXIDS === '1') {
             // Can safely remove this after TXID verificationHash is implemented.
             dbg(`Clearing TXIDs for ${networkName}, ${txidVersion}...`);
-            Config.NETWORK_NAMES.map(async networkName => {
-              Config.TXID_VERSIONS.map(async txidVersion => {
-                await RailgunTxidMerkletreeManager.clearValidatedStatus(
-                  networkName,
-                  txidVersion,
+
+            await Promise.all(
+              Config.NETWORK_NAMES.map(async networkName => {
+                return Promise.all(
+                  Config.TXID_VERSIONS.map(async txidVersion => {
+                    return RailgunTxidMerkletreeManager.clearValidatedStatus(
+                      networkName,
+                      txidVersion,
+                    );
+                  }),
                 );
-              });
-              const txidMerkletree = getTXIDMerkletreeForNetwork(
-                txidVersion,
-                networkName,
-              );
-              await txidMerkletree.clearDataForMerkletree();
-            });
+              }),
+            );
+
+            const txidMerkletree = getTXIDMerkletreeForNetwork(
+              txidVersion,
+              networkName,
+            );
+            await txidMerkletree.clearDataForMerkletree();
           }
 
           await getEngine().syncRailgunTransactionsV2(
