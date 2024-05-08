@@ -25,9 +25,9 @@ let initNetworkProvidersStub: sinon.SinonStub;
 describe('proof-of-innocence-node', () => {
   before(async function run() {
     // Stub initNetworkProviders to resolve
-    initNetworkProvidersStub = sinon
-      .stub(ActiveNetworkProviders, 'initNetworkProviders')
-      .resolves();
+    // initNetworkProvidersStub = sinon
+    //   .stub(ActiveNetworkProviders, 'initNetworkProviders')
+    //   .resolves();
 
     nodeOnlyAggregator = new ProofOfInnocenceNode(
       '0.0.0.0',
@@ -60,7 +60,7 @@ describe('proof-of-innocence-node', () => {
     await nodeOnlyAggregator.stop();
     await nodeWithListProvider.stop();
 
-    initNetworkProvidersStub.restore();
+    // initNetworkProvidersStub.restore();
   });
 
   it.only('Should start up a node with list provider', async () => {
@@ -84,7 +84,7 @@ describe('proof-of-innocence-node', () => {
       );
     }
   }).timeout(20000);
-
+  ('');
   it('Should start up a node with list provider using JSON-RPC in poi-node-request instead of REST', async () => {
     // JSON-RPC version of getNodeStatusAllNetworks
     const getNodeStatusAllNetworks_JSON_RPC_STUB = async (nodeURL: string) => {

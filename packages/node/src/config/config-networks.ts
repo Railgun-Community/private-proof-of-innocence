@@ -7,6 +7,7 @@ import fallbackProvidersArbitrum from './fallback-providers/42161-arbitrum';
 import fallbackProvidersPolygonMumbai from './fallback-providers/80001-polygon-mumbai';
 import fallbackProvidersHardhat from './fallback-providers/31337-hardhat';
 import fallbackProvidersArbitrumGoerli from './fallback-providers/421613-arbitrum-goerli';
+import fallbackProvidersPolygonAmoy from './fallback-providers/80002-polygon-amoy';
 import {
   FallbackProviderJsonConfig,
   NetworkName,
@@ -34,17 +35,20 @@ const configNetworks: Partial<Record<NetworkName, NetworkConfig>> = {
   [NetworkName.EthereumGoerli_DEPRECATED]: {
     fallbackProviderConfig: fallbackProvidersEthereumGoerli,
   },
-  [NetworkName.ArbitrumGoerli]: {
+  [NetworkName.ArbitrumGoerli_DEPRECATED]: {
     fallbackProviderConfig: fallbackProvidersArbitrumGoerli,
   },
-  [NetworkName.PolygonMumbai]: {
+  [NetworkName.PolygonMumbai_DEPRECATED]: {
     fallbackProviderConfig: fallbackProvidersPolygonMumbai,
-  },
-  [NetworkName.Hardhat]: {
-    fallbackProviderConfig: fallbackProvidersHardhat,
   },
   [NetworkName.EthereumSepolia]: {
     fallbackProviderConfig: fallbackProvidersEthereumSepolia,
+  },
+  [NetworkName.PolygonAmoy]: {
+    fallbackProviderConfig: fallbackProvidersPolygonAmoy,
+  },
+  [NetworkName.Hardhat]: {
+    fallbackProviderConfig: fallbackProvidersHardhat,
   },
 };
 
