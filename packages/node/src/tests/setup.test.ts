@@ -23,7 +23,7 @@ before(async function run() {
 
   API.debug = true;
 
-  Config.NETWORK_NAMES = [NetworkName.EthereumSepolia];
+  Config.NETWORK_NAMES = [NetworkName.PolygonAmoy];
 
   await promiseTimeout(
     setUpMongoose(),
