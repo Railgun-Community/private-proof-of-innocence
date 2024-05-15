@@ -4,13 +4,7 @@ import {
   MerkleProof,
   TXIDVersion,
 } from '@railgun-community/shared-models';
-import {
-  nToHex,
-  hexToBigInt,
-  ByteLength,
-  numberify,
-  hexlify,
-} from '@railgun-community/wallet';
+import { ByteUtils, ByteLength } from '@railgun-community/wallet';
 import { POIMerkletreeDatabase } from '../database/databases/poi-merkletree-database';
 import { poseidon } from '@railgun-community/circomlibjs';
 import { POIMerkletreeDBItem } from '../models/database-types';
@@ -68,8 +62,8 @@ export class POIMerkletree {
   }
 
   private static hashLeftRight(left: string, right: string): string {
-    return nToHex(
-      poseidon([hexToBigInt(left), hexToBigInt(right)]),
+    return ByteUtils.nToHex(
+      poseidon([ByteUtils.hexToBigInt(left), ByteUtils.hexToBigInt(right)]),
       ByteLength.UINT_256,
     );
   }
@@ -545,7 +539,7 @@ export class POIMerkletree {
     );
 
     // Convert index to bytes data, the binary representation is the indices of the merkle path
-    const indices = nToHex(BigInt(index), ByteLength.UINT_256);
+    const indices = ByteUtils.nToHex(BigInt(index), ByteLength.UINT_256);
 
     // Fetch root
     const root = await this.getRoot(tree);
@@ -561,13 +555,13 @@ export class POIMerkletree {
 
   static verifyProof(proof: MerkleProof): boolean {
     // Get indices as BN form
-    const indices = numberify(proof.indices);
+    const indices = ByteUtils.hexToBigInt(proof.indices);
 
     // Calculate proof root and return if it matches the proof in the MerkleProof
     // Loop through each element and hash till we've reduced to 1 element
     const calculatedRoot = proof.elements.reduce((current, element, index) => {
       // If index is right
-      if (indices.testn(index)) {
+      if ((indices & (2n ** BigInt(index))) > 0n) {
         return POIMerkletree.hashLeftRight(element, current);
       }
 
@@ -575,6 +569,6 @@ export class POIMerkletree {
       return POIMerkletree.hashLeftRight(current, element);
     }, proof.leaf);
 
-    return hexlify(proof.root) === hexlify(calculatedRoot);
+    return ByteUtils.hexlify(proof.root) === ByteUtils.hexlify(calculatedRoot);
   }
 }

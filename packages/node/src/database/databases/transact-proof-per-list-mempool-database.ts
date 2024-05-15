@@ -11,7 +11,7 @@ import {
 } from '../../models/database-types';
 import { AbstractDatabase } from '../abstract-database';
 import { Filter } from 'mongodb';
-import { hexToBigInt } from '@railgun-community/wallet';
+import { ByteUtils } from '@railgun-community/wallet';
 
 export class TransactProofPerListMempoolDatabase extends AbstractDatabase<TransactProofMempoolDBItem> {
   constructor(networkName: NetworkName, txidVersion: TXIDVersion) {
@@ -74,7 +74,7 @@ export class TransactProofPerListMempoolDatabase extends AbstractDatabase<Transa
     listKey: string,
     railgunTxidIfHasUnshield: string,
   ): Promise<Optional<TransactProofMempoolDBItem>> {
-    if (hexToBigInt(railgunTxidIfHasUnshield) === 0n) {
+    if (ByteUtils.hexToBigInt(railgunTxidIfHasUnshield) === 0n) {
       return undefined;
     }
     const filter: Filter<TransactProofMempoolDBItem> = {

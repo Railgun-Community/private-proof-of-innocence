@@ -24,7 +24,7 @@ import { ShieldStatus } from '../models/database-types';
 import debug from 'debug';
 import { POINodeRequest } from '../api/poi-node-request';
 import { PushSync } from '../sync/push-sync';
-import { hexToBigInt } from '@railgun-community/wallet';
+import { ByteUtils } from '@railgun-community/wallet';
 import { POIMerkletreeManager } from '../poi-events/poi-merkletree-manager';
 import { generateKey } from '../util/util';
 
@@ -155,7 +155,7 @@ export class ListProviderPOIEventQueue {
     // Add transact proofs
     transactProofData.blindedCommitmentsOut
       .filter(blindedCommitment => {
-        return hexToBigInt(blindedCommitment) !== 0n;
+        return ByteUtils.hexToBigInt(blindedCommitment) !== 0n;
       })
       .forEach(blindedCommitment => {
         dbg(
@@ -174,7 +174,9 @@ export class ListProviderPOIEventQueue {
       });
 
     // Add unshield proof if it exists. Blinded commitment === railgunTxidIfHasUnshield.
-    if (hexToBigInt(transactProofData.railgunTxidIfHasUnshield) !== 0n) {
+    if (
+      ByteUtils.hexToBigInt(transactProofData.railgunTxidIfHasUnshield) !== 0n
+    ) {
       const poiEvent: POIEventUnshield = {
         type: POIEventType.Unshield,
         blindedCommitment: transactProofData.railgunTxidIfHasUnshield,

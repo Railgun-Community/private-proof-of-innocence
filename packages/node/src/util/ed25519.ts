@@ -1,6 +1,6 @@
 import { getPublicKey, sign, verify } from '@noble/ed25519';
 import { POIEventType, isDefined } from '@railgun-community/shared-models';
-import { bytesToHex, hexStringToBytes } from '@railgun-community/wallet';
+import { bytesToHex, ByteUtils } from '@railgun-community/wallet';
 import {
   POIEvent,
   SignedBlockedShield,
@@ -13,7 +13,7 @@ const getPKey = (): Uint8Array => {
   if (!isDefined(pkey)) {
     throw new Error('You must configure ed25519 "pkey" variable in .env file.');
   }
-  return hexStringToBytes(pkey);
+  return ByteUtils.hexStringToBytes(pkey);
 };
 
 export const signMessage = async (message: Uint8Array): Promise<string> => {

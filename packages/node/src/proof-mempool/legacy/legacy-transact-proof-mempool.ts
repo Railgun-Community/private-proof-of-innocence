@@ -21,10 +21,10 @@ import {
 import { LegacyTransactProofMempoolDatabase } from '../../database/databases/legacy-transact-proof-mempool-database';
 import { LegacyTransactProofMempoolCache } from './legacy-transact-proof-mempool-cache';
 import {
+  BlindedCommitment,
   ByteLength,
+  ByteUtils,
   TransactNote,
-  getBlindedCommitmentForShieldOrTransact,
-  nToHex,
 } from '@railgun-community/wallet';
 import { POIOrderedEventDBItem } from '../../models/database-types';
 
@@ -200,7 +200,7 @@ export class LegacyTransactProofMempool {
           commitmentHash,
         );
 
-      const blindedCommitment = getBlindedCommitmentForShieldOrTransact(
+      const blindedCommitment = BlindedCommitment.getForShieldOrTransact(
         commitmentHash,
         BigInt(legacyTransactProofData.npk),
         BigInt(utxoGlobalPosition),
@@ -222,7 +222,7 @@ export class LegacyTransactProofMempool {
     tokenHash: string,
     value: string,
   ): string {
-    return nToHex(
+    return ByteUtils.nToHex(
       TransactNote.getHash(BigInt(notePublicKey), tokenHash, BigInt(value)),
       ByteLength.UINT_256,
     );
