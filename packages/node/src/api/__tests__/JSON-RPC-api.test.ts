@@ -205,7 +205,7 @@ describe('JSON RPC API Tests', function () {
         method: 'ppoi_poi_events',
         params: {
           chainType: '0',
-          chainID: chainID, // TODO use polygon amoy
+          chainID: chainID,
           txidVersion: TXIDVersion.V2_PoseidonMerkle,
           listKey,
           startIndex: 0,
