@@ -256,25 +256,33 @@ export class API {
       const { statusCode, errorMessage } = handleHTTPError(error);
       const jsonRpcErrorCode = statusCode === 400 ? -32602 : -32603;
 
+      //TODO remove just for testing
+      // Show the error message to aggregator nodes
+      res.status(statusCode).json({
+        jsonrpc: '2.0',
+        error: { code: jsonRpcErrorCode, message: errorMessage },
+        id,
+      });
+
       // Respond with error
-      if (isListProvider()) {
-        // Show the error message to aggregator nodes
-        res.status(statusCode).json({
-          jsonrpc: '2.0',
-          error: { code: jsonRpcErrorCode, message: errorMessage },
-          id,
-        });
-      } else {
-        // Hide the error message for client nodes
-        res.status(statusCode).json({
-          jsonrpc: '2.0',
-          error: {
-            code: jsonRpcErrorCode,
-            message: 'Error occurred while executing the JSON-RPC method',
-          },
-          id,
-        });
-      }
+      // if (isListProvider()) {
+      //   // Show the error message to aggregator nodes
+      //   res.status(statusCode).json({
+      //     jsonrpc: '2.0',
+      //     error: { code: jsonRpcErrorCode, message: errorMessage },
+      //     id,
+      //   });
+      // } else {
+      //   // Hide the error message for client nodes
+      //   res.status(statusCode).json({
+      //     jsonrpc: '2.0',
+      //     error: {
+      //       code: jsonRpcErrorCode,
+      //       message: 'Error occurred while executing the JSON-RPC method',
+      //     },
+      //     id,
+      //   });
+      // }
     }
   }
 

@@ -63,7 +63,7 @@ describe('proof-of-innocence-node', () => {
     // initNetworkProvidersStub.restore();
   });
 
-  it.only('Should start up a node with list provider', async () => {
+  it('Should start up a node with list provider', async () => {
     // Check the nodes are done starting up
     expect(nodeOnlyAggregator).to.be.an.instanceOf(ProofOfInnocenceNode);
     expect(nodeWithListProvider).to.be.an.instanceOf(ProofOfInnocenceNode);
@@ -84,7 +84,7 @@ describe('proof-of-innocence-node', () => {
       );
     }
   }).timeout(20000);
-  ('');
+
   it('Should start up a node with list provider using JSON-RPC in poi-node-request instead of REST', async () => {
     // JSON-RPC version of getNodeStatusAllNetworks
     const getNodeStatusAllNetworks_JSON_RPC_STUB = async (nodeURL: string) => {

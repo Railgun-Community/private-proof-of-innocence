@@ -23,6 +23,7 @@ export class NodeStatus {
     const statusForNetwork: Partial<Record<NetworkName, NodeStatusForNetwork>> =
       {};
     const allNetworks: NetworkName[] = Object.values(Config.NETWORK_NAMES);
+
     await Promise.all(
       allNetworks.map(async networkName => {
         statusForNetwork[networkName] = await NodeStatus.getNodeStatus(
@@ -107,6 +108,7 @@ export class NodeStatus {
         };
       }),
     );
+
     return allStatuses;
   }
 }

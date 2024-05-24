@@ -110,6 +110,8 @@ export const getPoiEvents = async (
   chainID: string,
   params: any,
 ) => {
+  console.log('getPoiEvents', chainType, chainID, params);
+
   const networkName = networkNameForSerializedChain(chainType, chainID);
 
   const rangeLength = params.endIndex - params.startIndex;

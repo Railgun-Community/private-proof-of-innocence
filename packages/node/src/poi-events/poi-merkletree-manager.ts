@@ -420,6 +420,7 @@ export class POIMerkletreeManager {
     if (!network) {
       throw new Error('Network not found for chain');
     }
+
     return POIMerkletreeManager.validateAllPOIMerklerootsExist(
       txidVersion,
       network.name,

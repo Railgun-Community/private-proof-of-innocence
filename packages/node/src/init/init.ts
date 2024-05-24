@@ -52,24 +52,20 @@ export const initEngineAndScanTXIDs = async () => {
             // Can safely remove this after TXID verificationHash is implemented.
             dbg(`Clearing TXIDs for ${networkName}, ${txidVersion}...`);
 
-            await Promise.all(
-              Config.NETWORK_NAMES.map(async networkName => {
-                return Promise.all(
-                  Config.TXID_VERSIONS.map(async txidVersion => {
-                    return RailgunTxidMerkletreeManager.clearValidatedStatus(
-                      networkName,
-                      txidVersion,
-                    );
-                  }),
+            Config.NETWORK_NAMES.map(async networkName => {
+              Config.TXID_VERSIONS.map(async txidVersion => {
+                await RailgunTxidMerkletreeManager.clearValidatedStatus(
+                  networkName,
+                  txidVersion,
                 );
-              }),
-            );
+              });
 
-            const txidMerkletree = getTXIDMerkletreeForNetwork(
-              txidVersion,
-              networkName,
-            );
-            await txidMerkletree.clearDataForMerkletree();
+              const txidMerkletree = getTXIDMerkletreeForNetwork(
+                txidVersion,
+                networkName,
+              );
+              await txidMerkletree.clearDataForMerkletree();
+            });
           }
 
           await getEngine().syncRailgunTransactionsV2(

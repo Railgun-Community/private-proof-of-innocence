@@ -42,7 +42,8 @@ interface ValidationError {
 chai.use(chaiAsPromised);
 const { expect } = chai;
 
-const networkName = Config.NETWORK_NAMES[0]; // Assuming single network setup for simplicity
+Config.NETWORK_NAMES = [NetworkName.EthereumSepolia];
+const networkName = Config.NETWORK_NAMES[0];
 const chainID = NETWORK_CONFIG[networkName].chain.id;
 
 const listKey = MOCK_LIST_KEYS[0];
@@ -198,8 +199,7 @@ describe('JSON RPC API Tests', function () {
   });
 
   describe('ppoi_poi_events', () => {
-    it('Should return 200 for POST / ppoi_poi-events', async () => {
-      console.log('chainID', chainID);
+    it.only('Should return 200 for POST / ppoi_poi-events', async () => {
       const jsonRpcRequest = {
         jsonrpc: '2.0',
         method: 'ppoi_poi_events',
