@@ -443,18 +443,20 @@ export class API {
 
   /**
    *
-   * @param chainId
-   * @returns chainId as a number
-   * @throws Error if chainId is not a number
+   * @param param - The parameter to convert to a number (chainId or chainType)
+   * @returns param as a number
+   * @throws Error if param is not a number
    *
-   * @note Convert chainId to number since req.params is always string
+   * @note Convert back to number since express req.params convert to strings by default
    */
-  private chainIdToNumber(chainId: string): number {
-    const chainID = parseInt(chainId, 10);
-    if (isNaN(chainID)) {
-      throw new Error('Invalid chainID');
+  private paramToNumber(param: string): number {
+    const numberParam = parseInt(param, 10);
+
+    if (isNaN(numberParam)) {
+      throw new Error(`Invalid parameter: ${param}`);
     }
-    return chainID;
+
+    return numberParam;
   }
 
   /**
@@ -526,10 +528,10 @@ export class API {
           throw new Error('Invalid listKey');
         }
 
-        // Convert chainID type
-        const chainID = this.chainIdToNumber(req.params.chainID);
+        const chainType = this.paramToNumber(req.params.chainType);
+        const chainID = this.paramToNumber(req.params.chainId);
 
-        return getPoiEvents(req.params.chainType, chainID, body);
+        return getPoiEvents(chainType, chainID, body);
       },
       SharedChainTypeIDParamsSchema,
       GetPOIListEventRangeBodySchema,
@@ -545,14 +547,10 @@ export class API {
           throw new Error('Invalid listKey');
         }
 
-        // Convert chainID type
-        const chainID = this.chainIdToNumber(req.params.chainID);
+        const chainType = this.paramToNumber(req.params.chainType);
+        const chainID = this.paramToNumber(req.params.chainId);
 
-        return await getPOIMerkletreeLeaves(
-          req.params.chainType,
-          chainID,
-          body,
-        );
+        return await getPOIMerkletreeLeaves(chainType, chainID, body);
       },
       SharedChainTypeIDParamsSchema,
       GetPOIMerkletreeLeavesBodySchema,
@@ -567,13 +565,13 @@ export class API {
           throw new Error('Invalid listKey');
         }
 
-        // Convert chainID type
-        const chainID = this.chainIdToNumber(req.params.chainID);
+        const chainType = this.paramToNumber(req.params.chainType);
+        const chainID = this.paramToNumber(req.params.chainId);
 
         // safePOST requires a Promise to be returned
         return Promise.resolve(
           getTransactProofs(
-            req.params.chainType,
+            chainType,
             chainID,
             req.body as GetTransactProofsParams,
           ),
@@ -586,12 +584,12 @@ export class API {
     this.safePost<LegacyTransactProofData[]>(
       '/legacy-transact-proofs/:chainType/:chainID',
       (req: Request) => {
-        // Convert chainID type
-        const chainID = this.chainIdToNumber(req.params.chainID);
+        const chainType = this.paramToNumber(req.params.chainType);
+        const chainID = this.paramToNumber(req.params.chainId);
 
         return Promise.resolve(
           getLegacyTransactProofs(
-            req.params.chainType,
+            chainType,
             chainID,
             req.body as GetLegacyTransactProofsParams,
           ),
@@ -609,12 +607,10 @@ export class API {
           throw new Error('Invalid listKey');
         }
 
-        // Convert chainID type
-        const chainID = this.chainIdToNumber(req.params.chainID);
+        const chainType = this.paramToNumber(req.params.chainType);
+        const chainID = this.paramToNumber(req.params.chainId);
 
-        return Promise.resolve(
-          getBlockedShields(req.params.chainType, chainID, body),
-        );
+        return Promise.resolve(getBlockedShields(chainType, chainID, body));
       },
       SharedChainTypeIDParamsSchema,
       GetBlockedShieldsBodySchema,
@@ -628,12 +624,12 @@ export class API {
           throw new Error('Invalid listKey');
         }
 
-        // Convert chainID type
-        const chainID = this.chainIdToNumber(req.params.chainID);
+        const chainType = this.paramToNumber(req.params.chainType);
+        const chainID = this.paramToNumber(req.params.chainId);
 
         // Submit the POI event, return void
         await submitPOIEvent(
-          req.params.chainType,
+          chainType,
           chainID,
           body,
           dbg, // Pass in debugger for logging submitted signed POI events
@@ -651,11 +647,11 @@ export class API {
           throw new Error('Invalid listKey');
         }
 
-        // Convert chainID type
-        const chainID = this.chainIdToNumber(req.params.chainID);
+        const chainType = this.paramToNumber(req.params.chainType);
+        const chainID = this.paramToNumber(req.params.chainId);
 
         await submitValidatedTxid(
-          req.params.chainType,
+          chainType,
           chainID,
           body,
           dbg, // Pass in debugger for logging submitted validated txids
@@ -674,10 +670,10 @@ export class API {
           throw new Error('Invalid listKey');
         }
 
-        // Convert chainID type
-        const chainID = this.chainIdToNumber(req.params.chainID);
+        const chainType = this.paramToNumber(req.params.chainType);
+        const chainID = this.paramToNumber(req.params.chainId);
 
-        await removeTransactProof(req.params.chainType, chainID, body, dbg);
+        await removeTransactProof(chainType, chainID, body, dbg);
       },
       SharedChainTypeIDParamsSchema,
       RemoveTransactProofBodySchema,
@@ -694,10 +690,10 @@ export class API {
           throw new Error('Invalid listKey');
         }
 
-        // Convert chainID type
-        const chainID = this.chainIdToNumber(req.params.chainID);
+        const chainType = this.paramToNumber(req.params.chainType);
+        const chainID = this.paramToNumber(req.params.chainId);
 
-        await submitTransactProof(req.params.chainType, chainID, body, dbg);
+        await submitTransactProof(chainType, chainID, body, dbg);
       },
       SharedChainTypeIDParamsSchema,
       SubmitTransactProofBodySchema,
@@ -716,16 +712,11 @@ export class API {
         // Modify body.listKeys to only include valid listKeys
         body.listKeys = filteredListKeys;
 
-        // Convert chainID type
-        const chainID = this.chainIdToNumber(req.params.chainID);
+        const chainType = this.paramToNumber(req.params.chainType);
+        const chainID = this.paramToNumber(req.params.chainId);
 
         // Submit the legacy transact proofs
-        await submitLegacyTransactProofs(
-          req.params.chainType,
-          chainID,
-          body,
-          dbg,
-        );
+        await submitLegacyTransactProofs(chainType, chainID, body, dbg);
       },
       SharedChainTypeIDParamsSchema,
       SubmitLegacyTransactProofsBodySchema,
@@ -734,12 +725,12 @@ export class API {
     this.safePost<void>(
       '/submit-single-commitment-proofs/:chainType/:chainID',
       async (req: Request) => {
-        // Convert chainID type
-        const chainID = this.chainIdToNumber(req.params.chainID);
+        const chainType = this.paramToNumber(req.params.chainType);
+        const chainID = this.paramToNumber(req.params.chainId);
 
         // Submit and verify the proofs
         await submitSingleCommitmentProofs(
-          req.params.chainType,
+          chainType,
           chainID,
           req.body as SubmitSingleCommitmentProofsParams,
           dbg,
@@ -752,11 +743,11 @@ export class API {
     this.safePost<POIsPerListMap>(
       '/pois-per-list/:chainType/:chainID',
       (req: Request) => {
-        // Convert chainID type
-        const chainID = this.chainIdToNumber(req.params.chainID);
+        const chainType = this.paramToNumber(req.params.chainType);
+        const chainID = this.paramToNumber(req.params.chainId);
 
         return getPOIsPerList(
-          req.params.chainType,
+          chainType,
           chainID,
           req.body as GetPOIsPerListParams,
         );
@@ -768,11 +759,11 @@ export class API {
     this.safePost<POIsPerBlindedCommitmentMap>(
       '/pois-per-blinded-commitment/:chainType/:chainID',
       (req: Request) => {
-        // Convert chainID type
-        const chainID = this.chainIdToNumber(req.params.chainID);
+        const chainType = this.paramToNumber(req.params.chainType);
+        const chainID = this.paramToNumber(req.params.chainId);
 
         return getPOIsPerBlindedCommitment(
-          req.params.chainType,
+          chainType,
           chainID,
           req.body as GetPOIsPerBlindedCommitmentParams,
         );
@@ -791,10 +782,10 @@ export class API {
           throw new Error('Invalid listKey');
         }
 
-        // Convert chainID type
-        const chainID = this.chainIdToNumber(req.params.chainID);
+        const chainType = this.paramToNumber(req.params.chainType);
+        const chainID = this.paramToNumber(req.params.chainId);
 
-        return await getMerkleProofs(req.params.chainType, chainID, body);
+        return await getMerkleProofs(chainType, chainID, body);
       },
       SharedChainTypeIDParamsSchema,
       GetMerkleProofsBodySchema,
@@ -803,11 +794,11 @@ export class API {
     this.safePost<ValidatedRailgunTxidStatus>(
       '/validated-txid/:chainType/:chainID',
       async (req: Request) => {
-        // Convert chainID type
-        const chainID = this.chainIdToNumber(req.params.chainID);
+        const chainType = this.paramToNumber(req.params.chainType);
+        const chainID = this.paramToNumber(req.params.chainId);
 
         return await getValidatedTxid(
-          req.params.chainType,
+          chainType,
           chainID,
           req.body as GetLatestValidatedRailgunTxidParams,
         );
@@ -819,11 +810,11 @@ export class API {
     this.safePost<boolean>(
       '/validate-txid-merkleroot/:chainType/:chainID',
       async (req: Request) => {
-        // Convert chainID type
-        const chainID = this.chainIdToNumber(req.params.chainID);
+        const chainType = this.paramToNumber(req.params.chainType);
+        const chainID = this.paramToNumber(req.params.chainId);
 
         return await validateTxidMerkleroot(
-          req.params.chainType,
+          chainType,
           chainID,
           req.body as ValidateTxidMerklerootParams,
         );
@@ -835,11 +826,11 @@ export class API {
     this.safePost<boolean>(
       '/validate-poi-merkleroots/:chainType/:chainID',
       async (req: Request) => {
-        // Convert chainID type
-        const chainID = this.chainIdToNumber(req.params.chainID);
+        const chainType = this.paramToNumber(req.params.chainType);
+        const chainID = this.paramToNumber(req.params.chainId);
 
         return await validatePoiMerkleroots(
-          req.params.chainType,
+          chainType,
           chainID,
           req.body as ValidatePOIMerklerootsParams,
         );

@@ -28,7 +28,7 @@ export const chainForNetwork = (networkName: NetworkName): Chain => {
 };
 
 export const networkNameForSerializedChain = (
-  chainType: string,
+  chainType: number,
   chainID: number,
 ): NetworkName => {
   const networkName = networkForChain({

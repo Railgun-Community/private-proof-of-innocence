@@ -326,10 +326,10 @@ The application exposes two types of endpoints for node-to-node communication:
 #### Method: `ppoi_poi_events`
 
 - **Parameters**:
-  - `chainType` (string) - The type of blockchain.
-  - `chainID` (number) - The ID of the blockchain.
-  - `listKey` (string) - The key to identify the list.
-  - `txidVersion` (string) - The transaction ID version.
+  - `chainType` (string)
+  - `chainID` (number)
+  - `listKey` (string)
+  - `txidVersion` (string)
   - `startIndex` (number) - The start index of the events.
   - `endIndex` (number) - The end index of the events.
 - **Response**:
@@ -339,10 +339,10 @@ The application exposes two types of endpoints for node-to-node communication:
 #### Method: `ppoi_poi_merkletree_leaves`
 
 - **Parameters**:
-  - `chainType` (string) - The type of blockchain.
-  - `chainID` (number) - The ID of the blockchain.
-  - `listKey` (string) - The key to identify the list.
-  - `txidVersion` (string) - The transaction ID version.
+  - `chainType` (string)
+  - `chainID` (number)
+  - `listKey` (string)
+  - `txidVersion` (string)
   - `startIndex` (number) - The start index of the leaves.
   - `endIndex` (number) - The end index of the leaves.
 - **Response**:
@@ -352,10 +352,10 @@ The application exposes two types of endpoints for node-to-node communication:
 #### Method: `ppoi_transact_proofs`
 
 - **Parameters**:
-  - `chainType` (string) - The type of blockchain.
-  - `chainID` (number) - The ID of the blockchain.
-  - `listKey` (string) - The key to identify the list.
-  - `txidVersion` (string) - The transaction ID version.
+  - `chainType` (string)
+  - `chainID` (number)
+  - `listKey` (string)
+  - `txidVersion` (string)
   - `bloomFilterSerialized` (string) - Serialized bloom filter data.
 - **Response**:
   - Status: 200 OK
@@ -364,9 +364,9 @@ The application exposes two types of endpoints for node-to-node communication:
 #### Method: `ppoi_legacy_transact_proofs`
 
 - **Parameters**:
-  - `chainType` (string) - The type of blockchain.
-  - `chainID` (number) - The ID of the blockchain.
-  - `txidVersion` (string) - The transaction ID version.
+  - `chainType` (string)
+  - `chainID` (number)
+  - `txidVersion` (string)
   - `bloomFilterSerialized` (string) - Serialized bloom filter data.
 - **Response**:
   - Status: 200 OK
@@ -375,10 +375,10 @@ The application exposes two types of endpoints for node-to-node communication:
 #### Method: `ppoi_blocked_shields`
 
 - **Parameters**:
-  - `chainType` (string) - The type of blockchain.
-  - `chainID` (number) - The ID of the blockchain.
-  - `txidVersion` (string) - The transaction ID version.
-  - `listKey` (string) - The key to identify the list.
+  - `chainType` (string)
+  - `chainID` (number)
+  - `txidVersion` (string)
+  - `listKey` (string)
   - `bloomFilterSerialized` (string) - Serialized bloom filter data.
 - **Response**:
   - Status: 200 OK
@@ -387,10 +387,10 @@ The application exposes two types of endpoints for node-to-node communication:
 #### Method: `ppoi_submit_poi_events`
 
 - **Parameters**:
-  - `chainType` (string) - The type of blockchain.
-  - `chainID` (number) - The ID of the blockchain.
-  - `txidVersion` (string) - The transaction ID version.
-  - `listKey` (string) - The key to identify the list.
+  - `chainType` (string)
+  - `chainID` (number)
+  - `txidVersion` (string)
+  - `listKey` (string)
   - `signedPOIEvent` (object) - The signed POI event data.
   - `validatedMerkleroot` (string) - The validated Merkle root.
 - **Response**:
@@ -399,9 +399,9 @@ The application exposes two types of endpoints for node-to-node communication:
 #### Method: `ppoi_submit_validated_txid`
 
 - **Parameters**:
-  - `chainType` (string) - The type of blockchain.
-  - `chainID` (number) - The ID of the blockchain.
-  - `txidVersion` (string) - The transaction ID version.
+  - `chainType` (string)
+  - `chainID` (number)
+  - `txidVersion` (string)
   - `listKey` (string)
   - `txidIndex` (number) - The index of the TXID.
   - `merkleroot` (string) - The Merkle root.
@@ -412,9 +412,9 @@ The application exposes two types of endpoints for node-to-node communication:
 #### Method: `ppoi_remove_transact_proof`
 
 - **Parameters**:
-  - `chainType` (string) - The type of blockchain.
-  - `chainID` (number) - The ID of the blockchain.
-  - `txidVersion` (string) - The transaction ID version.
+  - `chainType` (string)
+  - `chainID` (number)
+  - `txidVersion` (string)
   - `listKey` (string)
   - `blindedCommitmentsOut` (array of strings) - The blinded commitments out.
   - `railgunTxidIfHasUnshield` (string, optional) - The railgun TXID if it has an unshield.
@@ -427,8 +427,8 @@ The application exposes two types of endpoints for node-to-node communication:
 #### Method: `ppoi_submit_transact_proof`
 
 - **Parameters**:
-  - `chainType` (string) - The type of blockchain.
-  - `chainID` (number) - The ID of the blockchain.
+  - `chainType` (string)
+  - `chainID` (number)
   - `txidVersion` (string)
   - `listKey` (string)
   - `transactProofData` (object) - The transact proof data.
@@ -438,8 +438,8 @@ The application exposes two types of endpoints for node-to-node communication:
 #### Method: `ppoi_submit_legacy_transact_proofs`
 
 - **Parameters**:
-  - `chainType` (string) - The type of blockchain.
-  - `chainID` (number) - The ID of the blockchain.
+  - `chainType` (string)
+  - `chainID` (number)
   - `txidVersion` (string)
   - `listKeys` (array of strings) - The list keys.
   - `legacyTransactProofDatas` (array of objects) - The legacy transact proof data.
@@ -449,8 +449,8 @@ The application exposes two types of endpoints for node-to-node communication:
 #### Method: `ppoi_submit_single_commitment_proofs`
 
 - **Parameters**:
-  - `chainType` (string) - The type of blockchain.
-  - `chainID` (number) - The ID of the blockchain.
+  - `chainType` (string)
+  - `chainID` (number)
   - `txidVersion` (string)
   - `singleCommitmentProofsData` (object) - The single commitment proofs data.
 - **Response**:
@@ -459,8 +459,8 @@ The application exposes two types of endpoints for node-to-node communication:
 #### Method: `ppoi_pois_per_list`
 
 - **Parameters**:
-  - `chainType` (string) - The type of blockchain.
-  - `chainID` (number) - The ID of the blockchain.
+  - `chainType` (string)
+  - `chainID` (number)
   - `txidVersion` (string)
   - `listKeys` (array of strings) - The list keys.
   - `blindedCommitmentDatas` (array of objects) - The blinded commitment data.
@@ -471,8 +471,8 @@ The application exposes two types of endpoints for node-to-node communication:
 #### Method: `ppoi_pois_per_blinded_commitment`
 
 - **Parameters**:
-  - `chainType` (string) - The type of blockchain.
-  - `chainID` (number) - The ID of the blockchain.
+  - `chainType` (string)
+  - `chainID` (number)
   - `txidVersion` (string)
   - `listKey` (string)
   - `blindedCommitmentDatas` (array of objects) - The blinded commitment data.
@@ -483,8 +483,8 @@ The application exposes two types of endpoints for node-to-node communication:
 #### Method: `ppoi_merkle_proofs`
 
 - **Parameters**:
-  - `chainType` (string) - The type of blockchain.
-  - `chainID` (number) - The ID of the blockchain.
+  - `chainType` (string)
+  - `chainID` (number)
   - `txidVersion` (string)
   - `listKey` (string)
   - `blindedCommitments` (array of strings) - The blinded commitments.
@@ -495,8 +495,8 @@ The application exposes two types of endpoints for node-to-node communication:
 #### Method: `ppoi_validated_txid`
 
 - **Parameters**:
-  - `chainType` (string) - The type of blockchain.
-  - `chainID` (number) - The ID of the blockchain.
+  - `chainType` (string)
+  - `chainID` (number)
   - `txidVersion` (string)
 - **Response**:
   - Status: 200 OK
@@ -505,7 +505,24 @@ The application exposes two types of endpoints for node-to-node communication:
 #### Method: `ppoi_validate_txid_merkleroot`
 
 - **Parameters**:
-  - `chainType` (string) - The type of blockchain.
-  - `chainID` (number) - The ID of the blockchain.
+  - `chainType` (string)
+  - `chainID` (number)
   - `txidVersion` (string)
-  - `tree` (string
+  - `tree` (number)
+  - `index` (number)
+  - `merkleroot` (string)
+- **Response**:
+  - Status: 200 OK
+  - Body: `isValid` boolean.
+
+#### Method: `ppoi_validate_poi_merkleroots`
+
+- **Parameters**:
+  - `chainType` (string)
+  - `chainID` (number)
+  - `txidVersion` (string)
+  - `listKey` (string)
+  - `poiMerkleRoots` (string[])
+- **Response**:
+  - Status: 200 OK
+  - Body: `isValid` boolean.
