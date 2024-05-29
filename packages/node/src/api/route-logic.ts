@@ -40,6 +40,26 @@ import debug from 'debug';
 import os from 'os';
 
 /**
+ *
+ * @param param - The parameter to convert to a number (chainId or chainType)
+ * @returns param as a number
+ * @throws Error if param is not a number
+ *
+ * @note Convert back to number since express req.params convert to strings by default
+ */
+export function paramToNumber(param: string): number {
+  const numberParam = parseInt(param, 10);
+
+  console.log('paramToNumber', numberParam, param);
+
+  if (isNaN(numberParam)) {
+    throw new Error(`Invalid parameter: ${param}`);
+  }
+
+  return numberParam;
+}
+
+/**
  * Logic for shared HTTP error responses
  *
  * @param err - Error to handle

@@ -32,7 +32,7 @@ export const networkNameForSerializedChain = (
   chainID: number,
 ): NetworkName => {
   const networkName = networkForChain({
-    type: Number(chainType),
+    type: chainType,
     id: chainID,
   })?.name;
   if (!isDefined(networkName)) {

@@ -11,8 +11,8 @@ import { JSONSchema4 } from 'json-schema';
 export const SharedChainTypeIDParamsSchema: AllowedSchema = {
   type: 'object',
   properties: {
-    chainType: { type: 'string' },
-    chainID: { type: 'string' }, // REST request forces strings but api.ts converts to number to follow shared-models
+    chainType: { type: 'string' }, // REST req.params forces strings but each api.ts endpoint converts back to number
+    chainID: { type: 'string' }, // REST req.params forces strings but each api.ts endpoint converts back to number
   },
   required: ['chainType', 'chainID'],
 };
@@ -31,7 +31,7 @@ export const GetPOIListEventRangeBodySchema: AllowedSchema = {
 export const ExtendedGetPOIListEventRangeBodySchema: AllowedSchema = {
   type: 'object',
   properties: {
-    chainType: { type: 'string' },
+    chainType: { type: 'number' },
     chainID: { type: 'number' },
     txidVersion: { type: 'string' },
     startIndex: { type: 'number' },

@@ -2,20 +2,6 @@ import { ProofOfInnocenceNode } from '../../proof-of-innocence-node';
 import { LocalListProvider } from '../../local-list-provider';
 import { MOCK_LIST_KEYS } from '../../tests/mocks.test';
 import * as WalletModule from '../../engine/wallet';
-import {
-  BlindedCommitmentData,
-  BlindedCommitmentType,
-  GetMerkleProofsParams,
-  GetPOIsPerListParams,
-  NETWORK_CONFIG,
-  NetworkName,
-  NodeStatusAllNetworks,
-  POIEventType,
-  SingleCommitmentProofsData,
-  SubmitLegacyTransactProofParams,
-  SubmitTransactProofParams,
-  TXIDVersion,
-} from '@railgun-community/shared-models';
 import axios, { AxiosError } from 'axios';
 import 'dotenv/config';
 import chai, { assert } from 'chai';
@@ -32,12 +18,28 @@ import * as General from '../../config/general';
 import { POINodeRequest } from '../poi-node-request';
 import { API } from '../api';
 import { Config } from '../../config/config';
+import {
+  ChainType,
+  NETWORK_CONFIG,
+  TXIDVersion,
+  NodeStatusAllNetworks,
+  NetworkName,
+  SubmitTransactProofParams,
+  SingleCommitmentProofsData,
+  GetPOIsPerListParams,
+  GetMerkleProofsParams,
+  SubmitLegacyTransactProofParams,
+  POIEventType,
+  BlindedCommitmentData,
+  BlindedCommitmentType,
+} from '@railgun-community/shared-models';
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
 
 const networkName = Config.NETWORK_NAMES[0]; // Assuming single network setup for simplicity
 
+const chainType = ChainType.EVM;
 const chainID = NETWORK_CONFIG[networkName].chain.id;
 
 const listKey = MOCK_LIST_KEYS[0];
@@ -239,7 +241,6 @@ describe('api', function () {
   });
 
   it('Should return 200 for POST /poi-events', async () => {
-    const chainType = '0';
     const txidVersion = TXIDVersion.V2_PoseidonMerkle;
 
     const response = await AxiosTest.postRequest(
@@ -251,8 +252,6 @@ describe('api', function () {
   });
 
   it('Should return 400 for POST /poi-events with invalid body', async () => {
-    const chainType = '0';
-
     // Stub isListProvider to get full error message as an aggregator
     isListProviderStub.callsFake(() => true);
 
@@ -268,8 +267,6 @@ describe('api', function () {
   });
 
   it('Should return 400 for POST /poi-events with invalid listKey', async () => {
-    const chainType = '0';
-
     const txidVersion = TXIDVersion.V2_PoseidonMerkle;
 
     // Stub isListProvider to get full error message as an aggregator
@@ -288,8 +285,6 @@ describe('api', function () {
   });
 
   it('Should return 400 for POST /poi-events with rangeLength > MAX_EVENT_QUERY_RANGE_LENGTH', async () => {
-    const chainType = '0';
-
     const txidVersion = TXIDVersion.V2_PoseidonMerkle;
 
     // Stub isListProvider to get full error message as an aggregator
@@ -308,8 +303,6 @@ describe('api', function () {
   });
 
   it('Should return 400 for POST /poi-events with rangeLength < 0', async () => {
-    const chainType = '0';
-
     const txidVersion = TXIDVersion.V2_PoseidonMerkle;
 
     // Stub isListProvider to get full error message as an aggregator
@@ -328,8 +321,6 @@ describe('api', function () {
   });
 
   it('Should return 200 for POST /transact-proofs', async () => {
-    const chainType = '0';
-
     const validBloomFilterSerialized = 'someValidSerializedData';
 
     const response = await AxiosTest.postRequest(
@@ -345,8 +336,6 @@ describe('api', function () {
   });
 
   it('Should return 400 for POST /transact-proofs with invalid body', async () => {
-    const chainType = '0';
-
     // Stub the isListProvider function to fake being an aggregator so error message is returned
     isListProviderStub.callsFake(() => true);
 
@@ -361,8 +350,6 @@ describe('api', function () {
   });
 
   it('Should return 400 for POST /transact-proofs with Invalid listKey', async () => {
-    const chainType = '0';
-
     // Stub the isListProvider function to fake being an aggregator so error message is returned
     isListProviderStub.callsFake(() => true);
 
@@ -381,8 +368,6 @@ describe('api', function () {
   });
 
   it('Should return 200 for POST /blocked-shields', async () => {
-    const chainType = '0';
-
     const bloomFilterSerialized = BlockedShieldsCache.serializeBloomFilter(
       listKey,
       NetworkName.EthereumSepolia,
@@ -398,8 +383,6 @@ describe('api', function () {
   });
 
   it('Should return 400 for POST /blocked-shields with invalid body', async () => {
-    const chainType = '0';
-
     // Stub the isListProvider function to fake being an aggregator so error message is returned
     isListProviderStub.callsFake(() => true);
 
@@ -414,8 +397,6 @@ describe('api', function () {
   });
 
   it('Should return 400 for POST /blocked-shields with Invalid listKey', async () => {
-    const chainType = '0';
-
     // Stub the isListProvider function to fake being an aggregator so error message is returned
     isListProviderStub.callsFake(() => true);
 
@@ -438,10 +419,8 @@ describe('api', function () {
   });
 
   it('Should return 200 for POST /submit-transact-proof', async () => {
-    const chainType = '0';
-
     const body: SubmitTransactProofParams = {
-      chainType,
+      chainType: chainType.toString(),
       chainID: chainID.toString(),
       txidVersion: TXIDVersion.V2_PoseidonMerkle,
       listKey: listKey,
@@ -493,8 +472,6 @@ describe('api', function () {
   });
 
   it('Should return 400 for POST /submit-transact-proof with invalid body', async () => {
-    const chainType = '0';
-
     // Stub the isListProvider function to fake being an aggregator so error message is returned
     isListProviderStub.callsFake(() => true);
 
@@ -509,13 +486,11 @@ describe('api', function () {
   });
 
   it('Should return 400 for POST /submit-transact-proof with Invalid listKey', async () => {
-    const chainType = '0';
-
     // Stub the isListProvider function to fake being an aggregator so error message is returned
     isListProviderStub.callsFake(() => true);
 
     const body: SubmitTransactProofParams = {
-      chainType,
+      chainType: chainType.toString(),
       chainID: chainID.toString(),
       txidVersion: TXIDVersion.V2_PoseidonMerkle,
       listKey: 'fake_list_key',
@@ -614,8 +589,6 @@ describe('api', function () {
       },
     };
 
-    const chainType = '0';
-
     const response = await AxiosTest.postRequest(
       `${apiUrl}/submit-single-commitment-proofs/${chainType}/${chainID}`,
       { txidVersion, singleCommitmentProofsData },
@@ -625,8 +598,6 @@ describe('api', function () {
   });
 
   it('Should return 400 for POST /submit-single-commitment-proofs with invalid body', async () => {
-    const chainType = '0';
-
     const txidVersion = TXIDVersion.V2_PoseidonMerkle;
 
     await expect(
@@ -640,8 +611,6 @@ describe('api', function () {
   });
 
   it('Should return 200 for POST /pois-per-list', async () => {
-    const chainType = '0';
-
     const listKeys = [listKey];
 
     const blindedCommitmentDatas: BlindedCommitmentData[] = [
@@ -664,8 +633,6 @@ describe('api', function () {
   });
 
   it('Should return 400 for POST /pois-per-list with invalid body', async () => {
-    const chainType = '0';
-
     // Stub the isListProvider function to fake being an aggregator so error message is returned
     isListProviderStub.callsFake(() => true);
 
@@ -680,8 +647,6 @@ describe('api', function () {
   });
 
   it('Should return `Too many blinded commitments` for POST /pois-per-list', async () => {
-    const chainType = '0';
-
     // Stub the isListProvider function to fake being an aggregator so error message is returned
     isListProviderStub.callsFake(() => true);
 
@@ -695,7 +660,7 @@ describe('api', function () {
     );
 
     const body: GetPOIsPerListParams = {
-      chainType,
+      chainType: chainType.toString(),
       chainID: chainID.toString(),
       txidVersion,
       listKeys: [listKey],
@@ -713,10 +678,8 @@ describe('api', function () {
   });
 
   it('Should return 200 for POST /merkle-proofs', async () => {
-    const chainType = '0';
-
     const body: GetMerkleProofsParams = {
-      chainType,
+      chainType: chainType.toString(),
       chainID: chainID.toString(),
       txidVersion: TXIDVersion.V2_PoseidonMerkle,
       listKey: listKey,
@@ -743,8 +706,6 @@ describe('api', function () {
   });
 
   it('Should return 400 for POST /merkle-proofs with invalid body', async () => {
-    const chainType = '0';
-
     // Stub the isListProvider function to fake being an aggregator so error message is returned
     isListProviderStub.callsFake(() => true);
 
@@ -759,13 +720,11 @@ describe('api', function () {
   });
 
   it('Should return 400 for POST /merkle-proofs with invalid listKey', async () => {
-    const chainType = '0';
-
     // Stub the isListProvider function to fake being an aggregator so error message is returned
     isListProviderStub.callsFake(() => true);
 
     const body: GetMerkleProofsParams = {
-      chainType,
+      chainType: chainType.toString(),
       chainID: chainID.toString(),
       txidVersion: TXIDVersion.V2_PoseidonMerkle,
       listKey: 'fake_list_key',
@@ -783,13 +742,11 @@ describe('api', function () {
   });
 
   it('Should return 400 for POST /merkle-proofs with blindedCommitments.length > QueryLimits.GET_MERKLE_PROOFS_MAX_BLINDED_COMMITMENTS', async () => {
-    const chainType = '0';
-
     // Stub the isListProvider function to fake being an aggregator so error message is returned
     isListProviderStub.callsFake(() => true);
 
     const body: GetMerkleProofsParams = {
-      chainType,
+      chainType: chainType.toString(),
       chainID: chainID.toString(),
       txidVersion: TXIDVersion.V2_PoseidonMerkle,
       listKey: listKey,
@@ -810,8 +767,6 @@ describe('api', function () {
   });
 
   it('Should return 200 for POST /validate-txid-merkleroot', async () => {
-    const chainType = '0';
-
     const tree = 0;
     const index = 0;
     const merkleroot = '';
@@ -825,8 +780,6 @@ describe('api', function () {
   });
 
   it('Should return 400 for POST /validate-txid-merkleroot with invalid body', async () => {
-    const chainType = '0';
-
     await expect(
       AxiosTest.postRequest(
         `${apiUrl}/validate-txid-merkleroot/${chainType}/${chainID}`,
@@ -838,10 +791,8 @@ describe('api', function () {
   });
 
   it('Should submit legacy transact proofs', async () => {
-    const chainType = '0';
-
     const body: SubmitLegacyTransactProofParams = {
-      chainType,
+      chainType: chainType.toString(),
       chainID: chainID.toString(),
       txidVersion: TXIDVersion.V2_PoseidonMerkle,
       listKeys: ['test_list'],
@@ -865,8 +816,6 @@ describe('api', function () {
   });
 
   it('Should remove a transact proof', async () => {
-    const chainType = '0';
-
     const txidVersion = TXIDVersion.V2_PoseidonMerkle;
     const blindedCommitmentsOut = [
       '0x1441c994c1336075c8fc3687235e583fb5fa37e561184585bac31e3c029a46eb',
@@ -892,8 +841,6 @@ describe('api', function () {
   });
 
   it('Should fail to remove a transact proof with an unsaved list key', async () => {
-    const chainType = '0';
-
     const txidVersion = TXIDVersion.V2_PoseidonMerkle;
     const listKey = 'fake_list_key';
     const blindedCommitmentsOut = [
@@ -920,8 +867,6 @@ describe('api', function () {
   });
 
   it('Should return 200 for POST /submit-validated-txid', async () => {
-    const chainType = '0';
-
     const txidVersion = TXIDVersion.V2_PoseidonMerkle;
     const txidIndex = 0;
     const merkleroot = '';
@@ -936,8 +881,6 @@ describe('api', function () {
   });
 
   it('Should return 400 for POST /submit-validated-txid with Invalid listKey', async () => {
-    const chainType = '0';
-
     const txidVersion = TXIDVersion.V2_PoseidonMerkle;
     const txidIndex = 0;
     const merkleroot = '';
@@ -968,8 +911,6 @@ describe('api', function () {
   });
 
   it('Should return 200 for POST /pois-per-blinded-commitment', async () => {
-    const chainType = '0';
-
     const blindedCommitmentDatas: BlindedCommitmentData[] = [
       {
         blindedCommitment: '',
@@ -990,8 +931,6 @@ describe('api', function () {
   });
 
   it('Should return 400 for POST /pois-per-blinded-commitment with too many blinded commitments', async () => {
-    const chainType = '0';
-
     const blindedCommitmentDatas: BlindedCommitmentData[] = Array.from(
       { length: QueryLimits.GET_POI_EXISTENCE_MAX_BLINDED_COMMITMENTS + 1 },
       () => ({
@@ -1014,7 +953,6 @@ describe('api', function () {
   });
 
   it('Should return 200 for POST /submit-poi-event', async () => {
-    const chainType = '0';
     const txidVersion = TXIDVersion.V2_PoseidonMerkle;
     const signedPOIEvent: SignedPOIEvent = {
       index: 0,
@@ -1038,8 +976,6 @@ describe('api', function () {
   });
 
   it('Should return 400 for POST /submit-poi-event with Invalid listKey', async () => {
-    const chainType = '0';
-
     const txidVersion = TXIDVersion.V2_PoseidonMerkle;
     const signedPOIEvent: SignedPOIEvent = {
       index: 0,
@@ -1068,8 +1004,6 @@ describe('api', function () {
   });
 
   it('Should return 200 for POST /legacy-transact-proofs', async () => {
-    const chainType = '0';
-
     const txidVersion = TXIDVersion.V2_PoseidonMerkle;
     const bloomFilterSerialized = BlockedShieldsCache.serializeBloomFilter(
       listKey,
@@ -1086,8 +1020,6 @@ describe('api', function () {
   });
 
   it('Should return 400 for POST /legacy-transact-proofs with invalid body', async () => {
-    const chainType = '0';
-
     await expect(
       AxiosTest.postRequest(
         `${apiUrl}/legacy-transact-proofs/${chainType}/${chainID}`,
@@ -1099,8 +1031,6 @@ describe('api', function () {
   });
 
   it('Should return 200 for POST /poi-merkletree-leaves', async () => {
-    const chainType = '0';
-
     const txidVersion = TXIDVersion.V2_PoseidonMerkle;
 
     const response = await AxiosTest.postRequest(
@@ -1112,8 +1042,6 @@ describe('api', function () {
   });
 
   it('Should return 400 for POST /poi-merkletree-leaves with invalid body', async () => {
-    const chainType = '0';
-
     await expect(
       AxiosTest.postRequest(
         `${apiUrl}/poi-merkletree-leaves/${chainType}/${chainID}`,
@@ -1128,8 +1056,6 @@ describe('api', function () {
   });
 
   it('Should return 400 for POST /poi-merkletree-leaves with invalid listKey', async () => {
-    const chainType = '0';
-
     const txidVersion = TXIDVersion.V2_PoseidonMerkle;
 
     // Stub isListProvider to get full error message as an aggregator
@@ -1151,8 +1077,6 @@ describe('api', function () {
   }).timeout(10000);
 
   it('Should return 400 for POST /poi-merkletree-leaves with rangeLength > MAX_POI_MERKLETREE_LEAVES_QUERY_RANGE_LENGTH', async () => {
-    const chainType = '0';
-
     const txidVersion = TXIDVersion.V2_PoseidonMerkle;
 
     // Stub isListProvider to get full error message as an aggregator
@@ -1175,8 +1099,6 @@ describe('api', function () {
   });
 
   it('Should return 400 for POST /poi-merkletree-leaves with rangeLength < 0', async () => {
-    const chainType = '0';
-
     const txidVersion = TXIDVersion.V2_PoseidonMerkle;
 
     // Stub isListProvider to get full error message as an aggregator
@@ -1198,8 +1120,6 @@ describe('api', function () {
   });
 
   it('Should return 200 for POST /validated-txid/:chainType/:chainID', async () => {
-    const chainType = '0';
-
     const txidVersion = TXIDVersion.V2_PoseidonMerkle;
 
     const response = await AxiosTest.postRequest(
@@ -1211,8 +1131,6 @@ describe('api', function () {
   });
 
   it('Should return 200 for POST /validate-poi-merkleroots/:chainType/:chainID', async () => {
-    const chainType = '0';
-
     const txidVersion = TXIDVersion.V2_PoseidonMerkle;
 
     const response = await AxiosTest.postRequest(
