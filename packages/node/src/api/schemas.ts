@@ -12,7 +12,7 @@ export const SharedChainTypeIDParamsSchema: AllowedSchema = {
   type: 'object',
   properties: {
     chainType: { type: 'string' },
-    chainID: { type: 'string' },
+    chainID: { type: 'string' }, // REST request forces strings but api.ts converts to number to follow shared-models
   },
   required: ['chainType', 'chainID'],
 };
@@ -32,7 +32,7 @@ export const ExtendedGetPOIListEventRangeBodySchema: AllowedSchema = {
   type: 'object',
   properties: {
     chainType: { type: 'string' },
-    chainID: { type: 'string' },
+    chainID: { type: 'number' },
     txidVersion: { type: 'string' },
     startIndex: { type: 'number' },
     endIndex: { type: 'number' },

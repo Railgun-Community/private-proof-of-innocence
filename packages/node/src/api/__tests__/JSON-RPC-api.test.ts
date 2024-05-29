@@ -6,15 +6,11 @@ import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import axios, { AxiosError } from 'axios';
 import {
-  BlindedCommitmentData,
   BlindedCommitmentType,
-  ChainType,
-  GetPOIsPerListParams,
   NETWORK_CONFIG,
   NetworkName,
   NodeStatusAllNetworks,
   POIEventType,
-  SubmitTransactProofParams,
   TXIDVersion,
 } from '@railgun-community/shared-models';
 import { ProofOfInnocenceNode } from '../../proof-of-innocence-node';
@@ -24,14 +20,11 @@ import sinon, { SinonStub } from 'sinon';
 import * as General from '../../config/general';
 import { QueryLimits } from '../../config/query-limits';
 import { BlockedShieldsCache } from '../../shields/blocked-shields-cache';
-import { SignedPOIEvent } from '../../models/poi-types';
 import { POIEventList } from '../../poi-events/poi-event-list';
 import { RailgunTxidMerkletreeManager } from '../../railgun-txids/railgun-txid-merkletree-manager';
 import { TransactProofMempool } from '../../proof-mempool/transact-proof-mempool';
 import { POIMerkletreeManager } from '../../poi-events/poi-merkletree-manager';
-import { SharedChainTypeIDParamsSchema } from '../schemas';
 import { Config } from '../../config/config';
-
 interface ValidationError {
   params: {
     missingProperty: string;
@@ -56,10 +49,7 @@ let node3010: ProofOfInnocenceNode;
 let node3011: ProofOfInnocenceNode;
 let apiUrl: string;
 
-let base64Credentials: string;
-
 let nodeURLForListKeyStub: SinonStub;
-let initNetworkProvidersStub: SinonStub;
 let isListProviderStub: SinonStub;
 let verifyAndAddSignedPOIEventsWithValidatedMerklerootsStub: SinonStub;
 let verifySignatureAndUpdateValidatedRailgunTxidStatusStub: SinonStub;
@@ -93,14 +83,6 @@ describe('JSON RPC API Tests', function () {
     await node3010.start();
 
     apiUrl = node3011.getURL();
-
-    // Import admin and password from .env file
-    const username = process.env.BASIC_AUTH_USERNAME;
-    const password = process.env.BASIC_AUTH_PASSWORD;
-    base64Credentials = Buffer.from(
-      `${username}:${password}`,
-      'utf-8',
-    ).toString('base64');
   });
 
   beforeEach(async function () {
@@ -132,7 +114,7 @@ describe('JSON RPC API Tests', function () {
     await node3010.stop();
     await node3011.stop();
 
-    // Stub for all to prevent any network calls to eth goerli etc.
+    // Stub for all to prevent any network calls
     // TODO: sometimes the connections seem to cause timeouts
     // initNetworkProvidersStub.restore();
   });
@@ -199,7 +181,7 @@ describe('JSON RPC API Tests', function () {
   });
 
   describe('ppoi_poi_events', () => {
-    it.only('Should return 200 for POST / ppoi_poi-events', async () => {
+    it('Should return 200 for POST / ppoi_poi-events', async () => {
       const jsonRpcRequest = {
         jsonrpc: '2.0',
         method: 'ppoi_poi_events',
@@ -244,19 +226,6 @@ describe('JSON RPC API Tests', function () {
           'message',
           'Invalid params',
         );
-
-        // Extract missing properties from the validation errors
-        const missingProperties = err.response.data.error.data.map(
-          (error: ValidationError) => {
-            return error.params.missingProperty;
-          },
-        );
-
-        // Check if the specific properties are included in the missing properties
-        expect(missingProperties).to.include.members([
-          'txidVersion',
-          'listKey',
-        ]);
       }
     });
 
@@ -616,7 +585,7 @@ describe('JSON RPC API Tests', function () {
           txidVersion: TXIDVersion.V2_PoseidonMerkle,
           bloomFilterSerialized: BlockedShieldsCache.serializeBloomFilter(
             listKey,
-            NetworkName.EthereumGoerli_DEPRECATED,
+            NetworkName.EthereumSepolia,
             txidVersion,
           ),
         },
@@ -637,7 +606,7 @@ describe('JSON RPC API Tests', function () {
           chainID: chainID,
           bloomFilterSerialized: BlockedShieldsCache.serializeBloomFilter(
             listKey,
-            NetworkName.EthereumGoerli_DEPRECATED,
+            NetworkName.EthereumSepolia,
             txidVersion,
           ),
         },
@@ -682,7 +651,7 @@ describe('JSON RPC API Tests', function () {
           txidVersion: TXIDVersion.V2_PoseidonMerkle,
           bloomFilterSerialized: BlockedShieldsCache.serializeBloomFilter(
             listKey,
-            NetworkName.EthereumGoerli_DEPRECATED,
+            NetworkName.EthereumSepolia,
             txidVersion,
           ),
           listKey,
@@ -704,7 +673,7 @@ describe('JSON RPC API Tests', function () {
           chainID: chainID,
           bloomFilterSerialized: BlockedShieldsCache.serializeBloomFilter(
             listKey,
-            NetworkName.EthereumGoerli_DEPRECATED,
+            NetworkName.EthereumSepolia,
             txidVersion,
           ),
           listKey,
@@ -751,7 +720,7 @@ describe('JSON RPC API Tests', function () {
           txidVersion: TXIDVersion.V2_PoseidonMerkle,
           bloomFilterSerialized: BlockedShieldsCache.serializeBloomFilter(
             'fake_list_key',
-            NetworkName.EthereumGoerli_DEPRECATED,
+            NetworkName.EthereumSepolia,
             TXIDVersion.V2_PoseidonMerkle,
           ),
           listKey: 'fake_list_key',

@@ -12,7 +12,7 @@ import { MOCK_LIST_KEYS } from '../../../tests/mocks.test';
 chai.use(chaiAsPromised);
 const { expect } = chai;
 
-const networkName = NetworkName.EthereumGoerli_DEPRECATED;
+const networkName = NetworkName.EthereumSepolia;
 const txidVersion = TXIDVersion.V2_PoseidonMerkle;
 
 let db: TransactProofPerListMempoolDatabase;

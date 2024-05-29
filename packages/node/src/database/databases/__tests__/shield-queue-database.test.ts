@@ -17,7 +17,7 @@ import { calculateShieldBlindedCommitment } from '../../../util/shield-blinded-c
 chai.use(chaiAsPromised);
 const { expect } = chai;
 
-const networkName = NetworkName.EthereumGoerli_DEPRECATED;
+const networkName = NetworkName.EthereumSepolia;
 const txidVersion = TXIDVersion.V2_PoseidonMerkle;
 
 let db: ShieldQueueDatabase;

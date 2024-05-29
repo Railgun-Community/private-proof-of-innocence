@@ -61,11 +61,6 @@ export class POINodeRequest {
       return data.result as ResponseData;
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
-        console.error(
-          `ERROR ${nodeURL} - ${error.message}: ${JSON.stringify(
-            error.response.data,
-          )}`,
-        );
         throw new Error(
           `${error.message}: ${JSON.stringify(error.response.data)}`,
         );

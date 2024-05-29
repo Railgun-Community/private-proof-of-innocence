@@ -48,7 +48,7 @@ export type SignedBlockedShield = {
 
 export type SubmitPOIEventParams = {
   chainType: string;
-  chainID: string;
+  chainID: number;
   txidVersion: TXIDVersion;
   signedPOIEvent: SignedPOIEvent;
   listKey: string;
@@ -57,7 +57,7 @@ export type SubmitPOIEventParams = {
 
 export type SubmitValidatedTxidAndMerklerootParams = {
   chainType: string;
-  chainID: string;
+  chainID: number;
   txidVersion: TXIDVersion;
   txidIndex: number;
   merkleroot: string;
@@ -67,7 +67,7 @@ export type SubmitValidatedTxidAndMerklerootParams = {
 
 export type RemoveTransactProofParams = {
   chainType: string;
-  chainID: string;
+  chainID: number;
   txidVersion: TXIDVersion;
   blindedCommitmentsOut: string[];
   railgunTxidIfHasUnshield: string;
@@ -77,14 +77,14 @@ export type RemoveTransactProofParams = {
 
 export type GetLegacyTransactProofsParams = {
   chainType: string;
-  chainID: string;
+  chainID: number;
   txidVersion: TXIDVersion;
   bloomFilterSerialized: string;
 };
 
 export type GetPOIListEventRangeParams = {
   chainType: string;
-  chainID: string;
+  chainID: number;
   txidVersion: TXIDVersion;
   listKey: string;
   startIndex: number;
@@ -93,7 +93,7 @@ export type GetPOIListEventRangeParams = {
 
 export type GetPOIMerkletreeLeavesParams = {
   chainType: string;
-  chainID: string;
+  chainID: number;
   txidVersion: TXIDVersion;
   listKey: string;
   startIndex: number;
@@ -107,7 +107,7 @@ export type POISyncedListEvent = {
 
 export type GetPOIsPerBlindedCommitmentParams = {
   chainType: string;
-  chainID: string;
+  chainID: number;
   txidVersion: TXIDVersion;
   listKey: string;
   blindedCommitmentDatas: BlindedCommitmentData[];

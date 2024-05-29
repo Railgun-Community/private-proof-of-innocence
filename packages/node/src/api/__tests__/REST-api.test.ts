@@ -37,6 +37,7 @@ chai.use(chaiAsPromised);
 const { expect } = chai;
 
 const networkName = Config.NETWORK_NAMES[0]; // Assuming single network setup for simplicity
+
 const chainID = NETWORK_CONFIG[networkName].chain.id;
 
 const listKey = MOCK_LIST_KEYS[0];
@@ -252,10 +253,14 @@ describe('api', function () {
   it('Should return 400 for POST /poi-events with invalid body', async () => {
     const chainType = '0';
 
+    // Stub isListProvider to get full error message as an aggregator
+    isListProviderStub.callsFake(() => true);
+
     await expect(
       AxiosTest.postRequest(`${apiUrl}/poi-events/${chainType}/${chainID}`, {
         startIndex: 0,
         endIndex: 1,
+        listKey: listKey,
       }),
     ).to.eventually.be.rejectedWith(
       `Request failed with status code 400: must have required property 'txidVersion'`,
@@ -380,7 +385,7 @@ describe('api', function () {
 
     const bloomFilterSerialized = BlockedShieldsCache.serializeBloomFilter(
       listKey,
-      NetworkName.EthereumGoerli_DEPRECATED,
+      NetworkName.EthereumSepolia,
       txidVersion,
     );
 
@@ -421,7 +426,7 @@ describe('api', function () {
           txidVersion: TXIDVersion.V2_PoseidonMerkle,
           bloomFilterSerialized: BlockedShieldsCache.serializeBloomFilter(
             'fake_list_key',
-            NetworkName.EthereumGoerli_DEPRECATED,
+            NetworkName.EthereumSepolia,
             TXIDVersion.V2_PoseidonMerkle,
           ),
           listKey: 'fake_list_key',
@@ -1010,7 +1015,6 @@ describe('api', function () {
 
   it('Should return 200 for POST /submit-poi-event', async () => {
     const chainType = '0';
-
     const txidVersion = TXIDVersion.V2_PoseidonMerkle;
     const signedPOIEvent: SignedPOIEvent = {
       index: 0,
@@ -1069,7 +1073,7 @@ describe('api', function () {
     const txidVersion = TXIDVersion.V2_PoseidonMerkle;
     const bloomFilterSerialized = BlockedShieldsCache.serializeBloomFilter(
       listKey,
-      NetworkName.EthereumGoerli_DEPRECATED,
+      NetworkName.EthereumSepolia,
       txidVersion,
     );
 

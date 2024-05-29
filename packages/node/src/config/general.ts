@@ -29,11 +29,11 @@ export const chainForNetwork = (networkName: NetworkName): Chain => {
 
 export const networkNameForSerializedChain = (
   chainType: string,
-  chainID: string,
+  chainID: number,
 ): NetworkName => {
   const networkName = networkForChain({
     type: Number(chainType),
-    id: Number(chainID),
+    id: chainID,
   })?.name;
   if (!isDefined(networkName)) {
     throw new Error('No network info available.');

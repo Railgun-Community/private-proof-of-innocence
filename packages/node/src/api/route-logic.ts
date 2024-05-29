@@ -107,11 +107,9 @@ export const getPerformanceMetrics = () => {
 
 export const getPoiEvents = async (
   chainType: string,
-  chainID: string,
+  chainID: number,
   params: any,
 ) => {
-  console.log('getPoiEvents', chainType, chainID, params);
-
   const networkName = networkNameForSerializedChain(chainType, chainID);
 
   const rangeLength = params.endIndex - params.startIndex;
@@ -136,7 +134,7 @@ export const getPoiEvents = async (
 
 export const getPOIMerkletreeLeaves = async (
   chainType: string,
-  chainID: string,
+  chainID: number,
   params: GetPOIMerkletreeLeavesParams,
 ) => {
   const networkName = networkNameForSerializedChain(chainType, chainID);
@@ -163,7 +161,7 @@ export const getPOIMerkletreeLeaves = async (
 
 export const getTransactProofs = (
   chainType: string,
-  chainID: string,
+  chainID: number,
   params: GetTransactProofsParams,
 ) => {
   const networkName = networkNameForSerializedChain(chainType, chainID);
@@ -179,7 +177,7 @@ export const getTransactProofs = (
 
 export const getLegacyTransactProofs = (
   chainType: string,
-  chainID: string,
+  chainID: number,
   params: GetLegacyTransactProofsParams,
 ) => {
   const networkName = networkNameForSerializedChain(chainType, chainID);
@@ -194,7 +192,7 @@ export const getLegacyTransactProofs = (
 
 export const getBlockedShields = (
   chainType: string,
-  chainID: string,
+  chainID: number,
   params: GetBlockedShieldsParams,
 ) => {
   const networkName = networkNameForSerializedChain(chainType, chainID);
@@ -210,7 +208,7 @@ export const getBlockedShields = (
 
 export const submitPOIEvent = async (
   chainType: string,
-  chainID: string,
+  chainID: number,
   params: SubmitPOIEventParams,
   dbg: debug.Debugger,
 ) => {
@@ -230,7 +228,7 @@ export const submitPOIEvent = async (
 
 export const submitValidatedTxid = async (
   chainType: string,
-  chainID: string,
+  chainID: number,
   params: SubmitValidatedTxidAndMerklerootParams,
   dbg: debug.Debugger,
 ) => {
@@ -252,7 +250,7 @@ export const submitValidatedTxid = async (
 
 export const removeTransactProof = async (
   chainType: string,
-  chainID: string,
+  chainID: number,
   params: RemoveTransactProofParams,
   dbg: debug.Debugger,
 ) => {
@@ -285,7 +283,7 @@ export const removeTransactProof = async (
 
 export const submitTransactProof = async (
   chainType: string,
-  chainID: string,
+  chainID: number,
   params: SubmitTransactProofParams,
   dbg: debug.Debugger,
 ) => {
@@ -309,7 +307,7 @@ export const submitTransactProof = async (
 
 export const submitLegacyTransactProofs = async (
   chainType: string,
-  chainID: string,
+  chainID: number,
   params: SubmitLegacyTransactProofParams,
   dbg: debug.Debugger,
 ) => {
@@ -338,7 +336,7 @@ export const submitLegacyTransactProofs = async (
 
 export const submitSingleCommitmentProofs = async (
   chainType: string,
-  chainID: string,
+  chainID: number,
   params: SubmitSingleCommitmentProofsParams,
   dbg: debug.Debugger,
 ) => {
@@ -366,7 +364,7 @@ export const submitSingleCommitmentProofs = async (
 
 export const getPOIsPerList = (
   chainType: string,
-  chainID: string,
+  chainID: number,
   params: GetPOIsPerListParams,
 ) => {
   const { txidVersion, listKeys, blindedCommitmentDatas } = params;
@@ -392,7 +390,7 @@ export const getPOIsPerList = (
 
 export const getPOIsPerBlindedCommitment = (
   chainType: string,
-  chainID: string,
+  chainID: number,
   params: GetPOIsPerBlindedCommitmentParams,
 ) => {
   const { txidVersion, listKey, blindedCommitmentDatas } = params;
@@ -418,7 +416,7 @@ export const getPOIsPerBlindedCommitment = (
 
 export const getMerkleProofs = async (
   chainType: string,
-  chainID: string,
+  chainID: number,
   params: GetMerkleProofsParams,
 ) => {
   const { txidVersion, listKey, blindedCommitments } = params;
@@ -445,7 +443,7 @@ export const getMerkleProofs = async (
 
 export const getValidatedTxid = async (
   chainType: string,
-  chainID: string,
+  chainID: number,
   params: GetLatestValidatedRailgunTxidParams,
 ) => {
   const { txidVersion } = params;
@@ -461,7 +459,7 @@ export const getValidatedTxid = async (
 
 export const validateTxidMerkleroot = async (
   chainType: string,
-  chainID: string,
+  chainID: number,
   params: ValidateTxidMerklerootParams,
 ) => {
   const { txidVersion, tree, index, merkleroot } = params;
@@ -479,7 +477,7 @@ export const validateTxidMerkleroot = async (
 
 export const validatePoiMerkleroots = async (
   chainType: string,
-  chainID: string,
+  chainID: number,
   params: ValidatePOIMerklerootsParams,
 ) => {
   const { txidVersion, listKey, poiMerkleroots } = params;
