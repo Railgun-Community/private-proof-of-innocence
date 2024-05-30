@@ -251,6 +251,18 @@ describe('JSON RPC API Tests', function () {
           'message',
           'Invalid params',
         );
+        // Extract missing properties from the validation errors
+        const missingProperties = err.response.data.error.data.map(
+          (error: ValidationError) => {
+            return error.params.missingProperty;
+          },
+        );
+
+        // Check if the specific properties are included in the missing properties
+        expect(missingProperties).to.include.members([
+          'txidVersion',
+          'listKey',
+        ]);
       }
     });
 
