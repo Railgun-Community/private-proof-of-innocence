@@ -160,6 +160,22 @@ describe('JSON RPC API Tests', function () {
 
       expect(response.status).to.equal(200);
       expect(body).to.have.keys(['listKeys', 'forNetwork']);
+      expect(body.forNetwork).to.have.keys(['Ethereum_Sepolia']);
+      expect(body.forNetwork.Ethereum_Sepolia).to.have.keys([
+        'legacyTransactProofs',
+        'txidStatus',
+        'listStatuses',
+        'shieldQueueStatus',
+      ]);
+
+      if (body.forNetwork.Ethereum_Sepolia) {
+        expect(body.forNetwork.Ethereum_Sepolia.txidStatus).to.haveOwnProperty(
+          'currentTxidIndex',
+        );
+        expect(body.forNetwork.Ethereum_Sepolia.txidStatus).to.haveOwnProperty(
+          'currentMerkleroot',
+        );
+      }
     });
 
     it('Should return 200 for POST / ppoi_node_status with listKey', async () => {
@@ -179,6 +195,13 @@ describe('JSON RPC API Tests', function () {
 
       expect(response.status).to.equal(200);
       expect(body).to.have.keys(['listKeys', 'forNetwork']);
+      expect(body.forNetwork).to.have.keys(['Ethereum_Sepolia']);
+      expect(body.forNetwork.Ethereum_Sepolia).to.have.keys([
+        'legacyTransactProofs',
+        'txidStatus',
+        'listStatuses',
+        'shieldQueueStatus',
+      ]);
     });
   });
 
