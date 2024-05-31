@@ -68,49 +68,62 @@ export class ProofOfInnocenceNode {
 
   async start() {
     if (this.running) {
-      dbg(`Node already running, exiting start()`);
+      dbg(`ProofOfInnocenceNode already running, exiting start()`);
       return;
     }
 
-    dbg(`Starting Proof of Innocence node...`);
+    dbg(`ProofOfInnocenceNode start()...`);
     this.running = true;
 
-    // Must proceed in this order:
-    await initDatabases();
-    await initEngineAndScanTXIDs();
-    await this.connectedNodeStartup.start();
-    await initModules(this.listKeys);
-
-    this.listProvider?.startPolling();
-
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    this.runRescanHistoryPoller();
-
-    this.api.serve(this.host, this.port);
-
-    this.roundRobinSyncer.startPolling();
-
-    const transactProofPushSyncer = new TransactProofPushSyncer(this.listKeys);
-    transactProofPushSyncer.startPolling();
-
-    // Check if node API is running
     try {
+      // Must proceed in this order:
+      await initDatabases();
+      dbg(`- Databases initialized -`);
+
+      await initEngineAndScanTXIDs();
+      dbg(`- Engine initialized -`);
+
+      await this.connectedNodeStartup.start();
+      dbg(`- Connected nodes started -`);
+
+      await initModules(this.listKeys);
+      dbg(`- Modules initialized -`);
+
+      this.listProvider?.startPolling();
+      dbg(`- List provider started polling -`);
+
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+      this.runRescanHistoryPoller();
+      dbg(`- Rescan history poller started -`);
+
+      this.api.serve(this.host, this.port);
+      dbg(`- API started on ${this.getURL()} -`);
+
+      this.roundRobinSyncer.startPolling();
+      dbg(`- Round robin syncer started polling -`);
+
+      const transactProofPushSyncer = new TransactProofPushSyncer(
+        this.listKeys,
+      );
+      transactProofPushSyncer.startPolling();
+      dbg(`- Transact proof push syncer started polling -`);
+
+      // Check if node API is running
       const url = this.getURL();
       await axios.get(url, { timeout: 1000 });
+      dbg(`- API check successful: Connected to ${url} -`);
     } catch (err) {
-      dbg(
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        `Cannot connect to API - check port ${this.port} for existing process: ${err.message}`,
-      );
-      throw new Error(`Cannot start node: port ${this.port} is already in use`);
+      dbg(`Error during node startup: ${err.message}`);
+      throw err;
     }
 
     ListProviderPOIEventQueue.ready = true;
-
-    dbg(`Proof of Innocence node running...`);
+    dbg(`ProofOfInnocence node finished starting.`);
   }
 
   private async runRescanHistoryPoller() {
+    dbg(`Rescan history poller started...`);
+
     for (const networkName of Config.NETWORK_NAMES) {
       const chain = chainForNetwork(networkName);
       await refreshBalances(chain, undefined);

@@ -14,7 +14,7 @@ describe('active-network-providers', () => {
   before(async function run() {
     this.timeout(30000);
     await startEngine();
-    await initNetworkProviders([NetworkName.EthereumGoerli]);
+    await initNetworkProviders([NetworkName.EthereumSepolia]);
   });
 
   after(async () => {
@@ -22,8 +22,8 @@ describe('active-network-providers', () => {
   });
 
   it('Should init viable fallback providers', async () => {
-    const provider = getProviderForNetwork(NetworkName.EthereumGoerli);
+    const provider = getProviderForNetwork(NetworkName.EthereumSepolia);
     const block = await provider.getBlockNumber();
-    expect(block).to.be.greaterThan(9_000_000);
+    expect(block).to.be.greaterThan(5_000_000);
   });
 }).timeout(20000);

@@ -12,7 +12,7 @@ import { Config } from '../../../config/config';
 chai.use(chaiAsPromised);
 const { expect } = chai;
 
-const networkName = NetworkName.EthereumGoerli;
+const networkName = NetworkName.EthereumSepolia;
 const txidVersion = TXIDVersion.V2_PoseidonMerkle;
 
 let db: TestDatabase;

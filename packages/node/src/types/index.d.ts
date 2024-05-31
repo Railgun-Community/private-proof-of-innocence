@@ -6,6 +6,6 @@ declare module 'bits-to-bytes';
 
 declare module 'snarkjs';
 
-declare module 'circomlibjs' {
+declare module '@railgun-community/circomlibjs' {
   export function poseidon(inputs: bigint[]): bigint;
 }

@@ -20,7 +20,7 @@ import { POIMerkletreeDatabase } from '../../database/databases/poi-merkletree-d
 chai.use(chaiAsPromised);
 const { expect } = chai;
 
-const networkName = NetworkName.EthereumGoerli;
+const networkName = NetworkName.EthereumSepolia;
 const txidVersion = TXIDVersion.V2_PoseidonMerkle;
 const listKey = 'test_list';
 

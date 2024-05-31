@@ -1,5 +1,5 @@
 import { NetworkName, TXIDVersion } from '@railgun-community/shared-models';
-import { hexToBigInt } from '@railgun-community/wallet';
+import { ByteUtils } from '@railgun-community/wallet';
 import { POIOrderedEventsDatabase } from '../database/databases/poi-ordered-events-database';
 import debug from 'debug';
 
@@ -15,11 +15,11 @@ export class TransactProofEventMatcher {
   ): Promise<boolean> {
     const blindedCommitmentsIncludingUnshield = blindedCommitments.filter(
       blindedCommitment => {
-        return hexToBigInt(blindedCommitment) !== 0n;
+        return ByteUtils.hexToBigInt(blindedCommitment) !== 0n;
       },
     );
 
-    if (hexToBigInt(railgunTxidIfHasUnshield) !== 0n) {
+    if (ByteUtils.hexToBigInt(railgunTxidIfHasUnshield) !== 0n) {
       blindedCommitmentsIncludingUnshield.push(railgunTxidIfHasUnshield);
     }
 

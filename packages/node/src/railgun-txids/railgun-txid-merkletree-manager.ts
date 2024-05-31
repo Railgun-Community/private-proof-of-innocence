@@ -99,11 +99,13 @@ export class RailgunTxidMerkletreeManager {
   ): Promise<RailgunTxidStatus> {
     const { txidIndex: currentTxidIndex, merkleroot: currentMerkleroot } =
       await getLatestRailgunTxidData(txidVersion, networkName);
+
     const { validatedTxidIndex, validatedMerkleroot } =
       await RailgunTxidMerkletreeManager.getValidatedRailgunTxidStatus(
         networkName,
         txidVersion,
       );
+
     return {
       currentTxidIndex,
       currentMerkleroot,

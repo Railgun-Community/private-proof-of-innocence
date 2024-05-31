@@ -26,7 +26,7 @@
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
     "moduleResolution": "node",
-    "isolatedModules": true,
+    "isolatedModules": false, // changed with wallet 10.0.0 patch
     "noImplicitReturns": true,
     "useUnknownInCatchVariables": false,
     "skipLibCheck": true

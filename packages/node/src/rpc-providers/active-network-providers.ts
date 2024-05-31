@@ -19,6 +19,7 @@ const activeNetworkProviders: Partial<Record<NetworkName, FallbackProvider>> =
 
 export const initNetworkProviders = async (networkNames?: NetworkName[]) => {
   const initChains = networkNames ?? Config.NETWORK_NAMES;
+
   await Promise.all(
     initChains.map(async (networkName: NetworkName) => {
       try {

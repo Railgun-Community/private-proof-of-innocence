@@ -23,7 +23,7 @@ before(async function run() {
 
   API.debug = true;
 
-  Config.NETWORK_NAMES = [NetworkName.EthereumGoerli];
+  Config.NETWORK_NAMES = [NetworkName.EthereumSepolia];
 
   await promiseTimeout(
     setUpMongoose(),

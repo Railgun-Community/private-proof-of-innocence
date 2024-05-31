@@ -36,10 +36,10 @@
   },
   "dependencies": {
     "@noble/ed25519": "^1.7.1",
+    "@railgun-community/circomlibjs": "^0.0.8",
     "axios": "^1.5.0",
-    "byte-base64": "^1.1.0",
     "bloom-filters": "^3.0.0",
-    "circomlibjs": "hsg88/circomlibjs#ffjavascrip.0.1.0",
+    "byte-base64": "^1.1.0",
     "cors": "^2.8.5",
     "express": "^4.18.2",
     "express-json-rpc-router": "^1.4.0",
@@ -50,13 +50,14 @@
     "snarkjs": "^0.7.0"
   },
   "peerDependencies": {
-    "@railgun-community/shared-models": "^6.4.0",
-    "@railgun-community/wallet": "7.3.1",
+    "@railgun-community/shared-models": "7.0.7",
+    "@railgun-community/wallet": "10.0.1",
     "ethers": "github:Railgun-Community/ethers.js#v6.7.10"
   },
   "devDependencies": {
-    "@railgun-community/shared-models": "^6.4.0",
-    "@railgun-community/wallet": "7.3.1",
+    "@railgun-community/shared-models": "7.0.7",
+    "@railgun-community/wallet": "10.0.1",
+    "@types/brotli": "^1.3.4",
     "@types/chai": "^4.3.5",
     "@types/chai-as-promised": "^7.1.5",
     "@types/cors": "^2.8.13",

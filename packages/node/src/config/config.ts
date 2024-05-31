@@ -11,9 +11,13 @@ export class Config {
 
   static MONGODB_URL = process.env.MONGODB_URL;
 
+  // Launch all non-deprecated networks with a poi config
   static NETWORK_NAMES: NetworkName[] = Object.values(NetworkName).filter(
     networkName => {
-      return isDefined(NETWORK_CONFIG[networkName].poi);
+      return (
+        isDefined(NETWORK_CONFIG[networkName].poi) &&
+        NETWORK_CONFIG[networkName].deprecated !== true
+      );
     },
   );
 

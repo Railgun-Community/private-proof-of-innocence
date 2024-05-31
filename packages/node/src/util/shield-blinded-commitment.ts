@@ -1,7 +1,7 @@
 import {
+  BlindedCommitment,
+  ByteUtils,
   ShieldData,
-  getBlindedCommitmentForShieldOrTransact,
-  hexToBigInt,
 } from '@railgun-community/wallet';
 
 // 2^16
@@ -14,9 +14,9 @@ const getGlobalTreePosition = (utxoTree: number, utxoIndex: number) => {
 export const calculateShieldBlindedCommitment = (
   shieldData: ShieldData,
 ): string => {
-  return getBlindedCommitmentForShieldOrTransact(
+  return BlindedCommitment.getForShieldOrTransact(
     shieldData.commitmentHash,
-    hexToBigInt(shieldData.npk),
+    ByteUtils.hexToBigInt(shieldData.npk),
     BigInt(getGlobalTreePosition(shieldData.utxoTree, shieldData.utxoIndex)),
   );
 };

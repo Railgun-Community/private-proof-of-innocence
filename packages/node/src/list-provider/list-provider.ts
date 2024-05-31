@@ -14,7 +14,7 @@ import { chainForNetwork, networkForName } from '../config/general';
 import {
   ByteLength,
   ShieldData,
-  formatToByteLength,
+  ByteUtils,
   getRailgunTxidsForUnshields,
 } from '@railgun-community/wallet';
 import debug from 'debug';
@@ -318,7 +318,7 @@ export abstract class ListProvider {
     // 3. If any unshield exists, find POI Status for each unshield railgunTxid (by blindedCommitments).
     const poiStatuses: POIStatus[] = await Promise.all(
       unshieldRailgunTxids.map(async unshieldRailgunTxid => {
-        const blindedCommitment = formatToByteLength(
+        const blindedCommitment = ByteUtils.formatToByteLength(
           unshieldRailgunTxid,
           ByteLength.UINT_256,
           true,

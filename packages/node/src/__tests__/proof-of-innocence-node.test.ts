@@ -24,6 +24,11 @@ let initNetworkProvidersStub: sinon.SinonStub;
 
 describe('proof-of-innocence-node', () => {
   before(async function run() {
+    // Stub initNetworkProviders to resolve
+    // initNetworkProvidersStub = sinon
+    //   .stub(ActiveNetworkProviders, 'initNetworkProviders')
+    //   .resolves();
+
     nodeOnlyAggregator = new ProofOfInnocenceNode(
       '0.0.0.0',
       PORT_2,
@@ -35,23 +40,18 @@ describe('proof-of-innocence-node', () => {
       MOCK_LIST_KEYS[0],
     );
     nodeWithListProvider = new ProofOfInnocenceNode(
-      '0.0.0.0',
-      PORT_1,
-      [{ name: 'test', nodeURL: `http://localhost:${PORT_2}` }],
-      testListProvider,
+      '0.0.0.0', // Host
+      PORT_1, // Port
+      [{ name: 'test', nodeURL: `http://localhost:${PORT_2}` }], // Node configs
+      testListProvider, // List provider
     );
   });
 
   beforeEach(async function () {
     this.timeout(20000);
 
-    // // Stub loadEngineProvider where failure occurs without internet connection during testing
-    // // No actual network calls should be happening during testing
-    // initNetworkProvidersStub = sinon
-    //   .stub(ActiveNetworkProviders, 'initNetworkProviders')
-    //   .resolves();
-
     await nodeOnlyAggregator.start();
+
     await nodeWithListProvider.start();
   });
 
@@ -64,7 +64,8 @@ describe('proof-of-innocence-node', () => {
   });
 
   it('Should start up a node with list provider', async () => {
-    // Check that the node is an instance of ProofOfInnocenceNode
+    // Check the nodes are done starting up
+    expect(nodeOnlyAggregator).to.be.an.instanceOf(ProofOfInnocenceNode);
     expect(nodeWithListProvider).to.be.an.instanceOf(ProofOfInnocenceNode);
 
     expect(nodeWithListProvider.getPollStatus()).to.equal(PollStatus.IDLE);
@@ -76,6 +77,7 @@ describe('proof-of-innocence-node', () => {
       20,
       5000 / 20, // 5 sec.
     );
+
     if (pollStatusPolling !== PollStatus.POLLING) {
       throw new Error(
         `Should be polling, got ${nodeWithListProvider.getPollStatus()}`,

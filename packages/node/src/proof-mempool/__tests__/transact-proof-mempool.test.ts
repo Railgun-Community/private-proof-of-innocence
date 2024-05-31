@@ -26,7 +26,7 @@ import { SignedPOIEvent } from '../../models/poi-types';
 chai.use(chaiAsPromised);
 const { expect } = chai;
 
-const networkName = NetworkName.EthereumGoerli;
+const networkName = NetworkName.EthereumSepolia;
 const txidVersion = TXIDVersion.V2_PoseidonMerkle;
 const listKey = MOCK_LIST_KEYS[0];
 

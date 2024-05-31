@@ -24,6 +24,9 @@ import {
 } from '../util/ed25519';
 import { isListProvider } from '../config/general';
 import { JsonRpcError, JsonRpcPayload, JsonRpcResult } from 'ethers';
+
+import debug from 'debug';
+const dbg = debug('poi-node-request');
 export class POINodeRequest {
   private static async jsonRpcRequest<
     Params extends any[] | Record<string, any>,
@@ -39,6 +42,8 @@ export class POINodeRequest {
       params,
       id: Date.now(),
     };
+
+    dbg(`Making JSON-RPC request to ${nodeURL} - ${JSON.stringify(payload)}`);
 
     try {
       // Directly use Axios to make the post request
@@ -56,11 +61,6 @@ export class POINodeRequest {
       return data.result as ResponseData;
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
-        console.error(
-          `ERROR ${nodeURL} - ${error.message}: ${JSON.stringify(
-            error.response.data,
-          )}`,
-        );
         throw new Error(
           `${error.message}: ${JSON.stringify(error.response.data)}`,
         );
@@ -91,7 +91,10 @@ export class POINodeRequest {
   static getNodeStatusAllNetworks = async (
     nodeURL: string,
   ): Promise<NodeStatusAllNetworks> => {
+    dbg(`Getting node status for all networks from ${nodeURL}`);
+
     const method = POIJSONRPCMethod.NodeStatus;
+
     const nodeStatusAllNetworks = await this.jsonRpcRequest<
       object,
       NodeStatusAllNetworks
@@ -112,8 +115,8 @@ export class POINodeRequest {
     const chain = NETWORK_CONFIG[networkName].chain;
 
     const params = {
-      chainType: chain.type.toString(),
-      chainID: chain.id.toString(),
+      chainType: chain.type,
+      chainID: chain.id,
       txidVersion,
       listKey,
       startIndex,
@@ -137,8 +140,8 @@ export class POINodeRequest {
     const chain = NETWORK_CONFIG[networkName].chain;
     const method = POIJSONRPCMethod.POIMerkletreeLeaves;
     const params = {
-      chainID: chain.id.toString(),
-      chainType: chain.type.toString(),
+      chainID: chain.id,
+      chainType: chain.type,
       networkName,
       txidVersion,
       listKey,
@@ -164,8 +167,8 @@ export class POINodeRequest {
     const chain = NETWORK_CONFIG[networkName].chain;
     const method = POIJSONRPCMethod.TransactProofs;
     const params = {
-      chainID: chain.id.toString(),
-      chainType: chain.type.toString(),
+      chainID: chain.id,
+      chainType: chain.type,
       networkName,
       txidVersion,
       listKey,
@@ -189,8 +192,8 @@ export class POINodeRequest {
     const method = POIJSONRPCMethod.LegacyTransactProofs;
 
     const params = {
-      chainID: chain.id.toString(),
-      chainType: chain.type.toString(),
+      chainID: chain.id,
+      chainType: chain.type,
       networkName,
       txidVersion,
       bloomFilterSerialized,
@@ -214,8 +217,8 @@ export class POINodeRequest {
     const method = POIJSONRPCMethod.BlockedShields;
 
     const params = {
-      chainID: chain.id.toString(),
-      chainType: chain.type.toString(),
+      chainID: chain.id,
+      chainType: chain.type,
       networkName,
       txidVersion,
       listKey,
@@ -240,8 +243,8 @@ export class POINodeRequest {
     const method = POIJSONRPCMethod.SubmitTransactProof;
 
     const params = {
-      chainID: chain.id.toString(),
-      chainType: chain.type.toString(),
+      chainID: chain.id,
+      chainType: chain.type,
       networkName,
       txidVersion,
       listKey,
@@ -266,8 +269,8 @@ export class POINodeRequest {
     const method = POIJSONRPCMethod.SubmitLegacyTransactProofs;
 
     const params = {
-      chainID: chain.id.toString(),
-      chainType: chain.type.toString(),
+      chainID: chain.id,
+      chainType: chain.type,
       networkName,
       txidVersion,
       listKeys: [],
@@ -292,8 +295,8 @@ export class POINodeRequest {
     const method = POIJSONRPCMethod.SubmitSingleCommitmentProofs;
 
     const params = {
-      chainID: chain.id.toString(),
-      chainType: chain.type.toString(),
+      chainID: chain.id,
+      chainType: chain.type,
       networkName,
       txidVersion,
       singleCommitmentProofsData,
@@ -329,8 +332,8 @@ export class POINodeRequest {
     );
 
     const params = {
-      chainID: chain.id.toString(),
-      chainType: chain.type.toString(),
+      chainID: chain.id,
+      chainType: chain.type,
       networkName,
       txidVersion,
       listKey,
@@ -354,8 +357,8 @@ export class POINodeRequest {
     const method = POIJSONRPCMethod.SubmitPOIEvents;
 
     const params = {
-      chainID: chain.id.toString(),
-      chainType: chain.type.toString(),
+      chainID: chain.id,
+      chainType: chain.type,
       networkName,
       txidVersion,
       listKey,
@@ -382,8 +385,8 @@ export class POINodeRequest {
     const method = POIJSONRPCMethod.MerkleProofs;
 
     const params = {
-      chainID: chain.id.toString(),
-      chainType: chain.type.toString(),
+      chainID: chain.id,
+      chainType: chain.type,
       networkName,
       txidVersion,
       listKey,
@@ -408,8 +411,8 @@ export class POINodeRequest {
     const method = POIJSONRPCMethod.POIsPerBlindedCommitment;
 
     const params = {
-      chainID: chain.id.toString(),
-      chainType: chain.type.toString(),
+      chainID: chain.id,
+      chainType: chain.type,
       networkName,
       txidVersion,
       listKey,
@@ -434,8 +437,8 @@ export class POINodeRequest {
     const method = POIJSONRPCMethod.ValidatePOIMerkleroots;
 
     const params = {
-      chainID: chain.id.toString(),
-      chainType: chain.type.toString(),
+      chainID: chain.id,
+      chainType: chain.type,
       networkName,
       txidVersion,
       listKey,
@@ -470,8 +473,8 @@ export class POINodeRequest {
     const signature = await signValidatedTxidMerkleroot(txidIndex, merkleroot);
 
     const params = {
-      chainID: chain.id.toString(),
-      chainType: chain.type.toString(),
+      chainID: chain.id,
+      chainType: chain.type,
       networkName,
       txidVersion,
       txidIndex,

@@ -63,21 +63,6 @@ export type LogicFunctionMap = {
 };
 
 /**
- * Handle JSON RPC errors
- *
- * @param res - Express response
- * @param error - Error to handle
- * @param id - JSON RPC request id
- */
-export const handleJsonRpcError = (res: Response, error: Error, id: string) => {
-  res.status(500).json({
-    jsonrpc: '2.0',
-    error: { code: -32603, message: error.message },
-    id,
-  });
-};
-
-/**
  * Get the logic function map for the JSON RPC handler
  *
  * @param params - JSON RPC params

@@ -10,9 +10,9 @@ import { POINodeRequest } from '../api/poi-node-request';
 import debug from 'debug';
 import { PushSync } from '../sync/push-sync';
 import {
+  BlindedCommitment,
+  ByteUtils,
   POIValidator,
-  getBlindedCommitmentForShieldOrTransact,
-  hexToBigInt,
 } from '@railgun-community/wallet';
 import { getGlobalTreePosition } from '@railgun-community/engine';
 import { RailgunTxidMerkletreeManager } from '../railgun-txids/railgun-txid-merkletree-manager';
@@ -135,9 +135,9 @@ export class SingleCommitmentProofManager {
         );
       }
 
-      const blindedCommitment = getBlindedCommitmentForShieldOrTransact(
+      const blindedCommitment = BlindedCommitment.getForShieldOrTransact(
         commitment,
-        hexToBigInt(npk),
+        ByteUtils.hexToBigInt(npk),
         getGlobalTreePosition(utxoTreeOut, utxoPositionOut),
       );
 

@@ -25,7 +25,9 @@ const question = promisify(rl.question).bind(rl);
   let dotEnv = '';
 
   /** @type {string} */
-  let pkey = await question('(Required) Enter your private ed25519 key: ');
+  let pkey = await question(
+    '(Required) Enter a private ed25519 key to assign the node: ',
+  );
   if (typeof pkey !== 'string' || pkey.length === 0) {
     console.log('Invalid! Private key must be 32 bytes hexadecimal.');
     process.exit(1);
@@ -40,7 +42,7 @@ const question = promisify(rl.question).bind(rl);
   dotEnv += `pkey=0x${pkey}\n`;
 
   const port = await question(
-    '(Required) Enter the port number to run the node on: ',
+    '(Required) Enter a port number for the node to run node on: ',
   );
   // Validate port number:
   if (typeof port === 'string' && port.length > 0) {

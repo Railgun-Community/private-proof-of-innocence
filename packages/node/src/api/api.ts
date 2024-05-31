@@ -13,8 +13,8 @@ import debug from 'debug';
 import { Server } from 'http';
 import {
   Validator,
-  ValidationError,
   AllowedSchema,
+  ValidationError,
 } from 'express-json-validator-middleware';
 import { isListProvider } from '../config/general';
 import {
@@ -93,8 +93,10 @@ import {
   validateTxidMerkleroot,
   handleHTTPError,
   submitValidatedTxid,
+  paramToNumber,
 } from './route-logic';
 import { getLogicFunctionMap } from './json-rpc-handlers';
+import { error } from 'console';
 
 const dbg = debug('poi:api');
 
@@ -131,7 +133,7 @@ export class API {
 
     this.listKeys = listKeys;
 
-    // Error middleware for JSON validation errors
+    // Catch errors thrown by each JSON schema validator used in JSON-RPC and REST flows
     this.app.use(
       (
         error: Error | unknown,
@@ -140,17 +142,30 @@ export class API {
         next: NextFunction,
       ) => {
         if (error instanceof ValidationError) {
-          res
-            .status(400)
-            .send(
-              `${
-                error?.validationErrors?.body?.[0]?.message ??
-                'Unknown validation error'
-              }`,
-            );
+          if (req.path === '/') {
+            // JSON-RPC validation error
+            res.status(400).json({
+              jsonrpc: '2.0',
+              error: {
+                code: -32602,
+                message: 'Invalid params',
+                data: error.validationErrors,
+              },
+              id: req.body.id,
+            });
+          } else {
+            // REST validation error
+            res
+              .status(400)
+              .send(
+                `${
+                  error?.validationErrors?.body?.[0]?.message ??
+                  'Unknown validation error'
+                }`,
+              );
+          }
           return;
         }
-
         next(error);
       },
     );
@@ -216,7 +231,7 @@ export class API {
       return;
     }
 
-    // Check validity of listKey if present
+    // Check validity of listKey if one is passed in for the respective method
     if (Boolean(params.listKey) && !this.hasListKey(params.listKey)) {
       res.status(400).json({
         jsonrpc: '2.0',
@@ -237,9 +252,11 @@ export class API {
       // Manually validate params/schema since validation package isn't compatible with JSON-RPC
       if (schema) {
         const validateResult = validator.ajv.validate(schema, params);
+
         if (!validateResult) {
           // Validation failed, handle error response
           const errors = validator.ajv.errors;
+
           res.status(400).json({
             jsonrpc: '2.0',
             error: { code: -32602, message: 'Invalid params', data: errors },
@@ -315,7 +332,7 @@ export class API {
   }
 
   /**
-   * Safe GET handler that catches errors.
+   * Safe GET handler that catches REST errors.
    *
    * If the API is running in list provider mode, the specific error message is returned to the client.
    * If the API is running in aggregator mode, a 500 response is returned without the error message.
@@ -330,7 +347,7 @@ export class API {
     this.app.get(
       route,
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      async (req: Request, res: Response, next: NextFunction) => {
+      async (req: Request, res: Response) => {
         if (shouldLogVerbose()) {
           dbg(`GET request ${route}`);
           dbg({ ...req.params, ...req.body });
@@ -348,19 +365,20 @@ export class API {
 
           if (isListProvider()) {
             // Show the error message to aggregator nodes
-            return res.status(500).json(err.message);
+            return res.status(500).json({ error: err.message });
           } else {
             // Hide the error message
-            return res.status(500).send();
+            return res.status(500).json({
+              error: 'Error occurred while executing the REST method',
+            });
           }
-          // return next(err);
         }
       },
     );
   };
 
   /**
-   * Safe POST handler that catches errors and returns a 500 response.
+   * Safe POST handler that catches REST errors and returns a 500 response.
    *
    * @param route - Route to handle POST requests for
    * @param handler - Request handler function that returns a Promise
@@ -373,15 +391,14 @@ export class API {
     paramsSchema: AllowedSchema,
     bodySchema: AllowedSchema,
   ) => {
-    const validate = validator.validate({
+    const validateMiddleware = validator.validate({
       params: paramsSchema,
       body: bodySchema,
     });
 
     this.app.post(
       route,
-      validate,
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      validateMiddleware,
       async (req: Request, res: Response, next: NextFunction) => {
         dbg(`POST request ${route}`);
         dbg({ ...req.params, ...req.body });
@@ -404,13 +421,11 @@ export class API {
           const { statusCode, errorMessage } = handleHTTPError(err);
 
           if (isListProvider()) {
-            // Show the error message to aggregator nodes
-            return res.status(statusCode).json(errorMessage);
+            return res.status(statusCode).send(errorMessage);
           } else {
-            // Hide the error message
             return res
               .status(statusCode)
-              .json('Error occurred while executing the REST method');
+              .send('Error occurred while executing the REST method');
           }
         }
       },
@@ -490,12 +505,19 @@ export class API {
     this.safePost<POISyncedListEvent[]>(
       '/poi-events/:chainType/:chainID',
       async (req: Request) => {
+        console.log('req.body', req.body);
+        console.log('req.params', req.params);
+
         const body = req.body as GetPOIListEventRangeParams;
-        // Check if the listKey is valid
+        // Check if listKey is valid
         if (!this.hasListKey(body.listKey)) {
           throw new Error('Invalid listKey');
         }
-        return getPoiEvents(req.params.chainType, req.params.chainID, body);
+
+        const chainType = paramToNumber(req.params.chainType);
+        const chainID = paramToNumber(req.params.chainID);
+
+        return getPoiEvents(chainType, chainID, body);
       },
       SharedChainTypeIDParamsSchema,
       GetPOIListEventRangeBodySchema,
@@ -510,11 +532,11 @@ export class API {
         if (!this.hasListKey(body.listKey)) {
           throw new Error('Invalid listKey');
         }
-        return await getPOIMerkletreeLeaves(
-          req.params.chainType,
-          req.params.chainID,
-          body,
-        );
+
+        const chainType = paramToNumber(req.params.chainType);
+        const chainID = paramToNumber(req.params.chainID);
+
+        return await getPOIMerkletreeLeaves(chainType, chainID, body);
       },
       SharedChainTypeIDParamsSchema,
       GetPOIMerkletreeLeavesBodySchema,
@@ -528,11 +550,15 @@ export class API {
         if (!this.hasListKey(body.listKey)) {
           throw new Error('Invalid listKey');
         }
+
+        const chainType = paramToNumber(req.params.chainType);
+        const chainID = paramToNumber(req.params.chainID);
+
         // safePOST requires a Promise to be returned
         return Promise.resolve(
           getTransactProofs(
-            req.params.chainType,
-            req.params.chainID,
+            chainType,
+            chainID,
             req.body as GetTransactProofsParams,
           ),
         );
@@ -544,10 +570,13 @@ export class API {
     this.safePost<LegacyTransactProofData[]>(
       '/legacy-transact-proofs/:chainType/:chainID',
       (req: Request) => {
+        const chainType = paramToNumber(req.params.chainType);
+        const chainID = paramToNumber(req.params.chainID);
+
         return Promise.resolve(
           getLegacyTransactProofs(
-            req.params.chainType,
-            req.params.chainID,
+            chainType,
+            chainID,
             req.body as GetLegacyTransactProofsParams,
           ),
         );
@@ -564,9 +593,10 @@ export class API {
           throw new Error('Invalid listKey');
         }
 
-        return Promise.resolve(
-          getBlockedShields(req.params.chainType, req.params.chainID, body),
-        );
+        const chainType = paramToNumber(req.params.chainType);
+        const chainID = paramToNumber(req.params.chainID);
+
+        return Promise.resolve(getBlockedShields(chainType, chainID, body));
       },
       SharedChainTypeIDParamsSchema,
       GetBlockedShieldsBodySchema,
@@ -579,10 +609,14 @@ export class API {
         if (!this.hasListKey(body.listKey)) {
           throw new Error('Invalid listKey');
         }
+
+        const chainType = paramToNumber(req.params.chainType);
+        const chainID = paramToNumber(req.params.chainID);
+
         // Submit the POI event, return void
         await submitPOIEvent(
-          req.params.chainType,
-          req.params.chainID,
+          chainType,
+          chainID,
           body,
           dbg, // Pass in debugger for logging submitted signed POI events
         );
@@ -598,9 +632,13 @@ export class API {
         if (!this.hasListKey(body.listKey)) {
           throw new Error('Invalid listKey');
         }
+
+        const chainType = paramToNumber(req.params.chainType);
+        const chainID = paramToNumber(req.params.chainID);
+
         await submitValidatedTxid(
-          req.params.chainType,
-          req.params.chainID,
+          chainType,
+          chainID,
           body,
           dbg, // Pass in debugger for logging submitted validated txids
         );
@@ -617,12 +655,11 @@ export class API {
         if (!this.hasListKey(body.listKey)) {
           throw new Error('Invalid listKey');
         }
-        await removeTransactProof(
-          req.params.chainType,
-          req.params.chainID,
-          body,
-          dbg,
-        );
+
+        const chainType = paramToNumber(req.params.chainType);
+        const chainID = paramToNumber(req.params.chainID);
+
+        await removeTransactProof(chainType, chainID, body, dbg);
       },
       SharedChainTypeIDParamsSchema,
       RemoveTransactProofBodySchema,
@@ -638,12 +675,11 @@ export class API {
         if (!this.hasListKey(body.listKey)) {
           throw new Error('Invalid listKey');
         }
-        await submitTransactProof(
-          req.params.chainType,
-          req.params.chainID,
-          body,
-          dbg,
-        );
+
+        const chainType = paramToNumber(req.params.chainType);
+        const chainID = paramToNumber(req.params.chainID);
+
+        await submitTransactProof(chainType, chainID, body, dbg);
       },
       SharedChainTypeIDParamsSchema,
       SubmitTransactProofBodySchema,
@@ -662,13 +698,11 @@ export class API {
         // Modify body.listKeys to only include valid listKeys
         body.listKeys = filteredListKeys;
 
+        const chainType = paramToNumber(req.params.chainType);
+        const chainID = paramToNumber(req.params.chainID);
+
         // Submit the legacy transact proofs
-        await submitLegacyTransactProofs(
-          req.params.chainType,
-          req.params.chainID,
-          body,
-          dbg,
-        );
+        await submitLegacyTransactProofs(chainType, chainID, body, dbg);
       },
       SharedChainTypeIDParamsSchema,
       SubmitLegacyTransactProofsBodySchema,
@@ -677,10 +711,13 @@ export class API {
     this.safePost<void>(
       '/submit-single-commitment-proofs/:chainType/:chainID',
       async (req: Request) => {
+        const chainType = paramToNumber(req.params.chainType);
+        const chainID = paramToNumber(req.params.chainID);
+
         // Submit and verify the proofs
         await submitSingleCommitmentProofs(
-          req.params.chainType,
-          req.params.chainID,
+          chainType,
+          chainID,
           req.body as SubmitSingleCommitmentProofsParams,
           dbg,
         );
@@ -692,9 +729,12 @@ export class API {
     this.safePost<POIsPerListMap>(
       '/pois-per-list/:chainType/:chainID',
       (req: Request) => {
+        const chainType = paramToNumber(req.params.chainType);
+        const chainID = paramToNumber(req.params.chainID);
+
         return getPOIsPerList(
-          req.params.chainType,
-          req.params.chainID,
+          chainType,
+          chainID,
           req.body as GetPOIsPerListParams,
         );
       },
@@ -705,9 +745,12 @@ export class API {
     this.safePost<POIsPerBlindedCommitmentMap>(
       '/pois-per-blinded-commitment/:chainType/:chainID',
       (req: Request) => {
+        const chainType = paramToNumber(req.params.chainType);
+        const chainID = paramToNumber(req.params.chainID);
+
         return getPOIsPerBlindedCommitment(
-          req.params.chainType,
-          req.params.chainID,
+          chainType,
+          chainID,
           req.body as GetPOIsPerBlindedCommitmentParams,
         );
       },
@@ -724,11 +767,11 @@ export class API {
         if (!this.hasListKey(body.listKey)) {
           throw new Error('Invalid listKey');
         }
-        return await getMerkleProofs(
-          req.params.chainType,
-          req.params.chainID,
-          body,
-        );
+
+        const chainType = paramToNumber(req.params.chainType);
+        const chainID = paramToNumber(req.params.chainID);
+
+        return await getMerkleProofs(chainType, chainID, body);
       },
       SharedChainTypeIDParamsSchema,
       GetMerkleProofsBodySchema,
@@ -737,9 +780,12 @@ export class API {
     this.safePost<ValidatedRailgunTxidStatus>(
       '/validated-txid/:chainType/:chainID',
       async (req: Request) => {
+        const chainType = paramToNumber(req.params.chainType);
+        const chainID = paramToNumber(req.params.chainID);
+
         return await getValidatedTxid(
-          req.params.chainType,
-          req.params.chainID,
+          chainType,
+          chainID,
           req.body as GetLatestValidatedRailgunTxidParams,
         );
       },
@@ -750,9 +796,12 @@ export class API {
     this.safePost<boolean>(
       '/validate-txid-merkleroot/:chainType/:chainID',
       async (req: Request) => {
+        const chainType = paramToNumber(req.params.chainType);
+        const chainID = paramToNumber(req.params.chainID);
+
         return await validateTxidMerkleroot(
-          req.params.chainType,
-          req.params.chainID,
+          chainType,
+          chainID,
           req.body as ValidateTxidMerklerootParams,
         );
       },
@@ -763,9 +812,12 @@ export class API {
     this.safePost<boolean>(
       '/validate-poi-merkleroots/:chainType/:chainID',
       async (req: Request) => {
+        const chainType = paramToNumber(req.params.chainType);
+        const chainID = paramToNumber(req.params.chainID);
+
         return await validatePoiMerkleroots(
-          req.params.chainType,
-          req.params.chainID,
+          chainType,
+          chainID,
           req.body as ValidatePOIMerklerootsParams,
         );
       },
