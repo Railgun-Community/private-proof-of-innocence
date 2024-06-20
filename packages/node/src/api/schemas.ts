@@ -28,26 +28,6 @@ export const GetPOIListEventRangeBodySchema: AllowedSchema = {
   required: ['txidVersion', 'startIndex', 'endIndex', 'listKey'],
 };
 
-export const ExtendedGetPOIListEventRangeBodySchema: AllowedSchema = {
-  type: 'object',
-  properties: {
-    chainType: { type: 'number' },
-    chainID: { type: 'number' },
-    txidVersion: { type: 'string' },
-    startIndex: { type: 'number' },
-    endIndex: { type: 'number' },
-    listKey: { type: 'string' },
-  },
-  required: [
-    'chainType',
-    'chainID',
-    'txidVersion',
-    'startIndex',
-    'endIndex',
-    'listKey',
-  ],
-};
-
 export const GetPOIMerkletreeLeavesBodySchema: AllowedSchema = {
   type: 'object',
   properties: {

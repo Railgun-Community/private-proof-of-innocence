@@ -473,15 +473,6 @@ export abstract class ListProvider {
         throw new Error('Invalid timestamp');
       }
 
-      const poiSettings = NETWORK_CONFIG[networkName].poi;
-
-      if (
-        isDefined(poiSettings) &&
-        poiSettings.launchBlock < txReceipt.blockNumber
-      ) {
-        return await this.allowShield(networkName, txidVersion, shieldDBItem);
-      }
-
       const { shouldAllow, blockReason } = await this.shouldAllowShield(
         networkName,
         txid,

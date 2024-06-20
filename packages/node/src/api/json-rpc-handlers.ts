@@ -33,7 +33,7 @@ import {
   validatePoiMerkleroots,
 } from './route-logic';
 import {
-  ExtendedGetPOIListEventRangeBodySchema,
+  GetPOIListEventRangeBodySchema,
   GetBlockedShieldsBodySchema,
   GetLatestValidatedRailgunTxidBodySchema,
   GetLegacyTransactProofsBodySchema,
@@ -88,7 +88,7 @@ export const getLogicFunctionMap = (
     ppoi_poi_events: {
       logicFunction: () =>
         getPoiEvents(params.chainType, params.chainID, params),
-      schema: ExtendedGetPOIListEventRangeBodySchema,
+      schema: GetPOIListEventRangeBodySchema,
     },
     ppoi_poi_merkletree_leaves: {
       logicFunction: () =>

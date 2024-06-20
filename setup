@@ -2,11 +2,15 @@
 set +e;
 
 # Node
-pushd packages/node
-yarn
-popd
+if [ -d "packages/node" ]; then
+  pushd packages/node
+  yarn
+  popd
+fi
 
 # Dashboard
-pushd packages/dashboard
-yarn
-popd
+if [ -d "packages/dashboard" ]; then
+  pushd packages/dashboard
+  yarn
+  popd
+fi

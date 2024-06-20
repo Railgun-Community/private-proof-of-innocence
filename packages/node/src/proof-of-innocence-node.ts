@@ -110,7 +110,7 @@ export class ProofOfInnocenceNode {
 
       // Check if node API is running
       const url = this.getURL();
-      await axios.get(url, { timeout: 1000 });
+      await axios.get(url, { timeout: 3000 });
       dbg(`- API check successful: Connected to ${url} -`);
     } catch (err) {
       dbg(`Error during node startup: ${err.message}`);

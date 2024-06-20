@@ -211,8 +211,30 @@ describe('JSON RPC API Tests', function () {
         jsonrpc: '2.0',
         method: 'ppoi_poi_events',
         params: {
-          chainType: chainType,
-          chainID: chainID,
+          chainType: chainType.toString(),
+          chainID: chainID.toString(),
+          txidVersion: TXIDVersion.V2_PoseidonMerkle,
+          listKey,
+          startIndex: 0,
+          endIndex: 1,
+        },
+        id: 1,
+      };
+
+      const response = await axios.post(`${apiUrl}/`, jsonRpcRequest);
+
+      expect(response.status).to.equal(200);
+    });
+
+    // NOTE: this test is being used for blank node having chainID and chainType types updated
+    // ... before other nodes
+    it('Should return 200 for POST / ppoi_poi-events using strings', async () => {
+      const jsonRpcRequest = {
+        jsonrpc: '2.0',
+        method: 'ppoi_poi_events',
+        params: {
+          chainType: chainType.toString(),
+          chainID: chainID.toString(),
           txidVersion: TXIDVersion.V2_PoseidonMerkle,
           listKey,
           startIndex: 0,
@@ -231,8 +253,8 @@ describe('JSON RPC API Tests', function () {
         jsonrpc: '2.0',
         method: 'ppoi_poi_events',
         params: {
-          chainType: chainType,
-          chainID: chainID,
+          chainType: chainType.toString(),
+          chainID: chainID.toString(),
           startIndex: 0,
           endIndex: 1,
         },
@@ -271,8 +293,8 @@ describe('JSON RPC API Tests', function () {
         jsonrpc: '2.0',
         method: 'ppoi_poi_events',
         params: {
-          chainType: chainType,
-          chainID: chainID,
+          chainType: chainType.toString(),
+          chainID: chainID.toString(),
           txidVersion: TXIDVersion.V2_PoseidonMerkle,
           listKey: 'fake_list_key',
           startIndex: 0,
@@ -299,8 +321,8 @@ describe('JSON RPC API Tests', function () {
         jsonrpc: '2.0',
         method: 'ppoi_poi_events',
         params: {
-          chainType: chainType,
-          chainID: chainID,
+          chainType: chainType.toString(),
+          chainID: chainID.toString(),
           txidVersion: TXIDVersion.V2_PoseidonMerkle,
           listKey,
           startIndex: 0,
@@ -334,8 +356,8 @@ describe('JSON RPC API Tests', function () {
         jsonrpc: '2.0',
         method: 'ppoi_poi_events',
         params: {
-          chainType: chainType,
-          chainID: chainID,
+          chainType: chainType.toString(),
+          chainID: chainID.toString(),
           txidVersion: TXIDVersion.V2_PoseidonMerkle,
           listKey,
           startIndex: 1,
@@ -368,8 +390,8 @@ describe('JSON RPC API Tests', function () {
         jsonrpc: '2.0',
         method: 'ppoi_poi_merkletree_leaves',
         params: {
-          chainType: chainType,
-          chainID: chainID,
+          chainType: chainType.toString(),
+          chainID: chainID.toString(),
           txidVersion: TXIDVersion.V2_PoseidonMerkle,
           listKey,
           startIndex: 0,
@@ -388,8 +410,8 @@ describe('JSON RPC API Tests', function () {
         jsonrpc: '2.0',
         method: 'ppoi_poi_merkletree_leaves',
         params: {
-          chainType: chainType,
-          chainID: chainID,
+          chainType: chainType.toString(),
+          chainID: chainID.toString(),
           startIndex: 0,
           endIndex: 1,
         },
@@ -429,8 +451,8 @@ describe('JSON RPC API Tests', function () {
         jsonrpc: '2.0',
         method: 'ppoi_poi_merkletree_leaves',
         params: {
-          chainType: chainType,
-          chainID: chainID,
+          chainType: chainType.toString(),
+          chainID: chainID.toString(),
           txidVersion: TXIDVersion.V2_PoseidonMerkle,
           listKey: 'fake_list_key',
           startIndex: 0,
@@ -457,8 +479,8 @@ describe('JSON RPC API Tests', function () {
         jsonrpc: '2.0',
         method: 'ppoi_poi_merkletree_leaves',
         params: {
-          chainType: chainType,
-          chainID: chainID,
+          chainType: chainType.toString(),
+          chainID: chainID.toString(),
           txidVersion: TXIDVersion.V2_PoseidonMerkle,
           listKey,
           startIndex: 0,
@@ -492,8 +514,8 @@ describe('JSON RPC API Tests', function () {
         jsonrpc: '2.0',
         method: 'ppoi_poi_merkletree_leaves',
         params: {
-          chainType: chainType,
-          chainID: chainID,
+          chainType: chainType.toString(),
+          chainID: chainID.toString(),
           txidVersion: TXIDVersion.V2_PoseidonMerkle,
           listKey,
           startIndex: 1,
@@ -526,8 +548,8 @@ describe('JSON RPC API Tests', function () {
         jsonrpc: '2.0',
         method: 'ppoi_transact_proofs',
         params: {
-          chainType: chainType,
-          chainID: chainID,
+          chainType: chainType.toString(),
+          chainID: chainID.toString(),
           txidVersion: TXIDVersion.V2_PoseidonMerkle,
           bloomFilterSerialized: 'someValidSerializedData',
           listKey,
@@ -545,8 +567,8 @@ describe('JSON RPC API Tests', function () {
         jsonrpc: '2.0',
         method: 'ppoi_transact_proofs',
         params: {
-          chainType: chainType,
-          chainID: chainID,
+          chainType: chainType.toString(),
+          chainID: chainID.toString(),
           bloomFilterSerialized: 'someValidSerializedData',
           listKey,
         },
@@ -587,8 +609,8 @@ describe('JSON RPC API Tests', function () {
         jsonrpc: '2.0',
         method: 'ppoi_transact_proofs',
         params: {
-          chainType: chainType,
-          chainID: chainID,
+          chainType: chainType.toString(),
+          chainID: chainID.toString(),
           txidVersion: TXIDVersion.V2_PoseidonMerkle,
           bloomFilterSerialized: 'someValidSerializedData',
           listKey: 'fake_list_key',
@@ -617,8 +639,8 @@ describe('JSON RPC API Tests', function () {
         jsonrpc: '2.0',
         method: 'ppoi_legacy_transact_proofs',
         params: {
-          chainType: chainType,
-          chainID: chainID,
+          chainType: chainType.toString(),
+          chainID: chainID.toString(),
           txidVersion: TXIDVersion.V2_PoseidonMerkle,
           bloomFilterSerialized: BlockedShieldsCache.serializeBloomFilter(
             listKey,
@@ -639,8 +661,8 @@ describe('JSON RPC API Tests', function () {
         jsonrpc: '2.0',
         method: 'ppoi_legacy_transact_proofs',
         params: {
-          chainType: chainType,
-          chainID: chainID,
+          chainType: chainType.toString(),
+          chainID: chainID.toString(),
           bloomFilterSerialized: BlockedShieldsCache.serializeBloomFilter(
             listKey,
             NetworkName.EthereumSepolia,
@@ -683,8 +705,8 @@ describe('JSON RPC API Tests', function () {
         jsonrpc: '2.0',
         method: 'ppoi_blocked_shields',
         params: {
-          chainType: chainType,
-          chainID: chainID,
+          chainType: chainType.toString(),
+          chainID: chainID.toString(),
           txidVersion: TXIDVersion.V2_PoseidonMerkle,
           bloomFilterSerialized: BlockedShieldsCache.serializeBloomFilter(
             listKey,
@@ -706,8 +728,8 @@ describe('JSON RPC API Tests', function () {
         jsonrpc: '2.0',
         method: 'ppoi_blocked_shields',
         params: {
-          chainType: chainType,
-          chainID: chainID,
+          chainType: chainType.toString(),
+          chainID: chainID.toString(),
           bloomFilterSerialized: BlockedShieldsCache.serializeBloomFilter(
             listKey,
             NetworkName.EthereumSepolia,
@@ -752,8 +774,8 @@ describe('JSON RPC API Tests', function () {
         jsonrpc: '2.0',
         method: 'ppoi_blocked_shields',
         params: {
-          chainType: chainType,
-          chainID: chainID,
+          chainType: chainType.toString(),
+          chainID: chainID.toString(),
           txidVersion: TXIDVersion.V2_PoseidonMerkle,
           bloomFilterSerialized: BlockedShieldsCache.serializeBloomFilter(
             'fake_list_key',
@@ -786,8 +808,8 @@ describe('JSON RPC API Tests', function () {
         jsonrpc: '2.0',
         method: 'ppoi_submit_poi_events',
         params: {
-          chainType: chainType,
-          chainID: chainID,
+          chainType: chainType.toString(),
+          chainID: chainID.toString(),
           txidVersion: TXIDVersion.V2_PoseidonMerkle,
           listKey,
           signedPOIEvent: {
@@ -816,8 +838,8 @@ describe('JSON RPC API Tests', function () {
         jsonrpc: '2.0',
         method: 'ppoi_submit_poi_events',
         params: {
-          chainType: chainType,
-          chainID: chainID,
+          chainType: chainType.toString(),
+          chainID: chainID.toString(),
           txidVersion: TXIDVersion.V2_PoseidonMerkle,
           listKey: 'fake_list_key',
           signedPOIEvents: {
@@ -852,8 +874,8 @@ describe('JSON RPC API Tests', function () {
         jsonrpc: '2.0',
         method: 'ppoi_submit_validated_txid',
         params: {
-          chainType: chainType,
-          chainID: chainID,
+          chainType: chainType.toString(),
+          chainID: chainID.toString(),
           txidVersion: TXIDVersion.V2_PoseidonMerkle,
           txidIndex: 0,
           merkleroot: '',
@@ -873,8 +895,8 @@ describe('JSON RPC API Tests', function () {
         jsonrpc: '2.0',
         method: 'ppoi_submit_validated_txid',
         params: {
-          chainType: chainType,
-          chainID: chainID,
+          chainType: chainType.toString(),
+          chainID: chainID.toString(),
           txidVersion: TXIDVersion.V2_PoseidonMerkle,
           txidIndex: 0,
           merkleroot: '',
@@ -910,8 +932,8 @@ describe('JSON RPC API Tests', function () {
         jsonRpc: '2.0',
         method: 'ppoi_remove_transact_proof',
         params: {
-          chainType: chainType,
-          chainID: chainID,
+          chainType: chainType.toString(),
+          chainID: chainID.toString(),
           txidVersion: TXIDVersion.V2_PoseidonMerkle,
           listKey,
           blindedCommitmentsOut: [
@@ -935,8 +957,8 @@ describe('JSON RPC API Tests', function () {
         jsonRpc: '2.0',
         method: 'ppoi_remove_transact_proof',
         params: {
-          chainType: chainType,
-          chainID: chainID,
+          chainType: chainType.toString(),
+          chainID: chainID.toString(),
           txidVersion: TXIDVersion.V2_PoseidonMerkle,
           listKey: 'fake_list_key',
           blindedCommitmentsOut: [
@@ -971,8 +993,8 @@ describe('JSON RPC API Tests', function () {
         jsonrpc: '2.0',
         method: 'ppoi_submit_transact_proof',
         params: {
-          chainType: chainType,
-          chainID: chainID,
+          chainType: chainType.toString(),
+          chainID: chainID.toString(),
           txidVersion: TXIDVersion.V2_PoseidonMerkle,
           listKey: listKey,
           transactProofData: {
@@ -1026,8 +1048,8 @@ describe('JSON RPC API Tests', function () {
         jsonrpc: '2.0',
         method: 'ppoi_submit_transact_proof',
         params: {
-          chainType: chainType,
-          chainID: chainID,
+          chainType: chainType.toString(),
+          chainID: chainID.toString(),
           listKey: listKey,
           transactProofData: 0,
         },
@@ -1067,8 +1089,8 @@ describe('JSON RPC API Tests', function () {
         jsonrpc: '2.0',
         method: 'ppoi_submit_transact_proof',
         params: {
-          chainType: chainType,
-          chainID: chainID,
+          chainType: chainType.toString(),
+          chainID: chainID.toString(),
           txidVersion: TXIDVersion.V2_PoseidonMerkle,
           listKey: 'fake_list_key',
           transactProofData: {
@@ -1129,8 +1151,8 @@ describe('JSON RPC API Tests', function () {
         jsonrpc: '2.0',
         method: 'ppoi_submit_legacy_transact_proofs',
         params: {
-          chainType: chainType,
-          chainID: chainID,
+          chainType: chainType.toString(),
+          chainID: chainID.toString(),
           txidVersion: TXIDVersion.V2_PoseidonMerkle,
           listKeys: ['test_list'],
           legacyTransactProofDatas: [
@@ -1158,8 +1180,8 @@ describe('JSON RPC API Tests', function () {
         jsonrpc: '2.0',
         method: 'ppoi_submit_single_commitment_proofs',
         params: {
-          chainType: chainType,
-          chainID: chainID,
+          chainType: chainType.toString(),
+          chainID: chainID.toString(),
           txidVersion: TXIDVersion.V2_PoseidonMerkle,
           singleCommitmentProofsData: {
             railgunTxid:
@@ -1236,8 +1258,8 @@ describe('JSON RPC API Tests', function () {
         jsonrpc: '2.0',
         method: 'ppoi_submit_single_commitment_proofs',
         params: {
-          chainType: chainType,
-          chainID: chainID,
+          chainType: chainType.toString(),
+          chainID: chainID.toString(),
           txidVersion: TXIDVersion.V2_PoseidonMerkle,
           singleCommitmentProofsData: {
             invalidBody: 3000,
@@ -1288,8 +1310,8 @@ describe('JSON RPC API Tests', function () {
         jsonrpc: '2.0',
         method: 'ppoi_pois_per_list',
         params: {
-          chainType: chainType,
-          chainID: chainID,
+          chainType: chainType.toString(),
+          chainID: chainID.toString(),
           txidVersion: TXIDVersion.V2_PoseidonMerkle,
           listKeys: [listKey],
           blindedCommitmentDatas: [
@@ -1316,8 +1338,8 @@ describe('JSON RPC API Tests', function () {
         jsonrpc: '2.0',
         method: 'ppoi_pois_per_list',
         params: {
-          chainType: chainType,
-          chainID: chainID,
+          chainType: chainType.toString(),
+          chainID: chainID.toString(),
           listKey: 0,
           blindedCommitmentDatas: 0,
         },
@@ -1357,8 +1379,8 @@ describe('JSON RPC API Tests', function () {
         jsonrpc: '2.0',
         method: 'ppoi_pois_per_list',
         params: {
-          chainType: chainType,
-          chainID: chainID,
+          chainType: chainType.toString(),
+          chainID: chainID.toString(),
           txidVersion: TXIDVersion.V2_PoseidonMerkle,
           listKeys: [listKey],
           blindedCommitmentDatas: Array.from(
@@ -1396,8 +1418,8 @@ describe('JSON RPC API Tests', function () {
         jsonrpc: '2.0',
         method: 'ppoi_pois_per_blinded_commitment',
         params: {
-          chainType: chainType,
-          chainID: chainID,
+          chainType: chainType.toString(),
+          chainID: chainID.toString(),
           txidVersion: TXIDVersion.V2_PoseidonMerkle,
           listKey: listKey,
           blindedCommitmentDatas: [
@@ -1424,8 +1446,8 @@ describe('JSON RPC API Tests', function () {
         jsonrpc: '2.0',
         method: 'ppoi_pois_per_blinded_commitment',
         params: {
-          chainType: chainType,
-          chainID: chainID,
+          chainType: chainType.toString(),
+          chainID: chainID.toString(),
           listKey: listKey,
           txidVersion: TXIDVersion.V2_PoseidonMerkle,
           blindedCommitmentDatas: Array.from(
@@ -1463,8 +1485,8 @@ describe('JSON RPC API Tests', function () {
         jsonrpc: '2.0',
         method: 'ppoi_merkle_proofs',
         params: {
-          chainType: chainType,
-          chainID: chainID,
+          chainType: chainType.toString(),
+          chainID: chainID.toString(),
           listKey: listKey,
           txidVersion: TXIDVersion.V2_PoseidonMerkle,
           blindedCommitments: ['', ''],
@@ -1493,8 +1515,8 @@ describe('JSON RPC API Tests', function () {
         jsonrpc: '2.0',
         method: 'ppoi_merkle_proofs',
         params: {
-          chainType: chainType,
-          chainID: chainID,
+          chainType: chainType.toString(),
+          chainID: chainID.toString(),
           listKey: listKey,
           blindedCommitments: 0,
         },
@@ -1535,8 +1557,8 @@ describe('JSON RPC API Tests', function () {
         jsonrpc: '2.0',
         method: 'ppoi_merkle_proofs',
         params: {
-          chainType: chainType,
-          chainID: chainID,
+          chainType: chainType.toString(),
+          chainID: chainID.toString(),
           listKey: 'fake_list_key',
           txidVersion: TXIDVersion.V2_PoseidonMerkle,
           blindedCommitments: ['', ''],
@@ -1563,8 +1585,8 @@ describe('JSON RPC API Tests', function () {
         jsonrpc: '2.0',
         method: 'ppoi_merkle_proofs',
         params: {
-          chainType: chainType,
-          chainID: chainID,
+          chainType: chainType.toString(),
+          chainID: chainID.toString(),
           listKey: listKey,
           txidVersion: TXIDVersion.V2_PoseidonMerkle,
           blindedCommitments: Array.from(
@@ -1599,8 +1621,8 @@ describe('JSON RPC API Tests', function () {
         jsonrpc: '2.0',
         method: 'ppoi_validated_txid',
         params: {
-          chainType: chainType,
-          chainID: chainID,
+          chainType: chainType.toString(),
+          chainID: chainID.toString(),
           txidVersion: TXIDVersion.V2_PoseidonMerkle,
         },
         id: 1,
@@ -1618,8 +1640,8 @@ describe('JSON RPC API Tests', function () {
         jsonrpc: '2.0',
         method: 'ppoi_validate_txid_merkleroot',
         params: {
-          chainType: chainType,
-          chainID: chainID,
+          chainType: chainType.toString(),
+          chainID: chainID.toString(),
           txidVersion: TXIDVersion.V2_PoseidonMerkle,
           tree: 0,
           index: 0,
@@ -1638,8 +1660,8 @@ describe('JSON RPC API Tests', function () {
         jsonrpc: '2.0',
         method: 'ppoi_validate_txid_merkleroot',
         params: {
-          chainType: chainType,
-          chainID: chainID,
+          chainType: chainType.toString(),
+          chainID: chainID.toString(),
           tree: 0,
           index: 0,
           merkleroot: 0,
@@ -1683,8 +1705,8 @@ describe('JSON RPC API Tests', function () {
         jsonrpc: '2.0',
         method: 'ppoi_validate_poi_merkleroots',
         params: {
-          chainType: chainType,
-          chainID: chainID,
+          chainType: chainType.toString(),
+          chainID: chainID.toString(),
           txidVersion: TXIDVersion.V2_PoseidonMerkle,
           listKey,
           poiMerkleroots: [''],

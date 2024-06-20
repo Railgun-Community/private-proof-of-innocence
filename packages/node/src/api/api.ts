@@ -93,15 +93,14 @@ import {
   validateTxidMerkleroot,
   handleHTTPError,
   submitValidatedTxid,
-  paramToNumber,
 } from './route-logic';
 import { getLogicFunctionMap } from './json-rpc-handlers';
-import { error } from 'console';
 
 const dbg = debug('poi:api');
 
 // Initialize the JSON schema validator
-const validator = new Validator({ allErrors: true });
+// NOTE: Hotfix allowUnionTypes is set to true to allow both string and number types for chainType and chainID
+const validator = new Validator({ allErrors: true, allowUnionTypes: true });
 
 export class API {
   private app: express.Express;
@@ -249,11 +248,11 @@ export class API {
     try {
       const { logicFunction, schema } = logicFunctionMap[method];
 
-      // Manually validate params/schema since validation package isn't compatible with JSON-RPC
       if (schema) {
-        const validateResult = validator.ajv.validate(schema, params);
+        // Validate the rest of the params using the matching shared schema to the function
+        const validateFunctionParams = validator.ajv.validate(schema, params);
 
-        if (!validateResult) {
+        if (!validateFunctionParams) {
           // Validation failed, handle error response
           const errors = validator.ajv.errors;
 
@@ -505,19 +504,13 @@ export class API {
     this.safePost<POISyncedListEvent[]>(
       '/poi-events/:chainType/:chainID',
       async (req: Request) => {
-        console.log('req.body', req.body);
-        console.log('req.params', req.params);
-
         const body = req.body as GetPOIListEventRangeParams;
         // Check if listKey is valid
         if (!this.hasListKey(body.listKey)) {
           throw new Error('Invalid listKey');
         }
 
-        const chainType = paramToNumber(req.params.chainType);
-        const chainID = paramToNumber(req.params.chainID);
-
-        return getPoiEvents(chainType, chainID, body);
+        return getPoiEvents(req.params.chainType, req.params.chainID, body);
       },
       SharedChainTypeIDParamsSchema,
       GetPOIListEventRangeBodySchema,
@@ -533,10 +526,11 @@ export class API {
           throw new Error('Invalid listKey');
         }
 
-        const chainType = paramToNumber(req.params.chainType);
-        const chainID = paramToNumber(req.params.chainID);
-
-        return await getPOIMerkletreeLeaves(chainType, chainID, body);
+        return await getPOIMerkletreeLeaves(
+          req.params.chainType,
+          req.params.chainID,
+          body,
+        );
       },
       SharedChainTypeIDParamsSchema,
       GetPOIMerkletreeLeavesBodySchema,
@@ -551,14 +545,11 @@ export class API {
           throw new Error('Invalid listKey');
         }
 
-        const chainType = paramToNumber(req.params.chainType);
-        const chainID = paramToNumber(req.params.chainID);
-
         // safePOST requires a Promise to be returned
         return Promise.resolve(
           getTransactProofs(
-            chainType,
-            chainID,
+            req.params.chainType,
+            req.params.chainID,
             req.body as GetTransactProofsParams,
           ),
         );
@@ -570,13 +561,10 @@ export class API {
     this.safePost<LegacyTransactProofData[]>(
       '/legacy-transact-proofs/:chainType/:chainID',
       (req: Request) => {
-        const chainType = paramToNumber(req.params.chainType);
-        const chainID = paramToNumber(req.params.chainID);
-
         return Promise.resolve(
           getLegacyTransactProofs(
-            chainType,
-            chainID,
+            req.params.chainType,
+            req.params.chainID,
             req.body as GetLegacyTransactProofsParams,
           ),
         );
@@ -593,10 +581,9 @@ export class API {
           throw new Error('Invalid listKey');
         }
 
-        const chainType = paramToNumber(req.params.chainType);
-        const chainID = paramToNumber(req.params.chainID);
-
-        return Promise.resolve(getBlockedShields(chainType, chainID, body));
+        return Promise.resolve(
+          getBlockedShields(req.params.chainType, req.params.chainID, body),
+        );
       },
       SharedChainTypeIDParamsSchema,
       GetBlockedShieldsBodySchema,
@@ -610,13 +597,10 @@ export class API {
           throw new Error('Invalid listKey');
         }
 
-        const chainType = paramToNumber(req.params.chainType);
-        const chainID = paramToNumber(req.params.chainID);
-
         // Submit the POI event, return void
         await submitPOIEvent(
-          chainType,
-          chainID,
+          req.params.chainType,
+          req.params.chainID,
           body,
           dbg, // Pass in debugger for logging submitted signed POI events
         );
@@ -633,12 +617,9 @@ export class API {
           throw new Error('Invalid listKey');
         }
 
-        const chainType = paramToNumber(req.params.chainType);
-        const chainID = paramToNumber(req.params.chainID);
-
         await submitValidatedTxid(
-          chainType,
-          chainID,
+          req.params.chainType,
+          req.params.chainID,
           body,
           dbg, // Pass in debugger for logging submitted validated txids
         );
@@ -656,10 +637,12 @@ export class API {
           throw new Error('Invalid listKey');
         }
 
-        const chainType = paramToNumber(req.params.chainType);
-        const chainID = paramToNumber(req.params.chainID);
-
-        await removeTransactProof(chainType, chainID, body, dbg);
+        await removeTransactProof(
+          req.params.chainType,
+          req.params.chainID,
+          body,
+          dbg,
+        );
       },
       SharedChainTypeIDParamsSchema,
       RemoveTransactProofBodySchema,
@@ -676,10 +659,12 @@ export class API {
           throw new Error('Invalid listKey');
         }
 
-        const chainType = paramToNumber(req.params.chainType);
-        const chainID = paramToNumber(req.params.chainID);
-
-        await submitTransactProof(chainType, chainID, body, dbg);
+        await submitTransactProof(
+          req.params.chainType,
+          req.params.chainID,
+          body,
+          dbg,
+        );
       },
       SharedChainTypeIDParamsSchema,
       SubmitTransactProofBodySchema,
@@ -698,11 +683,13 @@ export class API {
         // Modify body.listKeys to only include valid listKeys
         body.listKeys = filteredListKeys;
 
-        const chainType = paramToNumber(req.params.chainType);
-        const chainID = paramToNumber(req.params.chainID);
-
         // Submit the legacy transact proofs
-        await submitLegacyTransactProofs(chainType, chainID, body, dbg);
+        await submitLegacyTransactProofs(
+          req.params.chainType,
+          req.params.chainID,
+          body,
+          dbg,
+        );
       },
       SharedChainTypeIDParamsSchema,
       SubmitLegacyTransactProofsBodySchema,
@@ -711,13 +698,10 @@ export class API {
     this.safePost<void>(
       '/submit-single-commitment-proofs/:chainType/:chainID',
       async (req: Request) => {
-        const chainType = paramToNumber(req.params.chainType);
-        const chainID = paramToNumber(req.params.chainID);
-
         // Submit and verify the proofs
         await submitSingleCommitmentProofs(
-          chainType,
-          chainID,
+          req.params.chainType,
+          req.params.chainID,
           req.body as SubmitSingleCommitmentProofsParams,
           dbg,
         );
@@ -729,12 +713,9 @@ export class API {
     this.safePost<POIsPerListMap>(
       '/pois-per-list/:chainType/:chainID',
       (req: Request) => {
-        const chainType = paramToNumber(req.params.chainType);
-        const chainID = paramToNumber(req.params.chainID);
-
         return getPOIsPerList(
-          chainType,
-          chainID,
+          req.params.chainType,
+          req.params.chainID,
           req.body as GetPOIsPerListParams,
         );
       },
@@ -745,12 +726,9 @@ export class API {
     this.safePost<POIsPerBlindedCommitmentMap>(
       '/pois-per-blinded-commitment/:chainType/:chainID',
       (req: Request) => {
-        const chainType = paramToNumber(req.params.chainType);
-        const chainID = paramToNumber(req.params.chainID);
-
         return getPOIsPerBlindedCommitment(
-          chainType,
-          chainID,
+          req.params.chainType,
+          req.params.chainID,
           req.body as GetPOIsPerBlindedCommitmentParams,
         );
       },
@@ -768,10 +746,11 @@ export class API {
           throw new Error('Invalid listKey');
         }
 
-        const chainType = paramToNumber(req.params.chainType);
-        const chainID = paramToNumber(req.params.chainID);
-
-        return await getMerkleProofs(chainType, chainID, body);
+        return await getMerkleProofs(
+          req.params.chainType,
+          req.params.chainID,
+          body,
+        );
       },
       SharedChainTypeIDParamsSchema,
       GetMerkleProofsBodySchema,
@@ -780,12 +759,9 @@ export class API {
     this.safePost<ValidatedRailgunTxidStatus>(
       '/validated-txid/:chainType/:chainID',
       async (req: Request) => {
-        const chainType = paramToNumber(req.params.chainType);
-        const chainID = paramToNumber(req.params.chainID);
-
         return await getValidatedTxid(
-          chainType,
-          chainID,
+          req.params.chainType,
+          req.params.chainID,
           req.body as GetLatestValidatedRailgunTxidParams,
         );
       },
@@ -796,12 +772,9 @@ export class API {
     this.safePost<boolean>(
       '/validate-txid-merkleroot/:chainType/:chainID',
       async (req: Request) => {
-        const chainType = paramToNumber(req.params.chainType);
-        const chainID = paramToNumber(req.params.chainID);
-
         return await validateTxidMerkleroot(
-          chainType,
-          chainID,
+          req.params.chainType,
+          req.params.chainID,
           req.body as ValidateTxidMerklerootParams,
         );
       },
@@ -812,12 +785,9 @@ export class API {
     this.safePost<boolean>(
       '/validate-poi-merkleroots/:chainType/:chainID',
       async (req: Request) => {
-        const chainType = paramToNumber(req.params.chainType);
-        const chainID = paramToNumber(req.params.chainID);
-
         return await validatePoiMerkleroots(
-          chainType,
-          chainID,
+          req.params.chainType,
+          req.params.chainID,
           req.body as ValidatePOIMerklerootsParams,
         );
       },

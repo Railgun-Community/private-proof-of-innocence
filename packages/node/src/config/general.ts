@@ -28,12 +28,12 @@ export const chainForNetwork = (networkName: NetworkName): Chain => {
 };
 
 export const networkNameForSerializedChain = (
-  chainType: number,
-  chainID: number,
+  chainType: string,
+  chainID: string,
 ): NetworkName => {
   const networkName = networkForChain({
-    type: chainType,
-    id: chainID,
+    type: Number(chainType),
+    id: Number(chainID),
   })?.name;
   if (!isDefined(networkName)) {
     throw new Error('No network info available.');
