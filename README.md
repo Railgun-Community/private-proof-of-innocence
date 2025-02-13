@@ -6,7 +6,7 @@ This repository contains the codebase for the RAILGUN Private Proofs of Innocenc
 
 ## Introduction
 
-RAILGUN PPOI is a blockchain privacy solution that ensures transactions remain confidential and comply with OFAC sanctions.
+Private Proofs of Innocence is a tool to give cryptographic assurance that tokens entering the RAILGUN smart contract are not from a known list of interactions, or actors considered undesirable by respective wallet providers.
 
 ## Installation
 
